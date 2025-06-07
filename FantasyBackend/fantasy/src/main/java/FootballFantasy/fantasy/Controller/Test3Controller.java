@@ -7,13 +7,14 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
-@RequestMapping("/api/test")
-public class TestController {
+@RequestMapping("/api/test3")
+public class Test3Controller {
 
     @GetMapping
-    @PreAuthorize("hasRole('user')")
-    public ResponseEntity<String> hello() {
-        return ResponseEntity.ok("Hello from backend!");
+    @PreAuthorize("hasRole('admin')")
+    public ResponseEntity<String> test44() {
+        return ResponseEntity.ok("only accessible for admins!");
+
     }
 
 }
