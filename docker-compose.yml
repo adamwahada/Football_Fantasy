@@ -10,6 +10,7 @@ services:
       - postgres_data:/var/lib/postgresql/data
     networks:
       - keycloak-network
+    restart: unless-stopped
 
   keycloak:
     image: quay.io/keycloak/keycloak:24.0.1
@@ -23,15 +24,38 @@ services:
       KC_DB_PASSWORD: password
       KEYCLOAK_ADMIN: admin
       KEYCLOAK_ADMIN_PASSWORD: admin
+      KC_PROXY: edge  # Important pour le reverse proxy
+      KC_HOSTNAME_STRICT: false
+      KC_HTTP_ENABLED: true
     ports:
-      - "8180:8080"
+    - "8180:8080" 
+    expose:
+      - "8080"
     depends_on:
       - postgres
     networks:
       - keycloak-network
+    restart: unless-stopped
+
+  nginx:
+    image: nginx:latest
+    container_name: keycloak_nginx
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/conf.d/default.conf
+      - ./certs:/etc/letsencrypt:ro
+      - ./acme-challenge:/var/www/acme-challenge  # Séparé du dossier certs
+    depends_on:
+      - keycloak
+    networks:
+      - keycloak-network
+    restart: unless-stopped
 
 volumes:
   postgres_data:
 
 networks:
   keycloak-network:
+    driver: bridge
