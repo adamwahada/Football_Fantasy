@@ -11,7 +11,7 @@ import org.springframework.web.bind.annotation.RestController;
 public class TestController {
 
     @GetMapping
-    @PreAuthorize("hasRole('user')")
+    @PreAuthorize("hasAuthority('ROLE_USER')")
     public ResponseEntity<String> hello() {
         return ResponseEntity.ok("Hello from backend!");
     }
