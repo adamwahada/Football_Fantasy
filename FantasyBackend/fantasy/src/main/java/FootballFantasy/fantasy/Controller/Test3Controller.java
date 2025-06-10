@@ -11,7 +11,7 @@ import org.springframework.web.bind.annotation.RestController;
 public class Test3Controller {
 
     @GetMapping
-    @PreAuthorize("hasRole('admin')")
+    @PreAuthorize("hasAuthority('ROLE_ADMIN')")  // ✅ Correct
     public ResponseEntity<String> test44() {
         return ResponseEntity.ok("only accessible for admins!");
 
