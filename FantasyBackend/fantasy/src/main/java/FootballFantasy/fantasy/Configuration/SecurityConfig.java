@@ -21,20 +21,20 @@ public class SecurityConfig {
         http
                 .csrf(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers(
-                                // Swagger UI endpoints - match your actual URL pattern
-                                "/fantasy/swagger-ui/**",
-                                "/fantasy/swagger-ui.html",
-                                "/fantasy/v3/api-docs/**",
-                                "/swagger-ui/**",
-                                "/swagger-ui.html",
-                                "/v3/api-docs/**",
-                                "/webjars/**",
-                                "/swagger-resources/**",
-                                "/configuration/**"
-                        ).permitAll()
+                                .requestMatchers(
+                                        // Swagger UI endpoints - match your actual URL pattern
+                                        "/fantasy/swagger-ui/**",
+                                        "/fantasy/swagger-ui.html",
+                                        "/fantasy/v3/api-docs/**",
+                                        "/swagger-ui/**",
+                                        "/swagger-ui.html",
+                                        "/v3/api-docs/**",
+                                        "/webjars/**",
+                                        "/swagger-resources/**",
+                                        "/configuration/**"
+                                ).permitAll()
 //                        .requestMatchers("/api/test/**").permitAll()
-                        .anyRequest().authenticated()
+                                .anyRequest().authenticated()
                 )
                 .oauth2ResourceServer(oauth2 -> oauth2
                         .jwt(jwt -> jwt

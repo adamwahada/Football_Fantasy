@@ -37,21 +37,21 @@ services:
       - keycloak-network
     restart: unless-stopped
 
-  nginx:
-    image: nginx:latest
-    container_name: keycloak_nginx
-    ports:
-      - "80:80"
-      - "443:443"
-    volumes:
-      - ./nginx/nginx.conf:/etc/nginx/conf.d/default.conf
-      - ./certs:/etc/letsencrypt:ro
-      - ./acme-challenge:/var/www/acme-challenge  # Séparé du dossier certs
-    depends_on:
-      - keycloak
-    networks:
-      - keycloak-network
-    restart: unless-stopped
+  # nginx:
+  #   image: nginx:latest
+  #   container_name: keycloak_nginx
+  #   ports:
+  #   - "8080:80"
+  #   - "443:443"
+  #   volumes:
+  #     - ./nginx/nginx.conf:/etc/nginx/conf.d/default.conf
+  #     - ./certs:/etc/letsencrypt:ro
+  #     - ./acme-challenge:/var/www/acme-challenge  # Séparé du dossier certs
+  #   depends_on:
+  #     - keycloak
+  #   networks:
+  #     - keycloak-network
+  #   restart: unless-stopped
 
 volumes:
   postgres_data:
