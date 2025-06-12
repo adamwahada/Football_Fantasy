@@ -27,7 +27,11 @@ public class KeycloakRoleConverter implements Converter<Jwt, Collection<GrantedA
         System.out.println("Original roles: " + roles);
 
         Collection<GrantedAuthority> authorities = roles.stream()
-                .map(role -> new SimpleGrantedAuthority("ROLE_" + role.toUpperCase()))
+                .map(role -> {
+                    // Ne pas ajouter ROLE_ si déjà présent
+                    String roleName = role.startsWith("ROLE_") ? role : "ROLE_" + role.toUpperCase();
+                    return new SimpleGrantedAuthority(roleName);
+                })
                 .collect(Collectors.toList());
 
         System.out.println("Converted authorities: " + authorities);

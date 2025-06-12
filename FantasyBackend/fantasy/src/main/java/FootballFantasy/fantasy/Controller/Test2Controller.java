@@ -13,7 +13,7 @@ public class Test2Controller {
     @GetMapping
     @PreAuthorize("hasAuthority('ROLE_ADMIN')")  // ✅ Correct
     public ResponseEntity<String> bye() {
-        return ResponseEntity.ok("Hello from backend!");
+        return ResponseEntity.ok("Hello Admin from backend!");
 
     }
 
