@@ -29,6 +29,8 @@ services:
       KC_HTTP_ENABLED: true
     ports:
     - "8180:8080" 
+    volumes:
+    - ./keycloak_exports:/opt/keycloak/data/export   //backup des données exportées
     expose:
       - "8080"
     depends_on:
