@@ -15,22 +15,23 @@ services:
   keycloak:
     image: quay.io/keycloak/keycloak:24.0.1
     container_name: keycloak_server
-    command: start-dev
+    command: ["start-dev"]
     environment:
       KC_DB: postgres
       KC_DB_URL_HOST: postgres
       KC_DB_URL_DATABASE: keycloak
       KC_DB_USERNAME: keycloak
       KC_DB_PASSWORD: password
-      KEYCLOAK_ADMIN: admin
-      KEYCLOAK_ADMIN_PASSWORD: admin
+      KEYCLOAK_ADMIN: admiinfaantasy@gmail.com
+      KEYCLOAK_ADMIN_PASSWORD: Ageuro9320
       KC_PROXY: edge  # Important pour le reverse proxy
       KC_HOSTNAME_STRICT: false
       KC_HTTP_ENABLED: true
     ports:
     - "8180:8080" 
     volumes:
-    - ./keycloak_exports:/opt/keycloak/data/export   //backup des données exportées
+    - ./keycloak_exports:/opt/keycloak/data/export   # backup des données exportées
+    - ./keycloak_providers:/opt/keycloak/providers  # Répertoire pour les extensions Keycloak
     expose:
       - "8080"
     depends_on:
