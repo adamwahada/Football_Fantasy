@@ -1,0 +1,36 @@
+# Global
+*.log
+*.tmp
+*.bak
+.DS_Store
+node_modules/
+dist/
+.env
+*.env
+.env.local
+.vscode/
+.idea/
+__pycache__/
+
+# Docker
+docker/keycloak_imports/
+docker/keycloak_exports/
+docker/postgres_data/
+docker/*.bak
+docker/*.log
+/docker/.env
+
+
+# Backend
+/backend/target/
+/backend/.mvn/
+/backend/.env
+
+# Frontend
+/frontend/node_modules/
+/frontend/dist/
+/frontend/.env
+
+# OS generated
+Thumbs.db
+ehthumbs.db
