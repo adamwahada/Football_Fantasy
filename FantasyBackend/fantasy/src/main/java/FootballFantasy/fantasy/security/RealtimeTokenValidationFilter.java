@@ -14,6 +14,7 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.util.Base64;
 import java.util.Map;
 
 @Component
@@ -25,9 +26,11 @@ public class RealtimeTokenValidationFilter extends OncePerRequestFilter {
     @Value("${keycloak.realm}")
     private String realm;
 
-    @Value("${keycloak.resource}")
-    private String clientId;
+    @Value("${keycloak.backend.client-id}")
+    private String backendClientId;
 
+    @Value("${keycloak.backend.client-secret}")
+    private String backendClientSecret;
 
     private final RestTemplate restTemplate = new RestTemplate();
     private final ObjectMapper objectMapper = new ObjectMapper();
@@ -75,7 +78,11 @@ public class RealtimeTokenValidationFilter extends OncePerRequestFilter {
 
             HttpHeaders headers = new HttpHeaders();
             headers.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
-            headers.setBasicAuth(clientId);
+
+            // Use backend client credentials for introspection
+            String credentials = backendClientId + ":" + backendClientSecret;
+            String encodedCredentials = Base64.getEncoder().encodeToString(credentials.getBytes());
+            headers.set("Authorization", "Basic " + encodedCredentials);
 
             MultiValueMap<String, String> body = new LinkedMultiValueMap<>();
             body.add("token", token);

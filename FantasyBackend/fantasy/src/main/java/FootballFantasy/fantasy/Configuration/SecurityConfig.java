@@ -47,9 +47,9 @@ public class SecurityConfig {
                                 .decoder(jwtDecoder())
                                 .jwtAuthenticationConverter(jwtAuthenticationConverter())
                         )
-                )
+                );
                 // Add the real-time token validation filter BEFORE JWT processing
-                .addFilterBefore(realtimeTokenValidationFilter, UsernamePasswordAuthenticationFilter.class);
+//                .addFilterBefore(realtimeTokenValidationFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }
