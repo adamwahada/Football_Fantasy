@@ -3,7 +3,7 @@ services:
     image: postgres:15
     container_name: keycloak_db
     env_file:
-      - .env
+      - keycloak.env
     volumes:
       - ../postgres_data:/var/lib/postgresql/data
     networks:
@@ -20,6 +20,7 @@ services:
       - "8180:8080"
     volumes:
       - ./keycloak_imports:/opt/keycloak/data/import
+      - ./keycloak_exports:/opt/keycloak/data/export     
       - ./keycloak_providers:/opt/keycloak/providers
     expose:
       - "8080"
