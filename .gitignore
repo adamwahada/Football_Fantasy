@@ -34,3 +34,9 @@ docker/*.log
 # OS generated
 Thumbs.db
 ehthumbs.db
+
+# the backend and frontend and database passwords
+.env
+.env.local
+*.env
+src/main/resources/application.properties
