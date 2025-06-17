@@ -10,7 +10,5 @@ public class FantasyApplication {
 
 	public static void main(String[] args) {
 		SpringApplication.run(FantasyApplication.class, args);
-
 	}
-
 }

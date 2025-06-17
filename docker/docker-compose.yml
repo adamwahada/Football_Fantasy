@@ -1,0 +1,38 @@
+services:
+  postgres:
+    image: postgres:15
+    container_name: keycloak_db
+    env_file:
+      - keycloak.env
+    volumes:
+      - ../postgres_data:/var/lib/postgresql/data
+    networks:
+      - keycloak-network
+    restart: unless-stopped
+
+  keycloak:
+    image: quay.io/keycloak/keycloak:24.0.1
+    container_name: keycloak_server
+    command: ["start-dev"]
+    env_file:
+      - keycloak.env
+    ports:
+      - "8180:8080"
+    volumes:
+      - ./keycloak_imports:/opt/keycloak/data/import
+      - ./keycloak_exports:/opt/keycloak/data/export     
+      - ./keycloak_providers:/opt/keycloak/providers
+    expose:
+      - "8080"
+    depends_on:
+      - postgres
+    networks:
+      - keycloak-network
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+
+networks:
+  keycloak-network:
+    driver: bridge
