@@ -1,0 +1,331 @@
+<div class="registration-modal">
+  <div class="modal-content">
+    <h2>Créer un compte</h2>
+    
+
+    <!-- Step Indicator -->
+    <div class="step-indicator">
+      <div class="step" [class.active]="currentStep === 1" [class.completed]="currentStep > 1">
+        <span class="step-number">1</span>
+        <span class="step-label">Informations de base</span>
+      </div>
+      <div class="step-divider"></div>
+      <div class="step" [class.active]="currentStep === 2">
+        <span class="step-number">2</span>
+        <span class="step-label">Informations complémentaires</span>
+      </div>
+    </div>
+
+    <form [formGroup]="currentStep === 1 ? basicForm : customForm" (ngSubmit)="onSubmit()">
+      
+      <!-- Error Message Global -->
+      <div *ngIf="errorMessage" class="alert alert-error">
+        <div class="alert-icon">⚠️</div>
+        <div class="alert-content">
+          <strong>Erreur :</strong> {{ errorMessage }}
+        </div>
+      </div>
+
+      <!-- Step 1: Basic Keycloak Fields -->
+      <div *ngIf="currentStep === 1" class="form-step">
+        <h3>Informations de base</h3>
+        
+        <!-- Username -->
+        <div class="form-group">
+          <mat-form-field appearance="outline" class="w-100">
+            <mat-label>Nom d'utilisateur <span class="required">*</span></mat-label>
+            <input 
+              matInput
+              type="text" 
+              id="username"
+              placeholder="Choisissez un nom d'utilisateur unique" 
+              formControlName="username"
+              autocomplete="username"
+            >
+            <mat-icon matSuffix class="material-icons-outlined color-icon">face</mat-icon>
+            <mat-error *ngIf="getFieldError('username')">
+              {{ getFieldError('username') }}
+            </mat-error>
+          </mat-form-field>
+        </div>
+
+        <!-- First Name -->
+        <div class="form-group">
+          <mat-form-field appearance="outline" class="w-100">
+            <mat-label>Prénom <span class="required">*</span></mat-label>
+            <input 
+              matInput
+              type="text" 
+              id="firstName"
+              placeholder="Votre prénom" 
+              formControlName="firstName"
+              autocomplete="given-name"
+            >
+            <mat-icon matSuffix class="material-icons-outlined color-icon">person</mat-icon>
+            <mat-error *ngIf="getFieldError('firstName')">
+              {{ getFieldError('firstName') }}
+            </mat-error>
+          </mat-form-field>
+        </div>
+
+        <!-- Last Name -->
+        <div class="form-group">
+          <mat-form-field appearance="outline" class="w-100">
+            <mat-label>Nom <span class="required">*</span></mat-label>
+            <input 
+              matInput
+              type="text" 
+              id="lastName"
+              placeholder="Votre nom de famille" 
+              formControlName="lastName"
+              autocomplete="family-name"
+            >
+            <mat-icon matSuffix class="material-icons-outlined color-icon">person</mat-icon>
+            <mat-error *ngIf="getFieldError('lastName')">
+              {{ getFieldError('lastName') }}
+            </mat-error>
+          </mat-form-field>
+        </div>
+
+        <!-- Email -->
+        <div class="form-group">
+          <mat-form-field appearance="outline" class="w-100">
+            <mat-label>Adresse email <span class="required">*</span></mat-label>
+            <input 
+              matInput
+              type="email" 
+              id="email"
+              placeholder="votre.email@exemple.com" 
+              formControlName="email"
+              autocomplete="email"
+            >
+            <mat-icon matSuffix class="material-icons-outlined color-icon">email</mat-icon>
+            <mat-error *ngIf="getFieldError('email')">
+              {{ getFieldError('email') }}
+            </mat-error>
+          </mat-form-field>
+        </div>
+
+        <!-- Password -->
+        <div class="form-group">
+          <mat-form-field appearance="outline" class="w-100">
+            <mat-label>Mot de passe <span class="required">*</span></mat-label>
+            <input 
+              matInput
+              type="password" 
+              id="password"
+              placeholder="Créez un mot de passe sécurisé" 
+              formControlName="password"
+              autocomplete="new-password"
+            >
+            <mat-icon matSuffix class="material-icons-outlined color-icon">lock</mat-icon>
+            <mat-error *ngIf="getFieldError('password')">
+              {{ getFieldError('password') }}
+            </mat-error>
+          </mat-form-field>
+          <div class="field-hint">
+            8 caractères minimum avec majuscule, minuscule, chiffre et caractère spécial
+          </div>
+        </div>
+        
+        <div class="form-actions">
+          <button 
+            type="button" 
+            (click)="nextStep()" 
+            class="btn btn-primary"
+            [disabled]="!basicForm.valid"
+          >
+            Continuer
+            <span class="btn-icon">→</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Step 2: Custom Attributes -->
+      <div *ngIf="currentStep === 2" class="form-step">
+        <h3>Informations complémentaires</h3>
+        
+        <!-- Phone -->
+        <div class="form-group">
+          <mat-form-field appearance="outline" class="w-100">
+            <mat-label>Numéro de téléphone</mat-label>
+            <input 
+              matInput
+              type="tel" 
+              id="phone"
+              placeholder="+33 6 12 34 56 78" 
+              formControlName="phone"
+              autocomplete="tel"
+              (focus)="onStep2Input()"
+            >
+            <mat-icon matSuffix class="material-icons-outlined color-icon">phone</mat-icon>
+            <mat-error *ngIf="getFieldError('phone')">
+              {{ getFieldError('phone') }}
+            </mat-error>
+          </mat-form-field>
+        </div>
+
+        <!-- Country -->
+        <div class="form-group">
+          <mat-form-field appearance="outline" class="w-100">
+            <mat-label>Pays</mat-label>
+            <input 
+              matInput
+              type="text" 
+              id="country"
+              placeholder="France" 
+              formControlName="country"
+              autocomplete="country-name"
+            >
+            <mat-icon matSuffix class="material-icons-outlined color-icon">public</mat-icon>
+            <mat-error *ngIf="getFieldError('country')">
+              {{ getFieldError('country') }}
+            </mat-error>
+          </mat-form-field>
+        </div>
+
+        <!-- Address -->
+        <div class="form-group">
+          <mat-form-field appearance="outline" class="w-100">
+            <mat-label>Adresse</mat-label>
+            <input 
+              matInput
+              type="text" 
+              id="address"
+              placeholder="123 Rue de la Paix" 
+              formControlName="address"
+              autocomplete="street-address"
+            >
+            <mat-icon matSuffix class="material-icons-outlined color-icon">home</mat-icon>
+            <mat-error *ngIf="getFieldError('address')">
+              {{ getFieldError('address') }}
+            </mat-error>
+          </mat-form-field>
+        </div>
+
+        <!-- Postal Number -->
+        <div class="form-group">
+          <mat-form-field appearance="outline" class="w-100">
+            <mat-label>Code postal</mat-label>
+            <input 
+              matInput
+              type="text" 
+              id="postalNumber"
+              placeholder="75001" 
+              formControlName="postalNumber"
+              autocomplete="postal-code"
+              pattern="[0-9]{4,10}"
+            >
+            <mat-icon matSuffix class="material-icons-outlined color-icon">location_on</mat-icon>
+            <mat-error *ngIf="getFieldError('postalNumber')">
+              {{ getFieldError('postalNumber') }}
+            </mat-error>
+          </mat-form-field>
+          <div class="field-hint">
+            Uniquement des chiffres (4 à 10 caractères)
+          </div>
+        </div>
+
+        <!-- Birth Date -->
+        <div class="form-group">
+          <mat-form-field appearance="outline" class="w-100">
+            <mat-label>Date de naissance</mat-label>
+            <input 
+              matInput
+              [matDatepicker]="birthDatePicker"
+              formControlName="birthDate"
+              [min]="getMinDate()"
+              [max]="getMaxDate()"
+              autocomplete="bday"
+            >
+            <mat-datepicker-toggle matSuffix [for]="birthDatePicker">
+              <mat-icon matDatepickerToggleIcon>calendar_today</mat-icon>
+            </mat-datepicker-toggle>
+            <mat-datepicker #birthDatePicker></mat-datepicker>
+            <mat-error *ngIf="getFieldError('birthDate')">
+              {{ getFieldError('birthDate') }}
+            </mat-error>
+          </mat-form-field>
+          <div class="field-hint">
+            Vous devez avoir au moins 13 ans pour vous inscrire
+          </div>
+        </div>
+
+        <!-- Referral Code -->
+        <div class="form-group">
+          <mat-form-field appearance="outline" class="w-100">
+            <mat-label>Code de parrainage <span class="optional">(optionnel)</span></mat-label>
+            <input 
+              matInput
+              type="text" 
+              id="referralCode"
+              placeholder="Code de parrainage" 
+              formControlName="referralCode"
+            >
+            <mat-icon matSuffix class="material-icons-outlined color-icon">card_giftcard</mat-icon>
+            <mat-error *ngIf="getFieldError('referralCode')">
+              {{ getFieldError('referralCode') }}
+            </mat-error>
+          </mat-form-field>
+          <div class="field-hint">
+            Si vous avez été parrainé, saisissez le code ici
+          </div>
+        </div>
+
+        <!-- Terms and Conditions -->
+        <div class="form-group">
+          <mat-checkbox formControlName="termsAccepted" color="primary">
+            J'accepte les <a href="/terms" target="_blank">conditions générales d'utilisation</a> 
+            et la <a href="/privacy" target="_blank">politique de confidentialité</a>
+            <span class="required">*</span>
+          </mat-checkbox>
+          <mat-error *ngIf="getFieldError('termsAccepted')">
+            {{ getFieldError('termsAccepted') }}
+          </mat-error>
+        </div>
+        
+        <!-- reCAPTCHA -->
+        <div class="form-group">
+          <div 
+            id="recaptcha-container" 
+            class="recaptcha-container"
+          >
+            <div *ngIf="!recaptchaInitialized" class="recaptcha-loading">
+              <mat-spinner diameter="24"></mat-spinner>
+              <span>Chargement de la vérification...</span>
+            </div>
+          </div>
+          <mat-error *ngIf="getFieldError('recaptcha')">
+            {{ getFieldError('recaptcha') }}
+          </mat-error>
+        </div>
+
+        <div class="form-actions">
+          <button 
+            type="button" 
+            (click)="previousStep()" 
+            class="btn btn-secondary"
+          >
+            <mat-icon>arrow_back</mat-icon>
+            Retour
+          </button>
+          <button 
+            type="submit" 
+            class="btn btn-primary"
+            [disabled]="isSubmitting || customForm.invalid || !recaptchaToken"
+          >
+            <mat-spinner *ngIf="isSubmitting" diameter="20"></mat-spinner>
+            {{ isSubmitting ? 'Création du compte...' : 'Créer mon compte' }}
+          </button>
+        </div>
+      </div>
+    </form>
+
+    <!-- Login Link -->
+    <div class="form-footer">
+      <p>Vous avez déjà un compte ? 
+        <a routerLink="/login" class="link-primary">Se connecter</a>
+      </p>
+    </div>
+  </div>
+</div>
