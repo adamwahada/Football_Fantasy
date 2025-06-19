@@ -56,6 +56,7 @@ export class RegistrationComponent implements OnInit, AfterViewInit, OnDestroy {
   recaptchaToken: string | null = null;
   private readonly RECAPTCHA_SITE_KEY = '6LfgHGUrAAAAAIYJZpivfvWwdel4PdGulFnPSXSF';
   private readonly RECAPTCHA_CONTAINER_ID = 'recaptcha-container';
+  showModal = true;
 
   constructor(private fb: FormBuilder, private authService: AuthService, private router: Router) {
     console.log('🔍 RegistrationComponent initialized');
@@ -65,15 +66,16 @@ export class RegistrationComponent implements OnInit, AfterViewInit, OnDestroy {
       firstName: ['', [Validators.required, Validators.minLength(2), this.nameValidator]],
       lastName: ['', [Validators.required, Validators.minLength(2), this.nameValidator]],
       email: ['', [Validators.required, Validators.email, this.emailValidator]],
-      password: ['', [Validators.required, Validators.minLength(8), this.passwordValidator]]
-    });
+      password: ['', [Validators.required, Validators.minLength(8), this.passwordValidator]],
+      confirmPassword: ['', [Validators.required]]
+    }, { validators: this.passwordsMatchValidator });
 
     this.customForm = this.fb.group({
-      phone: ['', [this.phoneValidator]],
-      country: ['', [Validators.minLength(2)]],
-      address: [''],
+      phone: ['', [Validators.required, this.phoneValidator]],
+      country: ['', [Validators.required, Validators.minLength(2)]],
+      address: ['', [Validators.required]],
       postalNumber: ['', [this.postalCodeValidator]],
-      birthDate: ['', [this.birthDateValidator]],
+      birthDate: ['', [Validators.required, this.birthDateValidator]],
       referralCode: [''],
       termsAccepted: [false, Validators.requiredTrue]
     });
@@ -135,9 +137,6 @@ export class RegistrationComponent implements OnInit, AfterViewInit, OnDestroy {
     }
     if (!/[0-9]/.test(password)) {
       errors.push('un chiffre');
-    }
-    if (!/[!@#$%^&*(),.?":{}|<>]/.test(password)) {
-      errors.push('un caractère spécial');
     }
     
     if (errors.length > 0) {
@@ -204,6 +203,15 @@ export class RegistrationComponent implements OnInit, AfterViewInit, OnDestroy {
       return { birthDate: { message: 'Veuillez vérifier votre date de naissance' } };
     }
     
+    return null;
+  }
+
+  passwordsMatchValidator(group: FormGroup): ValidationErrors | null {
+    const password = group.get('password')?.value;
+    const confirmPassword = group.get('confirmPassword')?.value;
+    if (password !== confirmPassword) {
+      return { passwordsMismatch: { message: 'Les mots de passe ne correspondent pas' } };
+    }
     return null;
   }
 
@@ -342,7 +350,10 @@ export class RegistrationComponent implements OnInit, AfterViewInit, OnDestroy {
         return errors['birthDate'].message;
       }
     }
-    
+    // Erreur de correspondance des mots de passe
+    if (fieldName === 'confirmPassword' && form.errors && form.errors['passwordsMismatch'] && (form.get('confirmPassword')?.touched || form.get('confirmPassword')?.dirty)) {
+      return form.errors['passwordsMismatch'].message;
+    }
     return '';
   }
 
@@ -353,6 +364,7 @@ export class RegistrationComponent implements OnInit, AfterViewInit, OnDestroy {
       lastName: 'Le nom est requis',
       email: 'L\'adresse email est requise',
       password: 'Le mot de passe est requis',
+      confirmPassword: 'La confirmation du mot de passe est requise',
       phone: 'Le numéro de téléphone est requis',
       country: 'Le pays est requis',
       address: 'L\'adresse est requise',
@@ -446,6 +458,10 @@ export class RegistrationComponent implements OnInit, AfterViewInit, OnDestroy {
         recaptchaToken: this.recaptchaToken
       };
 
+      if (formData.birthDate instanceof Date) {
+        formData.birthDate = this.formatDateForInput(formData.birthDate);
+      }
+
       console.log('🚀 Submitting registration with data:', {
         ...formData,
         password: '***',
@@ -509,5 +525,9 @@ export class RegistrationComponent implements OnInit, AfterViewInit, OnDestroy {
       console.log('🔍 Initializing reCAPTCHA on first input');
       setTimeout(() => this.initializeRecaptcha(), 200);
     }
+  }
+
+  closeModal() {
+    this.showModal = false;
   }
 }

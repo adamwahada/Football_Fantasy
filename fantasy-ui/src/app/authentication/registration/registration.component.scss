@@ -4,7 +4,7 @@
   align-items: center;
   justify-content: center;
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  padding: 20px;
+  padding: 10px;
 }
 
 .auth-main {
@@ -83,7 +83,7 @@
 
 // Form field styles
 .form-field {
-  margin-bottom: 20px;
+  margin-bottom: 15px;
 }
 
 .form-label {
@@ -404,369 +404,171 @@
 
 // Form Groups
 .form-group {
-  margin-bottom: 24px;
-
-  .form-label {
-    display: block;
-    margin-bottom: 8px;
-    color: #2d3748;
-    font-weight: 500;
-    font-size: 14px;
-
-    .required {
-      color: #e53e3e;
-      margin-left: 2px;
-    }
-
-    .optional {
-      color: #718096;
-      font-weight: 400;
-      font-size: 12px;
-      margin-left: 4px;
-    }
-  }
-
-  .form-input {
-    width: 100%;
-    padding: 12px 16px;
-    border: 2px solid #e2e8f0;
-    border-radius: 8px;
-    font-size: 16px;
-    transition: all 0.3s ease;
-    background: white;
-
-    &:focus {
-      outline: none;
-      border-color: #4299e1;
-      box-shadow: 0 0 0 3px rgba(66, 153, 225, 0.1);
-    }
-
-    &.error {
-      border-color: #e53e3e;
-      box-shadow: 0 0 0 3px rgba(229, 62, 62, 0.1);
-    }
-
-    &::placeholder {
-      color: #a0aec0;
-    }
-  }
-
-  .field-error {
-    display: flex;
-    align-items: center;
-    margin-top: 6px;
-    color: #e53e3e;
-    font-size: 14px;
-
-    .error-icon {
-      margin-right: 6px;
-      font-size: 12px;
-    }
-  }
-
-  .field-hint {
-    margin-top: 4px;
-    color: #718096;
-    font-size: 12px;
-    line-height: 1.4;
-  }
-}
-
-// Date Input
-.date-input-wrapper {
+  margin-bottom: 12px;
   position: relative;
 
-  .date-input {
-    padding-right: 40px;
+  .mat-form-field {
+    width: 100%;
+    display: block;
   }
 
-  .date-icon {
-    position: absolute;
-    right: 12px;
-    top: 50%;
-    transform: translateY(-50%);
-    pointer-events: none;
-    font-size: 18px;
-  }
-}
+  // Style de base des champs
+  ::ng-deep {
+    .mat-form-field-appearance-outline {
+      .mat-form-field-wrapper {
+        margin: 0;
+        padding: 0;
+      }
 
-// Checkbox
-.checkbox-group {
-  .checkbox-container {
-    display: flex;
-    align-items: flex-start;
-    cursor: pointer;
-    line-height: 1.5;
+      .mat-form-field-flex {
+        min-height: 60px;
+        padding: 0 12px;
+      }
 
-    .checkbox-input {
+      // Style normal de la bordure
+      .mat-form-field-outline {
+        color: #e2e8f0;
+      }
+
+      // Style de la bordure en erreur
+      &.mat-form-field-invalid .mat-form-field-outline {
+        color: #dc2626;
+      }
+
+      // Masquer les messages d'erreur par défaut de Material
+      .mat-error {
+        display: none;
+      }
+    }
+
+    // Suppression des espacements par défaut de Material
+    .mat-form-field-subscript-wrapper {
       display: none;
     }
 
-    .checkbox-custom {
-      width: 20px;
-      height: 20px;
-      border: 2px solid #e2e8f0;
-      border-radius: 4px;
-      margin-right: 12px;
-      margin-top: 2px;
-      flex-shrink: 0;
-      transition: all 0.3s ease;
-      position: relative;
-
-      &::after {
-        content: '✓';
-        position: absolute;
-        top: 50%;
-        left: 50%;
-        transform: translate(-50%, -50%);
-        color: white;
-        font-size: 12px;
-        font-weight: bold;
-        opacity: 0;
-        transition: opacity 0.3s ease;
-      }
-    }
-
-    .checkbox-label {
-      color: #4a5568;
-      font-size: 14px;
-
-      a {
-        color: #4299e1;
-        text-decoration: none;
-
-        &:hover {
-          text-decoration: underline;
-        }
-      }
-    }
-
-    .checkbox-input:checked + .checkbox-custom {
-      background: #4299e1;
-      border-color: #4299e1;
-
-      &::after {
-        opacity: 1;
-      }
+    .mat-form-field-infix {
+      padding: 8px 0;
+      border-top: 0;
     }
   }
 }
 
-// Alerts
-.alert {
-  padding: 16px;
-  border-radius: 8px;
-  margin-bottom: 20px;
-  display: flex;
-  align-items: flex-start;
+// Nouveau style pour le tooltip d'erreur
+.error-tooltip {
+  display: none;
+  position: absolute;
+  background: #dc2626;
+  color: white;
+  padding: 8px 12px;
+  border-radius: 4px;
+  font-size: 12px;
+  white-space: nowrap;
+  z-index: 1000;
+  top: -30px;
+  left: 50%;
+  transform: translateX(-50%);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 
-  .alert-icon {
-    margin-right: 12px;
-    font-size: 18px;
-    flex-shrink: 0;
-  }
-
-  .alert-content {
-    flex: 1;
-    line-height: 1.5;
-  }
-
-  &.alert-error {
-    background: #fed7d7;
-    border: 1px solid #feb2b2;
-    color: #c53030;
-  }
-
-  &.alert-success {
-    background: #c6f6d5;
-    border: 1px solid #9ae6b4;
-    color: #2f855a;
+  // Flèche du tooltip
+  &::after {
+    content: '';
+    position: absolute;
+    bottom: -4px;
+    left: 50%;
+    transform: translateX(-50%) rotate(45deg);
+    width: 8px;
+    height: 8px;
+    background: #dc2626;
   }
 }
 
-// Buttons
-.btn {
-  padding: 12px 24px;
-  border: none;
-  border-radius: 8px;
-  font-size: 16px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  text-decoration: none;
-
-  .btn-icon {
-    margin-left: 8px;
-    margin-right: 8px;
-  }
-
-  &:disabled {
-    opacity: 0.6;
-    cursor: not-allowed;
-  }
-
-  &.btn-primary {
-    background: #4299e1;
-    color: white;
-
-    &:hover:not(:disabled) {
-      background: #3182ce;
-      transform: translateY(-1px);
-      box-shadow: 0 4px 12px rgba(66, 153, 225, 0.3);
-    }
-  }
-
-  &.btn-secondary {
-    background: #e2e8f0;
-    color: #4a5568;
-
-    &:hover:not(:disabled) {
-      background: #cbd5e0;
-      transform: translateY(-1px);
-    }
+// Affichage du tooltip au survol
+.mat-form-field-invalid:hover {
+  .error-tooltip {
+    display: block;
   }
 }
 
-// Form Actions
-.form-actions {
-  display: flex;
-  gap: 12px;
-  justify-content: space-between;
-  margin-top: 30px;
-
-  .btn {
-    flex: 1;
+// Style des icônes
+::ng-deep .mat-form-field-suffix {
+  .mat-icon {
+    font-size: 20px;
+    height: 20px;
+    width: 20px;
+    padding: 2px;
+    color: #64748b;
   }
 }
 
-// Loading Spinner
-.loading-spinner {
-  width: 16px;
-  height: 16px;
-  border: 2px solid transparent;
-  border-top: 2px solid currentColor;
-  border-radius: 50%;
-  animation: spin 1s linear infinite;
-  margin-right: 8px;
+// Style de la modal
+.modal-content {
+  background: white;
+  border-radius: 16px;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  width: 100%;
+  max-width: 510px;
+  padding: 32px;
+  position: relative;
+  overflow-y: auto;
+  max-height: 90vh;
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* IE 10+ */
+}
+.modal-content::-webkit-scrollbar {
+  display: none; /* Chrome, Safari, Opera */
 }
 
-@keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
+// Suppression de tout effet de sidebar ou de décalage pour la section Informations complémentaires
+.form-step {
+  width: 100%;
+  margin: 0;
+  padding: 0;
+  box-shadow: none;
+  background: none;
+  display: block;
 }
 
-// Form Footer
-.form-footer {
-  text-align: center;
-  margin-top: 30px;
-  padding-top: 20px;
-  border-top: 1px solid #e2e8f0;
-
-  p {
-    color: #718096;
-    margin: 0;
-  }
-
-  .link-primary {
-    color: #4299e1;
-    text-decoration: none;
-    font-weight: 500;
-
-    &:hover {
-      text-decoration: underline;
-    }
-  }
+// Ajustement pour les champs requis
+.required {
+  color: #dc2626;
+  margin-left: 2px;
 }
 
-// Responsive Design
-@media (max-width: 768px) {
-  .auth-container {
-    padding: 10px;
+// Style des hints
+.field-hint {
+  font-size: 12px;
+  color: #64748b;
+  margin-top: 4px;
+  margin-left: 4px;
+}
 
-    .auth-main {
-      .auth-form-section {
-        .form-section {
-          .auth-wrapper {
-            padding: 20px;
-          }
-        }
-      }
-    }
+// Support mobile
+@media (max-width: 480px) {
+  .modal-content {
+    padding: 20px;
   }
 
-  .step-indicator {
-    .step-label {
-      font-size: 10px;
-    }
-
-    .step-divider {
-      width: 40px;
-    }
-  }
-
-  .form-actions {
-    flex-direction: column;
-
-    .btn {
-      width: 100%;
-    }
+  .error-tooltip {
+    white-space: normal;
+    max-width: 90%;
+    text-align: center;
   }
 }
 
-// Focus and accessibility improvements
-.form-input:focus,
-.checkbox-container:focus-within .checkbox-custom {
-  outline: 2px solid #4299e1;
-  outline-offset: 2px;
-}
-
-// High contrast mode support
-@media (prefers-contrast: high) {
-  .form-input {
-    border-width: 3px;
-  }
-
-  .btn {
-    border: 2px solid currentColor;
-  }
-}
-
-// Reduced motion support
-@media (prefers-reduced-motion: reduce) {
-  * {
-    animation-duration: 0.01ms !important;
-    animation-iteration-count: 1 !important;
-    transition-duration: 0.01ms !important;
-  }
-}
-
+// Modal styles
 .registration-modal {
   position: fixed;
   top: 0;
   left: 0;
   width: 100%;
   height: 100%;
-  background: #f8fafc;
+  background: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(4px);
   display: flex;
   align-items: center;
   justify-content: center;
   z-index: 1000;
   padding: 20px;
-}
-
-.modal-content {
-  background: white;
-  border-radius: 16px;
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-  width: 100%;
-  max-width: 480px;
-  padding: 32px;
-  position: relative;
-  overflow-y: auto;
-  max-height: 90vh;
 }
 
 h2 {
@@ -847,58 +649,6 @@ h3 {
   }
 }
 
-// Form Groups
-.form-group {
-  margin-bottom: 16px;
-
-  .mat-form-field {
-    width: 100%;
-  }
-
-  ::ng-deep {
-    .mat-form-field-wrapper {
-      padding-bottom: 0;
-    }
-
-    .mat-form-field-appearance-outline .mat-form-field-outline {
-      color: #e2e8f0;
-    }
-
-    .mat-form-field-appearance-outline.mat-focused .mat-form-field-outline {
-      color: #3b82f6;
-    }
-
-    .mat-form-field-label {
-      color: #64748b;
-    }
-
-    .mat-input-element {
-      color: #1a202c;
-      font-size: 14px;
-    }
-
-    .mat-form-field-infix {
-      padding: 8px 0;
-    }
-
-    .mat-form-field-suffix {
-      color: #94a3b8;
-    }
-
-    .mat-error {
-      font-size: 12px;
-      margin-top: 4px;
-    }
-  }
-}
-
-.field-hint {
-  font-size: 12px;
-  color: #64748b;
-  margin-top: 4px;
-  margin-left: 16px;
-}
-
 // Form Actions
 .form-actions {
   margin-top: 24px;
@@ -944,26 +694,6 @@ h3 {
   }
 }
 
-// Alert
-.alert {
-  padding: 12px 16px;
-  border-radius: 8px;
-  margin-bottom: 16px;
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  font-size: 13px;
-
-  &.alert-error {
-    background: #fee2e2;
-    color: #dc2626;
-  }
-
-  .alert-icon {
-    font-size: 16px;
-  }
-}
-
 // Form Footer
 .form-footer {
   text-align: center;
@@ -984,13 +714,90 @@ h3 {
   }
 }
 
-// Responsive
+// Alert styles
+.alert {
+  padding: 12px 16px;
+  border-radius: 8px;
+  margin-bottom: 16px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 13px;
+
+  &.alert-error {
+    background: #fee2e2;
+    color: #dc2626;
+  }
+
+  .alert-icon {
+    font-size: 16px;
+  }
+}
+
+// Loading Spinner
+.loading-spinner {
+  width: 16px;
+  height: 16px;
+  border: 2px solid transparent;
+  border-top: 2px solid currentColor;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin-right: 8px;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+// Responsive styles
 @media (max-width: 480px) {
   .modal-content {
-    padding: 24px;
+    padding: 20px;
   }
 
   .form-actions {
     flex-direction: column;
   }
+
+  .step-indicator {
+    .step-label {
+      font-size: 11px;
+    }
+
+    .step-divider {
+      width: 30px;
+    }
+  }
+}
+
+.modern-close-btn {
+  position: absolute;
+  top: 16px;
+  left: 16px;
+  width: 40px;
+  height: 40px;
+  background: transparent;
+  border: none;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background 0.2s;
+  z-index: 10;
+
+  mat-icon {
+    font-size: 28px;
+    color: #444;
+    transition: color 0.2s;
+  }
+
+  &:hover, &:focus {
+    background: #f0f0f0;
+    mat-icon {
+      color: #111;
+    }
+  }
+
 }

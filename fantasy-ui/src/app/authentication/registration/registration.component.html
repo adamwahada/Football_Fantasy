@@ -1,6 +1,10 @@
-<div class="registration-modal">
+<div class="registration-modal" *ngIf="showModal">
   <div class="modal-content">
-    <h2>Créer un compte</h2>
+    <!-- Bouton X moderne en haut à gauche -->
+    <button class="modern-close-btn" type="button" (click)="closeModal()" aria-label="Fermer">
+      <mat-icon fontIcon="close"></mat-icon>
+    </button>
+    <h2>Inscription</h2>
     
 
     <!-- Step Indicator -->
@@ -32,8 +36,8 @@
         
         <!-- Username -->
         <div class="form-group">
-          <mat-form-field appearance="outline" class="w-100">
-            <mat-label>Nom d'utilisateur <span class="required">*</span></mat-label>
+          <mat-form-field appearance="outline" class="w-100 large-input">
+            <mat-label>Username <span class="required">*</span></mat-label>
             <input 
               matInput
               type="text" 
@@ -43,15 +47,15 @@
               autocomplete="username"
             >
             <mat-icon matSuffix class="material-icons-outlined color-icon">face</mat-icon>
-            <mat-error *ngIf="getFieldError('username')">
+            <div class="error-tooltip" *ngIf="getFieldError('username')">
               {{ getFieldError('username') }}
-            </mat-error>
+            </div>
           </mat-form-field>
         </div>
 
         <!-- First Name -->
         <div class="form-group">
-          <mat-form-field appearance="outline" class="w-100">
+          <mat-form-field appearance="outline" class="w-100 large-input">
             <mat-label>Prénom <span class="required">*</span></mat-label>
             <input 
               matInput
@@ -62,15 +66,15 @@
               autocomplete="given-name"
             >
             <mat-icon matSuffix class="material-icons-outlined color-icon">person</mat-icon>
-            <mat-error *ngIf="getFieldError('firstName')">
+            <div class="error-tooltip" *ngIf="getFieldError('firstName')">
               {{ getFieldError('firstName') }}
-            </mat-error>
+            </div>
           </mat-form-field>
         </div>
 
         <!-- Last Name -->
         <div class="form-group">
-          <mat-form-field appearance="outline" class="w-100">
+          <mat-form-field appearance="outline" class="w-100 large-input">
             <mat-label>Nom <span class="required">*</span></mat-label>
             <input 
               matInput
@@ -81,15 +85,15 @@
               autocomplete="family-name"
             >
             <mat-icon matSuffix class="material-icons-outlined color-icon">person</mat-icon>
-            <mat-error *ngIf="getFieldError('lastName')">
+            <div class="error-tooltip" *ngIf="getFieldError('lastName')">
               {{ getFieldError('lastName') }}
-            </mat-error>
+            </div>
           </mat-form-field>
         </div>
 
         <!-- Email -->
         <div class="form-group">
-          <mat-form-field appearance="outline" class="w-100">
+          <mat-form-field appearance="outline" class="w-100 large-input">
             <mat-label>Adresse email <span class="required">*</span></mat-label>
             <input 
               matInput
@@ -100,15 +104,15 @@
               autocomplete="email"
             >
             <mat-icon matSuffix class="material-icons-outlined color-icon">email</mat-icon>
-            <mat-error *ngIf="getFieldError('email')">
+            <div class="error-tooltip" *ngIf="getFieldError('email')">
               {{ getFieldError('email') }}
-            </mat-error>
+            </div>
           </mat-form-field>
         </div>
 
         <!-- Password -->
         <div class="form-group">
-          <mat-form-field appearance="outline" class="w-100">
+          <mat-form-field appearance="outline" class="w-100 large-input">
             <mat-label>Mot de passe <span class="required">*</span></mat-label>
             <input 
               matInput
@@ -119,13 +123,29 @@
               autocomplete="new-password"
             >
             <mat-icon matSuffix class="material-icons-outlined color-icon">lock</mat-icon>
-            <mat-error *ngIf="getFieldError('password')">
+            <div class="error-tooltip" *ngIf="getFieldError('password')">
               {{ getFieldError('password') }}
-            </mat-error>
+            </div>
           </mat-form-field>
-          <div class="field-hint">
-            8 caractères minimum avec majuscule, minuscule, chiffre et caractère spécial
-          </div>
+
+        </div>
+        <!-- Confirm Password -->
+        <div class="form-group">
+          <mat-form-field appearance="outline" class="w-100 large-input">
+            <mat-label>Confirmation mot de passe <span class="required">*</span></mat-label>
+            <input 
+              matInput
+              type="password" 
+              id="confirmPassword"
+              placeholder="Répétez le mot de passe" 
+              formControlName="confirmPassword"
+              autocomplete="new-password"
+            >
+            <mat-icon matSuffix class="material-icons-outlined color-icon">lock</mat-icon>
+            <div class="error-tooltip" *ngIf="getFieldError('confirmPassword')">
+              {{ getFieldError('confirmPassword') }}
+            </div>
+          </mat-form-field>
         </div>
         
         <div class="form-actions">
@@ -147,7 +167,7 @@
         
         <!-- Phone -->
         <div class="form-group">
-          <mat-form-field appearance="outline" class="w-100">
+          <mat-form-field appearance="outline" class="w-100 large-input">
             <mat-label>Numéro de téléphone</mat-label>
             <input 
               matInput
@@ -159,15 +179,15 @@
               (focus)="onStep2Input()"
             >
             <mat-icon matSuffix class="material-icons-outlined color-icon">phone</mat-icon>
-            <mat-error *ngIf="getFieldError('phone')">
+            <div class="error-tooltip" *ngIf="getFieldError('phone')">
               {{ getFieldError('phone') }}
-            </mat-error>
+            </div>
           </mat-form-field>
         </div>
 
         <!-- Country -->
         <div class="form-group">
-          <mat-form-field appearance="outline" class="w-100">
+          <mat-form-field appearance="outline" class="w-100 large-input">
             <mat-label>Pays</mat-label>
             <input 
               matInput
@@ -178,15 +198,15 @@
               autocomplete="country-name"
             >
             <mat-icon matSuffix class="material-icons-outlined color-icon">public</mat-icon>
-            <mat-error *ngIf="getFieldError('country')">
+            <div class="error-tooltip" *ngIf="getFieldError('country')">
               {{ getFieldError('country') }}
-            </mat-error>
+            </div>
           </mat-form-field>
         </div>
 
         <!-- Address -->
         <div class="form-group">
-          <mat-form-field appearance="outline" class="w-100">
+          <mat-form-field appearance="outline" class="w-100 large-input">
             <mat-label>Adresse</mat-label>
             <input 
               matInput
@@ -197,15 +217,15 @@
               autocomplete="street-address"
             >
             <mat-icon matSuffix class="material-icons-outlined color-icon">home</mat-icon>
-            <mat-error *ngIf="getFieldError('address')">
+            <div class="error-tooltip" *ngIf="getFieldError('address')">
               {{ getFieldError('address') }}
-            </mat-error>
+            </div>
           </mat-form-field>
         </div>
 
         <!-- Postal Number -->
         <div class="form-group">
-          <mat-form-field appearance="outline" class="w-100">
+          <mat-form-field appearance="outline" class="w-100 large-input">
             <mat-label>Code postal</mat-label>
             <input 
               matInput
@@ -217,9 +237,9 @@
               pattern="[0-9]{4,10}"
             >
             <mat-icon matSuffix class="material-icons-outlined color-icon">location_on</mat-icon>
-            <mat-error *ngIf="getFieldError('postalNumber')">
+            <div class="error-tooltip" *ngIf="getFieldError('postalNumber')">
               {{ getFieldError('postalNumber') }}
-            </mat-error>
+            </div>
           </mat-form-field>
           <div class="field-hint">
             Uniquement des chiffres (4 à 10 caractères)
@@ -228,7 +248,7 @@
 
         <!-- Birth Date -->
         <div class="form-group">
-          <mat-form-field appearance="outline" class="w-100">
+          <mat-form-field appearance="outline" class="w-100 large-input">
             <mat-label>Date de naissance</mat-label>
             <input 
               matInput
@@ -242,9 +262,9 @@
               <mat-icon matDatepickerToggleIcon>calendar_today</mat-icon>
             </mat-datepicker-toggle>
             <mat-datepicker #birthDatePicker></mat-datepicker>
-            <mat-error *ngIf="getFieldError('birthDate')">
+            <div class="error-tooltip" *ngIf="getFieldError('birthDate')">
               {{ getFieldError('birthDate') }}
-            </mat-error>
+            </div>
           </mat-form-field>
           <div class="field-hint">
             Vous devez avoir au moins 13 ans pour vous inscrire
@@ -253,7 +273,7 @@
 
         <!-- Referral Code -->
         <div class="form-group">
-          <mat-form-field appearance="outline" class="w-100">
+          <mat-form-field appearance="outline" class="w-100 large-input">
             <mat-label>Code de parrainage <span class="optional">(optionnel)</span></mat-label>
             <input 
               matInput
@@ -263,9 +283,9 @@
               formControlName="referralCode"
             >
             <mat-icon matSuffix class="material-icons-outlined color-icon">card_giftcard</mat-icon>
-            <mat-error *ngIf="getFieldError('referralCode')">
+            <div class="error-tooltip" *ngIf="getFieldError('referralCode')">
               {{ getFieldError('referralCode') }}
-            </mat-error>
+            </div>
           </mat-form-field>
           <div class="field-hint">
             Si vous avez été parrainé, saisissez le code ici
@@ -273,15 +293,15 @@
         </div>
 
         <!-- Terms and Conditions -->
-        <div class="form-group">
+        <div class="form-group checkbox-group">
           <mat-checkbox formControlName="termsAccepted" color="primary">
             J'accepte les <a href="/terms" target="_blank">conditions générales d'utilisation</a> 
             et la <a href="/privacy" target="_blank">politique de confidentialité</a>
             <span class="required">*</span>
           </mat-checkbox>
-          <mat-error *ngIf="getFieldError('termsAccepted')">
+          <div class="error-tooltip" *ngIf="getFieldError('termsAccepted')">
             {{ getFieldError('termsAccepted') }}
-          </mat-error>
+          </div>
         </div>
         
         <!-- reCAPTCHA -->
@@ -295,9 +315,9 @@
               <span>Chargement de la vérification...</span>
             </div>
           </div>
-          <mat-error *ngIf="getFieldError('recaptcha')">
+          <div class="error-tooltip" *ngIf="getFieldError('recaptcha')">
             {{ getFieldError('recaptcha') }}
-          </mat-error>
+          </div>
         </div>
 
         <div class="form-actions">
