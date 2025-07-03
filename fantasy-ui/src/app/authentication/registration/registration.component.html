@@ -22,14 +22,6 @@
 
     <form [formGroup]="currentStep === 1 ? basicForm : customForm" (ngSubmit)="onSubmit()">
       
-      <!-- Error Message Global -->
-      <div *ngIf="errorMessage" class="alert alert-error">
-        <div class="alert-icon">⚠️</div>
-        <div class="alert-content">
-          <strong>Erreur :</strong> {{ errorMessage }}
-        </div>
-      </div>
-
       <!-- Step 1: Basic Keycloak Fields -->
       <div *ngIf="currentStep === 1" class="form-step">
         <h3>Informations de base</h3>
@@ -241,9 +233,6 @@
               {{ getFieldError('postalNumber') }}
             </div>
           </mat-form-field>
-          <div class="field-hint">
-            Uniquement des chiffres (4 à 10 caractères)
-          </div>
         </div>
 
         <!-- Birth Date -->
@@ -266,9 +255,6 @@
               {{ getFieldError('birthDate') }}
             </div>
           </mat-form-field>
-          <div class="field-hint">
-            Vous devez avoir au moins 13 ans pour vous inscrire
-          </div>
         </div>
 
         <!-- Referral Code -->

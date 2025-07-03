@@ -1,6 +1,7 @@
 package FootballFantasy.fantasy.Service.ServiceUser;
 
 import FootballFantasy.fantasy.Dto.RegisterRequest;
+import FootballFantasy.fantasy.Exception.UserAlreadyExistsException;
 import jakarta.ws.rs.core.Response;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -44,12 +45,12 @@ public class KeycloakService {
     }
 
     public void createUser(RegisterRequest request) {
-        // First, print configuration to verify environment variables
-        printConfiguration();
+        printConfiguration(); // Optional debug
 
         Keycloak keycloak = null;
+
         try {
-            log.info("🔍 DEBUG - Configuration:");
+            log.info("🔍 Configuration:");
             log.info("Server URL: {}", serverUrl);
             log.info("Realm: {}", realm);
             log.info("Client ID: {}", clientId);
@@ -65,77 +66,77 @@ public class KeycloakService {
                     .clientSecret(clientSecret)
                     .build();
 
-            // 2. Test connection first
+            // 2. Test connection
             log.info("🔍 Testing connection...");
             try {
                 var realmRepresentation = keycloak.realm(realm).toRepresentation();
-                log.info("✅ Successfully connected to realm: {}", realmRepresentation.getRealm());
+                log.info("✅ Connected to realm: {}", realmRepresentation.getRealm());
             } catch (Exception e) {
-                log.error("❌ Failed to connect to realm: {}", e.getMessage());
-                throw new RuntimeException("Failed to connect to Keycloak realm", e);
+                log.error("❌ Connection to realm failed: {}", e.getMessage());
+                throw new RuntimeException("Impossible de se connecter au serveur d'authentification.", e);
             }
 
-            // 3. Test if we can access users resource
-            log.info("🔍 Testing users resource access...");
+            // 3. Test user access
+            log.info("🔍 Checking access to users resource...");
+            UsersResource usersResource = keycloak.realm(realm).users();
             try {
-                UsersResource usersResource = keycloak.realm(realm).users();
                 int userCount = usersResource.count();
-                log.info("✅ Can access users resource. Current user count: {}", userCount);
+                log.info("✅ Access to users resource confirmed. Current count: {}", userCount);
             } catch (Exception e) {
-                log.error("❌ Cannot access users resource: {}", e.getMessage());
-                throw new RuntimeException("Cannot access users resource - check service account permissions", e);
+                log.error("❌ Access to users resource failed: {}", e.getMessage());
+                throw new RuntimeException("Accès refusé à la ressource utilisateurs. Vérifiez les permissions du client.", e);
             }
 
             // 4. Create user representation
             UserRepresentation user = buildUserRepresentation(request);
-            log.info("🔍 User representation created for: {}", user.getUsername());
+            log.info("🔧 Prepared user representation for: {}", user.getUsername());
 
             // 5. Create user
-            UsersResource usersResource = keycloak.realm(realm).users();
-            log.info("🔄 Creating user in Keycloak...");
-
+            log.info("🚀 Creating user...");
             Response response = usersResource.create(user);
-            log.info("🔍 Response status: {}", response.getStatus());
+            int status = response.getStatus();
+            log.info("📩 Response status: {}", status);
 
-            if (response.getStatus() == 201) {
-                log.info("✅ User created successfully");
+            if (status == 201) {
+                log.info("✅ User created successfully.");
 
                 String userId = extractUserIdFromResponse(response);
                 setUserPassword(usersResource, userId, request.getPassword());
                 assignUserRole(keycloak, usersResource, userId);
 
-                log.info("✅ User setup completed: {}", userId);
-            } else if (response.getStatus() == 409) {
-                log.error("❌ User already exists: {}", request.getUsername());
-                throw new RuntimeException("User already exists: " + request.getUsername());
+                log.info("🎉 User setup completed successfully: {}", userId);
+
+            } else if (status == 409) {
+                log.warn("⚠️ User already exists: {}", request.getUsername());
+                throw new UserAlreadyExistsException("Un compte avec ce nom d'utilisateur ou email existe déjà.");
             } else {
-                String errorDetails = "No details available";
+                String errorDetails = "Non spécifié";
                 try {
                     errorDetails = response.readEntity(String.class);
                 } catch (Exception e) {
-                    log.warn("Could not read error response: {}", e.getMessage());
+                    log.warn("⚠️ Impossible de lire le corps de la réponse: {}", e.getMessage());
                 }
 
-                log.error("❌ Failed to create user. Status: {}, Details: {}",
-                        response.getStatus(), errorDetails);
+                log.error("❌ Erreur lors de la création de l'utilisateur. Statut: {}, Détails: {}", status, errorDetails);
 
-                // Specific handling for 403
-                if (response.getStatus() == 403) {
-                    throw new RuntimeException("Permission denied. Check if service account has 'manage-users' role assigned. Error details: " + errorDetails);
+                if (status == 403) {
+                    throw new RuntimeException("Permission refusée : vérifiez que le client Keycloak possède le rôle 'manage-users'.");
                 }
 
-                throw new RuntimeException("Failed to create user (Status: " + response.getStatus() + "): " + errorDetails);
+                throw new RuntimeException("Échec de la création de l'utilisateur. Statut: " + status + ". Détails: " + errorDetails);
             }
 
+        } catch (UserAlreadyExistsException e) {
+            throw e; // Let the controller advice handle it
         } catch (Exception e) {
-            log.error("❌ Error in createUser: {}", e.getMessage(), e);
-            throw new RuntimeException("Failed to create user: " + e.getMessage(), e);
+            log.error("❌ Exception during user creation: {}", e.getMessage(), e);
+            throw new RuntimeException("Erreur inattendue lors de la création du compte utilisateur.", e);
         } finally {
             if (keycloak != null) {
                 try {
                     keycloak.close();
                 } catch (Exception e) {
-                    log.warn("⚠️ Error closing Keycloak client: {}", e.getMessage());
+                    log.warn("⚠️ Erreur lors de la fermeture du client Keycloak: {}", e.getMessage());
                 }
             }
         }

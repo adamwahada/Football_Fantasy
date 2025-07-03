@@ -11,6 +11,8 @@ import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatDatepickerModule } from '@angular/material/datepicker';
 import { MatNativeDateModule } from '@angular/material/core';
+import { MatSnackBar } from '@angular/material/snack-bar';
+import { SnackbarErrorComponent } from '../snackbar-error/snackbar-error.component';
 
 declare global {
   interface Window {
@@ -38,7 +40,8 @@ declare global {
     MatCheckboxModule,
     MatProgressSpinnerModule,
     MatDatepickerModule,
-    MatNativeDateModule
+    MatNativeDateModule,
+    SnackbarErrorComponent
   ],
   templateUrl: './registration.component.html',
   styleUrls: ['./registration.component.scss']
@@ -58,7 +61,7 @@ export class RegistrationComponent implements OnInit, AfterViewInit, OnDestroy {
   private readonly RECAPTCHA_CONTAINER_ID = 'recaptcha-container';
   showModal = true;
 
-  constructor(private fb: FormBuilder, private authService: AuthService, private router: Router) {
+  constructor(private fb: FormBuilder, private authService: AuthService, private router: Router, private snackBar: MatSnackBar) {
     console.log('🔍 RegistrationComponent initialized');
     
     this.basicForm = this.fb.group({
@@ -470,25 +473,67 @@ export class RegistrationComponent implements OnInit, AfterViewInit, OnDestroy {
 
       const response = await this.authService.registerUser(formData).toPromise();
       console.log('✅ Registration successful:', response);
-      
+      this.snackBar.open('Inscription réussie ! Vous pouvez maintenant vous connecter.', 'Fermer', { duration: 5000, panelClass: 'snackbar-success' });
       this.router.navigate(['/login']);
     } catch (error: any) {
       console.error('❌ Registration failed:', error);
-      
-      // Gestion des erreurs spécifiques par champ
-      if (error.message.includes('code postal') || error.message.includes('postalNumber')) {
+      const msg = (error.message || '').toLowerCase();
+    
+      // 🔎 Détails dynamiques
+      if (msg.includes('user already exists')) {
+        const friendlyMsg = '❌ Ce nom d\'utilisateur ou cette adresse email est déjà associé à un compte. Veuillez en choisir un autre ou vous connecter à votre compte.';
+        this.snackBar.openFromComponent(SnackbarErrorComponent, {
+          data: friendlyMsg,
+          duration: 7000,
+          horizontalPosition: 'center',
+          verticalPosition: 'top',
+          panelClass: 'snackbar-error'
+        });
+        if (msg.includes('email')) {
+          this.setFieldError('email', '');
+        } else if (msg.includes('username')) {
+          this.setFieldError('username', '');
+        } else {
+          this.errorMessage = '';
+        }
+      } else if (msg.includes('postal') || msg.includes('code postal')) {
         this.setFieldError('postalNumber', error.message);
-      } else if (error.message.includes('email')) {
-        this.setFieldError('email', error.message);
-      } else if (error.message.includes('username')) {
-        this.setFieldError('username', error.message);
-      } else if (error.message.includes('téléphone') || error.message.includes('phone')) {
+        this.snackBar.openFromComponent(SnackbarErrorComponent, {
+          data: error.message,
+          duration: 7000,
+          horizontalPosition: 'center',
+          verticalPosition: 'top',
+          panelClass: 'snackbar-error'
+        });
+      } else if (msg.includes('phone') || msg.includes('téléphone')) {
         this.setFieldError('phone', error.message);
+        this.snackBar.openFromComponent(SnackbarErrorComponent, {
+          data: error.message,
+          duration: 7000,
+          horizontalPosition: 'center',
+          verticalPosition: 'top',
+          panelClass: 'snackbar-error'
+        });
+      } else if (msg.includes('recaptcha')) {
+        this.setFieldError('recaptcha', error.message);
+        this.snackBar.openFromComponent(SnackbarErrorComponent, {
+          data: error.message,
+          duration: 7000,
+          horizontalPosition: 'center',
+          verticalPosition: 'top',
+          panelClass: 'snackbar-error'
+        });
       } else {
-        this.errorMessage = error.message || 'Une erreur s\'est produite lors de l\'inscription. Veuillez réessayer.';
+        this.snackBar.openFromComponent(SnackbarErrorComponent, {
+          data: error.message || 'Une erreur s\'est produite lors de l\'inscription. Veuillez réessayer.',
+          duration: 7000,
+          horizontalPosition: 'center',
+          verticalPosition: 'top',
+          panelClass: 'snackbar-error'
+        });
       }
-      
-      // Reset reCAPTCHA on error
+    
+      // ♻️ Recharger le captcha
       if (this.recaptchaWidgetId !== null) {
         try {
           window.grecaptcha.reset(this.recaptchaWidgetId);
@@ -497,9 +542,9 @@ export class RegistrationComponent implements OnInit, AfterViewInit, OnDestroy {
           console.error('Error resetting reCAPTCHA:', recaptchaError);
         }
       }
-    } finally {
       this.isSubmitting = false;
     }
+    
   }
 
   // ✅ Méthode pour formater la date pour l'input date

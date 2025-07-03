@@ -799,5 +799,11 @@ h3 {
       color: #111;
     }
   }
-
+  .custom-snackbar {
+    background: transparent !important;
+  }
+  
+  .custom-snackbar * {
+    background: transparent !important;
+  }
 }

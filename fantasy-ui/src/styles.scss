@@ -1,4 +1,85 @@
-/* You can add global styles to this file, and also import other style files */
 
-html, body { height: 100%; }
-body { margin: 0; font-family: Roboto, "Helvetica Neue", sans-serif; }
+.snackbar-error {
+    .mat-mdc-snack-bar-container,
+    .mat-snack-bar-container {
+      background: transparent !important;
+      padding: 0 !important;
+      margin: 0 !important;
+      border-radius: 0 !important;
+      color: inherit !important;
+      
+      .mdc-snackbar__surface,
+      .mat-mdc-snack-bar-surface {
+        background: transparent !important;
+        border-radius: 0 !important;
+        color: inherit !important;
+      }
+      
+      .mat-mdc-snack-bar-action,
+      .mat-snack-bar-action {
+        display: none !important;
+      }
+      
+      .mdc-snackbar__label,
+      .mat-mdc-snack-bar-label {
+        color: inherit !important;
+        padding: 0 !important;
+        margin: 0 !important;
+      }
+    }
+  }
+  
+  /* Success snackbar styling (optional) */
+  .snackbar-success {
+    .mat-mdc-snack-bar-container,
+    .mat-snack-bar-container {
+      background: #f3fff3 !important;
+      color: #1b5e20 !important;
+      border-left: 4px solid #4caf50 !important;
+      border-radius: 10px !important;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif !important;
+      padding: 14px 20px !important;
+      
+      .mdc-snackbar__surface,
+      .mat-mdc-snack-bar-surface {
+        background: transparent !important;
+        color: inherit !important;
+      }
+    }
+  }
+  
+  /* Position snackbar at top center */
+  .mat-mdc-snack-bar-container,
+  .mat-snack-bar-container {
+    position: fixed !important;
+    top: 20px !important;
+    left: 50% !important;
+    transform: translateX(-50%) !important;
+    z-index: 1000 !important;
+    max-width: 90vw !important;
+    min-width: 300px !important;
+  }
+  
+  /* Remove any backdrop/overlay */
+  .cdk-overlay-backdrop {
+    background: transparent !important;
+  }
+
+/* Supprime le fond noir du snackbar Material */
+.snackbar-error.mat-mdc-snack-bar-container {
+  background: transparent !important;
+  padding: 0 !important;
+}
+
+/* Style du contenu custom (déjà présent dans SnackbarErrorComponent) */
+.snackbar-error-content {
+  background: #fff0f0;
+  color: #d32f2f;
+  border-radius: 12px;
+  font-weight: 500;
+  font-size: 1.1em;
+  padding: 10px 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}

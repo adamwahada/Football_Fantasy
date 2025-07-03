@@ -59,40 +59,48 @@ export class AuthService {
     }
   }
 
+  /**
+   * Enregistre un utilisateur dans Keycloak via le backend.
+   */
   registerUser(data: RegisterRequest): Observable<any> {
     return this.http.post(`${this.apiUrl}/register`, data).pipe(
       tap(() => {
-        console.log('✅ Registration successful');
+        console.log('✅ Inscription réussie');
         this.router.navigate(['/signin']);
       }),
       catchError((error: HttpErrorResponse) => {
-        console.error('❌ Registration error', error);
-        let errorMessage = 'An error occurred during registration';
-        
-        if (error.error instanceof ErrorEvent) {
-          // Client-side error
+        console.error('❌ Erreur d\'inscription', error);
+        let errorMessage = 'Une erreur est survenue pendant l’inscription.';
+
+        // Gestion des erreurs spécifiques
+        if (error.status === 409 && typeof error.error === 'string') {
+          // Erreur 409 personnalisée (ex: utilisateur déjà existant)
+          errorMessage = 'Ce nom d’utilisateur ou cette adresse email est déjà associé à un compte. Veuillez en choisir un autre ou vous connecter.';
+        } else if (error.status === 400 && typeof error.error === 'string') {
+          errorMessage = error.error;
+        } else if (error.error instanceof ErrorEvent) {
           errorMessage = error.error.message;
-        } else {
-          // Server-side error
-          errorMessage = error.error?.message || error.message;
+        } else if (typeof error.error === 'string') {
+          errorMessage = error.error;
         }
-        
+
         return throwError(() => new Error(errorMessage));
       })
     );
   }
 
+  /**
+   * Initialise le reCAPTCHA dans un conteneur HTML donné
+   */
   initializeRecaptcha(containerId: string): Promise<void> {
     return new Promise((resolve, reject) => {
       if (!window.grecaptcha) {
-        reject(new Error('reCAPTCHA not loaded'));
-        return;
+        return reject(new Error('reCAPTCHA non chargé'));
       }
 
       const container = document.getElementById(containerId);
       if (!container) {
-        reject(new Error('reCAPTCHA container not found'));
-        return;
+        return reject(new Error('Conteneur reCAPTCHA introuvable'));
       }
 
       try {
@@ -107,7 +115,7 @@ export class AuthService {
               window.grecaptcha.reset(this.recaptchaWidgetId);
             }
           },
-          'error-callback': () => reject(new Error('reCAPTCHA error'))
+          'error-callback': () => reject(new Error('Erreur reCAPTCHA'))
         });
       } catch (error) {
         reject(error);
