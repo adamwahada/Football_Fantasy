@@ -1,6 +1,6 @@
 import { HttpInterceptorFn, HttpRequest, HttpHandlerFn, HttpErrorResponse } from '@angular/common/http';
 import { inject } from '@angular/core';
-import { KeycloakService } from './keycloak.service';
+import { KeycloakService } from '../../keycloak.service';
 import { from, throwError } from 'rxjs';
 import { switchMap, catchError } from 'rxjs/operators';
 

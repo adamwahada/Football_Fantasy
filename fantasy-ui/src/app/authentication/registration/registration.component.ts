@@ -41,7 +41,7 @@ declare global {
     MatProgressSpinnerModule,
     MatDatepickerModule,
     MatNativeDateModule,
-    SnackbarErrorComponent
+    // SnackbarErrorComponent
   ],
   templateUrl: './registration.component.html',
   styleUrls: ['./registration.component.scss']
