@@ -1,0 +1,31 @@
+.auth-container {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  background-color: #f9f9f9;
+}
+
+.auth-main {
+  width: 100%;
+}
+
+.left-img {
+  height: 100vh;
+  background-size: cover;
+  background-position: center;
+}
+
+.auth-form-section {
+  padding: 40px;
+}
+
+.auth-wrapper {
+  max-width: 400px;
+  margin: auto;
+}
+
+.auth-form-btn {
+  width: 100%;
+  padding: 10px;
+  font-size: 16px;
+}

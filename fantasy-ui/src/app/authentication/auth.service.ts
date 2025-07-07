@@ -70,12 +70,12 @@ export class AuthService {
       }),
       catchError((error: HttpErrorResponse) => {
         console.error('❌ Erreur d\'inscription', error);
-        let errorMessage = 'Une erreur est survenue pendant l’inscription.';
+        let errorMessage = 'Une erreur est survenue pendant l\'inscription.';
 
         // Gestion des erreurs spécifiques
         if (error.status === 409 && typeof error.error === 'string') {
           // Erreur 409 personnalisée (ex: utilisateur déjà existant)
-          errorMessage = 'Ce nom d’utilisateur ou cette adresse email est déjà associé à un compte. Veuillez en choisir un autre ou vous connecter.';
+          errorMessage = 'Ce nom d\'utilisateur ou cette adresse email est déjà associé à un compte. Veuillez en choisir un autre ou vous connecter.';
         } else if (error.status === 400 && typeof error.error === 'string') {
           errorMessage = error.error;
         } else if (error.error instanceof ErrorEvent) {
@@ -121,5 +121,166 @@ export class AuthService {
         reject(error);
       }
     });
+  }
+
+  /**
+   * Vérifie si l'utilisateur est connecté ET si le token est valide
+   */
+  isLoggedIn(): boolean {
+    const token = localStorage.getItem('token');
+    
+    if (!token) {
+      return false;
+    }
+
+    try {
+      // Vérifier si le token est expiré
+      const payload = JSON.parse(atob(token.split('.')[1]));
+      const currentTime = Math.floor(Date.now() / 1000);
+      
+      if (payload.exp && payload.exp < currentTime) {
+        console.log('🔒 Token expiré, déconnexion automatique');
+        this.logout();
+        return false;
+      }
+      
+      return true;
+    } catch (error) {
+      console.error('❌ Token invalide', error);
+      this.logout();
+      return false;
+    }
+  }
+
+  /**
+   * Récupère les rôles de l'utilisateur depuis le token
+   */
+// Ajoutez cette méthode dans votre AuthService pour déboguer
+debugToken(): void {
+  const token = localStorage.getItem('token');
+  if (!token) {
+    console.log('❌ Aucun token trouvé');
+    return;
+  }
+
+  try {
+    const payload = JSON.parse(atob(token.split('.')[1]));
+    console.log('🔍 Contenu complet du token:', payload);
+    
+    // Vérifier tous les emplacements possibles des rôles
+    console.log('🔍 Rôles trouvés:', {
+      roles: payload.roles,
+      realm_access: payload.realm_access,
+      resource_access: payload.resource_access,
+      scope: payload.scope,
+      authorities: payload.authorities
+    });
+  } catch (error) {
+    console.error('❌ Erreur lors du décodage du token:', error);
+  }
+}
+
+// Méthode getUserRoles() améliorée
+getUserRoles(): string[] {
+  const token = localStorage.getItem('token');
+  if (!token) return [];
+  
+  try {
+    const payload = JSON.parse(atob(token.split('.')[1]));
+    
+    // Debug: afficher le payload complet
+    console.log('🔍 Payload token:', payload);
+    
+    // Vérifier tous les emplacements possibles pour les rôles Keycloak
+    let roles: string[] = [];
+    
+    // 1. Rôles directs
+    if (payload.roles) {
+      roles = [...roles, ...payload.roles];
+    }
+    
+    // 2. Realm access roles (format Keycloak standard)
+    if (payload.realm_access?.roles) {
+      roles = [...roles, ...payload.realm_access.roles];
+    }
+    
+    // 3. Resource access roles (pour des clients spécifiques)
+    if (payload.resource_access) {
+      Object.keys(payload.resource_access).forEach(client => {
+        if (payload.resource_access[client]?.roles) {
+          roles = [...roles, ...payload.resource_access[client].roles];
+        }
+      });
+    }
+    
+    // 4. Authorities (format Spring Security)
+    if (payload.authorities) {
+      roles = [...roles, ...payload.authorities];
+    }
+    
+    // 5. Scope (parfois les rôles sont dans le scope)
+    if (payload.scope) {
+      const scopeRoles = payload.scope.split(' ').filter((s: string) => s.startsWith('role_'));
+      roles = [...roles, ...scopeRoles.map((r: string) => r.replace('role_', ''))];
+    }
+    
+    // Supprimer les doublons
+    roles = [...new Set(roles)];
+    
+    console.log('🔍 Rôles extraits:', roles);
+    return roles;
+  } catch (error) {
+    console.error('❌ Erreur lors de la récupération des rôles:', error);
+    return [];
+  }
+}
+
+  /**
+   * Déconnecte l'utilisateur
+   */
+  logout(): void {
+    localStorage.removeItem('token');
+    // Ne pas rediriger automatiquement pour éviter les boucles
+    // this.router.navigate(['/signin']);
+  }
+
+  /**
+   * Connecte l'utilisateur
+   */
+  login(credentials: any): Observable<any> {
+    return this.http.post(`${this.apiUrl}/login`, credentials).pipe(
+      tap((response: any) => {
+        if (response.token) {
+          localStorage.setItem('token', response.token);
+          console.log('✅ Connexion réussie');
+          
+          // 👉 Forcer un petit délai pour laisser le token être bien écrit et lu
+          setTimeout(() => {
+            const roles = this.getUserRoles();
+            console.log('✅ Rôles après login :', roles);
+          
+            if (roles.includes('admin')) {
+              this.router.navigate(['/admin/referral']);
+            } else {
+              this.router.navigate(['/dashboard']);
+            }
+          }, 100);
+        } else {
+          throw new Error('Token manquant dans la réponse');
+        }
+      }),
+      catchError((error: HttpErrorResponse) => {
+        console.error('❌ Erreur de connexion', error);
+        let errorMessage = 'Identifiants incorrects';
+        
+        if (error.status === 401) {
+          errorMessage = 'Nom d\'utilisateur ou mot de passe incorrect';
+        } else if (error.status === 0) {
+          errorMessage = 'Impossible de se connecter au serveur';
+        }
+        
+        return throwError(() => new Error(errorMessage));
+      })
+    );
   }
 }

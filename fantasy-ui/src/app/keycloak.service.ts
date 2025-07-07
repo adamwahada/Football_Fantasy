@@ -42,7 +42,6 @@ export class KeycloakService {
           checkLoginIframe: false,
           pkceMethod: 'S256',
           enableLogging: true,
-          silentCheckSsoRedirectUri: window.location.origin + '/assets/silent-check-sso.html'
         });
         this.isInitialized = true;
         console.log('=== Keycloak Initialization ===');
@@ -88,9 +87,10 @@ export class KeycloakService {
   }
 
 
-  login(): void {
-    console.log('Redirecting to login...');
-    this.keycloak.login();
+  async login(redirectUri?: string): Promise<void> {
+    await this.keycloak.login({
+      redirectUri: redirectUri ? window.location.origin + redirectUri : window.location.origin
+    });
   }
 
   getUsername(): string {

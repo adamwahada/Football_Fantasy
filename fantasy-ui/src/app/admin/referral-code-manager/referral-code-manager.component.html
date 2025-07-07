@@ -1,0 +1,54 @@
+<div class="referral-manager-container">
+    <h2>Gestion des codes de parrainage</h2>
+  
+    <form [formGroup]="referralForm" (ngSubmit)="onSubmit()" novalidate>
+      <div>
+        <label for="code">Code de parrainage (6 à 12 caractères alphanumériques)*</label><br/>
+        <input id="code" formControlName="code" placeholder="Ex: ABC123" />
+        <div *ngIf="referralForm.get('code')?.invalid && referralForm.get('code')?.touched" class="error">
+          Le code doit contenir entre 6 et 12 caractères alphanumériques.
+        </div>
+      </div>
+  
+      <div>
+        <label for="expirationDate">Date d'expiration (optionnel)</label><br/>
+        <input id="expirationDate" formControlName="expirationDate" type="date" />
+      </div>
+  
+      <button type="submit" [disabled]="referralForm.invalid">Créer un code</button>
+    </form>
+  
+    <div *ngIf="errorMessage" class="error-message">{{ errorMessage }}</div>
+    <div *ngIf="successMessage" class="success-message">{{ successMessage }}</div>
+  
+    <hr/>
+  
+    <h3>Liste des codes existants</h3>
+    <div *ngIf="loading">Chargement...</div>
+  
+    <table *ngIf="!loading && referralCodes.length > 0" border="1" cellpadding="5">
+      <thead>
+        <tr>
+          <th>Code</th>
+          <th>Date d'expiration</th>
+          <th>Utilisé</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let code of referralCodes">
+          <td>{{ code.code }}</td>
+          <td>{{ code.expirationDate || 'Aucune' }}</td>
+          <td>{{ code.used ? 'Oui' : 'Non' }}</td>
+          <td>
+            <button (click)="deleteCode(code.code)">Supprimer</button>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  
+    <div *ngIf="!loading && referralCodes.length === 0">
+      Aucun code disponible.
+    </div>
+  </div>
+  

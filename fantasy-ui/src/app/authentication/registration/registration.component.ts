@@ -79,7 +79,7 @@ export class RegistrationComponent implements OnInit, AfterViewInit, OnDestroy {
       address: ['', [Validators.required]],
       postalNumber: ['', [this.postalCodeValidator]],
       birthDate: ['', [Validators.required, this.birthDateValidator]],
-      referralCode: [''],
+      referralCode: ['', [Validators.pattern(/^[A-Za-z0-9]{6,12}$/)]],
       termsAccepted: [false, Validators.requiredTrue]
     });
   }
