@@ -4,6 +4,7 @@
     <div *ngIf="!keycloak.isLoggedIn()">
       <button (click)="login()">Login</button>
       <button (click)="register()">Register</button>
+      <button (click)="logout()">Disconnect</button>
     </div>
   
     <div *ngIf="keycloak.isLoggedIn()">

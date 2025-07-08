@@ -16,11 +16,6 @@ public class Test3Controller {
         return ResponseEntity.ok("only accessible for admins!");
 
     }
-    @GetMapping
-    @PreAuthorize("hasAuthority('ROLE_ADMIN')")  // ✅ Correct
-    public ResponseEntity<String> bye() {
-        return ResponseEntity.ok("Hello Admin from backend!");
 
-    }
 
 }

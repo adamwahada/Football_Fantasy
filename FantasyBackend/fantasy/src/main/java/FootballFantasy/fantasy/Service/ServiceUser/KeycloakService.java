@@ -105,7 +105,6 @@ public class KeycloakService {
                 assignUserRole(keycloak, usersResource, userId);
 
                 log.info("🎉 User setup completed successfully: {}", userId);
-
             } else if (status == 409) {
                 log.warn("⚠️ User already exists: {}", request.getUsername());
                 throw new UserAlreadyExistsException("Un compte avec ce nom d'utilisateur ou email existe déjà.");

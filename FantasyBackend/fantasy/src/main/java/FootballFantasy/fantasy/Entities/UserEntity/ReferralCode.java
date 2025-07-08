@@ -1,4 +1,4 @@
-package FootballFantasy.fantasy.UserEntity;
+package FootballFantasy.fantasy.Entities.UserEntity;
 
 import jakarta.persistence.*;
 import lombok.*;
