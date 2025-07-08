@@ -1,27 +1,27 @@
 <div style="text-align:center; margin-top: 2rem;">
-    <h1>Football Fantasy App</h1>
-  
-    <div *ngIf="!keycloak.isLoggedIn()">
-      <button (click)="login()">Login</button>
-      <button (click)="register()">Register</button>
-      <button (click)="logout()">Disconnect</button>
-    </div>
-  
-    <div *ngIf="keycloak.isLoggedIn()">
-      <!-- user info and buttons here -->
-    </div>
-  
-    <div *ngIf="message" style="margin-top: 1rem; padding: 1rem; border: 1px solid #ccc;">
-      <h3>API Response:</h3>
-      <pre>{{ message }}</pre>
-    </div>
-  
-    <div *ngIf="error" style="margin-top: 1rem; padding: 1rem; border: 1px solid red; color: red;">
-      <h3>Error:</h3>
-      <pre>{{ error }}</pre>
-    </div>
-  
-    <!-- This is the key: render routed components here -->
-    <router-outlet></router-outlet>
+  <h1>Football Fantasy App</h1>
+
+  <div *ngIf="!auth.isLoggedIn()">
+    <button (click)="login()">Login</button>
+    <button (click)="register()">Register</button>
   </div>
-  
+
+  <div *ngIf="auth.isLoggedIn()">
+    <p>Welcome!</p>
+    <button (click)="logout()">Logout</button>
+    <button (click)="testUserEndpoint()">Test User API</button>
+    <button (click)="testAdminEndpoint()">Test Admin API</button>
+  </div>
+
+  <div *ngIf="message" style="margin-top: 1rem; padding: 1rem; border: 1px solid #ccc;">
+    <h3>API Response:</h3>
+    <pre>{{ message }}</pre>
+  </div>
+
+  <div *ngIf="error" style="margin-top: 1rem; padding: 1rem; border: 1px solid red; color: red;">
+    <h3>Error:</h3>
+    <pre>{{ error }}</pre>
+  </div>
+
+  <router-outlet></router-outlet>
+</div>

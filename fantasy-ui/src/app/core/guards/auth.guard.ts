@@ -17,8 +17,12 @@ export const authGuard: CanActivateFn = (route: ActivatedRouteSnapshot) => {
   const requiredRoles = route.data?.['roles'] as string[] | undefined;
 
   if (requiredRoles && requiredRoles.length > 0) {
-    const userRoles = authService.getUserRoles();
-    const hasRequiredRole = requiredRoles.some(role => userRoles.includes(role));
+    const userRoles = authService.getUserRoles().map(role => role.toUpperCase());
+    const hasRequiredRole = requiredRoles.some(role => 
+      userRoles.includes(role.toUpperCase()) || 
+      userRoles.includes(`ROLE_${role.toUpperCase()}`) ||
+      userRoles.includes(role.toUpperCase().replace('ROLE_', ''))
+    );
 
     if (!hasRequiredRole) {
       console.warn('❌ Accès refusé - Rôle insuffisant', {
@@ -26,7 +30,6 @@ export const authGuard: CanActivateFn = (route: ActivatedRouteSnapshot) => {
         found: userRoles,
       });
 
-      // ✅ Rediriger vers une page d'erreur ou d'accès refusé
       router.navigate(['/unauthorized']); 
       return false;
     }
