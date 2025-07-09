@@ -1,4 +1,4 @@
-package FootballFantasy.fantasy.Service.ServiceUser;
+package FootballFantasy.fantasy.Service.UserService;
 
 import FootballFantasy.fantasy.Dto.RegisterRequest;
 import FootballFantasy.fantasy.Exception.UserAlreadyExistsException;
@@ -35,7 +35,7 @@ public class RegistrationService {
             }
 
         } catch (UserAlreadyExistsException e) {
-            log.warn("❗ User already exists in RegistrationService: {}", e.getMessage());
+            log.warn("❗ UserEntity already exists in RegistrationService: {}", e.getMessage());
             throw e;
         } catch (Exception e) {
             log.error("❌ Erreur lors de la création de l'utilisateur dans Keycloak: {}", e.getMessage());

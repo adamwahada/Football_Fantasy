@@ -1,0 +1,44 @@
+package FootballFantasy.fantasy.Entities.GameweekEntity;
+
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonManagedReference;
+import jakarta.persistence.*;
+import lombok.*;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.util.List;
+
+@Entity
+@Table(name = "football_match")
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+public class Match {
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    private String homeTeam;
+    private String awayTeam;
+
+    private LocalDate matchDate;
+
+    private Integer homeScore;
+    private Integer awayScore;
+
+    private LocalDateTime predictionDeadline;
+
+    private boolean finished;
+    private String description;
+
+    @Enumerated(EnumType.STRING)
+    private MatchStatus status;
+
+    @JsonIgnore
+    @ManyToOne
+    @JoinColumn(name = "gameweek_id")
+    private GameWeek gameweek;
+
+    @OneToMany(mappedBy = "match", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<Prediction> predictions;
+}

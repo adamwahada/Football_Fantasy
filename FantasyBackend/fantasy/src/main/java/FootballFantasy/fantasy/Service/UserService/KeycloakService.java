@@ -1,4 +1,4 @@
-package FootballFantasy.fantasy.Service.ServiceUser;
+package FootballFantasy.fantasy.Service.UserService;
 
 import FootballFantasy.fantasy.Dto.RegisterRequest;
 import FootballFantasy.fantasy.Exception.UserAlreadyExistsException;
@@ -98,15 +98,15 @@ public class KeycloakService {
             log.info("📩 Response status: {}", status);
 
             if (status == 201) {
-                log.info("✅ User created successfully.");
+                log.info("✅ UserEntity created successfully.");
 
                 String userId = extractUserIdFromResponse(response);
                 setUserPassword(usersResource, userId, request.getPassword());
                 assignUserRole(keycloak, usersResource, userId);
 
-                log.info("🎉 User setup completed successfully: {}", userId);
+                log.info("🎉 UserEntity setup completed successfully: {}", userId);
             } else if (status == 409) {
-                log.warn("⚠️ User already exists: {}", request.getUsername());
+                log.warn("⚠️ UserEntity already exists: {}", request.getUsername());
                 throw new UserAlreadyExistsException("Un compte avec ce nom d'utilisateur ou email existe déjà.");
             } else {
                 String errorDetails = "Non spécifié";
@@ -161,7 +161,7 @@ public class KeycloakService {
         attributes.put("termsAccepted", List.of(String.valueOf(request.isTermsAccepted())));
 
         user.setAttributes(attributes);
-        log.info("🔍 User attributes: {}", attributes);
+        log.info("🔍 UserEntity attributes: {}", attributes);
 
         return user;
     }
@@ -198,7 +198,7 @@ public class KeycloakService {
         try {
             RoleRepresentation userRole = keycloak.realm(realm).roles().get("user").toRepresentation();
             usersResource.get(userId).roles().realmLevel().add(Collections.singletonList(userRole));
-            log.info("✅ User role assigned to: {}", userId);
+            log.info("✅ UserEntity role assigned to: {}", userId);
         } catch (Exception e) {
             log.warn("⚠️ Failed to assign user role (user might still be functional): {}", e.getMessage());
             // Don't throw exception here as user creation was successful

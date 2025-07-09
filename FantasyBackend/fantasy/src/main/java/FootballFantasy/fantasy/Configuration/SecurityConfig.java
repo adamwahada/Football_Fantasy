@@ -38,8 +38,13 @@ public class SecurityConfig {
                                 "/swagger-ui.html",
                                 "/swagger-resources/**",
                                 "/webjars/**",
-                                "/configuration/**"
-                        ).permitAll()
+                                "/configuration/**",
+                                "/api/matches/**",
+                                "/api/gameweeks/**"
+
+
+
+                                ).permitAll()
 
                         // All other requests must be authenticated
                         .anyRequest().authenticated()

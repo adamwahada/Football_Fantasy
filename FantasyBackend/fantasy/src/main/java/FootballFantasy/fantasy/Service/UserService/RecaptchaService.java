@@ -1,4 +1,4 @@
-package FootballFantasy.fantasy.Service.ServiceUser;
+package FootballFantasy.fantasy.Service.UserService;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
