@@ -4,7 +4,6 @@ import FootballFantasy.fantasy.Entities.UserEntity.UserEntity;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.*;
-import org.springframework.web.bind.support.SessionStatus;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
