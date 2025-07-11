@@ -1,8 +1,9 @@
-package FootballFantasy.fantasy.Service.GameweekService;
+package FootballFantasy.fantasy.Services.GameweekService;
 
 import FootballFantasy.fantasy.Entities.GameweekEntity.GameWeek;
 import FootballFantasy.fantasy.Entities.GameweekEntity.Match;
 
+import FootballFantasy.fantasy.Entities.GameweekEntity.MatchStatus;
 import FootballFantasy.fantasy.Repositories.GameweekRepository.GameWeekRepository;
 import FootballFantasy.fantasy.Repositories.GameweekRepository.MatchRepository;
 import jakarta.transaction.Transactional;
@@ -20,6 +21,7 @@ public class GameWeekService {
 
     @Autowired
     private MatchRepository matchRepository;
+
 
     public GameWeek createGameWeek(GameWeek gameWeek) {
         if (gameWeek.getStartDate().isAfter(gameWeek.getEndDate())) {
@@ -125,5 +127,9 @@ public class GameWeekService {
     public GameWeek getByWeekNumber(int weekNumber) {
         return gameWeekRepository.findByWeekNumber(weekNumber)
                 .orElseThrow(() -> new IllegalArgumentException("GameWeek not found for week number " + weekNumber));
+    }
+    public boolean isGameWeekComplete(Long gameWeekId) {
+        List<Match> matches = matchRepository.findByGameweekId(gameWeekId);
+        return matches.stream().allMatch(m -> m.getStatus() == MatchStatus.COMPLETED);
     }
 }

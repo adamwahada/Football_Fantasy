@@ -2,7 +2,7 @@ package FootballFantasy.fantasy.Controller.ControllerUser;
 
 
 import FootballFantasy.fantasy.Dto.RegisterRequest;
-import FootballFantasy.fantasy.Service.UserService.RegistrationService;
+import FootballFantasy.fantasy.Services.UserService.RegistrationService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;

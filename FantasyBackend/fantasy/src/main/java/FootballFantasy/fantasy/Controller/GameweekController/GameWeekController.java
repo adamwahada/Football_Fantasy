@@ -2,10 +2,9 @@ package FootballFantasy.fantasy.Controller.GameweekController;
 
 import FootballFantasy.fantasy.Entities.GameweekEntity.GameWeek;
 import FootballFantasy.fantasy.Entities.GameweekEntity.Match;
-import FootballFantasy.fantasy.Service.GameweekService.GameWeekService;
+import FootballFantasy.fantasy.Services.GameweekService.GameWeekService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -81,4 +80,12 @@ public class GameWeekController {
         GameWeek gameWeek = gameWeekService.getByWeekNumber(weekNumber);
         return ResponseEntity.ok(gameWeek);
     }
+
+    // ✅ Check if all matches in a GameWeek are completed
+    @GetMapping("/{gameWeekId}/is-complete")
+    public ResponseEntity<Boolean> isGameWeekComplete(@PathVariable Long gameWeekId) {
+        boolean complete = gameWeekService.isGameWeekComplete(gameWeekId);
+        return ResponseEntity.ok(complete);
+    }
+
 }

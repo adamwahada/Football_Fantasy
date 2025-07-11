@@ -32,6 +32,9 @@ public class CompetitionSession {
     @Column(nullable = false)
     private Integer maxParticipants; // 2 for 1v1, 5 for small, 10 for medium, null for open
 
+    @Column(name = "access_key", nullable = true, unique = true)
+    private String accessKey;  // The key used to join private sessions
+
     @Column(nullable = false)
     private Integer currentParticipants = 0;
 
@@ -50,11 +53,13 @@ public class CompetitionSession {
     private BigDecimal totalPrizePool = BigDecimal.ZERO;
 
     // Winner of this specific session
+    @JsonIgnore
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "winner_id")
     private UserEntity winner;
 
     // Link to gameweek
+    @JsonIgnore
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "gameweek_id", nullable = false)
     private GameWeek gameweek;
@@ -74,5 +79,8 @@ public class CompetitionSession {
         return status == CompetitionSessionStatus.OPEN &&
                 !isFull() &&
                 LocalDateTime.now().isBefore(joinDeadline);
+    }
+    public boolean isPrivate() {
+        return accessKey != null && !accessKey.isEmpty();
     }
 }

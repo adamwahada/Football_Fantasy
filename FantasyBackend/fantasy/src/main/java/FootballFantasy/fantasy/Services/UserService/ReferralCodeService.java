@@ -1,4 +1,4 @@
-package FootballFantasy.fantasy.Service.UserService;
+package FootballFantasy.fantasy.Services.UserService;
 
 import FootballFantasy.fantasy.Entities.UserEntity.ReferralCode;
 import FootballFantasy.fantasy.Repositories.UserRepository.ReferralCodeRepository;

@@ -50,10 +50,12 @@ public class SessionParticipation {
     private BigDecimal prizeWon = BigDecimal.ZERO;
 
     // User and session references
+    @JsonIgnore
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false)
     private UserEntity user;
 
+    @JsonIgnore
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "session_id", nullable = false)
     private CompetitionSession session;

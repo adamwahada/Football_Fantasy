@@ -1,4 +1,4 @@
-package FootballFantasy.fantasy.Service.UserService;
+package FootballFantasy.fantasy.Services.UserService;
 
 import FootballFantasy.fantasy.Dto.RegisterRequest;
 import FootballFantasy.fantasy.Exception.UserAlreadyExistsException;

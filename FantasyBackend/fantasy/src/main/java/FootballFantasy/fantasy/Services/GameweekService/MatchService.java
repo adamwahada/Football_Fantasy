@@ -1,7 +1,8 @@
-package FootballFantasy.fantasy.Service.GameweekService;
+package FootballFantasy.fantasy.Services.GameweekService;
 
 import FootballFantasy.fantasy.Entities.GameweekEntity.GameWeek;
 import FootballFantasy.fantasy.Entities.GameweekEntity.Match;
+import FootballFantasy.fantasy.Entities.GameweekEntity.MatchStatus;
 import FootballFantasy.fantasy.Repositories.GameweekRepository.GameWeekRepository;
 import FootballFantasy.fantasy.Repositories.GameweekRepository.MatchRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -17,6 +18,12 @@ public class MatchService {
 
     @Autowired
     private GameWeekRepository gameWeekRepository;
+
+    @Autowired
+    private GameWeekService gameWeekService;
+
+    @Autowired
+    private CompetitionSessionService competitionSessionService;
 
     public Match createMatch(Match match) {
         if (match.getGameweek() != null && match.getGameweek().getId() != null) {
@@ -39,8 +46,7 @@ public class MatchService {
         Match existingMatch = matchRepository.findById(matchId)
                 .orElseThrow(() -> new IllegalArgumentException("Match non trouvé"));
 
-        // Optionally validate updatedMatch data here...
-
+        // Update fields normally
         existingMatch.setHomeTeam(updatedMatch.getHomeTeam());
         existingMatch.setAwayTeam(updatedMatch.getAwayTeam());
         existingMatch.setMatchDate(updatedMatch.getMatchDate());
@@ -48,11 +54,22 @@ public class MatchService {
         existingMatch.setAwayScore(updatedMatch.getAwayScore());
         existingMatch.setFinished(updatedMatch.isFinished());
         existingMatch.setDescription(updatedMatch.getDescription());
-
-        // Keep gameweek unchanged or update if needed
         existingMatch.setStatus(updatedMatch.getStatus());
 
-        return matchRepository.save(existingMatch);
+        Match savedMatch = matchRepository.save(existingMatch);
+
+        // --- New logic for automatic winner determination ---
+        if (updatedMatch.getStatus() == MatchStatus.COMPLETED) {
+            Long gameWeekId = existingMatch.getGameweek() != null ? existingMatch.getGameweek().getId() : null;
+            if (gameWeekId != null) {
+                boolean allMatchesCompleted = gameWeekService.isGameWeekComplete(gameWeekId);
+                if (allMatchesCompleted) {
+                    competitionSessionService.determineWinnersForCompletedGameWeek(gameWeekId);
+                }
+            }
+        }
+
+        return savedMatch;
     }
 
     public void deleteMatch(Long matchId) {

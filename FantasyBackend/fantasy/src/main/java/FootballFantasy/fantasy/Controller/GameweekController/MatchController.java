@@ -1,7 +1,7 @@
 package FootballFantasy.fantasy.Controller.GameweekController;
 
 import FootballFantasy.fantasy.Entities.GameweekEntity.Match;
-import FootballFantasy.fantasy.Service.GameweekService.MatchService;
+import FootballFantasy.fantasy.Services.GameweekService.MatchService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;

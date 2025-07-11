@@ -39,6 +39,7 @@ public class Match {
     @JoinColumn(name = "gameweek_id")
     private GameWeek gameweek;
 
+    @JsonIgnore
     @OneToMany(mappedBy = "match", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Prediction> predictions;
 }

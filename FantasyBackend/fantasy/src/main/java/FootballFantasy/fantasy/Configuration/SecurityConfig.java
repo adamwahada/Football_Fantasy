@@ -40,7 +40,12 @@ public class SecurityConfig {
                                 "/webjars/**",
                                 "/configuration/**",
                                 "/api/matches/**",
-                                "/api/gameweeks/**"
+                                "/api/gameweeks/**",
+                                "/api/session-templates/**",
+                                "/api/competition-sessions/**"
+
+
+
 
 
 
