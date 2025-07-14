@@ -81,6 +81,7 @@ public class GameWeekController {
         return ResponseEntity.ok(gameWeek);
     }
 
+
     // ✅ Check if all matches in a GameWeek are completed
     @GetMapping("/{gameWeekId}/is-complete")
     public ResponseEntity<Boolean> isGameWeekComplete(@PathVariable Long gameWeekId) {

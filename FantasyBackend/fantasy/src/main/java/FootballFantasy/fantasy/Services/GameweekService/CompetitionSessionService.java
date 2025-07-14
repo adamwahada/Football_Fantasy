@@ -41,31 +41,38 @@ public class CompetitionSessionService {
         GameWeek gameWeek = gameWeekRepository.findById(gameweekId)
                 .orElseThrow(() -> new RuntimeException("GameWeek not found"));
 
-        SessionTemplate template = sessionTemplateRepository.findBySessionTypeAndBuyInAmount(sessionType, buyInAmount);
-        if (template == null || !template.getIsActive()) {
-            throw new RuntimeException("Template not available or inactive");
-        }
+        // ✅ Trouver UN template actif correspondant
+        SessionTemplate template = sessionTemplateRepository.findBySessionTypeAndBuyInAmount(sessionType, buyInAmount)
+                .stream()
+                .filter(SessionTemplate::getIsActive)
+                .findFirst()
+                .orElseThrow(() -> new RuntimeException("No active template found for session type and amount."));
 
-        CompetitionSession session;
+        CompetitionSession session = null;
 
         if (isPrivate) {
-            // Check access key for private session
-            session = competitionSessionRepository.findPrivateSessionByAccessKey(accessKeyFromUser);
+            // ✅ Si clé d'accès fournie → on essaie de trouver la session
+            if (accessKeyFromUser != null && !accessKeyFromUser.trim().isEmpty()) {
+                session = competitionSessionRepository.findPrivateSessionByAccessKey(accessKeyFromUser);
+            }
+
+            // ✅ Si aucune session privée trouvée → on crée une
             if (session == null) {
-                // No session with that key? => create new private session
                 session = createNewSessionFromTemplate(gameWeek, template, true);
             }
         } else {
-            // Look for available public session
+            // ✅ Recherche session publique dispo
             session = competitionSessionRepository.findAvailableSession(gameweekId, sessionType, buyInAmount);
+
             if (session == null) {
-                // Create a new public session
+                // ✅ Créer nouvelle session publique
                 session = createNewSessionFromTemplate(gameWeek, template, false);
             }
         }
 
         return session;
     }
+
 
     /*** Helper: Create a new CompetitionSession from a SessionTemplate.*/
     public CompetitionSession createNewSessionFromTemplate(GameWeek gameWeek,
