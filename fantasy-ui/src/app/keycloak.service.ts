@@ -194,4 +194,17 @@ export class KeycloakService {
     console.log('=== Redirecting to registration ===');
     window.location.href = '/register';
   }
+  private startTokenRefreshLoop(): void {
+  setInterval(async () => {
+    try {
+      const refreshed = await this.keycloak.updateToken(30); // rafraîchir si < 30s
+      if (refreshed) {
+        console.log('✅ Token auto-refresh réussi');
+      }
+    } catch (error) {
+      console.error('❌ Échec du token refresh automatique, déconnexion...', error);
+      this.logout();
+    }
+  }, 60000); // toutes les 60 secondes
+  }
 }

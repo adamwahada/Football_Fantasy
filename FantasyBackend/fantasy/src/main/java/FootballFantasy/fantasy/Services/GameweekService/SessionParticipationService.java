@@ -1,16 +1,20 @@
 package FootballFantasy.fantasy.Services.GameweekService;
 
+import FootballFantasy.fantasy.Dto.UserSessionStats;
 import FootballFantasy.fantasy.Entities.GameweekEntity.*;
 import FootballFantasy.fantasy.Entities.UserEntity.UserEntity;
 import FootballFantasy.fantasy.Repositories.GameweekRepository.CompetitionSessionRepository;
 import FootballFantasy.fantasy.Repositories.GameweekRepository.SessionParticipationRepository;
 import FootballFantasy.fantasy.Repositories.UserRepository.UserRepository;
+import FootballFantasy.fantasy.Services.UserService.UserService;
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
+import FootballFantasy.fantasy.Dto.UserSessionStats;
+
 
 import java.math.BigDecimal;
-import java.math.RoundingMode;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
@@ -26,6 +30,11 @@ public class SessionParticipationService {
 
     @Autowired
     private UserRepository userRepository;
+
+    @Autowired
+    @Lazy
+    private UserService userService;
+
 
     @Autowired
     private CompetitionSessionService competitionSessionService;
@@ -44,6 +53,20 @@ public class SessionParticipationService {
 
         // 2. Join the session
         return joinSession(session.getId(), userId);
+    }
+
+    /**
+     * Complete flow: Find/Create session and join it (using Keycloak ID)
+     */
+    @Transactional
+    public SessionParticipation joinCompetitionByKeycloakId(Long gameweekId, SessionType sessionType,
+                                                            BigDecimal buyInAmount, boolean isPrivate,
+                                                            String accessKeyFromUser, String keycloakId) {
+
+        UserEntity user = userRepository.findByKeycloakId(keycloakId)
+                .orElseThrow(() -> new RuntimeException("User not found with Keycloak ID: " + keycloakId));
+
+        return joinCompetition(gameweekId, sessionType, buyInAmount, isPrivate, accessKeyFromUser, user.getId());
     }
 
     /**
@@ -74,6 +97,9 @@ public class SessionParticipationService {
             throw new RuntimeException("Session is full");
         }
 
+        // Validate user eligibility (e.g., terms accepted, profile complete)
+        validateUserEligibility(user);
+
         // Create participation record
         SessionParticipation participation = createParticipation(session, user);
 
@@ -88,6 +114,17 @@ public class SessionParticipationService {
                 " (Participants: " + session.getCurrentParticipants() + "/" + session.getMaxParticipants() + ")");
 
         return savedParticipation;
+    }
+
+    /**
+     * Join an existing session using Keycloak ID
+     */
+    @Transactional
+    public SessionParticipation joinSessionByKeycloakId(Long sessionId, String keycloakId) {
+        UserEntity user = userRepository.findByKeycloakId(keycloakId)
+                .orElseThrow(() -> new RuntimeException("User not found with Keycloak ID: " + keycloakId));
+
+        return joinSession(sessionId, user.getId());
     }
 
     /**
@@ -115,6 +152,17 @@ public class SessionParticipationService {
         competitionSessionRepository.save(session);
 
         System.out.println("❌ User " + userId + " left session " + sessionId);
+    }
+
+    /**
+     * Leave a session using Keycloak ID
+     */
+    @Transactional
+    public void leaveSessionByKeycloakId(Long sessionId, String keycloakId) {
+        UserEntity user = userRepository.findByKeycloakId(keycloakId)
+                .orElseThrow(() -> new RuntimeException("User not found with Keycloak ID: " + keycloakId));
+
+        leaveSession(sessionId, user.getId());
     }
 
     /**
@@ -146,10 +194,30 @@ public class SessionParticipationService {
     }
 
     /**
+     * Get user's participation in a specific session by Keycloak ID
+     */
+    public Optional<SessionParticipation> getUserParticipationByKeycloakId(String keycloakId, Long sessionId) {
+        UserEntity user = userRepository.findByKeycloakId(keycloakId)
+                .orElseThrow(() -> new RuntimeException("User not found with Keycloak ID: " + keycloakId));
+
+        return sessionParticipationRepository.findByUserIdAndSessionId(user.getId(), sessionId);
+    }
+
+    /**
      * Get user's participations for a gameweek
      */
     public List<SessionParticipation> getUserParticipationsForGameweek(Long userId, Long gameweekId) {
         return sessionParticipationRepository.findByUserIdAndGameweekId(userId, gameweekId);
+    }
+
+    /**
+     * Get user's participations for a gameweek by Keycloak ID
+     */
+    public List<SessionParticipation> getUserParticipationsForGameweekByKeycloakId(String keycloakId, Long gameweekId) {
+        UserEntity user = userRepository.findByKeycloakId(keycloakId)
+                .orElseThrow(() -> new RuntimeException("User not found with Keycloak ID: " + keycloakId));
+
+        return sessionParticipationRepository.findByUserIdAndGameweekId(user.getId(), gameweekId);
     }
 
     /**
@@ -167,6 +235,16 @@ public class SessionParticipationService {
     }
 
     /**
+     * Get user's active participations by Keycloak ID
+     */
+    public List<SessionParticipation> getUserActiveParticipationsByKeycloakId(String keycloakId) {
+        UserEntity user = userRepository.findByKeycloakId(keycloakId)
+                .orElseThrow(() -> new RuntimeException("User not found with Keycloak ID: " + keycloakId));
+
+        return sessionParticipationRepository.findByUserIdAndStatus(user.getId(), ParticipationStatus.ACTIVE);
+    }
+
+    /**
      * Check if user can join a session type for a gameweek
      */
     public boolean canUserJoinSession(Long userId, Long gameweekId, SessionType sessionType,
@@ -177,10 +255,31 @@ public class SessionParticipationService {
     }
 
     /**
+     * Check if user can join a session type for a gameweek by Keycloak ID
+     */
+    public boolean canUserJoinSessionByKeycloakId(String keycloakId, Long gameweekId,
+                                                  SessionType sessionType, BigDecimal buyInAmount) {
+        UserEntity user = userRepository.findByKeycloakId(keycloakId)
+                .orElseThrow(() -> new RuntimeException("User not found with Keycloak ID: " + keycloakId));
+
+        return canUserJoinSession(user.getId(), gameweekId, sessionType, buyInAmount);
+    }
+
+    /**
      * Calculate user's total winnings
      */
     public BigDecimal calculateUserTotalWinnings(Long userId) {
         return sessionParticipationRepository.sumPrizeWonByUserId(userId);
+    }
+
+    /**
+     * Calculate user's total winnings by Keycloak ID
+     */
+    public BigDecimal calculateUserTotalWinningsByKeycloakId(String keycloakId) {
+        UserEntity user = userRepository.findByKeycloakId(keycloakId)
+                .orElseThrow(() -> new RuntimeException("User not found with Keycloak ID: " + keycloakId));
+
+        return calculateUserTotalWinnings(user.getId());
     }
 
     /**
@@ -207,8 +306,30 @@ public class SessionParticipationService {
                 .average()
                 .orElse(0.0);
 
-        return new UserSessionStats(totalSessions, wonSessions, totalWinnings,
-                totalSpent, averageAccuracy);
+        // ✅ ADD THESE:
+        BigDecimal netProfit = totalWinnings.subtract(totalSpent);
+        double winRate = totalSessions > 0 ? (double) wonSessions / totalSessions * 100.0 : 0.0;
+
+        return new UserSessionStats(
+                totalSessions,
+                wonSessions,
+                totalWinnings,
+                totalSpent,
+                averageAccuracy,
+                netProfit,
+                winRate
+        );
+    }
+
+
+    /**
+     * Get user's session statistics by Keycloak ID
+     */
+    public UserSessionStats getUserSessionStatsByKeycloakId(String keycloakId) {
+        UserEntity user = userRepository.findByKeycloakId(keycloakId)
+                .orElseThrow(() -> new RuntimeException("User not found with Keycloak ID: " + keycloakId));
+
+        return getUserSessionStats(user.getId());
     }
 
     // ===== PRIVATE HELPER METHODS =====
@@ -237,6 +358,19 @@ public class SessionParticipationService {
         }
     }
 
+    /**
+     * Validate user eligibility to join sessions
+     */
+    private void validateUserEligibility(UserEntity user) {
+        // Check if user has accepted terms and conditions
+        if (!Boolean.TRUE.equals(user.getTermsAccepted())) {
+            throw new RuntimeException("User must accept terms and conditions before joining sessions");
+        }
+
+        // Add any other eligibility checks here
+        // For example: age verification, profile completion, etc.
+    }
+
     private SessionParticipation createParticipation(CompetitionSession session, UserEntity user) {
         SessionParticipation participation = new SessionParticipation();
         participation.setUser(user);
@@ -263,40 +397,4 @@ public class SessionParticipationService {
         }
     }
 
-    // ===== INNER CLASSES =====
-
-    /**
-     * User session statistics
-     */
-    public static class UserSessionStats {
-        private final int totalSessions;
-        private final int wonSessions;
-        private final BigDecimal totalWinnings;
-        private final BigDecimal totalSpent;
-        private final double averageAccuracy;
-
-        public UserSessionStats(int totalSessions, int wonSessions, BigDecimal totalWinnings,
-                                BigDecimal totalSpent, double averageAccuracy) {
-            this.totalSessions = totalSessions;
-            this.wonSessions = wonSessions;
-            this.totalWinnings = totalWinnings;
-            this.totalSpent = totalSpent;
-            this.averageAccuracy = averageAccuracy;
-        }
-
-        // Getters
-        public int getTotalSessions() { return totalSessions; }
-        public int getWonSessions() { return wonSessions; }
-        public BigDecimal getTotalWinnings() { return totalWinnings; }
-        public BigDecimal getTotalSpent() { return totalSpent; }
-        public double getAverageAccuracy() { return averageAccuracy; }
-
-        public double getWinRate() {
-            return totalSessions > 0 ? (double) wonSessions / totalSessions * 100.0 : 0.0;
-        }
-
-        public BigDecimal getNetProfit() {
-            return totalWinnings.subtract(totalSpent);
-        }
-    }
 }
