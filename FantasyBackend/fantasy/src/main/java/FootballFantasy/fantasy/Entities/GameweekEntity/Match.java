@@ -6,6 +6,7 @@ import jakarta.persistence.*;
 import lombok.*;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 
 @Entity
@@ -21,7 +22,7 @@ public class Match {
     private String homeTeam;
     private String awayTeam;
 
-    private LocalDate matchDate;
+    private LocalDateTime matchDate;
 
     private Integer homeScore;
     private Integer awayScore;
@@ -35,9 +36,13 @@ public class Match {
     private MatchStatus status;
 
     @JsonIgnore
-    @ManyToOne
-    @JoinColumn(name = "gameweek_id")
-    private GameWeek gameweek;
+    @ManyToMany
+    @JoinTable(
+            name = "match_gameweek",
+            joinColumns = @JoinColumn(name = "match_id"),
+            inverseJoinColumns = @JoinColumn(name = "gameweek_id")
+    )
+    private List<GameWeek> gameweeks = new ArrayList<>();
 
     @JsonIgnore
     @OneToMany(mappedBy = "match", cascade = CascadeType.ALL, orphanRemoval = true)

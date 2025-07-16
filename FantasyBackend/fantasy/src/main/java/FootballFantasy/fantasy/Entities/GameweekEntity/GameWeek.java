@@ -4,7 +4,6 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.*;
 
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -24,8 +23,11 @@ public class GameWeek {
     @Enumerated(EnumType.STRING)
     private GameweekStatus status;
 
-    private LocalDate startDate;
-    private LocalDate endDate;
+    @Enumerated(EnumType.STRING)
+    private LeagueTheme competition;
+
+    private LocalDateTime startDate;
+    private LocalDateTime endDate;
 
     // Add deadline for joining the competition
     @Column(nullable = false)
@@ -33,8 +35,8 @@ public class GameWeek {
     private String description;
 
     @JsonIgnore
-    @OneToMany(mappedBy = "gameweek", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<Match> matches;
+    @ManyToMany(mappedBy = "gameweeks")
+    private List<Match> matches = new ArrayList<>();
 
     @JsonIgnore
     @OneToMany(mappedBy = "gameweek", cascade = CascadeType.ALL, orphanRemoval = true)

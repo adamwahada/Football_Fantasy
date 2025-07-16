@@ -75,9 +75,11 @@ public class CompetitionSession {
     }
 
     // Check if session can accept more participants
+
     public boolean canJoin() {
         return status == CompetitionSessionStatus.OPEN &&
                 !isFull() &&
+                joinDeadline != null &&
                 LocalDateTime.now().isBefore(joinDeadline);
     }
     public boolean isPrivate() {

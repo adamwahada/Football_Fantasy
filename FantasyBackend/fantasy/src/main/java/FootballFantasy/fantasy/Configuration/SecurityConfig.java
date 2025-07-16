@@ -42,7 +42,8 @@ public class SecurityConfig {
                                 "/api/matches/**",
                                 "/api/gameweeks/**",
                                 "/api/session-templates/**",
-                                "/api/competition-sessions/**"
+                                "/api/competition-sessions/**",
+                                "/api/seed/**"
                                 ).permitAll()
 
                                 // All other requests must be authenticated

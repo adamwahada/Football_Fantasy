@@ -79,6 +79,10 @@ public class CompetitionSessionService {
                                                            SessionTemplate template,
                                                            boolean isPrivate) {
 
+        if (gameWeek.getJoinDeadline() == null) {
+            throw new RuntimeException("GameWeek join deadline is not set.");
+        }
+
         CompetitionSession session = new CompetitionSession();
         session.setGameweek(gameWeek);
         session.setSessionName(template.getTemplateName());
@@ -88,7 +92,10 @@ public class CompetitionSessionService {
         session.setCurrentParticipants(0);
         session.setStatus(CompetitionSessionStatus.OPEN);
         session.setCreatedAt(LocalDateTime.now());
-        session.setJoinDeadline(LocalDateTime.now().plusHours(2)); // or custom logic
+
+        // ✅ Set the joinDeadline to match the GameWeek's join deadline
+        session.setJoinDeadline(gameWeek.getJoinDeadline());
+
         session.setTotalPrizePool(BigDecimal.ZERO);
 
         // 🔑 Generate access key if private
@@ -165,5 +172,6 @@ public class CompetitionSessionService {
             }
         }
     }
+
 
 }

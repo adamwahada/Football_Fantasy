@@ -1,0 +1,52 @@
+[
+  {
+    "homeTeam": "Aston Villa",
+    "awayTeam": "Crystal Palace",
+    "matchDate": "2025-08-29T20:00:00"
+  },
+  {
+    "homeTeam": "Chelsea",
+    "awayTeam": "Fulham",
+    "matchDate": "2025-08-30T12:30:00"
+  },
+  {
+    "homeTeam": "Manchester United",
+    "awayTeam": "Burnley",
+    "matchDate": "2025-08-30T15:00:00"
+  },
+  {
+    "homeTeam": "Sunderland",
+    "awayTeam": "Brentford",
+    "matchDate": "2025-08-30T15:00:00"
+  },
+  {
+    "homeTeam": "Tottenham Hotspur",
+    "awayTeam": "Bournemouth",
+    "matchDate": "2025-08-30T15:00:00"
+  },
+  {
+    "homeTeam": "Wolverhampton Wanderers",
+    "awayTeam": "Everton",
+    "matchDate": "2025-08-30T15:00:00"
+  },
+  {
+    "homeTeam": "Leeds United",
+    "awayTeam": "Newcastle United",
+    "matchDate": "2025-08-30T17:30:00"
+  },
+  {
+    "homeTeam": "Brighton and Hove Albion",
+    "awayTeam": "Manchester City",
+    "matchDate": "2025-08-31T14:00:00"
+  },
+  {
+    "homeTeam": "Nottingham Forest",
+    "awayTeam": "West Ham United",
+    "matchDate": "2025-08-31T14:00:00"
+  },
+  {
+    "homeTeam": "Liverpool",
+    "awayTeam": "Arsenal",
+    "matchDate": "2025-08-31T16:30:00"
+  }
+]

@@ -26,27 +26,36 @@ public class MatchService {
     private CompetitionSessionService competitionSessionService;
 
     public Match createMatch(Match match) {
-        if (match.getGameweek() != null && match.getGameweek().getId() != null) {
-            GameWeek gameWeek = gameWeekRepository.findById(match.getGameweek().getId())
-                    .orElseThrow(() -> new IllegalArgumentException("GameWeek non trouvé"));
+        // If match has gameweeks, validate each one
+        if (match.getGameweeks() != null && !match.getGameweeks().isEmpty()) {
+            for (GameWeek gw : match.getGameweeks()) {
+                GameWeek gameWeek = gameWeekRepository.findById(gw.getId())
+                        .orElseThrow(() -> new IllegalArgumentException("GameWeek non trouvé avec ID: " + gw.getId()));
 
-            // Vérification que la date est dans l'intervalle de la GameWeek
-            if (match.getMatchDate().isBefore(gameWeek.getStartDate()) || match.getMatchDate().isAfter(gameWeek.getEndDate())) {
-                throw new IllegalArgumentException("La date du match doit être comprise entre la date de début et de fin de la GameWeek.");
+                // Check that the date is within bounds
+                if (match.getMatchDate().isBefore(gameWeek.getStartDate()) || match.getMatchDate().isAfter(gameWeek.getEndDate())) {
+                    throw new IllegalArgumentException("La date du match doit être comprise entre la date de début et de fin de la GameWeek.");
+                }
+
+                // Bi-directional sync (optional but recommended)
+                if (!gameWeek.getMatches().contains(match)) {
+                    gameWeek.getMatches().add(match);
+                }
             }
-
-            match.setGameweek(gameWeek);  // associer uniquement si valide
         }
 
-        // sinon : match sans GameWeek → aucun souci
+        // ✅ Set prediction deadline to 30 minutes before match
+        match.setPredictionDeadline(match.getMatchDate().minusMinutes(30));
+
         return matchRepository.save(match);
     }
+
 
     public Match updateMatch(Long matchId, Match updatedMatch) {
         Match existingMatch = matchRepository.findById(matchId)
                 .orElseThrow(() -> new IllegalArgumentException("Match non trouvé"));
 
-        // Update fields normally
+        // Update basic fields
         existingMatch.setHomeTeam(updatedMatch.getHomeTeam());
         existingMatch.setAwayTeam(updatedMatch.getAwayTeam());
         existingMatch.setMatchDate(updatedMatch.getMatchDate());
@@ -58,13 +67,12 @@ public class MatchService {
 
         Match savedMatch = matchRepository.save(existingMatch);
 
-        // --- New logic for automatic winner determination ---
+        // If the match is completed, check if related gameweeks are now complete
         if (updatedMatch.getStatus() == MatchStatus.COMPLETED) {
-            Long gameWeekId = existingMatch.getGameweek() != null ? existingMatch.getGameweek().getId() : null;
-            if (gameWeekId != null) {
-                boolean allMatchesCompleted = gameWeekService.isGameWeekComplete(gameWeekId);
-                if (allMatchesCompleted) {
-                    competitionSessionService.determineWinnersForCompletedGameWeek(gameWeekId);
+            for (GameWeek gameWeek : existingMatch.getGameweeks()) {
+                boolean allCompleted = gameWeekService.isGameWeekComplete(gameWeek.getId());
+                if (allCompleted) {
+                    competitionSessionService.determineWinnersForCompletedGameWeek(gameWeek.getId());
                 }
             }
         }
@@ -73,7 +81,15 @@ public class MatchService {
     }
 
     public void deleteMatch(Long matchId) {
-        matchRepository.deleteById(matchId);
+        Match match = matchRepository.findById(matchId)
+                .orElseThrow(() -> new IllegalArgumentException("Match non trouvé"));
+
+        // Remove the match from all associated gameweeks (clean up Many-to-Many)
+        for (GameWeek gw : match.getGameweeks()) {
+            gw.getMatches().remove(match);
+        }
+
+        matchRepository.delete(match);
     }
 
     public Match getMatchById(Long matchId) {
@@ -85,7 +101,6 @@ public class MatchService {
         return matchRepository.findAll();
     }
 
-    //RETOURNE GAGNEUR
     public String getWinner(Long matchId) {
         Match match = matchRepository.findById(matchId)
                 .orElseThrow(() -> new IllegalArgumentException("Match non trouvé"));
