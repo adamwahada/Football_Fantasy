@@ -48,11 +48,17 @@ public class MatchService {
     }
 
     public Match updateMatch(Long matchId, Match updatedMatch) {
+        System.out.println("🔄 MatchService.updateMatch called for match ID: " + matchId);
+
         Match existing = matchRepository.findById(matchId)
                 .orElseThrow(() -> new IllegalArgumentException("Match not found"));
 
         // Store the old status to check if it changed
         MatchStatus oldStatus = existing.getStatus();
+        System.out.println("📊 Match: " + existing.getHomeTeam() + " vs " + existing.getAwayTeam());
+        System.out.println("📊 Current match status: " + oldStatus);
+        System.out.println("📊 New match status: " + updatedMatch.getStatus());
+        System.out.println("📊 New scores: " + updatedMatch.getHomeScore() + "-" + updatedMatch.getAwayScore());
 
         existing.setHomeTeam(updatedMatch.getHomeTeam());
         existing.setAwayTeam(updatedMatch.getAwayTeam());
@@ -64,10 +70,33 @@ public class MatchService {
         existing.setStatus(updatedMatch.getStatus());
 
         Match saved = matchRepository.saveAndFlush(existing);
+        System.out.println("💾 Match saved successfully");
+        System.out.println("💾 Final saved status: " + saved.getStatus());
+
+        // Check if we should publish event
+        boolean shouldPublishEvent = (oldStatus != MatchStatus.COMPLETED && saved.getStatus() == MatchStatus.COMPLETED);
+        System.out.println("🔍 Should publish event? " + shouldPublishEvent);
+        System.out.println("🔍 Old status != COMPLETED: " + (oldStatus != MatchStatus.COMPLETED));
+        System.out.println("🔍 New status == COMPLETED: " + (saved.getStatus() == MatchStatus.COMPLETED));
 
         // Publish event if match was just completed
-        if (oldStatus != MatchStatus.COMPLETED && saved.getStatus() == MatchStatus.COMPLETED) {
-            eventPublisher.publishEvent(new MatchCompletedEvent(this, matchId));
+        if (shouldPublishEvent) {
+            System.out.println("🚀 Publishing MatchCompletedEvent for match ID: " + matchId);
+
+            // Check if we're in a transaction
+            boolean inTransaction = org.springframework.transaction.support.TransactionSynchronizationManager.isActualTransactionActive();
+            System.out.println("📝 Transaction active: " + inTransaction);
+
+            try {
+                MatchCompletedEvent event = new MatchCompletedEvent(this, matchId);
+                eventPublisher.publishEvent(event);
+                System.out.println("✅ MatchCompletedEvent published successfully");
+            } catch (Exception e) {
+                System.err.println("❌ Error publishing event: " + e.getMessage());
+                e.printStackTrace();
+            }
+        } else {
+            System.out.println("⏭️ No event published - status didn't change to COMPLETED");
         }
 
         return saved;

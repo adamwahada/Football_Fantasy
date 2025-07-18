@@ -1,5 +1,5 @@
 package FootballFantasy.fantasy.Services.GameweekService;
-
+import FootballFantasy.fantasy.Entities.GameweekEntity.GameweekStatus;
 import FootballFantasy.fantasy.Entities.GameweekEntity.*;
 import FootballFantasy.fantasy.Repositories.GameweekRepository.GameWeekRepository;
 import FootballFantasy.fantasy.Repositories.GameweekRepository.MatchRepository;
@@ -221,29 +221,39 @@ public class GameWeekService {
     }
     @Transactional
     public boolean updateStatusIfComplete(Long gameWeekId) {
-        // Detach stale context
-        em.clear();
+        System.out.println("🔍 GameWeekService.updateStatusIfComplete called for gameweek ID: " + gameWeekId);
 
-        // Fetch the GameWeek with its matches
-        GameWeek gw = gameWeekRepository.findWithMatchesById(gameWeekId);
+        GameWeek gameWeek = gameWeekRepository.findById(gameWeekId)
+                .orElseThrow(() -> new IllegalArgumentException("GameWeek not found"));
+
+        System.out.println("📊 Current gameweek status: " + gameWeek.getStatus());
+        System.out.println("📊 Total matches in gameweek: " + gameWeek.getMatches().size());
 
         // Check if all matches are completed
-        boolean allCompleted = gw.getMatches().stream()
-                .allMatch(m -> m.getStatus() == MatchStatus.COMPLETED);
+        long completedMatches = gameWeek.getMatches().stream()
+                .filter(match -> match.getStatus() == MatchStatus.COMPLETED)
+                .count();
 
-        // Update status if all matches are completed
-        if (allCompleted && gw.getStatus() != GameweekStatus.FINISHED) {
-            gw.setStatus(GameweekStatus.FINISHED);
-            gameWeekRepository.save(gw);
+        System.out.println("✅ Completed matches: " + completedMatches + "/" + gameWeek.getMatches().size());
 
-            // Log the status update
-            System.out.println("Gameweek " + gameWeekId + " status updated to FINISHED.");
+        // Check if all matches are completed and gameweek is not already finished
+        if (completedMatches == gameWeek.getMatches().size() &&
+                gameWeek.getStatus() != GameweekStatus.FINISHED) {
 
+            System.out.println("🎯 All matches completed! Updating gameweek status to FINISHED");
+            gameWeek.setStatus(GameweekStatus.FINISHED);
+            gameWeekRepository.save(gameWeek);
+
+            System.out.println("✅ GameWeek " + gameWeekId + " status updated to FINISHED");
             return true;
+        } else {
+            System.out.println("⏳ GameWeek " + gameWeekId + " is not ready to be finished");
+            System.out.println("   Reason: " +
+                    (completedMatches != gameWeek.getMatches().size() ?
+                            "Not all matches completed (" + completedMatches + "/" + gameWeek.getMatches().size() + ")" :
+                            "Already finished"));
+            return false;
         }
-        return false;
     }
-
-
 
 }

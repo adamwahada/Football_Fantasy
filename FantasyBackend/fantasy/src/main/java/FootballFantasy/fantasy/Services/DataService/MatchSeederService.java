@@ -36,7 +36,8 @@ public class MatchSeederService {
     private CompetitionSessionService competitionSessionService;
 
     @Autowired
-    private MatchService matchService; // 🔥 Added this - KEY for automatic updates
+    private MatchService matchService;
+
     @Autowired
     private GameWeekService gameWeekService;
 
@@ -76,7 +77,7 @@ public class MatchSeederService {
 
     /**
      * Update match results after the gameweek is over using a JSON file
-     * 🔥 UPDATED: Now uses MatchService for automatic GameWeek status updates
+     * 🔥 FIXED: Now properly triggers events by updating each match individually
      */
     @Transactional
     public void updateGameWeekResults(int weekNumber, LeagueTheme league) throws IOException {
@@ -102,28 +103,35 @@ public class MatchSeederService {
 
             if (optionalMatch.isPresent()) {
                 Match match = optionalMatch.get();
-
-                // Store old status to check for changes
                 MatchStatus oldStatus = match.getStatus();
 
-                // Update match details
-                match.setHomeScore(dto.getHomeScore());
-                match.setAwayScore(dto.getAwayScore());
-                match.setStatus(MatchStatus.COMPLETED);
-                match.setFinished(true);
+                // 🔥 KEY FIX: Create a fresh match object with updates
+                // This ensures the service layer detects the status change properly
+                Match matchUpdate = new Match();
+                matchUpdate.setHomeTeam(match.getHomeTeam());
+                matchUpdate.setAwayTeam(match.getAwayTeam());
+                matchUpdate.setMatchDate(match.getMatchDate());
+                matchUpdate.setHomeScore(dto.getHomeScore());
+                matchUpdate.setAwayScore(dto.getAwayScore());
+                matchUpdate.setStatus(MatchStatus.COMPLETED);
+                matchUpdate.setFinished(true);
+                matchUpdate.setDescription(match.getDescription());
+                matchUpdate.setPredictionDeadline(match.getPredictionDeadline());
 
+                try {
+                    matchService.updateMatch(match.getId(), matchUpdate);
 
-                // 🔥 KEY CHANGE: Use MatchService instead of direct repository save
-                // This will trigger the event and automatic GameWeek status update
-                matchService.updateMatch(match.getId(), match);
+                    updatedCount++;
+                    System.out.println("✅ Updated: " + dto.getHomeTeam() + " vs " + dto.getAwayTeam() +
+                            " with score " + dto.getHomeScore() + "-" + dto.getAwayScore());
 
-                updatedCount++;
-                System.out.println("✅ Updated: " + dto.getHomeTeam() + " vs " + dto.getAwayTeam() +
-                        " with score " + dto.getHomeScore() + "-" + dto.getAwayScore());
-
-                // Log if this triggered an event
-                if (oldStatus != MatchStatus.COMPLETED) {
-                    System.out.println("🔥 Match completion event triggered for: " + dto.getHomeTeam() + " vs " + dto.getAwayTeam());
+                    // Log if this should trigger an event
+                    if (oldStatus != MatchStatus.COMPLETED) {
+                        System.out.println("🔥 Match completion event should trigger for: " + dto.getHomeTeam() + " vs " + dto.getAwayTeam());
+                    }
+                } catch (Exception e) {
+                    System.err.println("❌ Error updating match " + dto.getHomeTeam() + " vs " + dto.getAwayTeam() + ": " + e.getMessage());
+                    skippedCount++;
                 }
             } else {
                 skippedCount++;
@@ -134,6 +142,10 @@ public class MatchSeederService {
 
         System.out.println("\n📊 Update summary: " + updatedCount + " matches updated, " + skippedCount + " matches skipped");
 
+        // 🔥 ADDITIONAL FIX: Explicitly check gameweek status after all matches are updated
+        // This is a safety net in case the automatic update doesn't work
+        System.out.println("🧪 MANUAL CHECK: Verifying gameweek " + weekNumber + " status after updates");
+        gameWeekService.updateStatusIfComplete(gw.getId());
     }
 
     private void updateGameWeekTimings(GameWeek gameWeek) {
