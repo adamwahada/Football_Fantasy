@@ -1,11 +1,9 @@
 package FootballFantasy.fantasy.Services.GameweekService;
 
-import FootballFantasy.fantasy.Entities.GameweekEntity.GameWeek;
-import FootballFantasy.fantasy.Entities.GameweekEntity.LeagueTheme;
-import FootballFantasy.fantasy.Entities.GameweekEntity.Match;
-import FootballFantasy.fantasy.Entities.GameweekEntity.MatchStatus;
+import FootballFantasy.fantasy.Entities.GameweekEntity.*;
 import FootballFantasy.fantasy.Repositories.GameweekRepository.GameWeekRepository;
 import FootballFantasy.fantasy.Repositories.GameweekRepository.MatchRepository;
+import jakarta.persistence.EntityManager;
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -22,6 +20,9 @@ public class GameWeekService {
 
     @Autowired
     private MatchRepository matchRepository;
+
+    @Autowired
+    private EntityManager em;
 
     public GameWeek createGameWeek(GameWeek gameWeek) {
         return gameWeekRepository.save(gameWeek);
@@ -46,26 +47,21 @@ public class GameWeekService {
         gameWeekRepository.delete(gameWeek);
     }
 
-    // ✅ Add a match to a gameweek without overwriting others
     @Transactional
     public Match addMatchToGameWeek(Long gameWeekId, Match match) {
         GameWeek gameWeek = gameWeekRepository.findById(gameWeekId)
                 .orElseThrow(() -> new IllegalArgumentException("GameWeek non trouvé"));
 
-        // ✅ Vérifie que la date du match est dans la plage de la GameWeek
         if (match.getMatchDate().isBefore(gameWeek.getStartDate()) || match.getMatchDate().isAfter(gameWeek.getEndDate())) {
             throw new IllegalArgumentException("La date du match doit être comprise entre la date de début et de fin de la GameWeek.");
         }
 
-        // ✅ Définir le délai de prédiction à 30 min avant le match
         match.setPredictionDeadline(match.getMatchDate().minusMinutes(30));
 
-        // ✅ Ajouter la GameWeek si pas déjà associée
         if (!match.getGameweeks().contains(gameWeek)) {
             match.getGameweeks().add(gameWeek);
         }
 
-        // ✅ Ajouter le match à la GameWeek si pas déjà présent
         if (!gameWeek.getMatches().contains(match)) {
             gameWeek.getMatches().add(match);
         }
@@ -73,7 +69,7 @@ public class GameWeekService {
         matchRepository.save(match);
         gameWeekRepository.save(gameWeek);
 
-        updateJoinDeadlineForGameWeek(gameWeek);
+        recalculateGameWeekDates(gameWeek);
         return match;
     }
 
@@ -93,8 +89,9 @@ public class GameWeekService {
         }
 
         gameWeekRepository.save(gameWeek);
-        updateJoinDeadlineForGameWeek(gameWeek);
+        recalculateGameWeekDates(gameWeek);
     }
+
     @Transactional
     public void deleteSpecificMatchesFromGameWeek(Long gameWeekId, List<Long> matchIdsToRemove) {
         GameWeek gameWeek = gameWeekRepository.findById(gameWeekId)
@@ -102,17 +99,15 @@ public class GameWeekService {
 
         for (Match match : new ArrayList<>(gameWeek.getMatches())) {
             if (matchIdsToRemove.contains(match.getId())) {
-                match.getGameweeks().remove(gameWeek); // unlink match from gameweek
-                gameWeek.getMatches().remove(match);   // unlink gameweek from match
+                match.getGameweeks().remove(gameWeek);
+                gameWeek.getMatches().remove(match);
                 matchRepository.save(match);
             }
         }
 
         gameWeekRepository.save(gameWeek);
-        updateJoinDeadlineForGameWeek(gameWeek);
+        recalculateGameWeekDates(gameWeek);
     }
-
-
 
     @Transactional
     public Match linkExistingMatchToGameWeek(Long gameWeekId, Long matchId) {
@@ -133,7 +128,7 @@ public class GameWeekService {
         matchRepository.save(match);
         gameWeekRepository.save(gameWeek);
 
-        updateJoinDeadlineForGameWeek(gameWeek);
+        recalculateGameWeekDates(gameWeek);
         return match;
     }
 
@@ -160,7 +155,7 @@ public class GameWeekService {
         }
 
         gameWeekRepository.save(gameWeek);
-        updateJoinDeadlineForGameWeek(gameWeek);
+        recalculateGameWeekDates(gameWeek);
         return updatedMatches;
     }
 
@@ -174,24 +169,27 @@ public class GameWeekService {
         return matches.stream().allMatch(m -> m.getStatus() == MatchStatus.COMPLETED);
     }
 
-    public void updateJoinDeadlineForGameWeek(GameWeek gameWeek) {
+    public void recalculateGameWeekDates(GameWeek gameWeek) {
         List<Match> matches = gameWeek.getMatches();
-        if (matches.isEmpty()) return;
+        if (matches.isEmpty()) {
+            gameWeek.setStartDate(null);
+            gameWeek.setEndDate(null);
+            gameWeek.setJoinDeadline(null);
+        } else {
+            LocalDateTime earliest = matches.stream()
+                    .map(Match::getMatchDate)
+                    .min(LocalDateTime::compareTo)
+                    .orElseThrow();
 
-        LocalDateTime earliest = matches.stream()
-                .map(Match::getMatchDate)
-                .min(LocalDateTime::compareTo)
-                .orElseThrow();
+            LocalDateTime latest = matches.stream()
+                    .map(Match::getMatchDate)
+                    .max(LocalDateTime::compareTo)
+                    .orElseThrow();
 
-        LocalDateTime latest = matches.stream()
-                .map(Match::getMatchDate)
-                .max(LocalDateTime::compareTo)
-                .orElseThrow();
-
-        gameWeek.setStartDate(earliest);
-
-        gameWeek.setEndDate(latest.plusHours(2).plusMinutes(30));
-        gameWeek.setJoinDeadline(earliest.minusMinutes(30));
+            gameWeek.setStartDate(earliest);
+            gameWeek.setEndDate(latest.plusHours(2).plusMinutes(30));
+            gameWeek.setJoinDeadline(earliest.minusMinutes(30));
+        }
 
         gameWeekRepository.save(gameWeek);
     }
@@ -206,25 +204,46 @@ public class GameWeekService {
                 .orElseThrow(() -> new IllegalArgumentException("GameWeek not found"));
 
         for (Match match : matchesToAdd) {
-            // Add gameweek reference if missing
             if (!match.getGameweeks().contains(gameWeek)) {
                 match.getGameweeks().add(gameWeek);
             }
 
-            // Add match to gameweek if missing
             if (!gameWeek.getMatches().contains(match)) {
                 gameWeek.getMatches().add(match);
             }
 
-            // Set prediction deadline (optional)
             match.setPredictionDeadline(match.getMatchDate().minusMinutes(30));
-
             matchRepository.save(match);
         }
 
-        // Update gameweek dates after all matches are added
-        updateJoinDeadlineForGameWeek(gameWeek);
+        recalculateGameWeekDates(gameWeek);
         gameWeekRepository.save(gameWeek);
     }
+    @Transactional
+    public boolean updateStatusIfComplete(Long gameWeekId) {
+        // Detach stale context
+        em.clear();
+
+        // Fetch the GameWeek with its matches
+        GameWeek gw = gameWeekRepository.findWithMatchesById(gameWeekId);
+
+        // Check if all matches are completed
+        boolean allCompleted = gw.getMatches().stream()
+                .allMatch(m -> m.getStatus() == MatchStatus.COMPLETED);
+
+        // Update status if all matches are completed
+        if (allCompleted && gw.getStatus() != GameweekStatus.FINISHED) {
+            gw.setStatus(GameweekStatus.FINISHED);
+            gameWeekRepository.save(gw);
+
+            // Log the status update
+            System.out.println("Gameweek " + gameWeekId + " status updated to FINISHED.");
+
+            return true;
+        }
+        return false;
+    }
+
+
 
 }

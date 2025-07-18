@@ -12,12 +12,15 @@ import java.util.List;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
+
+@Table(
+        uniqueConstraints = @UniqueConstraint(columnNames = {"weekNumber", "competition"})
+)
 public class GameWeek {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(unique = true)
     private int weekNumber;
 
     @Enumerated(EnumType.STRING)

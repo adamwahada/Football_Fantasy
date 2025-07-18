@@ -2,16 +2,22 @@
   {
     "homeTeam": "West Ham United",
     "awayTeam": "Chelsea",
-    "matchDate": "2025-06-22T20:00:00"
+    "matchDate": "2025-06-22T20:00:00",
+    "homeScore": 3,
+    "awayScore": 1
   },
   {
     "homeTeam": "Manchester City",
     "awayTeam": "Tottenham Hotspur",
-    "matchDate": "2025-06-23T12:30:00"
+    "matchDate": "2025-06-23T12:30:00",
+    "homeScore": 2,
+    "awayScore": 2
   },
   {
     "homeTeam": "Bournemouth",
     "awayTeam": "Wolverhampton Wanderers",
-    "matchDate": "2025-06-23T15:00:00"
+    "matchDate": "2025-06-23T15:00:00",
+    "homeScore": 1,
+    "awayScore": 0
   }
 ]
