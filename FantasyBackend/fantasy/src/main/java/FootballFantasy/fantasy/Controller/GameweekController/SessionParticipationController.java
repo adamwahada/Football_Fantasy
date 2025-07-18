@@ -1,6 +1,7 @@
 package FootballFantasy.fantasy.Controller.GameweekController;
 
 import FootballFantasy.fantasy.Dto.UserSessionStats;
+import FootballFantasy.fantasy.Entities.GameweekEntity.LeagueTheme;
 import FootballFantasy.fantasy.Entities.GameweekEntity.SessionParticipation;
 import FootballFantasy.fantasy.Entities.GameweekEntity.SessionType;
 import FootballFantasy.fantasy.Services.GameweekService.SessionParticipationService;
@@ -40,6 +41,7 @@ public class SessionParticipationController {
     })
     public ResponseEntity<?> joinCompetition(
             @Parameter(description = "Gameweek ID") @RequestParam Long gameweekId,
+            @Parameter(description = "League theme/competition") @RequestParam LeagueTheme competition,
             @Parameter(description = "Session type") @RequestParam SessionType sessionType,
             @Parameter(description = "Buy-in amount") @RequestParam BigDecimal buyInAmount,
             @Parameter(description = "Is private session") @RequestParam(defaultValue = "false") boolean isPrivate,
@@ -49,7 +51,7 @@ public class SessionParticipationController {
             String keycloakId = getCurrentUserKeycloakId();
 
             SessionParticipation participation = sessionParticipationService.joinCompetitionByKeycloakId(
-                    gameweekId, sessionType, buyInAmount, isPrivate, accessKey, keycloakId);
+                    gameweekId, competition, sessionType, buyInAmount, isPrivate, accessKey, keycloakId);
 
             return ResponseEntity.ok(participation);
         } catch (RuntimeException e) {
@@ -247,13 +249,16 @@ public class SessionParticipationController {
     public ResponseEntity<?> canUserJoinSession(
             @Parameter(description = "Gameweek ID") @RequestParam Long gameweekId,
             @Parameter(description = "Session type") @RequestParam SessionType sessionType,
-            @Parameter(description = "Buy-in amount") @RequestParam BigDecimal buyInAmount) {
+            @Parameter(description = "Buy-in amount") @RequestParam BigDecimal buyInAmount,
+            @Parameter(description = "competition") @RequestParam LeagueTheme competition
+
+    ) {
 
         try {
             String keycloakId = getCurrentUserKeycloakId();
 
             boolean canJoin = sessionParticipationService.canUserJoinSessionByKeycloakId(
-                    keycloakId, gameweekId, sessionType, buyInAmount);
+                    keycloakId, gameweekId, sessionType, buyInAmount,competition);
 
             return ResponseEntity.ok(new EligibilityResponse(canJoin));
         } catch (Exception e) {

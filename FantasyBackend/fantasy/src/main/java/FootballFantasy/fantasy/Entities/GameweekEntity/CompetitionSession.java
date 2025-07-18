@@ -26,6 +26,10 @@ public class CompetitionSession {
     @Column(nullable = false)
     private SessionType sessionType;
 
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private LeagueTheme competition;
+
     @Column(nullable = false)
     private BigDecimal buyInAmount; // $10, $20, $50
 

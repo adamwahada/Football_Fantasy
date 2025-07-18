@@ -43,15 +43,17 @@ public class SessionParticipationService {
      * Complete flow: Find/Create session and join it
      */
     @Transactional
-    public SessionParticipation joinCompetition(Long gameweekId, SessionType sessionType,
-                                                BigDecimal buyInAmount, boolean isPrivate,
-                                                String accessKeyFromUser, Long userId) {
+    public SessionParticipation joinCompetition(Long gameweekId,
+                                                LeagueTheme competition,
+                                                SessionType sessionType,
+                                                BigDecimal buyInAmount,
+                                                boolean isPrivate,
+                                                String accessKeyFromUser,
+                                                Long userId) {
 
-        // 1. Find or create session
-        CompetitionSession session = competitionSessionService.joinOrCreateSession(
-                gameweekId, sessionType, buyInAmount, isPrivate, accessKeyFromUser);
+        CompetitionSession session = competitionSessionService
+                .joinOrCreateSession(gameweekId, sessionType, buyInAmount, isPrivate, accessKeyFromUser, competition);
 
-        // 2. Join the session
         return joinSession(session.getId(), userId);
     }
 
@@ -59,14 +61,15 @@ public class SessionParticipationService {
      * Complete flow: Find/Create session and join it (using Keycloak ID)
      */
     @Transactional
-    public SessionParticipation joinCompetitionByKeycloakId(Long gameweekId, SessionType sessionType,
+    public SessionParticipation joinCompetitionByKeycloakId(Long gameweekId, LeagueTheme competition,
+                                                            SessionType sessionType,
                                                             BigDecimal buyInAmount, boolean isPrivate,
                                                             String accessKeyFromUser, String keycloakId) {
 
         UserEntity user = userRepository.findByKeycloakId(keycloakId)
                 .orElseThrow(() -> new RuntimeException("User not found with Keycloak ID: " + keycloakId));
 
-        return joinCompetition(gameweekId, sessionType, buyInAmount, isPrivate, accessKeyFromUser, user.getId());
+        return joinCompetition(gameweekId, competition, sessionType, buyInAmount, isPrivate, accessKeyFromUser, user.getId());
     }
 
     /**
@@ -88,9 +91,6 @@ public class SessionParticipationService {
         if (sessionParticipationRepository.existsByUserIdAndSessionId(userId, sessionId)) {
             throw new RuntimeException("User already joined this session");
         }
-
-        // Check if user already joined another session for same gameweek/type/amount
-        validateUserNotInSimilarSession(userId, session);
 
         // Check if session is full
         if (session.getCurrentParticipants() >= session.getMaxParticipants()) {
@@ -248,21 +248,21 @@ public class SessionParticipationService {
      * Check if user can join a session type for a gameweek
      */
     public boolean canUserJoinSession(Long userId, Long gameweekId, SessionType sessionType,
-                                      BigDecimal buyInAmount) {
+                                      BigDecimal buyInAmount,LeagueTheme competition) {
         // Check if user already has an active participation for this gameweek/type/amount
-        return !sessionParticipationRepository.existsByUserIdAndGameweekIdAndSessionTypeAndBuyInAmount(
-                userId, gameweekId, sessionType, buyInAmount);
+        return !sessionParticipationRepository.existsByUserIdAndGameweekIdAndSessionTypeAndBuyInAmountAndSession_Competition(
+                userId, gameweekId, sessionType, buyInAmount,competition);
     }
 
     /**
      * Check if user can join a session type for a gameweek by Keycloak ID
      */
     public boolean canUserJoinSessionByKeycloakId(String keycloakId, Long gameweekId,
-                                                  SessionType sessionType, BigDecimal buyInAmount) {
+                                                  SessionType sessionType, BigDecimal buyInAmount,LeagueTheme competition) {
         UserEntity user = userRepository.findByKeycloakId(keycloakId)
                 .orElseThrow(() -> new RuntimeException("User not found with Keycloak ID: " + keycloakId));
 
-        return canUserJoinSession(user.getId(), gameweekId, sessionType, buyInAmount);
+        return canUserJoinSession(user.getId(), gameweekId, sessionType, buyInAmount,competition);
     }
 
     /**
@@ -344,19 +344,20 @@ public class SessionParticipationService {
         }
     }
 
-    private void validateUserNotInSimilarSession(Long userId, CompetitionSession session) {
-        boolean alreadyInSimilarSession = sessionParticipationRepository
-                .existsByUserIdAndGameweekIdAndSessionTypeAndBuyInAmount(
-                        userId,
-                        session.getGameweek().getId(),
-                        session.getSessionType(),
-                        session.getBuyInAmount()
-                );
-
-        if (alreadyInSimilarSession) {
-            throw new RuntimeException("User already joined a similar session for this gameweek");
-        }
-    }
+//    private void validateUserNotInSimilarSession(Long userId, CompetitionSession session) {
+//        boolean alreadyInSimilarSession = sessionParticipationRepository
+//                .existsByUserIdAndGameweekIdAndSessionTypeAndBuyInAmountAndSession_Competition(
+//                        userId,
+//                        session.getGameweek().getId(),
+//                        session.getSessionType(),
+//                        session.getBuyInAmount(),
+//                        session.getCompetition()
+//                );
+//
+//        if (alreadyInSimilarSession) {
+//            throw new RuntimeException("User already joined a similar session for this gameweek");
+//        }
+//    }
 
     /**
      * Validate user eligibility to join sessions

@@ -1,9 +1,6 @@
 package FootballFantasy.fantasy.Repositories.GameweekRepository;
 
-import FootballFantasy.fantasy.Entities.GameweekEntity.ParticipationStatus;
-import FootballFantasy.fantasy.Entities.GameweekEntity.SessionParticipation;
-import FootballFantasy.fantasy.Entities.GameweekEntity.CompetitionSession;
-import FootballFantasy.fantasy.Entities.GameweekEntity.SessionType;
+import FootballFantasy.fantasy.Entities.GameweekEntity.*;
 import FootballFantasy.fantasy.Entities.UserEntity.UserEntity;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -35,13 +32,20 @@ public interface SessionParticipationRepository extends JpaRepository<SessionPar
 
     // Check if user already has participation for specific criteria (prevents duplicate entries)
     @Query("SELECT CASE WHEN COUNT(sp) > 0 THEN true ELSE false END FROM SessionParticipation sp " +
-            "WHERE sp.user.id = :userId AND sp.session.gameweek.id = :gameweekId " +
-            "AND sp.session.sessionType = :sessionType AND sp.session.buyInAmount = :buyInAmount")
-    boolean existsByUserIdAndGameweekIdAndSessionTypeAndBuyInAmount(
+            "WHERE sp.user.id = :userId " +
+            "AND sp.session.gameweek.weekNumber = :weekNumber " +
+            "AND sp.session.competition = :competition " +
+            "AND sp.session.sessionType = :sessionType " +
+            "AND sp.session.buyInAmount = :buyInAmount")
+
+    boolean existsByUserIdAndGameweekIdAndSessionTypeAndBuyInAmountAndSession_Competition(
             @Param("userId") Long userId,
-            @Param("gameweekId") Long gameweekId,
+            @Param("weekNumber") Long weekNumber,
             @Param("sessionType") SessionType sessionType,
-            @Param("buyInAmount") BigDecimal buyInAmount);
+            @Param("buyInAmount") BigDecimal buyInAmount,
+            @Param("competition") LeagueTheme competition
+
+    );
 
     // ===== SESSION RELATED QUERIES =====
 

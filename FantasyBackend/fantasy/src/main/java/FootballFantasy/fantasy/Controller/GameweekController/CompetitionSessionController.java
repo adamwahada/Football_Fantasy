@@ -1,6 +1,7 @@
 package FootballFantasy.fantasy.Controller.GameweekController;
 
 import FootballFantasy.fantasy.Entities.GameweekEntity.CompetitionSession;
+import FootballFantasy.fantasy.Entities.GameweekEntity.LeagueTheme;
 import FootballFantasy.fantasy.Entities.GameweekEntity.SessionType;
 import FootballFantasy.fantasy.Services.GameweekService.CompetitionSessionService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -18,15 +19,22 @@ public class CompetitionSessionController {
 
     // ✅ 1. Join or Create a session (for users)
     @PostMapping("/join")
-    public ResponseEntity<CompetitionSession> joinOrCreateSession(
-            @RequestParam Long gameWeekId,
+    public ResponseEntity<CompetitionSession> joinSession(
+            @RequestParam Long gameweekId,
+            @RequestParam LeagueTheme competition,
             @RequestParam SessionType sessionType,
             @RequestParam BigDecimal buyInAmount,
-            @RequestParam(defaultValue = "false") boolean isPrivate,
-            @RequestParam(required = false) String accessKeyFromUser
-    ) {
+            @RequestParam boolean isPrivate,
+            @RequestParam(required = false) String accessKey,
+            @RequestParam Long userId) {
+
         CompetitionSession session = competitionSessionService.joinOrCreateSession(
-                gameWeekId, sessionType, buyInAmount, isPrivate, accessKeyFromUser
+                gameweekId,
+                sessionType,
+                buyInAmount,
+                isPrivate,
+                accessKey,
+                competition
         );
         return ResponseEntity.ok(session);
     }

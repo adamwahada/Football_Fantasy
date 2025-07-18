@@ -34,38 +34,36 @@ public class CompetitionSessionService {
     /*** Join a session (public or private) based on template.
      * If no available session is found, create a new one from template. */
     @Transactional
-    public CompetitionSession joinOrCreateSession(Long gameweekId, SessionType sessionType,
-                                                  BigDecimal buyInAmount, boolean isPrivate,
-                                                  String accessKeyFromUser) {
-
+    public CompetitionSession joinOrCreateSession(Long gameweekId,
+                                                  SessionType sessionType,
+                                                  BigDecimal buyInAmount,
+                                                  boolean isPrivate,
+                                                  String accessKeyFromUser,
+                                                  LeagueTheme competition) {
         GameWeek gameWeek = gameWeekRepository.findById(gameweekId)
                 .orElseThrow(() -> new RuntimeException("GameWeek not found"));
 
-        // ✅ Trouver UN template actif correspondant
-        SessionTemplate template = sessionTemplateRepository.findBySessionTypeAndBuyInAmount(sessionType, buyInAmount)
+        SessionTemplate template = sessionTemplateRepository
+                .findByCompetitionAndSessionTypeAndIsActiveTrue(competition, sessionType)
                 .stream()
-                .filter(SessionTemplate::getIsActive)
+                .filter(t -> t.getBuyInAmount().equals(buyInAmount))
                 .findFirst()
-                .orElseThrow(() -> new RuntimeException("No active template found for session type and amount."));
+                .orElseThrow(() -> new RuntimeException("No active template for that competition/type/amount"));
 
         CompetitionSession session = null;
 
         if (isPrivate) {
-            // ✅ Si clé d'accès fournie → on essaie de trouver la session
-            if (accessKeyFromUser != null && !accessKeyFromUser.trim().isEmpty()) {
-                session = competitionSessionRepository.findPrivateSessionByAccessKey(accessKeyFromUser);
+            if (accessKeyFromUser != null && !accessKeyFromUser.isBlank()) {
+                session = competitionSessionRepository
+                        .findPrivateSessionByAccessKey(accessKeyFromUser, competition);
             }
-
-            // ✅ Si aucune session privée trouvée → on crée une
             if (session == null) {
                 session = createNewSessionFromTemplate(gameWeek, template, true);
             }
         } else {
-            // ✅ Recherche session publique dispo
-            session = competitionSessionRepository.findAvailableSession(gameweekId, sessionType, buyInAmount);
-
+            session = competitionSessionRepository
+                    .findAvailableSession(gameweekId, competition, sessionType, buyInAmount);
             if (session == null) {
-                // ✅ Créer nouvelle session publique
                 session = createNewSessionFromTemplate(gameWeek, template, false);
             }
         }
@@ -73,18 +71,16 @@ public class CompetitionSessionService {
         return session;
     }
 
-
-    /*** Helper: Create a new CompetitionSession from a SessionTemplate.*/
     public CompetitionSession createNewSessionFromTemplate(GameWeek gameWeek,
                                                            SessionTemplate template,
                                                            boolean isPrivate) {
-
         if (gameWeek.getJoinDeadline() == null) {
-            throw new RuntimeException("GameWeek join deadline is not set.");
+            throw new RuntimeException("GameWeek join deadline not set");
         }
 
         CompetitionSession session = new CompetitionSession();
         session.setGameweek(gameWeek);
+        session.setCompetition(gameWeek.getCompetition());          // 🎯 Tie to competition
         session.setSessionName(template.getTemplateName());
         session.setSessionType(template.getSessionType());
         session.setBuyInAmount(template.getBuyInAmount());
@@ -92,17 +88,11 @@ public class CompetitionSessionService {
         session.setCurrentParticipants(0);
         session.setStatus(CompetitionSessionStatus.OPEN);
         session.setCreatedAt(LocalDateTime.now());
-
-        // ✅ Set the joinDeadline to match the GameWeek's join deadline
         session.setJoinDeadline(gameWeek.getJoinDeadline());
-
         session.setTotalPrizePool(BigDecimal.ZERO);
-
-        // 🔑 Generate access key if private
         if (isPrivate) {
-            session.setAccessKey(UUID.randomUUID().toString().substring(0, 8));
+            session.setAccessKey(UUID.randomUUID().toString().substring(0,8));
         }
-
         return competitionSessionRepository.save(session);
     }
 

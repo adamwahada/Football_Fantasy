@@ -42,9 +42,15 @@ public class GameWeekService {
 
     public void deleteGameWeek(Long gameWeekId) {
         GameWeek gameWeek = gameWeekRepository.findById(gameWeekId)
-                .orElseThrow(() -> new IllegalArgumentException("GameWeek non trouvé"));
+                .orElseThrow(() -> new RuntimeException("GameWeek not found"));
+
+        for (Match match : gameWeek.getMatches()) {
+            match.getGameweeks().remove(gameWeek);
+        }
+        gameWeek.getMatches().clear();
 
         gameWeekRepository.delete(gameWeek);
+
     }
 
     @Transactional

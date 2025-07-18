@@ -1,0 +1,23 @@
+[
+  {
+    "homeTeam": "Deportivo Alavés",
+    "awayTeam": "Levante UD",
+    "matchDate": "2025-08-16T17:00:00"
+  } ,
+  {
+    "homeTeam": "Nottingham Forest",
+    "awayTeam": "Brentford",
+    "matchDate": "2025-08-17T14:00:00"
+  },
+  {
+    "homeTeam": "Manchester United",
+    "awayTeam": "Arsenal",
+    "matchDate": "2025-08-17T16:30:00"
+  },
+  {
+    "homeTeam": "Leeds United",
+    "awayTeam": "Everton",
+    "matchDate": "2025-08-18T20:00:00"
+  }
+
+]

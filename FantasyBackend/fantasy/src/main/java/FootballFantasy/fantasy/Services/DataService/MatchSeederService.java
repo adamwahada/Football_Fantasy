@@ -49,31 +49,46 @@ public class MatchSeederService {
         GameWeek gameWeek = gameWeekRepository.findByWeekNumberAndCompetition(weekNumber, league)
                 .orElseThrow(() -> new IllegalArgumentException("GameWeek not found for " + league + " week " + weekNumber));
 
-        if (!gameWeek.getMatches().isEmpty()) {
-            throw new IllegalStateException("GameWeek " + weekNumber + " for " + league + " already has matches");
-        }
-
-        String fileName = "data/" + league.name().toLowerCase().replace("_", "-") + "-gw" + weekNumber + ".json";
+        String fileName = "data/" + league.name().toLowerCase().replace("_", "-") + "/matches/"
+                + league.name().toLowerCase().replace("_", "-") + "-gw" + weekNumber + ".json";
         InputStream inputStream = new ClassPathResource(fileName).getInputStream();
         List<MatchSeedDTO> seedMatches = Arrays.asList(objectMapper.readValue(inputStream, MatchSeedDTO[].class));
 
         for (MatchSeedDTO dto : seedMatches) {
-            Match match = new Match();
-            match.setHomeTeam(dto.getHomeTeam());
-            match.setAwayTeam(dto.getAwayTeam());
-            match.setMatchDate(dto.getMatchDate());
-            match.setHomeScore(0);
-            match.setAwayScore(0);
-            match.setFinished(false);
-            match.setStatus(MatchStatus.SCHEDULED);
-            match.setPredictionDeadline(dto.getMatchDate().minusMinutes(30));
-            match.getGameweeks().add(gameWeek);
-            matchRepository.save(match);
-            gameWeek.getMatches().add(match);
+            Optional<Match> existingMatch = matchRepository.findByHomeTeamAndAwayTeamAndMatchDate(
+                    dto.getHomeTeam(), dto.getAwayTeam(), dto.getMatchDate());
+
+            Match match;
+            if (existingMatch.isPresent()) {
+                match = existingMatch.get();
+            } else {
+                match = new Match();
+                match.setHomeTeam(dto.getHomeTeam());
+                match.setAwayTeam(dto.getAwayTeam());
+                match.setMatchDate(dto.getMatchDate());
+                match.setHomeScore(0);
+                match.setAwayScore(0);
+                match.setFinished(false);
+                match.setStatus(MatchStatus.SCHEDULED);
+                match.setPredictionDeadline(dto.getMatchDate().minusMinutes(30));
+                matchRepository.save(match);
+            }
+
+            // Add link between gameweek and match only if missing
+            if (!match.getGameweeks().contains(gameWeek)) {
+                match.getGameweeks().add(gameWeek);
+            }
+            if (!gameWeek.getMatches().contains(match)) {
+                gameWeek.getMatches().add(match);
+            }
         }
+
+        // Save updated associations
+        gameWeekRepository.save(gameWeek);
 
         updateGameWeekTimings(gameWeek);
     }
+
 
     /**
      * Update match results after the gameweek is over using a JSON file
@@ -84,8 +99,7 @@ public class MatchSeederService {
         GameWeek gw = gameWeekRepository.findByWeekNumberAndCompetition(weekNumber, league)
                 .orElseThrow(() -> new IllegalArgumentException("GameWeek not found"));
 
-        String file = String.format("data/%s-gw%d-results.json",
-                league.name().toLowerCase().replace("_","-"), weekNumber);
+        String file = "data/" + league.name().toLowerCase().replace("_", "-") + "/results/" + league.name().toLowerCase().replace("_", "-") + "-gw" + weekNumber + "-results.json";
         InputStream is = new ClassPathResource(file).getInputStream();
 
         MatchResultDTO[] results = objectMapper.readValue(is, MatchResultDTO[].class);
@@ -94,19 +108,13 @@ public class MatchSeederService {
         int skippedCount = 0;
 
         for (MatchResultDTO dto : results) {
-            // Find matching existing match
-            Optional<Match> optionalMatch = gw.getMatches().stream()
-                    .filter(m -> m.getHomeTeam().equalsIgnoreCase(dto.getHomeTeam())
-                            && m.getAwayTeam().equalsIgnoreCase(dto.getAwayTeam())
-                            && m.getMatchDate().isEqual(dto.getMatchDate()))
-                    .findFirst();
+            Optional<Match> optionalMatch = matchRepository.findByHomeTeamAndAwayTeamAndMatchDate(
+                    dto.getHomeTeam(), dto.getAwayTeam(), dto.getMatchDate());
 
             if (optionalMatch.isPresent()) {
                 Match match = optionalMatch.get();
                 MatchStatus oldStatus = match.getStatus();
 
-                // 🔥 KEY FIX: Create a fresh match object with updates
-                // This ensures the service layer detects the status change properly
                 Match matchUpdate = new Match();
                 matchUpdate.setHomeTeam(match.getHomeTeam());
                 matchUpdate.setAwayTeam(match.getAwayTeam());
@@ -120,12 +128,10 @@ public class MatchSeederService {
 
                 try {
                     matchService.updateMatch(match.getId(), matchUpdate);
-
                     updatedCount++;
                     System.out.println("✅ Updated: " + dto.getHomeTeam() + " vs " + dto.getAwayTeam() +
                             " with score " + dto.getHomeScore() + "-" + dto.getAwayScore());
 
-                    // Log if this should trigger an event
                     if (oldStatus != MatchStatus.COMPLETED) {
                         System.out.println("🔥 Match completion event should trigger for: " + dto.getHomeTeam() + " vs " + dto.getAwayTeam());
                     }
@@ -139,6 +145,7 @@ public class MatchSeederService {
                         " on " + dto.getMatchDate());
             }
         }
+
 
         System.out.println("\n📊 Update summary: " + updatedCount + " matches updated, " + skippedCount + " matches skipped");
 

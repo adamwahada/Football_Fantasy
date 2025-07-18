@@ -1,0 +1,23 @@
+[
+  {
+    "homeTeam": "Aston Villa",
+    "awayTeam": "Crystal Palace",
+    "matchDate": "2025-08-29T20:00:00",
+    "homeScore": 3,
+    "awayScore": 1
+  },
+  {
+    "homeTeam": "Chelsea",
+    "awayTeam": "Fulham",
+    "matchDate": "2025-08-30T12:30:00",
+    "homeScore": 2,
+    "awayScore": 2
+  },
+  {
+    "homeTeam": "Manchester United",
+    "awayTeam": "Burnley",
+    "matchDate": "2025-08-30T15:00:00",
+    "homeScore": 1,
+    "awayScore": 0
+  }
+]

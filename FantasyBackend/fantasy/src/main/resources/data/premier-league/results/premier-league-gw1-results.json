@@ -1,11 +1,10 @@
-[
-  {
-    "homeTeam": "Liverpool",
-    "awayTeam": "Bournemouth",
-    "matchDate": "2025-08-15T20:00:00",
-    "homeScore": 3,
-    "awayScore": 1
-  },
+[  {
+  "homeTeam": "Liverpool",
+  "awayTeam": "Bournemouth",
+  "matchDate": "2025-08-15T20:00:00",
+  "homeScore": 3,
+  "awayScore": 1
+},
   {
     "homeTeam": "Aston Villa",
     "awayTeam": "Newcastle United",

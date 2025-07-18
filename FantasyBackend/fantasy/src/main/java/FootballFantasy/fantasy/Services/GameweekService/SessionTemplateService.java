@@ -1,5 +1,6 @@
 package FootballFantasy.fantasy.Services.GameweekService;
 
+import FootballFantasy.fantasy.Entities.GameweekEntity.LeagueTheme;
 import FootballFantasy.fantasy.Entities.GameweekEntity.SessionTemplate;
 import FootballFantasy.fantasy.Entities.GameweekEntity.SessionType;
 import FootballFantasy.fantasy.Repositories.GameweekRepository.SessionTemplateRepository;
@@ -14,73 +15,70 @@ import java.util.Optional;
 public class SessionTemplateService {
 
     @Autowired
-    private SessionTemplateRepository sessionTemplateRepository;
+    private SessionTemplateRepository repo;
 
-    public SessionTemplate createTemplate(String templateName, SessionType sessionType,
-                                          BigDecimal buyInAmount, Integer maxParticipants,
-                                          String description) {
+    public SessionTemplate createTemplate(LeagueTheme competition,
+                                          String templateName,
+                                          SessionType sessionType,
+                                          BigDecimal buyInAmount,
+                                          Integer maxParticipants,
+                                          String description,
+                                          boolean isPrivate) {
         SessionTemplate template = new SessionTemplate();
+        template.setCompetition(competition);
         template.setTemplateName(templateName);
         template.setSessionType(sessionType);
         template.setBuyInAmount(buyInAmount);
         template.setMaxParticipants(maxParticipants);
-        template.setDescription(description);
+        template.setIsPrivate(isPrivate);
         template.setIsActive(true);
-
-        return sessionTemplateRepository.save(template);
+        template.setDescription(description);
+        return repo.save(template);
     }
 
-    public SessionTemplate updateTemplate(Long templateId, String templateName,
-                                          BigDecimal buyInAmount, Integer maxParticipants,
-                                          String description, boolean isActive, boolean isPrivate) {
-        Optional<SessionTemplate> template = sessionTemplateRepository.findById(templateId);
-        if (template.isPresent()) {
-            SessionTemplate existing = template.get();
-            existing.setTemplateName(templateName);
-            existing.setBuyInAmount(buyInAmount);
-            existing.setMaxParticipants(maxParticipants);
-            existing.setIsPrivate(isPrivate);
-            existing.setIsActive(isActive);
-            existing.setDescription(description);
-            return sessionTemplateRepository.save(existing);
-        }
-        throw new RuntimeException("Template not found");
+    public SessionTemplate updateTemplate(Long id,
+                                          LeagueTheme competition,
+                                          String templateName,
+                                          BigDecimal buyInAmount,
+                                          Integer maxParticipants,
+                                          String description,
+                                          boolean isActive,
+                                          boolean isPrivate) {
+        SessionTemplate t = repo.findById(id).orElseThrow(() -> new RuntimeException("Template not found"));
+        t.setCompetition(competition);
+        t.setTemplateName(templateName);
+        t.setBuyInAmount(buyInAmount);
+        t.setMaxParticipants(maxParticipants);
+        t.setIsPrivate(isPrivate);
+        t.setIsActive(isActive);
+        t.setDescription(description);
+        return repo.save(t);
     }
 
-    public void deleteTemplate(Long templateId) {
-        if (sessionTemplateRepository.existsById(templateId)) {
-            sessionTemplateRepository.deleteById(templateId);
-        } else {
-            throw new RuntimeException("Template not found");
-        }
+    public void deleteTemplate(Long id) {
+        if (!repo.existsById(id)) throw new RuntimeException("Template not found");
+        repo.deleteById(id);
     }
 
-    public SessionTemplate toggleTemplate(Long templateId, boolean isActive) {
-        Optional<SessionTemplate> template = sessionTemplateRepository.findById(templateId);
-        if (template.isPresent()) {
-            template.get().setIsActive(isActive);
-            return sessionTemplateRepository.save(template.get());
-        }
-        throw new RuntimeException("Template not found");
+    public SessionTemplate toggleTemplate(Long id, boolean isActive) {
+        SessionTemplate t = repo.findById(id).orElseThrow(() -> new RuntimeException("Template not found"));
+        t.setIsActive(isActive);
+        return repo.save(t);
+    }
+
+    public List<SessionTemplate> getTemplates(LeagueTheme competition, SessionType sessionType) {
+        return repo.findByCompetitionAndSessionTypeAndIsActiveTrue(competition, sessionType);
     }
 
     public List<SessionTemplate> getTemplatesByType(SessionType sessionType) {
-        return sessionTemplateRepository.findBySessionTypeAndIsActiveTrue(sessionType);
+        return repo.findBySessionTypeAndIsActiveTrue(sessionType);
     }
 
     public List<SessionTemplate> getAllActiveTemplates() {
-        return sessionTemplateRepository.findByIsActiveTrue();
-    }
-
-    public SessionTemplate findTemplate(SessionType sessionType, BigDecimal buyInAmount) {
-        return sessionTemplateRepository.findBySessionTypeAndBuyInAmount(sessionType, buyInAmount)
-                .stream()
-                .filter(SessionTemplate::getIsActive)
-                .findFirst()
-                .orElse(null);
+        return repo.findByIsActiveTrue();
     }
 
     public List<SessionTemplate> findTemplates(SessionType sessionType, BigDecimal buyInAmount) {
-        return sessionTemplateRepository.findBySessionTypeAndBuyInAmount(sessionType, buyInAmount);
+        return repo.findBySessionTypeAndBuyInAmount(sessionType, buyInAmount);
     }
 }
