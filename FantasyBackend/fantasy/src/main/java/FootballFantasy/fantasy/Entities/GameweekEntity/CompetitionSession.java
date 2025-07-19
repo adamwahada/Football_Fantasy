@@ -42,6 +42,9 @@ public class CompetitionSession {
     @Column(nullable = false)
     private Integer currentParticipants = 0;
 
+    @Version
+    private int version;
+
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private CompetitionSessionStatus status = CompetitionSessionStatus.OPEN;

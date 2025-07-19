@@ -4,6 +4,7 @@ import FootballFantasy.fantasy.Dto.UserSessionStats;
 import FootballFantasy.fantasy.Entities.GameweekEntity.*;
 import FootballFantasy.fantasy.Entities.UserEntity.UserEntity;
 import FootballFantasy.fantasy.Repositories.GameweekRepository.CompetitionSessionRepository;
+import FootballFantasy.fantasy.Repositories.GameweekRepository.GameWeekRepository;
 import FootballFantasy.fantasy.Repositories.GameweekRepository.SessionParticipationRepository;
 import FootballFantasy.fantasy.Repositories.UserRepository.UserRepository;
 import FootballFantasy.fantasy.Services.UserService.UserService;
@@ -35,6 +36,8 @@ public class SessionParticipationService {
     @Lazy
     private UserService userService;
 
+    @Autowired
+    private GameWeekRepository gameWeekRepository;
 
     @Autowired
     private CompetitionSessionService competitionSessionService;
@@ -44,33 +47,52 @@ public class SessionParticipationService {
      */
     @Transactional
     public SessionParticipation joinCompetition(Long gameweekId,
-                                                LeagueTheme competition,
+                                                LeagueTheme competitionFromFrontend, // still keep this param if needed for validation
                                                 SessionType sessionType,
                                                 BigDecimal buyInAmount,
                                                 boolean isPrivate,
                                                 String accessKeyFromUser,
                                                 Long userId) {
 
+        // ✅ Get the actual GameWeek and real competition from DB
+        GameWeek gameWeek = gameWeekRepository.findById(gameweekId)
+                .orElseThrow(() -> new IllegalArgumentException("GameWeek not found"));
+
+        LeagueTheme actualCompetition = gameWeek.getCompetition();
+
+        // ❌ Optional validation (but recommended)
+        if (!actualCompetition.equals(competitionFromFrontend)) {
+            throw new IllegalArgumentException("Mismatch between GameWeek's competition and provided competition");
+        }
+
+        // ✅ Always use the correct competition from GameWeek
         CompetitionSession session = competitionSessionService
-                .joinOrCreateSession(gameweekId, sessionType, buyInAmount, isPrivate, accessKeyFromUser, competition);
+                .joinOrCreateSession(gameweekId, sessionType, buyInAmount, isPrivate, accessKeyFromUser, actualCompetition);
 
         return joinSession(session.getId(), userId);
     }
+
 
     /**
      * Complete flow: Find/Create session and join it (using Keycloak ID)
      */
     @Transactional
-    public SessionParticipation joinCompetitionByKeycloakId(Long gameweekId, LeagueTheme competition,
+    public SessionParticipation joinCompetitionByKeycloakId(Long gameweekId, LeagueTheme competitionFromFrontend,
                                                             SessionType sessionType,
-                                                            BigDecimal buyInAmount, boolean isPrivate,
-                                                            String accessKeyFromUser, String keycloakId) {
+                                                            BigDecimal buyInAmount,
+                                                            boolean isPrivate, String accessKeyFromUser, String keycloakId) {
+        if (keycloakId == null || keycloakId.isBlank()) {
+            throw new IllegalArgumentException("Keycloak ID is required");
+        }
 
         UserEntity user = userRepository.findByKeycloakId(keycloakId)
                 .orElseThrow(() -> new RuntimeException("User not found with Keycloak ID: " + keycloakId));
 
-        return joinCompetition(gameweekId, competition, sessionType, buyInAmount, isPrivate, accessKeyFromUser, user.getId());
+        return joinCompetition(gameweekId, competitionFromFrontend, sessionType, buyInAmount,
+                isPrivate, accessKeyFromUser, user.getId()
+        );
     }
+
 
     /**
      * Join an existing session

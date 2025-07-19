@@ -1,0 +1,2882 @@
+[
+  {
+    "templateName": "Private One Vs One - $10 - Premier League",
+    "isPrivate": true,
+    "sessionType": "ONE_VS_ONE",
+    "competition": "PREMIER_LEAGUE",
+    "buyInAmount": 10,
+    "maxParticipants": 2,
+    "isActive": true,
+    "description": "Private session (ONE_VS_ONE) for PREMIER_LEAGUE with buy-in $10"
+  },
+  {
+    "templateName": "Public One Vs One - $10 - Premier League",
+    "isPrivate": false,
+    "sessionType": "ONE_VS_ONE",
+    "competition": "PREMIER_LEAGUE",
+    "buyInAmount": 10,
+    "maxParticipants": 2,
+    "isActive": true,
+    "description": "Public session (ONE_VS_ONE) for PREMIER_LEAGUE with buy-in $10"
+  },
+  {
+    "templateName": "Private One Vs One - $20 - Premier League",
+    "isPrivate": true,
+    "sessionType": "ONE_VS_ONE",
+    "competition": "PREMIER_LEAGUE",
+    "buyInAmount": 20,
+    "maxParticipants": 2,
+    "isActive": true,
+    "description": "Private session (ONE_VS_ONE) for PREMIER_LEAGUE with buy-in $20"
+  },
+  {
+    "templateName": "Public One Vs One - $20 - Premier League",
+    "isPrivate": false,
+    "sessionType": "ONE_VS_ONE",
+    "competition": "PREMIER_LEAGUE",
+    "buyInAmount": 20,
+    "maxParticipants": 2,
+    "isActive": true,
+    "description": "Public session (ONE_VS_ONE) for PREMIER_LEAGUE with buy-in $20"
+  },
+  {
+    "templateName": "Private One Vs One - $50 - Premier League",
+    "isPrivate": true,
+    "sessionType": "ONE_VS_ONE",
+    "competition": "PREMIER_LEAGUE",
+    "buyInAmount": 50,
+    "maxParticipants": 2,
+    "isActive": true,
+    "description": "Private session (ONE_VS_ONE) for PREMIER_LEAGUE with buy-in $50"
+  },
+  {
+    "templateName": "Public One Vs One - $50 - Premier League",
+    "isPrivate": false,
+    "sessionType": "ONE_VS_ONE",
+    "competition": "PREMIER_LEAGUE",
+    "buyInAmount": 50,
+    "maxParticipants": 2,
+    "isActive": true,
+    "description": "Public session (ONE_VS_ONE) for PREMIER_LEAGUE with buy-in $50"
+  },
+  {
+    "templateName": "Private One Vs One - $100 - Premier League",
+    "isPrivate": true,
+    "sessionType": "ONE_VS_ONE",
+    "competition": "PREMIER_LEAGUE",
+    "buyInAmount": 100,
+    "maxParticipants": 2,
+    "isActive": true,
+    "description": "Private session (ONE_VS_ONE) for PREMIER_LEAGUE with buy-in $100"
+  },
+  {
+    "templateName": "Public One Vs One - $100 - Premier League",
+    "isPrivate": false,
+    "sessionType": "ONE_VS_ONE",
+    "competition": "PREMIER_LEAGUE",
+    "buyInAmount": 100,
+    "maxParticipants": 2,
+    "isActive": true,
+    "description": "Public session (ONE_VS_ONE) for PREMIER_LEAGUE with buy-in $100"
+  },
+  {
+    "templateName": "Private One Vs One - $10 - Serie A",
+    "isPrivate": true,
+    "sessionType": "ONE_VS_ONE",
+    "competition": "SERIE_A",
+    "buyInAmount": 10,
+    "maxParticipants": 2,
+    "isActive": true,
+    "description": "Private session (ONE_VS_ONE) for SERIE_A with buy-in $10"
+  },
+  {
+    "templateName": "Public One Vs One - $10 - Serie A",
+    "isPrivate": false,
+    "sessionType": "ONE_VS_ONE",
+    "competition": "SERIE_A",
+    "buyInAmount": 10,
+    "maxParticipants": 2,
+    "isActive": true,
+    "description": "Public session (ONE_VS_ONE) for SERIE_A with buy-in $10"
+  },
+  {
+    "templateName": "Private One Vs One - $20 - Serie A",
+    "isPrivate": true,
+    "sessionType": "ONE_VS_ONE",
+    "competition": "SERIE_A",
+    "buyInAmount": 20,
+    "maxParticipants": 2,
+    "isActive": true,
+    "description": "Private session (ONE_VS_ONE) for SERIE_A with buy-in $20"
+  },
+  {
+    "templateName": "Public One Vs One - $20 - Serie A",
+    "isPrivate": false,
+    "sessionType": "ONE_VS_ONE",
+    "competition": "SERIE_A",
+    "buyInAmount": 20,
+    "maxParticipants": 2,
+    "isActive": true,
+    "description": "Public session (ONE_VS_ONE) for SERIE_A with buy-in $20"
+  },
+  {
+    "templateName": "Private One Vs One - $50 - Serie A",
+    "isPrivate": true,
+    "sessionType": "ONE_VS_ONE",
+    "competition": "SERIE_A",
+    "buyInAmount": 50,
+    "maxParticipants": 2,
+    "isActive": true,
+    "description": "Private session (ONE_VS_ONE) for SERIE_A with buy-in $50"
+  },
+  {
+    "templateName": "Public One Vs One - $50 - Serie A",
+    "isPrivate": false,
+    "sessionType": "ONE_VS_ONE",
+    "competition": "SERIE_A",
+    "buyInAmount": 50,
+    "maxParticipants": 2,
+    "isActive": true,
+    "description": "Public session (ONE_VS_ONE) for SERIE_A with buy-in $50"
+  },
+  {
+    "templateName": "Private One Vs One - $100 - Serie A",
+    "isPrivate": true,
+    "sessionType": "ONE_VS_ONE",
+    "competition": "SERIE_A",
+    "buyInAmount": 100,
+    "maxParticipants": 2,
+    "isActive": true,
+    "description": "Private session (ONE_VS_ONE) for SERIE_A with buy-in $100"
+  },
+  {
+    "templateName": "Public One Vs One - $100 - Serie A",
+    "isPrivate": false,
+    "sessionType": "ONE_VS_ONE",
+    "competition": "SERIE_A",
+    "buyInAmount": 100,
+    "maxParticipants": 2,
+    "isActive": true,
+    "description": "Public session (ONE_VS_ONE) for SERIE_A with buy-in $100"
+  },
+  {
+    "templateName": "Private One Vs One - $10 - Champions League",
+    "isPrivate": true,
+    "sessionType": "ONE_VS_ONE",
+    "competition": "CHAMPIONS_LEAGUE",
+    "buyInAmount": 10,
+    "maxParticipants": 2,
+    "isActive": true,
+    "description": "Private session (ONE_VS_ONE) for CHAMPIONS_LEAGUE with buy-in $10"
+  },
+  {
+    "templateName": "Public One Vs One - $10 - Champions League",
+    "isPrivate": false,
+    "sessionType": "ONE_VS_ONE",
+    "competition": "CHAMPIONS_LEAGUE",
+    "buyInAmount": 10,
+    "maxParticipants": 2,
+    "isActive": true,
+    "description": "Public session (ONE_VS_ONE) for CHAMPIONS_LEAGUE with buy-in $10"
+  },
+  {
+    "templateName": "Private One Vs One - $20 - Champions League",
+    "isPrivate": true,
+    "sessionType": "ONE_VS_ONE",
+    "competition": "CHAMPIONS_LEAGUE",
+    "buyInAmount": 20,
+    "maxParticipants": 2,
+    "isActive": true,
+    "description": "Private session (ONE_VS_ONE) for CHAMPIONS_LEAGUE with buy-in $20"
+  },
+  {
+    "templateName": "Public One Vs One - $20 - Champions League",
+    "isPrivate": false,
+    "sessionType": "ONE_VS_ONE",
+    "competition": "CHAMPIONS_LEAGUE",
+    "buyInAmount": 20,
+    "maxParticipants": 2,
+    "isActive": true,
+    "description": "Public session (ONE_VS_ONE) for CHAMPIONS_LEAGUE with buy-in $20"
+  },
+  {
+    "templateName": "Private One Vs One - $50 - Champions League",
+    "isPrivate": true,
+    "sessionType": "ONE_VS_ONE",
+    "competition": "CHAMPIONS_LEAGUE",
+    "buyInAmount": 50,
+    "maxParticipants": 2,
+    "isActive": true,
+    "description": "Private session (ONE_VS_ONE) for CHAMPIONS_LEAGUE with buy-in $50"
+  },
+  {
+    "templateName": "Public One Vs One - $50 - Champions League",
+    "isPrivate": false,
+    "sessionType": "ONE_VS_ONE",
+    "competition": "CHAMPIONS_LEAGUE",
+    "buyInAmount": 50,
+    "maxParticipants": 2,
+    "isActive": true,
+    "description": "Public session (ONE_VS_ONE) for CHAMPIONS_LEAGUE with buy-in $50"
+  },
+  {
+    "templateName": "Private One Vs One - $100 - Champions League",
+    "isPrivate": true,
+    "sessionType": "ONE_VS_ONE",
+    "competition": "CHAMPIONS_LEAGUE",
+    "buyInAmount": 100,
+    "maxParticipants": 2,
+    "isActive": true,
+    "description": "Private session (ONE_VS_ONE) for CHAMPIONS_LEAGUE with buy-in $100"
+  },
+  {
+    "templateName": "Public One Vs One - $100 - Champions League",
+    "isPrivate": false,
+    "sessionType": "ONE_VS_ONE",
+    "competition": "CHAMPIONS_LEAGUE",
+    "buyInAmount": 100,
+    "maxParticipants": 2,
+    "isActive": true,
+    "description": "Public session (ONE_VS_ONE) for CHAMPIONS_LEAGUE with buy-in $100"
+  },
+  {
+    "templateName": "Private One Vs One - $10 - Europe League",
+    "isPrivate": true,
+    "sessionType": "ONE_VS_ONE",
+    "competition": "EUROPE_LEAGUE",
+    "buyInAmount": 10,
+    "maxParticipants": 2,
+    "isActive": true,
+    "description": "Private session (ONE_VS_ONE) for EUROPE_LEAGUE with buy-in $10"
+  },
+  {
+    "templateName": "Public One Vs One - $10 - Europe League",
+    "isPrivate": false,
+    "sessionType": "ONE_VS_ONE",
+    "competition": "EUROPE_LEAGUE",
+    "buyInAmount": 10,
+    "maxParticipants": 2,
+    "isActive": true,
+    "description": "Public session (ONE_VS_ONE) for EUROPE_LEAGUE with buy-in $10"
+  },
+  {
+    "templateName": "Private One Vs One - $20 - Europe League",
+    "isPrivate": true,
+    "sessionType": "ONE_VS_ONE",
+    "competition": "EUROPE_LEAGUE",
+    "buyInAmount": 20,
+    "maxParticipants": 2,
+    "isActive": true,
+    "description": "Private session (ONE_VS_ONE) for EUROPE_LEAGUE with buy-in $20"
+  },
+  {
+    "templateName": "Public One Vs One - $20 - Europe League",
+    "isPrivate": false,
+    "sessionType": "ONE_VS_ONE",
+    "competition": "EUROPE_LEAGUE",
+    "buyInAmount": 20,
+    "maxParticipants": 2,
+    "isActive": true,
+    "description": "Public session (ONE_VS_ONE) for EUROPE_LEAGUE with buy-in $20"
+  },
+  {
+    "templateName": "Private One Vs One - $50 - Europe League",
+    "isPrivate": true,
+    "sessionType": "ONE_VS_ONE",
+    "competition": "EUROPE_LEAGUE",
+    "buyInAmount": 50,
+    "maxParticipants": 2,
+    "isActive": true,
+    "description": "Private session (ONE_VS_ONE) for EUROPE_LEAGUE with buy-in $50"
+  },
+  {
+    "templateName": "Public One Vs One - $50 - Europe League",
+    "isPrivate": false,
+    "sessionType": "ONE_VS_ONE",
+    "competition": "EUROPE_LEAGUE",
+    "buyInAmount": 50,
+    "maxParticipants": 2,
+    "isActive": true,
+    "description": "Public session (ONE_VS_ONE) for EUROPE_LEAGUE with buy-in $50"
+  },
+  {
+    "templateName": "Private One Vs One - $100 - Europe League",
+    "isPrivate": true,
+    "sessionType": "ONE_VS_ONE",
+    "competition": "EUROPE_LEAGUE",
+    "buyInAmount": 100,
+    "maxParticipants": 2,
+    "isActive": true,
+    "description": "Private session (ONE_VS_ONE) for EUROPE_LEAGUE with buy-in $100"
+  },
+  {
+    "templateName": "Public One Vs One - $100 - Europe League",
+    "isPrivate": false,
+    "sessionType": "ONE_VS_ONE",
+    "competition": "EUROPE_LEAGUE",
+    "buyInAmount": 100,
+    "maxParticipants": 2,
+    "isActive": true,
+    "description": "Public session (ONE_VS_ONE) for EUROPE_LEAGUE with buy-in $100"
+  },
+  {
+    "templateName": "Private One Vs One - $10 - Buendsligua",
+    "isPrivate": true,
+    "sessionType": "ONE_VS_ONE",
+    "competition": "BUENDSLIGUA",
+    "buyInAmount": 10,
+    "maxParticipants": 2,
+    "isActive": true,
+    "description": "Private session (ONE_VS_ONE) for BUENDSLIGUA with buy-in $10"
+  },
+  {
+    "templateName": "Public One Vs One - $10 - Buendsligua",
+    "isPrivate": false,
+    "sessionType": "ONE_VS_ONE",
+    "competition": "BUENDSLIGUA",
+    "buyInAmount": 10,
+    "maxParticipants": 2,
+    "isActive": true,
+    "description": "Public session (ONE_VS_ONE) for BUENDSLIGUA with buy-in $10"
+  },
+  {
+    "templateName": "Private One Vs One - $20 - Buendsligua",
+    "isPrivate": true,
+    "sessionType": "ONE_VS_ONE",
+    "competition": "BUENDSLIGUA",
+    "buyInAmount": 20,
+    "maxParticipants": 2,
+    "isActive": true,
+    "description": "Private session (ONE_VS_ONE) for BUENDSLIGUA with buy-in $20"
+  },
+  {
+    "templateName": "Public One Vs One - $20 - Buendsligua",
+    "isPrivate": false,
+    "sessionType": "ONE_VS_ONE",
+    "competition": "BUENDSLIGUA",
+    "buyInAmount": 20,
+    "maxParticipants": 2,
+    "isActive": true,
+    "description": "Public session (ONE_VS_ONE) for BUENDSLIGUA with buy-in $20"
+  },
+  {
+    "templateName": "Private One Vs One - $50 - Buendsligua",
+    "isPrivate": true,
+    "sessionType": "ONE_VS_ONE",
+    "competition": "BUENDSLIGUA",
+    "buyInAmount": 50,
+    "maxParticipants": 2,
+    "isActive": true,
+    "description": "Private session (ONE_VS_ONE) for BUENDSLIGUA with buy-in $50"
+  },
+  {
+    "templateName": "Public One Vs One - $50 - Buendsligua",
+    "isPrivate": false,
+    "sessionType": "ONE_VS_ONE",
+    "competition": "BUENDSLIGUA",
+    "buyInAmount": 50,
+    "maxParticipants": 2,
+    "isActive": true,
+    "description": "Public session (ONE_VS_ONE) for BUENDSLIGUA with buy-in $50"
+  },
+  {
+    "templateName": "Private One Vs One - $100 - Buendsligua",
+    "isPrivate": true,
+    "sessionType": "ONE_VS_ONE",
+    "competition": "BUENDSLIGUA",
+    "buyInAmount": 100,
+    "maxParticipants": 2,
+    "isActive": true,
+    "description": "Private session (ONE_VS_ONE) for BUENDSLIGUA with buy-in $100"
+  },
+  {
+    "templateName": "Public One Vs One - $100 - Buendsligua",
+    "isPrivate": false,
+    "sessionType": "ONE_VS_ONE",
+    "competition": "BUENDSLIGUA",
+    "buyInAmount": 100,
+    "maxParticipants": 2,
+    "isActive": true,
+    "description": "Public session (ONE_VS_ONE) for BUENDSLIGUA with buy-in $100"
+  },
+  {
+    "templateName": "Private One Vs One - $10 - La Liga",
+    "isPrivate": true,
+    "sessionType": "ONE_VS_ONE",
+    "competition": "LA_LIGA",
+    "buyInAmount": 10,
+    "maxParticipants": 2,
+    "isActive": true,
+    "description": "Private session (ONE_VS_ONE) for LA_LIGA with buy-in $10"
+  },
+  {
+    "templateName": "Public One Vs One - $10 - La Liga",
+    "isPrivate": false,
+    "sessionType": "ONE_VS_ONE",
+    "competition": "LA_LIGA",
+    "buyInAmount": 10,
+    "maxParticipants": 2,
+    "isActive": true,
+    "description": "Public session (ONE_VS_ONE) for LA_LIGA with buy-in $10"
+  },
+  {
+    "templateName": "Private One Vs One - $20 - La Liga",
+    "isPrivate": true,
+    "sessionType": "ONE_VS_ONE",
+    "competition": "LA_LIGA",
+    "buyInAmount": 20,
+    "maxParticipants": 2,
+    "isActive": true,
+    "description": "Private session (ONE_VS_ONE) for LA_LIGA with buy-in $20"
+  },
+  {
+    "templateName": "Public One Vs One - $20 - La Liga",
+    "isPrivate": false,
+    "sessionType": "ONE_VS_ONE",
+    "competition": "LA_LIGA",
+    "buyInAmount": 20,
+    "maxParticipants": 2,
+    "isActive": true,
+    "description": "Public session (ONE_VS_ONE) for LA_LIGA with buy-in $20"
+  },
+  {
+    "templateName": "Private One Vs One - $50 - La Liga",
+    "isPrivate": true,
+    "sessionType": "ONE_VS_ONE",
+    "competition": "LA_LIGA",
+    "buyInAmount": 50,
+    "maxParticipants": 2,
+    "isActive": true,
+    "description": "Private session (ONE_VS_ONE) for LA_LIGA with buy-in $50"
+  },
+  {
+    "templateName": "Public One Vs One - $50 - La Liga",
+    "isPrivate": false,
+    "sessionType": "ONE_VS_ONE",
+    "competition": "LA_LIGA",
+    "buyInAmount": 50,
+    "maxParticipants": 2,
+    "isActive": true,
+    "description": "Public session (ONE_VS_ONE) for LA_LIGA with buy-in $50"
+  },
+  {
+    "templateName": "Private One Vs One - $100 - La Liga",
+    "isPrivate": true,
+    "sessionType": "ONE_VS_ONE",
+    "competition": "LA_LIGA",
+    "buyInAmount": 100,
+    "maxParticipants": 2,
+    "isActive": true,
+    "description": "Private session (ONE_VS_ONE) for LA_LIGA with buy-in $100"
+  },
+  {
+    "templateName": "Public One Vs One - $100 - La Liga",
+    "isPrivate": false,
+    "sessionType": "ONE_VS_ONE",
+    "competition": "LA_LIGA",
+    "buyInAmount": 100,
+    "maxParticipants": 2,
+    "isActive": true,
+    "description": "Public session (ONE_VS_ONE) for LA_LIGA with buy-in $100"
+  },
+  {
+    "templateName": "Private One Vs One - $10 - Ligue One",
+    "isPrivate": true,
+    "sessionType": "ONE_VS_ONE",
+    "competition": "LIGUE_ONE",
+    "buyInAmount": 10,
+    "maxParticipants": 2,
+    "isActive": true,
+    "description": "Private session (ONE_VS_ONE) for LIGUE_ONE with buy-in $10"
+  },
+  {
+    "templateName": "Public One Vs One - $10 - Ligue One",
+    "isPrivate": false,
+    "sessionType": "ONE_VS_ONE",
+    "competition": "LIGUE_ONE",
+    "buyInAmount": 10,
+    "maxParticipants": 2,
+    "isActive": true,
+    "description": "Public session (ONE_VS_ONE) for LIGUE_ONE with buy-in $10"
+  },
+  {
+    "templateName": "Private One Vs One - $20 - Ligue One",
+    "isPrivate": true,
+    "sessionType": "ONE_VS_ONE",
+    "competition": "LIGUE_ONE",
+    "buyInAmount": 20,
+    "maxParticipants": 2,
+    "isActive": true,
+    "description": "Private session (ONE_VS_ONE) for LIGUE_ONE with buy-in $20"
+  },
+  {
+    "templateName": "Public One Vs One - $20 - Ligue One",
+    "isPrivate": false,
+    "sessionType": "ONE_VS_ONE",
+    "competition": "LIGUE_ONE",
+    "buyInAmount": 20,
+    "maxParticipants": 2,
+    "isActive": true,
+    "description": "Public session (ONE_VS_ONE) for LIGUE_ONE with buy-in $20"
+  },
+  {
+    "templateName": "Private One Vs One - $50 - Ligue One",
+    "isPrivate": true,
+    "sessionType": "ONE_VS_ONE",
+    "competition": "LIGUE_ONE",
+    "buyInAmount": 50,
+    "maxParticipants": 2,
+    "isActive": true,
+    "description": "Private session (ONE_VS_ONE) for LIGUE_ONE with buy-in $50"
+  },
+  {
+    "templateName": "Public One Vs One - $50 - Ligue One",
+    "isPrivate": false,
+    "sessionType": "ONE_VS_ONE",
+    "competition": "LIGUE_ONE",
+    "buyInAmount": 50,
+    "maxParticipants": 2,
+    "isActive": true,
+    "description": "Public session (ONE_VS_ONE) for LIGUE_ONE with buy-in $50"
+  },
+  {
+    "templateName": "Private One Vs One - $100 - Ligue One",
+    "isPrivate": true,
+    "sessionType": "ONE_VS_ONE",
+    "competition": "LIGUE_ONE",
+    "buyInAmount": 100,
+    "maxParticipants": 2,
+    "isActive": true,
+    "description": "Private session (ONE_VS_ONE) for LIGUE_ONE with buy-in $100"
+  },
+  {
+    "templateName": "Public One Vs One - $100 - Ligue One",
+    "isPrivate": false,
+    "sessionType": "ONE_VS_ONE",
+    "competition": "LIGUE_ONE",
+    "buyInAmount": 100,
+    "maxParticipants": 2,
+    "isActive": true,
+    "description": "Public session (ONE_VS_ONE) for LIGUE_ONE with buy-in $100"
+  },
+  {
+    "templateName": "Private One Vs One - $10 - Bestoff",
+    "isPrivate": true,
+    "sessionType": "ONE_VS_ONE",
+    "competition": "BESTOFF",
+    "buyInAmount": 10,
+    "maxParticipants": 2,
+    "isActive": true,
+    "description": "Private session (ONE_VS_ONE) for BESTOFF with buy-in $10"
+  },
+  {
+    "templateName": "Public One Vs One - $10 - Bestoff",
+    "isPrivate": false,
+    "sessionType": "ONE_VS_ONE",
+    "competition": "BESTOFF",
+    "buyInAmount": 10,
+    "maxParticipants": 2,
+    "isActive": true,
+    "description": "Public session (ONE_VS_ONE) for BESTOFF with buy-in $10"
+  },
+  {
+    "templateName": "Private One Vs One - $20 - Bestoff",
+    "isPrivate": true,
+    "sessionType": "ONE_VS_ONE",
+    "competition": "BESTOFF",
+    "buyInAmount": 20,
+    "maxParticipants": 2,
+    "isActive": true,
+    "description": "Private session (ONE_VS_ONE) for BESTOFF with buy-in $20"
+  },
+  {
+    "templateName": "Public One Vs One - $20 - Bestoff",
+    "isPrivate": false,
+    "sessionType": "ONE_VS_ONE",
+    "competition": "BESTOFF",
+    "buyInAmount": 20,
+    "maxParticipants": 2,
+    "isActive": true,
+    "description": "Public session (ONE_VS_ONE) for BESTOFF with buy-in $20"
+  },
+  {
+    "templateName": "Private One Vs One - $50 - Bestoff",
+    "isPrivate": true,
+    "sessionType": "ONE_VS_ONE",
+    "competition": "BESTOFF",
+    "buyInAmount": 50,
+    "maxParticipants": 2,
+    "isActive": true,
+    "description": "Private session (ONE_VS_ONE) for BESTOFF with buy-in $50"
+  },
+  {
+    "templateName": "Public One Vs One - $50 - Bestoff",
+    "isPrivate": false,
+    "sessionType": "ONE_VS_ONE",
+    "competition": "BESTOFF",
+    "buyInAmount": 50,
+    "maxParticipants": 2,
+    "isActive": true,
+    "description": "Public session (ONE_VS_ONE) for BESTOFF with buy-in $50"
+  },
+  {
+    "templateName": "Private One Vs One - $100 - Bestoff",
+    "isPrivate": true,
+    "sessionType": "ONE_VS_ONE",
+    "competition": "BESTOFF",
+    "buyInAmount": 100,
+    "maxParticipants": 2,
+    "isActive": true,
+    "description": "Private session (ONE_VS_ONE) for BESTOFF with buy-in $100"
+  },
+  {
+    "templateName": "Public One Vs One - $100 - Bestoff",
+    "isPrivate": false,
+    "sessionType": "ONE_VS_ONE",
+    "competition": "BESTOFF",
+    "buyInAmount": 100,
+    "maxParticipants": 2,
+    "isActive": true,
+    "description": "Public session (ONE_VS_ONE) for BESTOFF with buy-in $100"
+  },
+  {
+    "templateName": "Private One Vs One - $10 - Conference League",
+    "isPrivate": true,
+    "sessionType": "ONE_VS_ONE",
+    "competition": "CONFERENCE_LEAGUE",
+    "buyInAmount": 10,
+    "maxParticipants": 2,
+    "isActive": true,
+    "description": "Private session (ONE_VS_ONE) for CONFERENCE_LEAGUE with buy-in $10"
+  },
+  {
+    "templateName": "Public One Vs One - $10 - Conference League",
+    "isPrivate": false,
+    "sessionType": "ONE_VS_ONE",
+    "competition": "CONFERENCE_LEAGUE",
+    "buyInAmount": 10,
+    "maxParticipants": 2,
+    "isActive": true,
+    "description": "Public session (ONE_VS_ONE) for CONFERENCE_LEAGUE with buy-in $10"
+  },
+  {
+    "templateName": "Private One Vs One - $20 - Conference League",
+    "isPrivate": true,
+    "sessionType": "ONE_VS_ONE",
+    "competition": "CONFERENCE_LEAGUE",
+    "buyInAmount": 20,
+    "maxParticipants": 2,
+    "isActive": true,
+    "description": "Private session (ONE_VS_ONE) for CONFERENCE_LEAGUE with buy-in $20"
+  },
+  {
+    "templateName": "Public One Vs One - $20 - Conference League",
+    "isPrivate": false,
+    "sessionType": "ONE_VS_ONE",
+    "competition": "CONFERENCE_LEAGUE",
+    "buyInAmount": 20,
+    "maxParticipants": 2,
+    "isActive": true,
+    "description": "Public session (ONE_VS_ONE) for CONFERENCE_LEAGUE with buy-in $20"
+  },
+  {
+    "templateName": "Private One Vs One - $50 - Conference League",
+    "isPrivate": true,
+    "sessionType": "ONE_VS_ONE",
+    "competition": "CONFERENCE_LEAGUE",
+    "buyInAmount": 50,
+    "maxParticipants": 2,
+    "isActive": true,
+    "description": "Private session (ONE_VS_ONE) for CONFERENCE_LEAGUE with buy-in $50"
+  },
+  {
+    "templateName": "Public One Vs One - $50 - Conference League",
+    "isPrivate": false,
+    "sessionType": "ONE_VS_ONE",
+    "competition": "CONFERENCE_LEAGUE",
+    "buyInAmount": 50,
+    "maxParticipants": 2,
+    "isActive": true,
+    "description": "Public session (ONE_VS_ONE) for CONFERENCE_LEAGUE with buy-in $50"
+  },
+  {
+    "templateName": "Private One Vs One - $100 - Conference League",
+    "isPrivate": true,
+    "sessionType": "ONE_VS_ONE",
+    "competition": "CONFERENCE_LEAGUE",
+    "buyInAmount": 100,
+    "maxParticipants": 2,
+    "isActive": true,
+    "description": "Private session (ONE_VS_ONE) for CONFERENCE_LEAGUE with buy-in $100"
+  },
+  {
+    "templateName": "Public One Vs One - $100 - Conference League",
+    "isPrivate": false,
+    "sessionType": "ONE_VS_ONE",
+    "competition": "CONFERENCE_LEAGUE",
+    "buyInAmount": 100,
+    "maxParticipants": 2,
+    "isActive": true,
+    "description": "Public session (ONE_VS_ONE) for CONFERENCE_LEAGUE with buy-in $100"
+  },
+  {
+    "templateName": "Private Small Group - $10 - Premier League",
+    "isPrivate": true,
+    "sessionType": "SMALL_GROUP",
+    "competition": "PREMIER_LEAGUE",
+    "buyInAmount": 10,
+    "maxParticipants": 5,
+    "isActive": true,
+    "description": "Private session (SMALL_GROUP) for PREMIER_LEAGUE with buy-in $10"
+  },
+  {
+    "templateName": "Public Small Group - $10 - Premier League",
+    "isPrivate": false,
+    "sessionType": "SMALL_GROUP",
+    "competition": "PREMIER_LEAGUE",
+    "buyInAmount": 10,
+    "maxParticipants": 5,
+    "isActive": true,
+    "description": "Public session (SMALL_GROUP) for PREMIER_LEAGUE with buy-in $10"
+  },
+  {
+    "templateName": "Private Small Group - $20 - Premier League",
+    "isPrivate": true,
+    "sessionType": "SMALL_GROUP",
+    "competition": "PREMIER_LEAGUE",
+    "buyInAmount": 20,
+    "maxParticipants": 5,
+    "isActive": true,
+    "description": "Private session (SMALL_GROUP) for PREMIER_LEAGUE with buy-in $20"
+  },
+  {
+    "templateName": "Public Small Group - $20 - Premier League",
+    "isPrivate": false,
+    "sessionType": "SMALL_GROUP",
+    "competition": "PREMIER_LEAGUE",
+    "buyInAmount": 20,
+    "maxParticipants": 5,
+    "isActive": true,
+    "description": "Public session (SMALL_GROUP) for PREMIER_LEAGUE with buy-in $20"
+  },
+  {
+    "templateName": "Private Small Group - $50 - Premier League",
+    "isPrivate": true,
+    "sessionType": "SMALL_GROUP",
+    "competition": "PREMIER_LEAGUE",
+    "buyInAmount": 50,
+    "maxParticipants": 5,
+    "isActive": true,
+    "description": "Private session (SMALL_GROUP) for PREMIER_LEAGUE with buy-in $50"
+  },
+  {
+    "templateName": "Public Small Group - $50 - Premier League",
+    "isPrivate": false,
+    "sessionType": "SMALL_GROUP",
+    "competition": "PREMIER_LEAGUE",
+    "buyInAmount": 50,
+    "maxParticipants": 5,
+    "isActive": true,
+    "description": "Public session (SMALL_GROUP) for PREMIER_LEAGUE with buy-in $50"
+  },
+  {
+    "templateName": "Private Small Group - $100 - Premier League",
+    "isPrivate": true,
+    "sessionType": "SMALL_GROUP",
+    "competition": "PREMIER_LEAGUE",
+    "buyInAmount": 100,
+    "maxParticipants": 5,
+    "isActive": true,
+    "description": "Private session (SMALL_GROUP) for PREMIER_LEAGUE with buy-in $100"
+  },
+  {
+    "templateName": "Public Small Group - $100 - Premier League",
+    "isPrivate": false,
+    "sessionType": "SMALL_GROUP",
+    "competition": "PREMIER_LEAGUE",
+    "buyInAmount": 100,
+    "maxParticipants": 5,
+    "isActive": true,
+    "description": "Public session (SMALL_GROUP) for PREMIER_LEAGUE with buy-in $100"
+  },
+  {
+    "templateName": "Private Small Group - $10 - Serie A",
+    "isPrivate": true,
+    "sessionType": "SMALL_GROUP",
+    "competition": "SERIE_A",
+    "buyInAmount": 10,
+    "maxParticipants": 5,
+    "isActive": true,
+    "description": "Private session (SMALL_GROUP) for SERIE_A with buy-in $10"
+  },
+  {
+    "templateName": "Public Small Group - $10 - Serie A",
+    "isPrivate": false,
+    "sessionType": "SMALL_GROUP",
+    "competition": "SERIE_A",
+    "buyInAmount": 10,
+    "maxParticipants": 5,
+    "isActive": true,
+    "description": "Public session (SMALL_GROUP) for SERIE_A with buy-in $10"
+  },
+  {
+    "templateName": "Private Small Group - $20 - Serie A",
+    "isPrivate": true,
+    "sessionType": "SMALL_GROUP",
+    "competition": "SERIE_A",
+    "buyInAmount": 20,
+    "maxParticipants": 5,
+    "isActive": true,
+    "description": "Private session (SMALL_GROUP) for SERIE_A with buy-in $20"
+  },
+  {
+    "templateName": "Public Small Group - $20 - Serie A",
+    "isPrivate": false,
+    "sessionType": "SMALL_GROUP",
+    "competition": "SERIE_A",
+    "buyInAmount": 20,
+    "maxParticipants": 5,
+    "isActive": true,
+    "description": "Public session (SMALL_GROUP) for SERIE_A with buy-in $20"
+  },
+  {
+    "templateName": "Private Small Group - $50 - Serie A",
+    "isPrivate": true,
+    "sessionType": "SMALL_GROUP",
+    "competition": "SERIE_A",
+    "buyInAmount": 50,
+    "maxParticipants": 5,
+    "isActive": true,
+    "description": "Private session (SMALL_GROUP) for SERIE_A with buy-in $50"
+  },
+  {
+    "templateName": "Public Small Group - $50 - Serie A",
+    "isPrivate": false,
+    "sessionType": "SMALL_GROUP",
+    "competition": "SERIE_A",
+    "buyInAmount": 50,
+    "maxParticipants": 5,
+    "isActive": true,
+    "description": "Public session (SMALL_GROUP) for SERIE_A with buy-in $50"
+  },
+  {
+    "templateName": "Private Small Group - $100 - Serie A",
+    "isPrivate": true,
+    "sessionType": "SMALL_GROUP",
+    "competition": "SERIE_A",
+    "buyInAmount": 100,
+    "maxParticipants": 5,
+    "isActive": true,
+    "description": "Private session (SMALL_GROUP) for SERIE_A with buy-in $100"
+  },
+  {
+    "templateName": "Public Small Group - $100 - Serie A",
+    "isPrivate": false,
+    "sessionType": "SMALL_GROUP",
+    "competition": "SERIE_A",
+    "buyInAmount": 100,
+    "maxParticipants": 5,
+    "isActive": true,
+    "description": "Public session (SMALL_GROUP) for SERIE_A with buy-in $100"
+  },
+  {
+    "templateName": "Private Small Group - $10 - Champions League",
+    "isPrivate": true,
+    "sessionType": "SMALL_GROUP",
+    "competition": "CHAMPIONS_LEAGUE",
+    "buyInAmount": 10,
+    "maxParticipants": 5,
+    "isActive": true,
+    "description": "Private session (SMALL_GROUP) for CHAMPIONS_LEAGUE with buy-in $10"
+  },
+  {
+    "templateName": "Public Small Group - $10 - Champions League",
+    "isPrivate": false,
+    "sessionType": "SMALL_GROUP",
+    "competition": "CHAMPIONS_LEAGUE",
+    "buyInAmount": 10,
+    "maxParticipants": 5,
+    "isActive": true,
+    "description": "Public session (SMALL_GROUP) for CHAMPIONS_LEAGUE with buy-in $10"
+  },
+  {
+    "templateName": "Private Small Group - $20 - Champions League",
+    "isPrivate": true,
+    "sessionType": "SMALL_GROUP",
+    "competition": "CHAMPIONS_LEAGUE",
+    "buyInAmount": 20,
+    "maxParticipants": 5,
+    "isActive": true,
+    "description": "Private session (SMALL_GROUP) for CHAMPIONS_LEAGUE with buy-in $20"
+  },
+  {
+    "templateName": "Public Small Group - $20 - Champions League",
+    "isPrivate": false,
+    "sessionType": "SMALL_GROUP",
+    "competition": "CHAMPIONS_LEAGUE",
+    "buyInAmount": 20,
+    "maxParticipants": 5,
+    "isActive": true,
+    "description": "Public session (SMALL_GROUP) for CHAMPIONS_LEAGUE with buy-in $20"
+  },
+  {
+    "templateName": "Private Small Group - $50 - Champions League",
+    "isPrivate": true,
+    "sessionType": "SMALL_GROUP",
+    "competition": "CHAMPIONS_LEAGUE",
+    "buyInAmount": 50,
+    "maxParticipants": 5,
+    "isActive": true,
+    "description": "Private session (SMALL_GROUP) for CHAMPIONS_LEAGUE with buy-in $50"
+  },
+  {
+    "templateName": "Public Small Group - $50 - Champions League",
+    "isPrivate": false,
+    "sessionType": "SMALL_GROUP",
+    "competition": "CHAMPIONS_LEAGUE",
+    "buyInAmount": 50,
+    "maxParticipants": 5,
+    "isActive": true,
+    "description": "Public session (SMALL_GROUP) for CHAMPIONS_LEAGUE with buy-in $50"
+  },
+  {
+    "templateName": "Private Small Group - $100 - Champions League",
+    "isPrivate": true,
+    "sessionType": "SMALL_GROUP",
+    "competition": "CHAMPIONS_LEAGUE",
+    "buyInAmount": 100,
+    "maxParticipants": 5,
+    "isActive": true,
+    "description": "Private session (SMALL_GROUP) for CHAMPIONS_LEAGUE with buy-in $100"
+  },
+  {
+    "templateName": "Public Small Group - $100 - Champions League",
+    "isPrivate": false,
+    "sessionType": "SMALL_GROUP",
+    "competition": "CHAMPIONS_LEAGUE",
+    "buyInAmount": 100,
+    "maxParticipants": 5,
+    "isActive": true,
+    "description": "Public session (SMALL_GROUP) for CHAMPIONS_LEAGUE with buy-in $100"
+  },
+  {
+    "templateName": "Private Small Group - $10 - Europe League",
+    "isPrivate": true,
+    "sessionType": "SMALL_GROUP",
+    "competition": "EUROPE_LEAGUE",
+    "buyInAmount": 10,
+    "maxParticipants": 5,
+    "isActive": true,
+    "description": "Private session (SMALL_GROUP) for EUROPE_LEAGUE with buy-in $10"
+  },
+  {
+    "templateName": "Public Small Group - $10 - Europe League",
+    "isPrivate": false,
+    "sessionType": "SMALL_GROUP",
+    "competition": "EUROPE_LEAGUE",
+    "buyInAmount": 10,
+    "maxParticipants": 5,
+    "isActive": true,
+    "description": "Public session (SMALL_GROUP) for EUROPE_LEAGUE with buy-in $10"
+  },
+  {
+    "templateName": "Private Small Group - $20 - Europe League",
+    "isPrivate": true,
+    "sessionType": "SMALL_GROUP",
+    "competition": "EUROPE_LEAGUE",
+    "buyInAmount": 20,
+    "maxParticipants": 5,
+    "isActive": true,
+    "description": "Private session (SMALL_GROUP) for EUROPE_LEAGUE with buy-in $20"
+  },
+  {
+    "templateName": "Public Small Group - $20 - Europe League",
+    "isPrivate": false,
+    "sessionType": "SMALL_GROUP",
+    "competition": "EUROPE_LEAGUE",
+    "buyInAmount": 20,
+    "maxParticipants": 5,
+    "isActive": true,
+    "description": "Public session (SMALL_GROUP) for EUROPE_LEAGUE with buy-in $20"
+  },
+  {
+    "templateName": "Private Small Group - $50 - Europe League",
+    "isPrivate": true,
+    "sessionType": "SMALL_GROUP",
+    "competition": "EUROPE_LEAGUE",
+    "buyInAmount": 50,
+    "maxParticipants": 5,
+    "isActive": true,
+    "description": "Private session (SMALL_GROUP) for EUROPE_LEAGUE with buy-in $50"
+  },
+  {
+    "templateName": "Public Small Group - $50 - Europe League",
+    "isPrivate": false,
+    "sessionType": "SMALL_GROUP",
+    "competition": "EUROPE_LEAGUE",
+    "buyInAmount": 50,
+    "maxParticipants": 5,
+    "isActive": true,
+    "description": "Public session (SMALL_GROUP) for EUROPE_LEAGUE with buy-in $50"
+  },
+  {
+    "templateName": "Private Small Group - $100 - Europe League",
+    "isPrivate": true,
+    "sessionType": "SMALL_GROUP",
+    "competition": "EUROPE_LEAGUE",
+    "buyInAmount": 100,
+    "maxParticipants": 5,
+    "isActive": true,
+    "description": "Private session (SMALL_GROUP) for EUROPE_LEAGUE with buy-in $100"
+  },
+  {
+    "templateName": "Public Small Group - $100 - Europe League",
+    "isPrivate": false,
+    "sessionType": "SMALL_GROUP",
+    "competition": "EUROPE_LEAGUE",
+    "buyInAmount": 100,
+    "maxParticipants": 5,
+    "isActive": true,
+    "description": "Public session (SMALL_GROUP) for EUROPE_LEAGUE with buy-in $100"
+  },
+  {
+    "templateName": "Private Small Group - $10 - Buendsligua",
+    "isPrivate": true,
+    "sessionType": "SMALL_GROUP",
+    "competition": "BUENDSLIGUA",
+    "buyInAmount": 10,
+    "maxParticipants": 5,
+    "isActive": true,
+    "description": "Private session (SMALL_GROUP) for BUENDSLIGUA with buy-in $10"
+  },
+  {
+    "templateName": "Public Small Group - $10 - Buendsligua",
+    "isPrivate": false,
+    "sessionType": "SMALL_GROUP",
+    "competition": "BUENDSLIGUA",
+    "buyInAmount": 10,
+    "maxParticipants": 5,
+    "isActive": true,
+    "description": "Public session (SMALL_GROUP) for BUENDSLIGUA with buy-in $10"
+  },
+  {
+    "templateName": "Private Small Group - $20 - Buendsligua",
+    "isPrivate": true,
+    "sessionType": "SMALL_GROUP",
+    "competition": "BUENDSLIGUA",
+    "buyInAmount": 20,
+    "maxParticipants": 5,
+    "isActive": true,
+    "description": "Private session (SMALL_GROUP) for BUENDSLIGUA with buy-in $20"
+  },
+  {
+    "templateName": "Public Small Group - $20 - Buendsligua",
+    "isPrivate": false,
+    "sessionType": "SMALL_GROUP",
+    "competition": "BUENDSLIGUA",
+    "buyInAmount": 20,
+    "maxParticipants": 5,
+    "isActive": true,
+    "description": "Public session (SMALL_GROUP) for BUENDSLIGUA with buy-in $20"
+  },
+  {
+    "templateName": "Private Small Group - $50 - Buendsligua",
+    "isPrivate": true,
+    "sessionType": "SMALL_GROUP",
+    "competition": "BUENDSLIGUA",
+    "buyInAmount": 50,
+    "maxParticipants": 5,
+    "isActive": true,
+    "description": "Private session (SMALL_GROUP) for BUENDSLIGUA with buy-in $50"
+  },
+  {
+    "templateName": "Public Small Group - $50 - Buendsligua",
+    "isPrivate": false,
+    "sessionType": "SMALL_GROUP",
+    "competition": "BUENDSLIGUA",
+    "buyInAmount": 50,
+    "maxParticipants": 5,
+    "isActive": true,
+    "description": "Public session (SMALL_GROUP) for BUENDSLIGUA with buy-in $50"
+  },
+  {
+    "templateName": "Private Small Group - $100 - Buendsligua",
+    "isPrivate": true,
+    "sessionType": "SMALL_GROUP",
+    "competition": "BUENDSLIGUA",
+    "buyInAmount": 100,
+    "maxParticipants": 5,
+    "isActive": true,
+    "description": "Private session (SMALL_GROUP) for BUENDSLIGUA with buy-in $100"
+  },
+  {
+    "templateName": "Public Small Group - $100 - Buendsligua",
+    "isPrivate": false,
+    "sessionType": "SMALL_GROUP",
+    "competition": "BUENDSLIGUA",
+    "buyInAmount": 100,
+    "maxParticipants": 5,
+    "isActive": true,
+    "description": "Public session (SMALL_GROUP) for BUENDSLIGUA with buy-in $100"
+  },
+  {
+    "templateName": "Private Small Group - $10 - La Liga",
+    "isPrivate": true,
+    "sessionType": "SMALL_GROUP",
+    "competition": "LA_LIGA",
+    "buyInAmount": 10,
+    "maxParticipants": 5,
+    "isActive": true,
+    "description": "Private session (SMALL_GROUP) for LA_LIGA with buy-in $10"
+  },
+  {
+    "templateName": "Public Small Group - $10 - La Liga",
+    "isPrivate": false,
+    "sessionType": "SMALL_GROUP",
+    "competition": "LA_LIGA",
+    "buyInAmount": 10,
+    "maxParticipants": 5,
+    "isActive": true,
+    "description": "Public session (SMALL_GROUP) for LA_LIGA with buy-in $10"
+  },
+  {
+    "templateName": "Private Small Group - $20 - La Liga",
+    "isPrivate": true,
+    "sessionType": "SMALL_GROUP",
+    "competition": "LA_LIGA",
+    "buyInAmount": 20,
+    "maxParticipants": 5,
+    "isActive": true,
+    "description": "Private session (SMALL_GROUP) for LA_LIGA with buy-in $20"
+  },
+  {
+    "templateName": "Public Small Group - $20 - La Liga",
+    "isPrivate": false,
+    "sessionType": "SMALL_GROUP",
+    "competition": "LA_LIGA",
+    "buyInAmount": 20,
+    "maxParticipants": 5,
+    "isActive": true,
+    "description": "Public session (SMALL_GROUP) for LA_LIGA with buy-in $20"
+  },
+  {
+    "templateName": "Private Small Group - $50 - La Liga",
+    "isPrivate": true,
+    "sessionType": "SMALL_GROUP",
+    "competition": "LA_LIGA",
+    "buyInAmount": 50,
+    "maxParticipants": 5,
+    "isActive": true,
+    "description": "Private session (SMALL_GROUP) for LA_LIGA with buy-in $50"
+  },
+  {
+    "templateName": "Public Small Group - $50 - La Liga",
+    "isPrivate": false,
+    "sessionType": "SMALL_GROUP",
+    "competition": "LA_LIGA",
+    "buyInAmount": 50,
+    "maxParticipants": 5,
+    "isActive": true,
+    "description": "Public session (SMALL_GROUP) for LA_LIGA with buy-in $50"
+  },
+  {
+    "templateName": "Private Small Group - $100 - La Liga",
+    "isPrivate": true,
+    "sessionType": "SMALL_GROUP",
+    "competition": "LA_LIGA",
+    "buyInAmount": 100,
+    "maxParticipants": 5,
+    "isActive": true,
+    "description": "Private session (SMALL_GROUP) for LA_LIGA with buy-in $100"
+  },
+  {
+    "templateName": "Public Small Group - $100 - La Liga",
+    "isPrivate": false,
+    "sessionType": "SMALL_GROUP",
+    "competition": "LA_LIGA",
+    "buyInAmount": 100,
+    "maxParticipants": 5,
+    "isActive": true,
+    "description": "Public session (SMALL_GROUP) for LA_LIGA with buy-in $100"
+  },
+  {
+    "templateName": "Private Small Group - $10 - Ligue One",
+    "isPrivate": true,
+    "sessionType": "SMALL_GROUP",
+    "competition": "LIGUE_ONE",
+    "buyInAmount": 10,
+    "maxParticipants": 5,
+    "isActive": true,
+    "description": "Private session (SMALL_GROUP) for LIGUE_ONE with buy-in $10"
+  },
+  {
+    "templateName": "Public Small Group - $10 - Ligue One",
+    "isPrivate": false,
+    "sessionType": "SMALL_GROUP",
+    "competition": "LIGUE_ONE",
+    "buyInAmount": 10,
+    "maxParticipants": 5,
+    "isActive": true,
+    "description": "Public session (SMALL_GROUP) for LIGUE_ONE with buy-in $10"
+  },
+  {
+    "templateName": "Private Small Group - $20 - Ligue One",
+    "isPrivate": true,
+    "sessionType": "SMALL_GROUP",
+    "competition": "LIGUE_ONE",
+    "buyInAmount": 20,
+    "maxParticipants": 5,
+    "isActive": true,
+    "description": "Private session (SMALL_GROUP) for LIGUE_ONE with buy-in $20"
+  },
+  {
+    "templateName": "Public Small Group - $20 - Ligue One",
+    "isPrivate": false,
+    "sessionType": "SMALL_GROUP",
+    "competition": "LIGUE_ONE",
+    "buyInAmount": 20,
+    "maxParticipants": 5,
+    "isActive": true,
+    "description": "Public session (SMALL_GROUP) for LIGUE_ONE with buy-in $20"
+  },
+  {
+    "templateName": "Private Small Group - $50 - Ligue One",
+    "isPrivate": true,
+    "sessionType": "SMALL_GROUP",
+    "competition": "LIGUE_ONE",
+    "buyInAmount": 50,
+    "maxParticipants": 5,
+    "isActive": true,
+    "description": "Private session (SMALL_GROUP) for LIGUE_ONE with buy-in $50"
+  },
+  {
+    "templateName": "Public Small Group - $50 - Ligue One",
+    "isPrivate": false,
+    "sessionType": "SMALL_GROUP",
+    "competition": "LIGUE_ONE",
+    "buyInAmount": 50,
+    "maxParticipants": 5,
+    "isActive": true,
+    "description": "Public session (SMALL_GROUP) for LIGUE_ONE with buy-in $50"
+  },
+  {
+    "templateName": "Private Small Group - $100 - Ligue One",
+    "isPrivate": true,
+    "sessionType": "SMALL_GROUP",
+    "competition": "LIGUE_ONE",
+    "buyInAmount": 100,
+    "maxParticipants": 5,
+    "isActive": true,
+    "description": "Private session (SMALL_GROUP) for LIGUE_ONE with buy-in $100"
+  },
+  {
+    "templateName": "Public Small Group - $100 - Ligue One",
+    "isPrivate": false,
+    "sessionType": "SMALL_GROUP",
+    "competition": "LIGUE_ONE",
+    "buyInAmount": 100,
+    "maxParticipants": 5,
+    "isActive": true,
+    "description": "Public session (SMALL_GROUP) for LIGUE_ONE with buy-in $100"
+  },
+  {
+    "templateName": "Private Small Group - $10 - Bestoff",
+    "isPrivate": true,
+    "sessionType": "SMALL_GROUP",
+    "competition": "BESTOFF",
+    "buyInAmount": 10,
+    "maxParticipants": 5,
+    "isActive": true,
+    "description": "Private session (SMALL_GROUP) for BESTOFF with buy-in $10"
+  },
+  {
+    "templateName": "Public Small Group - $10 - Bestoff",
+    "isPrivate": false,
+    "sessionType": "SMALL_GROUP",
+    "competition": "BESTOFF",
+    "buyInAmount": 10,
+    "maxParticipants": 5,
+    "isActive": true,
+    "description": "Public session (SMALL_GROUP) for BESTOFF with buy-in $10"
+  },
+  {
+    "templateName": "Private Small Group - $20 - Bestoff",
+    "isPrivate": true,
+    "sessionType": "SMALL_GROUP",
+    "competition": "BESTOFF",
+    "buyInAmount": 20,
+    "maxParticipants": 5,
+    "isActive": true,
+    "description": "Private session (SMALL_GROUP) for BESTOFF with buy-in $20"
+  },
+  {
+    "templateName": "Public Small Group - $20 - Bestoff",
+    "isPrivate": false,
+    "sessionType": "SMALL_GROUP",
+    "competition": "BESTOFF",
+    "buyInAmount": 20,
+    "maxParticipants": 5,
+    "isActive": true,
+    "description": "Public session (SMALL_GROUP) for BESTOFF with buy-in $20"
+  },
+  {
+    "templateName": "Private Small Group - $50 - Bestoff",
+    "isPrivate": true,
+    "sessionType": "SMALL_GROUP",
+    "competition": "BESTOFF",
+    "buyInAmount": 50,
+    "maxParticipants": 5,
+    "isActive": true,
+    "description": "Private session (SMALL_GROUP) for BESTOFF with buy-in $50"
+  },
+  {
+    "templateName": "Public Small Group - $50 - Bestoff",
+    "isPrivate": false,
+    "sessionType": "SMALL_GROUP",
+    "competition": "BESTOFF",
+    "buyInAmount": 50,
+    "maxParticipants": 5,
+    "isActive": true,
+    "description": "Public session (SMALL_GROUP) for BESTOFF with buy-in $50"
+  },
+  {
+    "templateName": "Private Small Group - $100 - Bestoff",
+    "isPrivate": true,
+    "sessionType": "SMALL_GROUP",
+    "competition": "BESTOFF",
+    "buyInAmount": 100,
+    "maxParticipants": 5,
+    "isActive": true,
+    "description": "Private session (SMALL_GROUP) for BESTOFF with buy-in $100"
+  },
+  {
+    "templateName": "Public Small Group - $100 - Bestoff",
+    "isPrivate": false,
+    "sessionType": "SMALL_GROUP",
+    "competition": "BESTOFF",
+    "buyInAmount": 100,
+    "maxParticipants": 5,
+    "isActive": true,
+    "description": "Public session (SMALL_GROUP) for BESTOFF with buy-in $100"
+  },
+  {
+    "templateName": "Private Small Group - $10 - Conference League",
+    "isPrivate": true,
+    "sessionType": "SMALL_GROUP",
+    "competition": "CONFERENCE_LEAGUE",
+    "buyInAmount": 10,
+    "maxParticipants": 5,
+    "isActive": true,
+    "description": "Private session (SMALL_GROUP) for CONFERENCE_LEAGUE with buy-in $10"
+  },
+  {
+    "templateName": "Public Small Group - $10 - Conference League",
+    "isPrivate": false,
+    "sessionType": "SMALL_GROUP",
+    "competition": "CONFERENCE_LEAGUE",
+    "buyInAmount": 10,
+    "maxParticipants": 5,
+    "isActive": true,
+    "description": "Public session (SMALL_GROUP) for CONFERENCE_LEAGUE with buy-in $10"
+  },
+  {
+    "templateName": "Private Small Group - $20 - Conference League",
+    "isPrivate": true,
+    "sessionType": "SMALL_GROUP",
+    "competition": "CONFERENCE_LEAGUE",
+    "buyInAmount": 20,
+    "maxParticipants": 5,
+    "isActive": true,
+    "description": "Private session (SMALL_GROUP) for CONFERENCE_LEAGUE with buy-in $20"
+  },
+  {
+    "templateName": "Public Small Group - $20 - Conference League",
+    "isPrivate": false,
+    "sessionType": "SMALL_GROUP",
+    "competition": "CONFERENCE_LEAGUE",
+    "buyInAmount": 20,
+    "maxParticipants": 5,
+    "isActive": true,
+    "description": "Public session (SMALL_GROUP) for CONFERENCE_LEAGUE with buy-in $20"
+  },
+  {
+    "templateName": "Private Small Group - $50 - Conference League",
+    "isPrivate": true,
+    "sessionType": "SMALL_GROUP",
+    "competition": "CONFERENCE_LEAGUE",
+    "buyInAmount": 50,
+    "maxParticipants": 5,
+    "isActive": true,
+    "description": "Private session (SMALL_GROUP) for CONFERENCE_LEAGUE with buy-in $50"
+  },
+  {
+    "templateName": "Public Small Group - $50 - Conference League",
+    "isPrivate": false,
+    "sessionType": "SMALL_GROUP",
+    "competition": "CONFERENCE_LEAGUE",
+    "buyInAmount": 50,
+    "maxParticipants": 5,
+    "isActive": true,
+    "description": "Public session (SMALL_GROUP) for CONFERENCE_LEAGUE with buy-in $50"
+  },
+  {
+    "templateName": "Private Small Group - $100 - Conference League",
+    "isPrivate": true,
+    "sessionType": "SMALL_GROUP",
+    "competition": "CONFERENCE_LEAGUE",
+    "buyInAmount": 100,
+    "maxParticipants": 5,
+    "isActive": true,
+    "description": "Private session (SMALL_GROUP) for CONFERENCE_LEAGUE with buy-in $100"
+  },
+  {
+    "templateName": "Public Small Group - $100 - Conference League",
+    "isPrivate": false,
+    "sessionType": "SMALL_GROUP",
+    "competition": "CONFERENCE_LEAGUE",
+    "buyInAmount": 100,
+    "maxParticipants": 5,
+    "isActive": true,
+    "description": "Public session (SMALL_GROUP) for CONFERENCE_LEAGUE with buy-in $100"
+  },
+  {
+    "templateName": "Private Medium Group - $10 - Premier League",
+    "isPrivate": true,
+    "sessionType": "MEDIUM_GROUP",
+    "competition": "PREMIER_LEAGUE",
+    "buyInAmount": 10,
+    "maxParticipants": 10,
+    "isActive": true,
+    "description": "Private session (MEDIUM_GROUP) for PREMIER_LEAGUE with buy-in $10"
+  },
+  {
+    "templateName": "Public Medium Group - $10 - Premier League",
+    "isPrivate": false,
+    "sessionType": "MEDIUM_GROUP",
+    "competition": "PREMIER_LEAGUE",
+    "buyInAmount": 10,
+    "maxParticipants": 10,
+    "isActive": true,
+    "description": "Public session (MEDIUM_GROUP) for PREMIER_LEAGUE with buy-in $10"
+  },
+  {
+    "templateName": "Private Medium Group - $20 - Premier League",
+    "isPrivate": true,
+    "sessionType": "MEDIUM_GROUP",
+    "competition": "PREMIER_LEAGUE",
+    "buyInAmount": 20,
+    "maxParticipants": 10,
+    "isActive": true,
+    "description": "Private session (MEDIUM_GROUP) for PREMIER_LEAGUE with buy-in $20"
+  },
+  {
+    "templateName": "Public Medium Group - $20 - Premier League",
+    "isPrivate": false,
+    "sessionType": "MEDIUM_GROUP",
+    "competition": "PREMIER_LEAGUE",
+    "buyInAmount": 20,
+    "maxParticipants": 10,
+    "isActive": true,
+    "description": "Public session (MEDIUM_GROUP) for PREMIER_LEAGUE with buy-in $20"
+  },
+  {
+    "templateName": "Private Medium Group - $50 - Premier League",
+    "isPrivate": true,
+    "sessionType": "MEDIUM_GROUP",
+    "competition": "PREMIER_LEAGUE",
+    "buyInAmount": 50,
+    "maxParticipants": 10,
+    "isActive": true,
+    "description": "Private session (MEDIUM_GROUP) for PREMIER_LEAGUE with buy-in $50"
+  },
+  {
+    "templateName": "Public Medium Group - $50 - Premier League",
+    "isPrivate": false,
+    "sessionType": "MEDIUM_GROUP",
+    "competition": "PREMIER_LEAGUE",
+    "buyInAmount": 50,
+    "maxParticipants": 10,
+    "isActive": true,
+    "description": "Public session (MEDIUM_GROUP) for PREMIER_LEAGUE with buy-in $50"
+  },
+  {
+    "templateName": "Private Medium Group - $100 - Premier League",
+    "isPrivate": true,
+    "sessionType": "MEDIUM_GROUP",
+    "competition": "PREMIER_LEAGUE",
+    "buyInAmount": 100,
+    "maxParticipants": 10,
+    "isActive": true,
+    "description": "Private session (MEDIUM_GROUP) for PREMIER_LEAGUE with buy-in $100"
+  },
+  {
+    "templateName": "Public Medium Group - $100 - Premier League",
+    "isPrivate": false,
+    "sessionType": "MEDIUM_GROUP",
+    "competition": "PREMIER_LEAGUE",
+    "buyInAmount": 100,
+    "maxParticipants": 10,
+    "isActive": true,
+    "description": "Public session (MEDIUM_GROUP) for PREMIER_LEAGUE with buy-in $100"
+  },
+  {
+    "templateName": "Private Medium Group - $10 - Serie A",
+    "isPrivate": true,
+    "sessionType": "MEDIUM_GROUP",
+    "competition": "SERIE_A",
+    "buyInAmount": 10,
+    "maxParticipants": 10,
+    "isActive": true,
+    "description": "Private session (MEDIUM_GROUP) for SERIE_A with buy-in $10"
+  },
+  {
+    "templateName": "Public Medium Group - $10 - Serie A",
+    "isPrivate": false,
+    "sessionType": "MEDIUM_GROUP",
+    "competition": "SERIE_A",
+    "buyInAmount": 10,
+    "maxParticipants": 10,
+    "isActive": true,
+    "description": "Public session (MEDIUM_GROUP) for SERIE_A with buy-in $10"
+  },
+  {
+    "templateName": "Private Medium Group - $20 - Serie A",
+    "isPrivate": true,
+    "sessionType": "MEDIUM_GROUP",
+    "competition": "SERIE_A",
+    "buyInAmount": 20,
+    "maxParticipants": 10,
+    "isActive": true,
+    "description": "Private session (MEDIUM_GROUP) for SERIE_A with buy-in $20"
+  },
+  {
+    "templateName": "Public Medium Group - $20 - Serie A",
+    "isPrivate": false,
+    "sessionType": "MEDIUM_GROUP",
+    "competition": "SERIE_A",
+    "buyInAmount": 20,
+    "maxParticipants": 10,
+    "isActive": true,
+    "description": "Public session (MEDIUM_GROUP) for SERIE_A with buy-in $20"
+  },
+  {
+    "templateName": "Private Medium Group - $50 - Serie A",
+    "isPrivate": true,
+    "sessionType": "MEDIUM_GROUP",
+    "competition": "SERIE_A",
+    "buyInAmount": 50,
+    "maxParticipants": 10,
+    "isActive": true,
+    "description": "Private session (MEDIUM_GROUP) for SERIE_A with buy-in $50"
+  },
+  {
+    "templateName": "Public Medium Group - $50 - Serie A",
+    "isPrivate": false,
+    "sessionType": "MEDIUM_GROUP",
+    "competition": "SERIE_A",
+    "buyInAmount": 50,
+    "maxParticipants": 10,
+    "isActive": true,
+    "description": "Public session (MEDIUM_GROUP) for SERIE_A with buy-in $50"
+  },
+  {
+    "templateName": "Private Medium Group - $100 - Serie A",
+    "isPrivate": true,
+    "sessionType": "MEDIUM_GROUP",
+    "competition": "SERIE_A",
+    "buyInAmount": 100,
+    "maxParticipants": 10,
+    "isActive": true,
+    "description": "Private session (MEDIUM_GROUP) for SERIE_A with buy-in $100"
+  },
+  {
+    "templateName": "Public Medium Group - $100 - Serie A",
+    "isPrivate": false,
+    "sessionType": "MEDIUM_GROUP",
+    "competition": "SERIE_A",
+    "buyInAmount": 100,
+    "maxParticipants": 10,
+    "isActive": true,
+    "description": "Public session (MEDIUM_GROUP) for SERIE_A with buy-in $100"
+  },
+  {
+    "templateName": "Private Medium Group - $10 - Champions League",
+    "isPrivate": true,
+    "sessionType": "MEDIUM_GROUP",
+    "competition": "CHAMPIONS_LEAGUE",
+    "buyInAmount": 10,
+    "maxParticipants": 10,
+    "isActive": true,
+    "description": "Private session (MEDIUM_GROUP) for CHAMPIONS_LEAGUE with buy-in $10"
+  },
+  {
+    "templateName": "Public Medium Group - $10 - Champions League",
+    "isPrivate": false,
+    "sessionType": "MEDIUM_GROUP",
+    "competition": "CHAMPIONS_LEAGUE",
+    "buyInAmount": 10,
+    "maxParticipants": 10,
+    "isActive": true,
+    "description": "Public session (MEDIUM_GROUP) for CHAMPIONS_LEAGUE with buy-in $10"
+  },
+  {
+    "templateName": "Private Medium Group - $20 - Champions League",
+    "isPrivate": true,
+    "sessionType": "MEDIUM_GROUP",
+    "competition": "CHAMPIONS_LEAGUE",
+    "buyInAmount": 20,
+    "maxParticipants": 10,
+    "isActive": true,
+    "description": "Private session (MEDIUM_GROUP) for CHAMPIONS_LEAGUE with buy-in $20"
+  },
+  {
+    "templateName": "Public Medium Group - $20 - Champions League",
+    "isPrivate": false,
+    "sessionType": "MEDIUM_GROUP",
+    "competition": "CHAMPIONS_LEAGUE",
+    "buyInAmount": 20,
+    "maxParticipants": 10,
+    "isActive": true,
+    "description": "Public session (MEDIUM_GROUP) for CHAMPIONS_LEAGUE with buy-in $20"
+  },
+  {
+    "templateName": "Private Medium Group - $50 - Champions League",
+    "isPrivate": true,
+    "sessionType": "MEDIUM_GROUP",
+    "competition": "CHAMPIONS_LEAGUE",
+    "buyInAmount": 50,
+    "maxParticipants": 10,
+    "isActive": true,
+    "description": "Private session (MEDIUM_GROUP) for CHAMPIONS_LEAGUE with buy-in $50"
+  },
+  {
+    "templateName": "Public Medium Group - $50 - Champions League",
+    "isPrivate": false,
+    "sessionType": "MEDIUM_GROUP",
+    "competition": "CHAMPIONS_LEAGUE",
+    "buyInAmount": 50,
+    "maxParticipants": 10,
+    "isActive": true,
+    "description": "Public session (MEDIUM_GROUP) for CHAMPIONS_LEAGUE with buy-in $50"
+  },
+  {
+    "templateName": "Private Medium Group - $100 - Champions League",
+    "isPrivate": true,
+    "sessionType": "MEDIUM_GROUP",
+    "competition": "CHAMPIONS_LEAGUE",
+    "buyInAmount": 100,
+    "maxParticipants": 10,
+    "isActive": true,
+    "description": "Private session (MEDIUM_GROUP) for CHAMPIONS_LEAGUE with buy-in $100"
+  },
+  {
+    "templateName": "Public Medium Group - $100 - Champions League",
+    "isPrivate": false,
+    "sessionType": "MEDIUM_GROUP",
+    "competition": "CHAMPIONS_LEAGUE",
+    "buyInAmount": 100,
+    "maxParticipants": 10,
+    "isActive": true,
+    "description": "Public session (MEDIUM_GROUP) for CHAMPIONS_LEAGUE with buy-in $100"
+  },
+  {
+    "templateName": "Private Medium Group - $10 - Europe League",
+    "isPrivate": true,
+    "sessionType": "MEDIUM_GROUP",
+    "competition": "EUROPE_LEAGUE",
+    "buyInAmount": 10,
+    "maxParticipants": 10,
+    "isActive": true,
+    "description": "Private session (MEDIUM_GROUP) for EUROPE_LEAGUE with buy-in $10"
+  },
+  {
+    "templateName": "Public Medium Group - $10 - Europe League",
+    "isPrivate": false,
+    "sessionType": "MEDIUM_GROUP",
+    "competition": "EUROPE_LEAGUE",
+    "buyInAmount": 10,
+    "maxParticipants": 10,
+    "isActive": true,
+    "description": "Public session (MEDIUM_GROUP) for EUROPE_LEAGUE with buy-in $10"
+  },
+  {
+    "templateName": "Private Medium Group - $20 - Europe League",
+    "isPrivate": true,
+    "sessionType": "MEDIUM_GROUP",
+    "competition": "EUROPE_LEAGUE",
+    "buyInAmount": 20,
+    "maxParticipants": 10,
+    "isActive": true,
+    "description": "Private session (MEDIUM_GROUP) for EUROPE_LEAGUE with buy-in $20"
+  },
+  {
+    "templateName": "Public Medium Group - $20 - Europe League",
+    "isPrivate": false,
+    "sessionType": "MEDIUM_GROUP",
+    "competition": "EUROPE_LEAGUE",
+    "buyInAmount": 20,
+    "maxParticipants": 10,
+    "isActive": true,
+    "description": "Public session (MEDIUM_GROUP) for EUROPE_LEAGUE with buy-in $20"
+  },
+  {
+    "templateName": "Private Medium Group - $50 - Europe League",
+    "isPrivate": true,
+    "sessionType": "MEDIUM_GROUP",
+    "competition": "EUROPE_LEAGUE",
+    "buyInAmount": 50,
+    "maxParticipants": 10,
+    "isActive": true,
+    "description": "Private session (MEDIUM_GROUP) for EUROPE_LEAGUE with buy-in $50"
+  },
+  {
+    "templateName": "Public Medium Group - $50 - Europe League",
+    "isPrivate": false,
+    "sessionType": "MEDIUM_GROUP",
+    "competition": "EUROPE_LEAGUE",
+    "buyInAmount": 50,
+    "maxParticipants": 10,
+    "isActive": true,
+    "description": "Public session (MEDIUM_GROUP) for EUROPE_LEAGUE with buy-in $50"
+  },
+  {
+    "templateName": "Private Medium Group - $100 - Europe League",
+    "isPrivate": true,
+    "sessionType": "MEDIUM_GROUP",
+    "competition": "EUROPE_LEAGUE",
+    "buyInAmount": 100,
+    "maxParticipants": 10,
+    "isActive": true,
+    "description": "Private session (MEDIUM_GROUP) for EUROPE_LEAGUE with buy-in $100"
+  },
+  {
+    "templateName": "Public Medium Group - $100 - Europe League",
+    "isPrivate": false,
+    "sessionType": "MEDIUM_GROUP",
+    "competition": "EUROPE_LEAGUE",
+    "buyInAmount": 100,
+    "maxParticipants": 10,
+    "isActive": true,
+    "description": "Public session (MEDIUM_GROUP) for EUROPE_LEAGUE with buy-in $100"
+  },
+  {
+    "templateName": "Private Medium Group - $10 - Buendsligua",
+    "isPrivate": true,
+    "sessionType": "MEDIUM_GROUP",
+    "competition": "BUENDSLIGUA",
+    "buyInAmount": 10,
+    "maxParticipants": 10,
+    "isActive": true,
+    "description": "Private session (MEDIUM_GROUP) for BUENDSLIGUA with buy-in $10"
+  },
+  {
+    "templateName": "Public Medium Group - $10 - Buendsligua",
+    "isPrivate": false,
+    "sessionType": "MEDIUM_GROUP",
+    "competition": "BUENDSLIGUA",
+    "buyInAmount": 10,
+    "maxParticipants": 10,
+    "isActive": true,
+    "description": "Public session (MEDIUM_GROUP) for BUENDSLIGUA with buy-in $10"
+  },
+  {
+    "templateName": "Private Medium Group - $20 - Buendsligua",
+    "isPrivate": true,
+    "sessionType": "MEDIUM_GROUP",
+    "competition": "BUENDSLIGUA",
+    "buyInAmount": 20,
+    "maxParticipants": 10,
+    "isActive": true,
+    "description": "Private session (MEDIUM_GROUP) for BUENDSLIGUA with buy-in $20"
+  },
+  {
+    "templateName": "Public Medium Group - $20 - Buendsligua",
+    "isPrivate": false,
+    "sessionType": "MEDIUM_GROUP",
+    "competition": "BUENDSLIGUA",
+    "buyInAmount": 20,
+    "maxParticipants": 10,
+    "isActive": true,
+    "description": "Public session (MEDIUM_GROUP) for BUENDSLIGUA with buy-in $20"
+  },
+  {
+    "templateName": "Private Medium Group - $50 - Buendsligua",
+    "isPrivate": true,
+    "sessionType": "MEDIUM_GROUP",
+    "competition": "BUENDSLIGUA",
+    "buyInAmount": 50,
+    "maxParticipants": 10,
+    "isActive": true,
+    "description": "Private session (MEDIUM_GROUP) for BUENDSLIGUA with buy-in $50"
+  },
+  {
+    "templateName": "Public Medium Group - $50 - Buendsligua",
+    "isPrivate": false,
+    "sessionType": "MEDIUM_GROUP",
+    "competition": "BUENDSLIGUA",
+    "buyInAmount": 50,
+    "maxParticipants": 10,
+    "isActive": true,
+    "description": "Public session (MEDIUM_GROUP) for BUENDSLIGUA with buy-in $50"
+  },
+  {
+    "templateName": "Private Medium Group - $100 - Buendsligua",
+    "isPrivate": true,
+    "sessionType": "MEDIUM_GROUP",
+    "competition": "BUENDSLIGUA",
+    "buyInAmount": 100,
+    "maxParticipants": 10,
+    "isActive": true,
+    "description": "Private session (MEDIUM_GROUP) for BUENDSLIGUA with buy-in $100"
+  },
+  {
+    "templateName": "Public Medium Group - $100 - Buendsligua",
+    "isPrivate": false,
+    "sessionType": "MEDIUM_GROUP",
+    "competition": "BUENDSLIGUA",
+    "buyInAmount": 100,
+    "maxParticipants": 10,
+    "isActive": true,
+    "description": "Public session (MEDIUM_GROUP) for BUENDSLIGUA with buy-in $100"
+  },
+  {
+    "templateName": "Private Medium Group - $10 - La Liga",
+    "isPrivate": true,
+    "sessionType": "MEDIUM_GROUP",
+    "competition": "LA_LIGA",
+    "buyInAmount": 10,
+    "maxParticipants": 10,
+    "isActive": true,
+    "description": "Private session (MEDIUM_GROUP) for LA_LIGA with buy-in $10"
+  },
+  {
+    "templateName": "Public Medium Group - $10 - La Liga",
+    "isPrivate": false,
+    "sessionType": "MEDIUM_GROUP",
+    "competition": "LA_LIGA",
+    "buyInAmount": 10,
+    "maxParticipants": 10,
+    "isActive": true,
+    "description": "Public session (MEDIUM_GROUP) for LA_LIGA with buy-in $10"
+  },
+  {
+    "templateName": "Private Medium Group - $20 - La Liga",
+    "isPrivate": true,
+    "sessionType": "MEDIUM_GROUP",
+    "competition": "LA_LIGA",
+    "buyInAmount": 20,
+    "maxParticipants": 10,
+    "isActive": true,
+    "description": "Private session (MEDIUM_GROUP) for LA_LIGA with buy-in $20"
+  },
+  {
+    "templateName": "Public Medium Group - $20 - La Liga",
+    "isPrivate": false,
+    "sessionType": "MEDIUM_GROUP",
+    "competition": "LA_LIGA",
+    "buyInAmount": 20,
+    "maxParticipants": 10,
+    "isActive": true,
+    "description": "Public session (MEDIUM_GROUP) for LA_LIGA with buy-in $20"
+  },
+  {
+    "templateName": "Private Medium Group - $50 - La Liga",
+    "isPrivate": true,
+    "sessionType": "MEDIUM_GROUP",
+    "competition": "LA_LIGA",
+    "buyInAmount": 50,
+    "maxParticipants": 10,
+    "isActive": true,
+    "description": "Private session (MEDIUM_GROUP) for LA_LIGA with buy-in $50"
+  },
+  {
+    "templateName": "Public Medium Group - $50 - La Liga",
+    "isPrivate": false,
+    "sessionType": "MEDIUM_GROUP",
+    "competition": "LA_LIGA",
+    "buyInAmount": 50,
+    "maxParticipants": 10,
+    "isActive": true,
+    "description": "Public session (MEDIUM_GROUP) for LA_LIGA with buy-in $50"
+  },
+  {
+    "templateName": "Private Medium Group - $100 - La Liga",
+    "isPrivate": true,
+    "sessionType": "MEDIUM_GROUP",
+    "competition": "LA_LIGA",
+    "buyInAmount": 100,
+    "maxParticipants": 10,
+    "isActive": true,
+    "description": "Private session (MEDIUM_GROUP) for LA_LIGA with buy-in $100"
+  },
+  {
+    "templateName": "Public Medium Group - $100 - La Liga",
+    "isPrivate": false,
+    "sessionType": "MEDIUM_GROUP",
+    "competition": "LA_LIGA",
+    "buyInAmount": 100,
+    "maxParticipants": 10,
+    "isActive": true,
+    "description": "Public session (MEDIUM_GROUP) for LA_LIGA with buy-in $100"
+  },
+  {
+    "templateName": "Private Medium Group - $10 - Ligue One",
+    "isPrivate": true,
+    "sessionType": "MEDIUM_GROUP",
+    "competition": "LIGUE_ONE",
+    "buyInAmount": 10,
+    "maxParticipants": 10,
+    "isActive": true,
+    "description": "Private session (MEDIUM_GROUP) for LIGUE_ONE with buy-in $10"
+  },
+  {
+    "templateName": "Public Medium Group - $10 - Ligue One",
+    "isPrivate": false,
+    "sessionType": "MEDIUM_GROUP",
+    "competition": "LIGUE_ONE",
+    "buyInAmount": 10,
+    "maxParticipants": 10,
+    "isActive": true,
+    "description": "Public session (MEDIUM_GROUP) for LIGUE_ONE with buy-in $10"
+  },
+  {
+    "templateName": "Private Medium Group - $20 - Ligue One",
+    "isPrivate": true,
+    "sessionType": "MEDIUM_GROUP",
+    "competition": "LIGUE_ONE",
+    "buyInAmount": 20,
+    "maxParticipants": 10,
+    "isActive": true,
+    "description": "Private session (MEDIUM_GROUP) for LIGUE_ONE with buy-in $20"
+  },
+  {
+    "templateName": "Public Medium Group - $20 - Ligue One",
+    "isPrivate": false,
+    "sessionType": "MEDIUM_GROUP",
+    "competition": "LIGUE_ONE",
+    "buyInAmount": 20,
+    "maxParticipants": 10,
+    "isActive": true,
+    "description": "Public session (MEDIUM_GROUP) for LIGUE_ONE with buy-in $20"
+  },
+  {
+    "templateName": "Private Medium Group - $50 - Ligue One",
+    "isPrivate": true,
+    "sessionType": "MEDIUM_GROUP",
+    "competition": "LIGUE_ONE",
+    "buyInAmount": 50,
+    "maxParticipants": 10,
+    "isActive": true,
+    "description": "Private session (MEDIUM_GROUP) for LIGUE_ONE with buy-in $50"
+  },
+  {
+    "templateName": "Public Medium Group - $50 - Ligue One",
+    "isPrivate": false,
+    "sessionType": "MEDIUM_GROUP",
+    "competition": "LIGUE_ONE",
+    "buyInAmount": 50,
+    "maxParticipants": 10,
+    "isActive": true,
+    "description": "Public session (MEDIUM_GROUP) for LIGUE_ONE with buy-in $50"
+  },
+  {
+    "templateName": "Private Medium Group - $100 - Ligue One",
+    "isPrivate": true,
+    "sessionType": "MEDIUM_GROUP",
+    "competition": "LIGUE_ONE",
+    "buyInAmount": 100,
+    "maxParticipants": 10,
+    "isActive": true,
+    "description": "Private session (MEDIUM_GROUP) for LIGUE_ONE with buy-in $100"
+  },
+  {
+    "templateName": "Public Medium Group - $100 - Ligue One",
+    "isPrivate": false,
+    "sessionType": "MEDIUM_GROUP",
+    "competition": "LIGUE_ONE",
+    "buyInAmount": 100,
+    "maxParticipants": 10,
+    "isActive": true,
+    "description": "Public session (MEDIUM_GROUP) for LIGUE_ONE with buy-in $100"
+  },
+  {
+    "templateName": "Private Medium Group - $10 - Bestoff",
+    "isPrivate": true,
+    "sessionType": "MEDIUM_GROUP",
+    "competition": "BESTOFF",
+    "buyInAmount": 10,
+    "maxParticipants": 10,
+    "isActive": true,
+    "description": "Private session (MEDIUM_GROUP) for BESTOFF with buy-in $10"
+  },
+  {
+    "templateName": "Public Medium Group - $10 - Bestoff",
+    "isPrivate": false,
+    "sessionType": "MEDIUM_GROUP",
+    "competition": "BESTOFF",
+    "buyInAmount": 10,
+    "maxParticipants": 10,
+    "isActive": true,
+    "description": "Public session (MEDIUM_GROUP) for BESTOFF with buy-in $10"
+  },
+  {
+    "templateName": "Private Medium Group - $20 - Bestoff",
+    "isPrivate": true,
+    "sessionType": "MEDIUM_GROUP",
+    "competition": "BESTOFF",
+    "buyInAmount": 20,
+    "maxParticipants": 10,
+    "isActive": true,
+    "description": "Private session (MEDIUM_GROUP) for BESTOFF with buy-in $20"
+  },
+  {
+    "templateName": "Public Medium Group - $20 - Bestoff",
+    "isPrivate": false,
+    "sessionType": "MEDIUM_GROUP",
+    "competition": "BESTOFF",
+    "buyInAmount": 20,
+    "maxParticipants": 10,
+    "isActive": true,
+    "description": "Public session (MEDIUM_GROUP) for BESTOFF with buy-in $20"
+  },
+  {
+    "templateName": "Private Medium Group - $50 - Bestoff",
+    "isPrivate": true,
+    "sessionType": "MEDIUM_GROUP",
+    "competition": "BESTOFF",
+    "buyInAmount": 50,
+    "maxParticipants": 10,
+    "isActive": true,
+    "description": "Private session (MEDIUM_GROUP) for BESTOFF with buy-in $50"
+  },
+  {
+    "templateName": "Public Medium Group - $50 - Bestoff",
+    "isPrivate": false,
+    "sessionType": "MEDIUM_GROUP",
+    "competition": "BESTOFF",
+    "buyInAmount": 50,
+    "maxParticipants": 10,
+    "isActive": true,
+    "description": "Public session (MEDIUM_GROUP) for BESTOFF with buy-in $50"
+  },
+  {
+    "templateName": "Private Medium Group - $100 - Bestoff",
+    "isPrivate": true,
+    "sessionType": "MEDIUM_GROUP",
+    "competition": "BESTOFF",
+    "buyInAmount": 100,
+    "maxParticipants": 10,
+    "isActive": true,
+    "description": "Private session (MEDIUM_GROUP) for BESTOFF with buy-in $100"
+  },
+  {
+    "templateName": "Public Medium Group - $100 - Bestoff",
+    "isPrivate": false,
+    "sessionType": "MEDIUM_GROUP",
+    "competition": "BESTOFF",
+    "buyInAmount": 100,
+    "maxParticipants": 10,
+    "isActive": true,
+    "description": "Public session (MEDIUM_GROUP) for BESTOFF with buy-in $100"
+  },
+  {
+    "templateName": "Private Medium Group - $10 - Conference League",
+    "isPrivate": true,
+    "sessionType": "MEDIUM_GROUP",
+    "competition": "CONFERENCE_LEAGUE",
+    "buyInAmount": 10,
+    "maxParticipants": 10,
+    "isActive": true,
+    "description": "Private session (MEDIUM_GROUP) for CONFERENCE_LEAGUE with buy-in $10"
+  },
+  {
+    "templateName": "Public Medium Group - $10 - Conference League",
+    "isPrivate": false,
+    "sessionType": "MEDIUM_GROUP",
+    "competition": "CONFERENCE_LEAGUE",
+    "buyInAmount": 10,
+    "maxParticipants": 10,
+    "isActive": true,
+    "description": "Public session (MEDIUM_GROUP) for CONFERENCE_LEAGUE with buy-in $10"
+  },
+  {
+    "templateName": "Private Medium Group - $20 - Conference League",
+    "isPrivate": true,
+    "sessionType": "MEDIUM_GROUP",
+    "competition": "CONFERENCE_LEAGUE",
+    "buyInAmount": 20,
+    "maxParticipants": 10,
+    "isActive": true,
+    "description": "Private session (MEDIUM_GROUP) for CONFERENCE_LEAGUE with buy-in $20"
+  },
+  {
+    "templateName": "Public Medium Group - $20 - Conference League",
+    "isPrivate": false,
+    "sessionType": "MEDIUM_GROUP",
+    "competition": "CONFERENCE_LEAGUE",
+    "buyInAmount": 20,
+    "maxParticipants": 10,
+    "isActive": true,
+    "description": "Public session (MEDIUM_GROUP) for CONFERENCE_LEAGUE with buy-in $20"
+  },
+  {
+    "templateName": "Private Medium Group - $50 - Conference League",
+    "isPrivate": true,
+    "sessionType": "MEDIUM_GROUP",
+    "competition": "CONFERENCE_LEAGUE",
+    "buyInAmount": 50,
+    "maxParticipants": 10,
+    "isActive": true,
+    "description": "Private session (MEDIUM_GROUP) for CONFERENCE_LEAGUE with buy-in $50"
+  },
+  {
+    "templateName": "Public Medium Group - $50 - Conference League",
+    "isPrivate": false,
+    "sessionType": "MEDIUM_GROUP",
+    "competition": "CONFERENCE_LEAGUE",
+    "buyInAmount": 50,
+    "maxParticipants": 10,
+    "isActive": true,
+    "description": "Public session (MEDIUM_GROUP) for CONFERENCE_LEAGUE with buy-in $50"
+  },
+  {
+    "templateName": "Private Medium Group - $100 - Conference League",
+    "isPrivate": true,
+    "sessionType": "MEDIUM_GROUP",
+    "competition": "CONFERENCE_LEAGUE",
+    "buyInAmount": 100,
+    "maxParticipants": 10,
+    "isActive": true,
+    "description": "Private session (MEDIUM_GROUP) for CONFERENCE_LEAGUE with buy-in $100"
+  },
+  {
+    "templateName": "Public Medium Group - $100 - Conference League",
+    "isPrivate": false,
+    "sessionType": "MEDIUM_GROUP",
+    "competition": "CONFERENCE_LEAGUE",
+    "buyInAmount": 100,
+    "maxParticipants": 10,
+    "isActive": true,
+    "description": "Public session (MEDIUM_GROUP) for CONFERENCE_LEAGUE with buy-in $100"
+  },
+  {
+    "templateName": "Private Open Room - $10 - Premier League",
+    "isPrivate": true,
+    "sessionType": "OPEN_ROOM",
+    "competition": "PREMIER_LEAGUE",
+    "buyInAmount": 10,
+    "maxParticipants": 100,
+    "isActive": true,
+    "description": "Private session (OPEN_ROOM) for PREMIER_LEAGUE with buy-in $10"
+  },
+  {
+    "templateName": "Public Open Room - $10 - Premier League",
+    "isPrivate": false,
+    "sessionType": "OPEN_ROOM",
+    "competition": "PREMIER_LEAGUE",
+    "buyInAmount": 10,
+    "maxParticipants": 100,
+    "isActive": true,
+    "description": "Public session (OPEN_ROOM) for PREMIER_LEAGUE with buy-in $10"
+  },
+  {
+    "templateName": "Private Open Room - $20 - Premier League",
+    "isPrivate": true,
+    "sessionType": "OPEN_ROOM",
+    "competition": "PREMIER_LEAGUE",
+    "buyInAmount": 20,
+    "maxParticipants": 100,
+    "isActive": true,
+    "description": "Private session (OPEN_ROOM) for PREMIER_LEAGUE with buy-in $20"
+  },
+  {
+    "templateName": "Public Open Room - $20 - Premier League",
+    "isPrivate": false,
+    "sessionType": "OPEN_ROOM",
+    "competition": "PREMIER_LEAGUE",
+    "buyInAmount": 20,
+    "maxParticipants": 100,
+    "isActive": true,
+    "description": "Public session (OPEN_ROOM) for PREMIER_LEAGUE with buy-in $20"
+  },
+  {
+    "templateName": "Private Open Room - $50 - Premier League",
+    "isPrivate": true,
+    "sessionType": "OPEN_ROOM",
+    "competition": "PREMIER_LEAGUE",
+    "buyInAmount": 50,
+    "maxParticipants": 100,
+    "isActive": true,
+    "description": "Private session (OPEN_ROOM) for PREMIER_LEAGUE with buy-in $50"
+  },
+  {
+    "templateName": "Public Open Room - $50 - Premier League",
+    "isPrivate": false,
+    "sessionType": "OPEN_ROOM",
+    "competition": "PREMIER_LEAGUE",
+    "buyInAmount": 50,
+    "maxParticipants": 100,
+    "isActive": true,
+    "description": "Public session (OPEN_ROOM) for PREMIER_LEAGUE with buy-in $50"
+  },
+  {
+    "templateName": "Private Open Room - $100 - Premier League",
+    "isPrivate": true,
+    "sessionType": "OPEN_ROOM",
+    "competition": "PREMIER_LEAGUE",
+    "buyInAmount": 100,
+    "maxParticipants": 100,
+    "isActive": true,
+    "description": "Private session (OPEN_ROOM) for PREMIER_LEAGUE with buy-in $100"
+  },
+  {
+    "templateName": "Public Open Room - $100 - Premier League",
+    "isPrivate": false,
+    "sessionType": "OPEN_ROOM",
+    "competition": "PREMIER_LEAGUE",
+    "buyInAmount": 100,
+    "maxParticipants": 100,
+    "isActive": true,
+    "description": "Public session (OPEN_ROOM) for PREMIER_LEAGUE with buy-in $100"
+  },
+  {
+    "templateName": "Private Open Room - $10 - Serie A",
+    "isPrivate": true,
+    "sessionType": "OPEN_ROOM",
+    "competition": "SERIE_A",
+    "buyInAmount": 10,
+    "maxParticipants": 100,
+    "isActive": true,
+    "description": "Private session (OPEN_ROOM) for SERIE_A with buy-in $10"
+  },
+  {
+    "templateName": "Public Open Room - $10 - Serie A",
+    "isPrivate": false,
+    "sessionType": "OPEN_ROOM",
+    "competition": "SERIE_A",
+    "buyInAmount": 10,
+    "maxParticipants": 100,
+    "isActive": true,
+    "description": "Public session (OPEN_ROOM) for SERIE_A with buy-in $10"
+  },
+  {
+    "templateName": "Private Open Room - $20 - Serie A",
+    "isPrivate": true,
+    "sessionType": "OPEN_ROOM",
+    "competition": "SERIE_A",
+    "buyInAmount": 20,
+    "maxParticipants": 100,
+    "isActive": true,
+    "description": "Private session (OPEN_ROOM) for SERIE_A with buy-in $20"
+  },
+  {
+    "templateName": "Public Open Room - $20 - Serie A",
+    "isPrivate": false,
+    "sessionType": "OPEN_ROOM",
+    "competition": "SERIE_A",
+    "buyInAmount": 20,
+    "maxParticipants": 100,
+    "isActive": true,
+    "description": "Public session (OPEN_ROOM) for SERIE_A with buy-in $20"
+  },
+  {
+    "templateName": "Private Open Room - $50 - Serie A",
+    "isPrivate": true,
+    "sessionType": "OPEN_ROOM",
+    "competition": "SERIE_A",
+    "buyInAmount": 50,
+    "maxParticipants": 100,
+    "isActive": true,
+    "description": "Private session (OPEN_ROOM) for SERIE_A with buy-in $50"
+  },
+  {
+    "templateName": "Public Open Room - $50 - Serie A",
+    "isPrivate": false,
+    "sessionType": "OPEN_ROOM",
+    "competition": "SERIE_A",
+    "buyInAmount": 50,
+    "maxParticipants": 100,
+    "isActive": true,
+    "description": "Public session (OPEN_ROOM) for SERIE_A with buy-in $50"
+  },
+  {
+    "templateName": "Private Open Room - $100 - Serie A",
+    "isPrivate": true,
+    "sessionType": "OPEN_ROOM",
+    "competition": "SERIE_A",
+    "buyInAmount": 100,
+    "maxParticipants": 100,
+    "isActive": true,
+    "description": "Private session (OPEN_ROOM) for SERIE_A with buy-in $100"
+  },
+  {
+    "templateName": "Public Open Room - $100 - Serie A",
+    "isPrivate": false,
+    "sessionType": "OPEN_ROOM",
+    "competition": "SERIE_A",
+    "buyInAmount": 100,
+    "maxParticipants": 100,
+    "isActive": true,
+    "description": "Public session (OPEN_ROOM) for SERIE_A with buy-in $100"
+  },
+  {
+    "templateName": "Private Open Room - $10 - Champions League",
+    "isPrivate": true,
+    "sessionType": "OPEN_ROOM",
+    "competition": "CHAMPIONS_LEAGUE",
+    "buyInAmount": 10,
+    "maxParticipants": 100,
+    "isActive": true,
+    "description": "Private session (OPEN_ROOM) for CHAMPIONS_LEAGUE with buy-in $10"
+  },
+  {
+    "templateName": "Public Open Room - $10 - Champions League",
+    "isPrivate": false,
+    "sessionType": "OPEN_ROOM",
+    "competition": "CHAMPIONS_LEAGUE",
+    "buyInAmount": 10,
+    "maxParticipants": 100,
+    "isActive": true,
+    "description": "Public session (OPEN_ROOM) for CHAMPIONS_LEAGUE with buy-in $10"
+  },
+  {
+    "templateName": "Private Open Room - $20 - Champions League",
+    "isPrivate": true,
+    "sessionType": "OPEN_ROOM",
+    "competition": "CHAMPIONS_LEAGUE",
+    "buyInAmount": 20,
+    "maxParticipants": 100,
+    "isActive": true,
+    "description": "Private session (OPEN_ROOM) for CHAMPIONS_LEAGUE with buy-in $20"
+  },
+  {
+    "templateName": "Public Open Room - $20 - Champions League",
+    "isPrivate": false,
+    "sessionType": "OPEN_ROOM",
+    "competition": "CHAMPIONS_LEAGUE",
+    "buyInAmount": 20,
+    "maxParticipants": 100,
+    "isActive": true,
+    "description": "Public session (OPEN_ROOM) for CHAMPIONS_LEAGUE with buy-in $20"
+  },
+  {
+    "templateName": "Private Open Room - $50 - Champions League",
+    "isPrivate": true,
+    "sessionType": "OPEN_ROOM",
+    "competition": "CHAMPIONS_LEAGUE",
+    "buyInAmount": 50,
+    "maxParticipants": 100,
+    "isActive": true,
+    "description": "Private session (OPEN_ROOM) for CHAMPIONS_LEAGUE with buy-in $50"
+  },
+  {
+    "templateName": "Public Open Room - $50 - Champions League",
+    "isPrivate": false,
+    "sessionType": "OPEN_ROOM",
+    "competition": "CHAMPIONS_LEAGUE",
+    "buyInAmount": 50,
+    "maxParticipants": 100,
+    "isActive": true,
+    "description": "Public session (OPEN_ROOM) for CHAMPIONS_LEAGUE with buy-in $50"
+  },
+  {
+    "templateName": "Private Open Room - $100 - Champions League",
+    "isPrivate": true,
+    "sessionType": "OPEN_ROOM",
+    "competition": "CHAMPIONS_LEAGUE",
+    "buyInAmount": 100,
+    "maxParticipants": 100,
+    "isActive": true,
+    "description": "Private session (OPEN_ROOM) for CHAMPIONS_LEAGUE with buy-in $100"
+  },
+  {
+    "templateName": "Public Open Room - $100 - Champions League",
+    "isPrivate": false,
+    "sessionType": "OPEN_ROOM",
+    "competition": "CHAMPIONS_LEAGUE",
+    "buyInAmount": 100,
+    "maxParticipants": 100,
+    "isActive": true,
+    "description": "Public session (OPEN_ROOM) for CHAMPIONS_LEAGUE with buy-in $100"
+  },
+  {
+    "templateName": "Private Open Room - $10 - Europe League",
+    "isPrivate": true,
+    "sessionType": "OPEN_ROOM",
+    "competition": "EUROPE_LEAGUE",
+    "buyInAmount": 10,
+    "maxParticipants": 100,
+    "isActive": true,
+    "description": "Private session (OPEN_ROOM) for EUROPE_LEAGUE with buy-in $10"
+  },
+  {
+    "templateName": "Public Open Room - $10 - Europe League",
+    "isPrivate": false,
+    "sessionType": "OPEN_ROOM",
+    "competition": "EUROPE_LEAGUE",
+    "buyInAmount": 10,
+    "maxParticipants": 100,
+    "isActive": true,
+    "description": "Public session (OPEN_ROOM) for EUROPE_LEAGUE with buy-in $10"
+  },
+  {
+    "templateName": "Private Open Room - $20 - Europe League",
+    "isPrivate": true,
+    "sessionType": "OPEN_ROOM",
+    "competition": "EUROPE_LEAGUE",
+    "buyInAmount": 20,
+    "maxParticipants": 100,
+    "isActive": true,
+    "description": "Private session (OPEN_ROOM) for EUROPE_LEAGUE with buy-in $20"
+  },
+  {
+    "templateName": "Public Open Room - $20 - Europe League",
+    "isPrivate": false,
+    "sessionType": "OPEN_ROOM",
+    "competition": "EUROPE_LEAGUE",
+    "buyInAmount": 20,
+    "maxParticipants": 100,
+    "isActive": true,
+    "description": "Public session (OPEN_ROOM) for EUROPE_LEAGUE with buy-in $20"
+  },
+  {
+    "templateName": "Private Open Room - $50 - Europe League",
+    "isPrivate": true,
+    "sessionType": "OPEN_ROOM",
+    "competition": "EUROPE_LEAGUE",
+    "buyInAmount": 50,
+    "maxParticipants": 100,
+    "isActive": true,
+    "description": "Private session (OPEN_ROOM) for EUROPE_LEAGUE with buy-in $50"
+  },
+  {
+    "templateName": "Public Open Room - $50 - Europe League",
+    "isPrivate": false,
+    "sessionType": "OPEN_ROOM",
+    "competition": "EUROPE_LEAGUE",
+    "buyInAmount": 50,
+    "maxParticipants": 100,
+    "isActive": true,
+    "description": "Public session (OPEN_ROOM) for EUROPE_LEAGUE with buy-in $50"
+  },
+  {
+    "templateName": "Private Open Room - $100 - Europe League",
+    "isPrivate": true,
+    "sessionType": "OPEN_ROOM",
+    "competition": "EUROPE_LEAGUE",
+    "buyInAmount": 100,
+    "maxParticipants": 100,
+    "isActive": true,
+    "description": "Private session (OPEN_ROOM) for EUROPE_LEAGUE with buy-in $100"
+  },
+  {
+    "templateName": "Public Open Room - $100 - Europe League",
+    "isPrivate": false,
+    "sessionType": "OPEN_ROOM",
+    "competition": "EUROPE_LEAGUE",
+    "buyInAmount": 100,
+    "maxParticipants": 100,
+    "isActive": true,
+    "description": "Public session (OPEN_ROOM) for EUROPE_LEAGUE with buy-in $100"
+  },
+  {
+    "templateName": "Private Open Room - $10 - Buendsligua",
+    "isPrivate": true,
+    "sessionType": "OPEN_ROOM",
+    "competition": "BUENDSLIGUA",
+    "buyInAmount": 10,
+    "maxParticipants": 100,
+    "isActive": true,
+    "description": "Private session (OPEN_ROOM) for BUENDSLIGUA with buy-in $10"
+  },
+  {
+    "templateName": "Public Open Room - $10 - Buendsligua",
+    "isPrivate": false,
+    "sessionType": "OPEN_ROOM",
+    "competition": "BUENDSLIGUA",
+    "buyInAmount": 10,
+    "maxParticipants": 100,
+    "isActive": true,
+    "description": "Public session (OPEN_ROOM) for BUENDSLIGUA with buy-in $10"
+  },
+  {
+    "templateName": "Private Open Room - $20 - Buendsligua",
+    "isPrivate": true,
+    "sessionType": "OPEN_ROOM",
+    "competition": "BUENDSLIGUA",
+    "buyInAmount": 20,
+    "maxParticipants": 100,
+    "isActive": true,
+    "description": "Private session (OPEN_ROOM) for BUENDSLIGUA with buy-in $20"
+  },
+  {
+    "templateName": "Public Open Room - $20 - Buendsligua",
+    "isPrivate": false,
+    "sessionType": "OPEN_ROOM",
+    "competition": "BUENDSLIGUA",
+    "buyInAmount": 20,
+    "maxParticipants": 100,
+    "isActive": true,
+    "description": "Public session (OPEN_ROOM) for BUENDSLIGUA with buy-in $20"
+  },
+  {
+    "templateName": "Private Open Room - $50 - Buendsligua",
+    "isPrivate": true,
+    "sessionType": "OPEN_ROOM",
+    "competition": "BUENDSLIGUA",
+    "buyInAmount": 50,
+    "maxParticipants": 100,
+    "isActive": true,
+    "description": "Private session (OPEN_ROOM) for BUENDSLIGUA with buy-in $50"
+  },
+  {
+    "templateName": "Public Open Room - $50 - Buendsligua",
+    "isPrivate": false,
+    "sessionType": "OPEN_ROOM",
+    "competition": "BUENDSLIGUA",
+    "buyInAmount": 50,
+    "maxParticipants": 100,
+    "isActive": true,
+    "description": "Public session (OPEN_ROOM) for BUENDSLIGUA with buy-in $50"
+  },
+  {
+    "templateName": "Private Open Room - $100 - Buendsligua",
+    "isPrivate": true,
+    "sessionType": "OPEN_ROOM",
+    "competition": "BUENDSLIGUA",
+    "buyInAmount": 100,
+    "maxParticipants": 100,
+    "isActive": true,
+    "description": "Private session (OPEN_ROOM) for BUENDSLIGUA with buy-in $100"
+  },
+  {
+    "templateName": "Public Open Room - $100 - Buendsligua",
+    "isPrivate": false,
+    "sessionType": "OPEN_ROOM",
+    "competition": "BUENDSLIGUA",
+    "buyInAmount": 100,
+    "maxParticipants": 100,
+    "isActive": true,
+    "description": "Public session (OPEN_ROOM) for BUENDSLIGUA with buy-in $100"
+  },
+  {
+    "templateName": "Private Open Room - $10 - La Liga",
+    "isPrivate": true,
+    "sessionType": "OPEN_ROOM",
+    "competition": "LA_LIGA",
+    "buyInAmount": 10,
+    "maxParticipants": 100,
+    "isActive": true,
+    "description": "Private session (OPEN_ROOM) for LA_LIGA with buy-in $10"
+  },
+  {
+    "templateName": "Public Open Room - $10 - La Liga",
+    "isPrivate": false,
+    "sessionType": "OPEN_ROOM",
+    "competition": "LA_LIGA",
+    "buyInAmount": 10,
+    "maxParticipants": 100,
+    "isActive": true,
+    "description": "Public session (OPEN_ROOM) for LA_LIGA with buy-in $10"
+  },
+  {
+    "templateName": "Private Open Room - $20 - La Liga",
+    "isPrivate": true,
+    "sessionType": "OPEN_ROOM",
+    "competition": "LA_LIGA",
+    "buyInAmount": 20,
+    "maxParticipants": 100,
+    "isActive": true,
+    "description": "Private session (OPEN_ROOM) for LA_LIGA with buy-in $20"
+  },
+  {
+    "templateName": "Public Open Room - $20 - La Liga",
+    "isPrivate": false,
+    "sessionType": "OPEN_ROOM",
+    "competition": "LA_LIGA",
+    "buyInAmount": 20,
+    "maxParticipants": 100,
+    "isActive": true,
+    "description": "Public session (OPEN_ROOM) for LA_LIGA with buy-in $20"
+  },
+  {
+    "templateName": "Private Open Room - $50 - La Liga",
+    "isPrivate": true,
+    "sessionType": "OPEN_ROOM",
+    "competition": "LA_LIGA",
+    "buyInAmount": 50,
+    "maxParticipants": 100,
+    "isActive": true,
+    "description": "Private session (OPEN_ROOM) for LA_LIGA with buy-in $50"
+  },
+  {
+    "templateName": "Public Open Room - $50 - La Liga",
+    "isPrivate": false,
+    "sessionType": "OPEN_ROOM",
+    "competition": "LA_LIGA",
+    "buyInAmount": 50,
+    "maxParticipants": 100,
+    "isActive": true,
+    "description": "Public session (OPEN_ROOM) for LA_LIGA with buy-in $50"
+  },
+  {
+    "templateName": "Private Open Room - $100 - La Liga",
+    "isPrivate": true,
+    "sessionType": "OPEN_ROOM",
+    "competition": "LA_LIGA",
+    "buyInAmount": 100,
+    "maxParticipants": 100,
+    "isActive": true,
+    "description": "Private session (OPEN_ROOM) for LA_LIGA with buy-in $100"
+  },
+  {
+    "templateName": "Public Open Room - $100 - La Liga",
+    "isPrivate": false,
+    "sessionType": "OPEN_ROOM",
+    "competition": "LA_LIGA",
+    "buyInAmount": 100,
+    "maxParticipants": 100,
+    "isActive": true,
+    "description": "Public session (OPEN_ROOM) for LA_LIGA with buy-in $100"
+  },
+  {
+    "templateName": "Private Open Room - $10 - Ligue One",
+    "isPrivate": true,
+    "sessionType": "OPEN_ROOM",
+    "competition": "LIGUE_ONE",
+    "buyInAmount": 10,
+    "maxParticipants": 100,
+    "isActive": true,
+    "description": "Private session (OPEN_ROOM) for LIGUE_ONE with buy-in $10"
+  },
+  {
+    "templateName": "Public Open Room - $10 - Ligue One",
+    "isPrivate": false,
+    "sessionType": "OPEN_ROOM",
+    "competition": "LIGUE_ONE",
+    "buyInAmount": 10,
+    "maxParticipants": 100,
+    "isActive": true,
+    "description": "Public session (OPEN_ROOM) for LIGUE_ONE with buy-in $10"
+  },
+  {
+    "templateName": "Private Open Room - $20 - Ligue One",
+    "isPrivate": true,
+    "sessionType": "OPEN_ROOM",
+    "competition": "LIGUE_ONE",
+    "buyInAmount": 20,
+    "maxParticipants": 100,
+    "isActive": true,
+    "description": "Private session (OPEN_ROOM) for LIGUE_ONE with buy-in $20"
+  },
+  {
+    "templateName": "Public Open Room - $20 - Ligue One",
+    "isPrivate": false,
+    "sessionType": "OPEN_ROOM",
+    "competition": "LIGUE_ONE",
+    "buyInAmount": 20,
+    "maxParticipants": 100,
+    "isActive": true,
+    "description": "Public session (OPEN_ROOM) for LIGUE_ONE with buy-in $20"
+  },
+  {
+    "templateName": "Private Open Room - $50 - Ligue One",
+    "isPrivate": true,
+    "sessionType": "OPEN_ROOM",
+    "competition": "LIGUE_ONE",
+    "buyInAmount": 50,
+    "maxParticipants": 100,
+    "isActive": true,
+    "description": "Private session (OPEN_ROOM) for LIGUE_ONE with buy-in $50"
+  },
+  {
+    "templateName": "Public Open Room - $50 - Ligue One",
+    "isPrivate": false,
+    "sessionType": "OPEN_ROOM",
+    "competition": "LIGUE_ONE",
+    "buyInAmount": 50,
+    "maxParticipants": 100,
+    "isActive": true,
+    "description": "Public session (OPEN_ROOM) for LIGUE_ONE with buy-in $50"
+  },
+  {
+    "templateName": "Private Open Room - $100 - Ligue One",
+    "isPrivate": true,
+    "sessionType": "OPEN_ROOM",
+    "competition": "LIGUE_ONE",
+    "buyInAmount": 100,
+    "maxParticipants": 100,
+    "isActive": true,
+    "description": "Private session (OPEN_ROOM) for LIGUE_ONE with buy-in $100"
+  },
+  {
+    "templateName": "Public Open Room - $100 - Ligue One",
+    "isPrivate": false,
+    "sessionType": "OPEN_ROOM",
+    "competition": "LIGUE_ONE",
+    "buyInAmount": 100,
+    "maxParticipants": 100,
+    "isActive": true,
+    "description": "Public session (OPEN_ROOM) for LIGUE_ONE with buy-in $100"
+  },
+  {
+    "templateName": "Private Open Room - $10 - Bestoff",
+    "isPrivate": true,
+    "sessionType": "OPEN_ROOM",
+    "competition": "BESTOFF",
+    "buyInAmount": 10,
+    "maxParticipants": 100,
+    "isActive": true,
+    "description": "Private session (OPEN_ROOM) for BESTOFF with buy-in $10"
+  },
+  {
+    "templateName": "Public Open Room - $10 - Bestoff",
+    "isPrivate": false,
+    "sessionType": "OPEN_ROOM",
+    "competition": "BESTOFF",
+    "buyInAmount": 10,
+    "maxParticipants": 100,
+    "isActive": true,
+    "description": "Public session (OPEN_ROOM) for BESTOFF with buy-in $10"
+  },
+  {
+    "templateName": "Private Open Room - $20 - Bestoff",
+    "isPrivate": true,
+    "sessionType": "OPEN_ROOM",
+    "competition": "BESTOFF",
+    "buyInAmount": 20,
+    "maxParticipants": 100,
+    "isActive": true,
+    "description": "Private session (OPEN_ROOM) for BESTOFF with buy-in $20"
+  },
+  {
+    "templateName": "Public Open Room - $20 - Bestoff",
+    "isPrivate": false,
+    "sessionType": "OPEN_ROOM",
+    "competition": "BESTOFF",
+    "buyInAmount": 20,
+    "maxParticipants": 100,
+    "isActive": true,
+    "description": "Public session (OPEN_ROOM) for BESTOFF with buy-in $20"
+  },
+  {
+    "templateName": "Private Open Room - $50 - Bestoff",
+    "isPrivate": true,
+    "sessionType": "OPEN_ROOM",
+    "competition": "BESTOFF",
+    "buyInAmount": 50,
+    "maxParticipants": 100,
+    "isActive": true,
+    "description": "Private session (OPEN_ROOM) for BESTOFF with buy-in $50"
+  },
+  {
+    "templateName": "Public Open Room - $50 - Bestoff",
+    "isPrivate": false,
+    "sessionType": "OPEN_ROOM",
+    "competition": "BESTOFF",
+    "buyInAmount": 50,
+    "maxParticipants": 100,
+    "isActive": true,
+    "description": "Public session (OPEN_ROOM) for BESTOFF with buy-in $50"
+  },
+  {
+    "templateName": "Private Open Room - $100 - Bestoff",
+    "isPrivate": true,
+    "sessionType": "OPEN_ROOM",
+    "competition": "BESTOFF",
+    "buyInAmount": 100,
+    "maxParticipants": 100,
+    "isActive": true,
+    "description": "Private session (OPEN_ROOM) for BESTOFF with buy-in $100"
+  },
+  {
+    "templateName": "Public Open Room - $100 - Bestoff",
+    "isPrivate": false,
+    "sessionType": "OPEN_ROOM",
+    "competition": "BESTOFF",
+    "buyInAmount": 100,
+    "maxParticipants": 100,
+    "isActive": true,
+    "description": "Public session (OPEN_ROOM) for BESTOFF with buy-in $100"
+  },
+  {
+    "templateName": "Private Open Room - $10 - Conference League",
+    "isPrivate": true,
+    "sessionType": "OPEN_ROOM",
+    "competition": "CONFERENCE_LEAGUE",
+    "buyInAmount": 10,
+    "maxParticipants": 100,
+    "isActive": true,
+    "description": "Private session (OPEN_ROOM) for CONFERENCE_LEAGUE with buy-in $10"
+  },
+  {
+    "templateName": "Public Open Room - $10 - Conference League",
+    "isPrivate": false,
+    "sessionType": "OPEN_ROOM",
+    "competition": "CONFERENCE_LEAGUE",
+    "buyInAmount": 10,
+    "maxParticipants": 100,
+    "isActive": true,
+    "description": "Public session (OPEN_ROOM) for CONFERENCE_LEAGUE with buy-in $10"
+  },
+  {
+    "templateName": "Private Open Room - $20 - Conference League",
+    "isPrivate": true,
+    "sessionType": "OPEN_ROOM",
+    "competition": "CONFERENCE_LEAGUE",
+    "buyInAmount": 20,
+    "maxParticipants": 100,
+    "isActive": true,
+    "description": "Private session (OPEN_ROOM) for CONFERENCE_LEAGUE with buy-in $20"
+  },
+  {
+    "templateName": "Public Open Room - $20 - Conference League",
+    "isPrivate": false,
+    "sessionType": "OPEN_ROOM",
+    "competition": "CONFERENCE_LEAGUE",
+    "buyInAmount": 20,
+    "maxParticipants": 100,
+    "isActive": true,
+    "description": "Public session (OPEN_ROOM) for CONFERENCE_LEAGUE with buy-in $20"
+  },
+  {
+    "templateName": "Private Open Room - $50 - Conference League",
+    "isPrivate": true,
+    "sessionType": "OPEN_ROOM",
+    "competition": "CONFERENCE_LEAGUE",
+    "buyInAmount": 50,
+    "maxParticipants": 100,
+    "isActive": true,
+    "description": "Private session (OPEN_ROOM) for CONFERENCE_LEAGUE with buy-in $50"
+  },
+  {
+    "templateName": "Public Open Room - $50 - Conference League",
+    "isPrivate": false,
+    "sessionType": "OPEN_ROOM",
+    "competition": "CONFERENCE_LEAGUE",
+    "buyInAmount": 50,
+    "maxParticipants": 100,
+    "isActive": true,
+    "description": "Public session (OPEN_ROOM) for CONFERENCE_LEAGUE with buy-in $50"
+  },
+  {
+    "templateName": "Private Open Room - $100 - Conference League",
+    "isPrivate": true,
+    "sessionType": "OPEN_ROOM",
+    "competition": "CONFERENCE_LEAGUE",
+    "buyInAmount": 100,
+    "maxParticipants": 100,
+    "isActive": true,
+    "description": "Private session (OPEN_ROOM) for CONFERENCE_LEAGUE with buy-in $100"
+  },
+  {
+    "templateName": "Public Open Room - $100 - Conference League",
+    "isPrivate": false,
+    "sessionType": "OPEN_ROOM",
+    "competition": "CONFERENCE_LEAGUE",
+    "buyInAmount": 100,
+    "maxParticipants": 100,
+    "isActive": true,
+    "description": "Public session (OPEN_ROOM) for CONFERENCE_LEAGUE with buy-in $100"
+  }
+]

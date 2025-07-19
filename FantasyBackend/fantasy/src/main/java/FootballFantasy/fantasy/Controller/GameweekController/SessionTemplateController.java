@@ -50,12 +50,10 @@ public class SessionTemplateController {
         return ResponseEntity.ok(updated);
     }
 
-    @PutMapping("/{id}/toggle")
-    public ResponseEntity<SessionTemplate> toggle(
-            @PathVariable Long id,
-            @RequestParam boolean isActive
-    ) {
-        return ResponseEntity.ok(service.toggleTemplate(id, isActive));
+    @PutMapping("/deactivate")
+    public ResponseEntity<Void> deactivateTemplates(@RequestParam List<Long> ids) {
+        service.deactivateTemplates(ids);
+        return ResponseEntity.ok().build();
     }
 
     @DeleteMapping("/{id}")

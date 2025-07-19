@@ -55,8 +55,8 @@ public class MatchSeederService {
         List<MatchSeedDTO> seedMatches = Arrays.asList(objectMapper.readValue(inputStream, MatchSeedDTO[].class));
 
         for (MatchSeedDTO dto : seedMatches) {
-            Optional<Match> existingMatch = matchRepository.findByHomeTeamAndAwayTeamAndMatchDate(
-                    dto.getHomeTeam(), dto.getAwayTeam(), dto.getMatchDate());
+            Optional<Match> existingMatch = Optional.ofNullable(matchRepository.findByHomeTeamAndAwayTeamAndMatchDate(
+                    dto.getHomeTeam(), dto.getAwayTeam(), dto.getMatchDate()));
 
             Match match;
             if (existingMatch.isPresent()) {
@@ -108,8 +108,8 @@ public class MatchSeederService {
         int skippedCount = 0;
 
         for (MatchResultDTO dto : results) {
-            Optional<Match> optionalMatch = matchRepository.findByHomeTeamAndAwayTeamAndMatchDate(
-                    dto.getHomeTeam(), dto.getAwayTeam(), dto.getMatchDate());
+            Optional<Match> optionalMatch = Optional.ofNullable(matchRepository.findByHomeTeamAndAwayTeamAndMatchDate(
+                    dto.getHomeTeam(), dto.getAwayTeam(), dto.getMatchDate()));
 
             if (optionalMatch.isPresent()) {
                 Match match = optionalMatch.get();

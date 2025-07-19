@@ -8,14 +8,17 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Service
 public class SessionTemplateService {
 
     @Autowired
     private SessionTemplateRepository repo;
+
 
     public SessionTemplate createTemplate(LeagueTheme competition,
                                           String templateName,
@@ -60,10 +63,8 @@ public class SessionTemplateService {
         repo.deleteById(id);
     }
 
-    public SessionTemplate toggleTemplate(Long id, boolean isActive) {
-        SessionTemplate t = repo.findById(id).orElseThrow(() -> new RuntimeException("Template not found"));
-        t.setIsActive(isActive);
-        return repo.save(t);
+    public void deactivateTemplates(List<Long> ids) {
+        repo.updateTemplatesActiveStatus(ids, false);
     }
 
     public List<SessionTemplate> getTemplates(LeagueTheme competition, SessionType sessionType) {
