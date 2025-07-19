@@ -49,17 +49,23 @@ public class CompetitionSessionService {
                 .findFirst()
                 .orElseThrow(() -> new RuntimeException("No active template for that competition/type/amount"));
 
-        CompetitionSession session = null;
+        CompetitionSession session;
 
         if (isPrivate) {
             if (accessKeyFromUser != null && !accessKeyFromUser.isBlank()) {
+                // JOIN existing private session by access key
                 session = competitionSessionRepository.findPrivateSessionByAccessKeyWithLock(accessKeyFromUser, competition)
-                        .orElse(null);
-            }
-            if (session == null) {
+                        .orElseThrow(() -> new RuntimeException("Private session not found or invalid access key"));
+
+                if (!session.canJoin()) {
+                    throw new RuntimeException("Private session is not joinable");
+                }
+            } else {
+                // CREATE a new private session with a new unique access key
                 session = createNewSessionFromTemplate(gameWeek, template, true, competition);
             }
         } else {
+            // Public session logic (reuse or create)
             session = competitionSessionRepository.findAvailableSessionWithLock(gameweekId, competition, sessionType, buyInAmount)
                     .orElse(null);
             if (session == null) {
@@ -69,6 +75,8 @@ public class CompetitionSessionService {
 
         return session;
     }
+
+
 
 
     public CompetitionSession createNewSessionFromTemplate(GameWeek gameWeek,

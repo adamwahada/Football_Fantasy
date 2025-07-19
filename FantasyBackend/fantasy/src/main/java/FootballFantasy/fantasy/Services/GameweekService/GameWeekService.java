@@ -22,9 +22,6 @@ public class GameWeekService {
     @Autowired
     private MatchRepository matchRepository;
 
-    @Autowired
-    private EntityManager em;
-
     public GameWeek createGameWeek(GameWeek gameWeek) {
         return gameWeekRepository.save(gameWeek);
     }

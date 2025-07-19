@@ -28,4 +28,5 @@ public interface CompetitionSessionRepository extends JpaRepository<CompetitionS
     @Query("SELECT s FROM CompetitionSession s WHERE s.accessKey = :accessKey AND s.competition = :competition AND s.status = 'OPEN'")
     Optional<CompetitionSession> findPrivateSessionByAccessKeyWithLock(@Param("accessKey") String accessKey,
                                                                        @Param("competition") LeagueTheme competition);
+
 }

@@ -50,10 +50,12 @@ public class SessionTemplateController {
         return ResponseEntity.ok(updated);
     }
 
-    @PutMapping("/deactivate")
-    public ResponseEntity<Void> deactivateTemplates(@RequestParam List<Long> ids) {
-        service.deactivateTemplates(ids);
-        return ResponseEntity.ok().build();
+    @PutMapping("/update-status")
+    public ResponseEntity<List<SessionTemplate>> updateTemplatesStatus(
+            @RequestParam List<Long> ids,
+            @RequestParam boolean isActive) {
+        List<SessionTemplate> updated = service.updateTemplateStatus(ids, isActive);
+        return ResponseEntity.ok(updated);
     }
 
     @DeleteMapping("/{id}")

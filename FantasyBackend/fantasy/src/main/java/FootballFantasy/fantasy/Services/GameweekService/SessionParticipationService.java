@@ -365,22 +365,7 @@ public class SessionParticipationService {
             throw new RuntimeException("Join deadline has passed");
         }
     }
-
-//    private void validateUserNotInSimilarSession(Long userId, CompetitionSession session) {
-//        boolean alreadyInSimilarSession = sessionParticipationRepository
-//                .existsByUserIdAndGameweekIdAndSessionTypeAndBuyInAmountAndSession_Competition(
-//                        userId,
-//                        session.getGameweek().getId(),
-//                        session.getSessionType(),
-//                        session.getBuyInAmount(),
-//                        session.getCompetition()
-//                );
-//
-//        if (alreadyInSimilarSession) {
-//            throw new RuntimeException("User already joined a similar session for this gameweek");
-//        }
-//    }
-
+    
     /**
      * Validate user eligibility to join sessions
      */
