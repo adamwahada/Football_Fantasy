@@ -52,4 +52,9 @@ public class MatchController {
         String winner = matchService.getWinner(id);
         return ResponseEntity.ok(winner);
     }
+    @PutMapping("/{matchId}/active")
+    public ResponseEntity<String> setMatchActiveStatus(@PathVariable Long matchId, @RequestParam boolean active) {
+        Match match = matchService.setMatchActiveStatus(matchId, active);
+        return ResponseEntity.ok("✅ Match " + matchId + " active status set to " + active);
+    }
 }

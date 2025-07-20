@@ -117,5 +117,20 @@ public class GameWeekController {
             return ResponseEntity.internalServerError().body("Unexpected error occurred.");
         }
     }
+    @GetMapping("/preview")
+    public ResponseEntity<GameWeek> previewGameweek(
+            @RequestParam LeagueTheme competition,
+            @RequestParam int week
+    ) {
+        GameWeek gameWeek = gameWeekService.getByCompetitionAndWeek(competition, week);
+        return ResponseEntity.ok(gameWeek);
+    }
+    @GetMapping("/upcoming")
+    public ResponseEntity<List<GameWeek>> getUpcomingGameweeks(
+            @RequestParam LeagueTheme competition
+    ) {
+        List<GameWeek> upcomingGameweeks = gameWeekService.getUpcomingByCompetition(competition);
+        return ResponseEntity.ok(upcomingGameweeks);
+    }
 
 }

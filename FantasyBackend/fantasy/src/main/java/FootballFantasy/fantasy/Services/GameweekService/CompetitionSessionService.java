@@ -76,9 +76,6 @@ public class CompetitionSessionService {
         return session;
     }
 
-
-
-
     public CompetitionSession createNewSessionFromTemplate(GameWeek gameWeek,
                                                            SessionTemplate template,
                                                            boolean isPrivate,

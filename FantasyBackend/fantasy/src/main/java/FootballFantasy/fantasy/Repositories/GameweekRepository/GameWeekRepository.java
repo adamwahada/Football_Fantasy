@@ -6,6 +6,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -19,5 +20,8 @@ public interface GameWeekRepository extends JpaRepository<GameWeek, Long> {
     WHERE gw.id = :id
   """)
     GameWeek findWithMatchesById(@Param("id") Long id);
+    Optional<GameWeek> findByCompetitionAndWeekNumber(LeagueTheme competition, int weekNumber);
+
+    List<GameWeek> findByCompetitionAndJoinDeadlineAfter(LeagueTheme competition, LocalDateTime now);
 
 }

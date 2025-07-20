@@ -365,7 +365,7 @@ public class SessionParticipationService {
             throw new RuntimeException("Join deadline has passed");
         }
     }
-    
+
     /**
      * Validate user eligibility to join sessions
      */

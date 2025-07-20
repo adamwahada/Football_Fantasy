@@ -131,5 +131,12 @@ public class MatchService {
                 : away > home ? match.getAwayTeam()
                 : "Draw";
     }
+    @Transactional
+    public Match setMatchActiveStatus(Long matchId, boolean active) {
+        Match match = matchRepository.findById(matchId)
+                .orElseThrow(() -> new IllegalArgumentException("Match not found with ID: " + matchId));
+        match.setActive(active);
+        return matchRepository.save(match);
+    }
 
 }

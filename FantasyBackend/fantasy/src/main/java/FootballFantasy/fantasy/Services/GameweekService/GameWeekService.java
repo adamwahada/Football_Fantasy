@@ -169,8 +169,12 @@ public class GameWeekService {
 
     public boolean isGameWeekComplete(Long gameWeekId) {
         List<Match> matches = matchRepository.findByGameweeksId(gameWeekId);
-        return matches.stream().allMatch(m -> m.getStatus() == MatchStatus.COMPLETED);
+
+        return matches.stream()
+                .filter(Match::isActive)
+                .allMatch(m -> m.getStatus() == MatchStatus.COMPLETED);
     }
+
 
     public void recalculateGameWeekDates(GameWeek gameWeek) {
         List<Match> matches = gameWeek.getMatches();
@@ -240,6 +244,7 @@ public class GameWeekService {
         // ✅ Recalculate status after matches updated using fresh DB query
         List<Match> updatedMatches = matchRepository.findByGameweeksId(gameWeekId);
         boolean allCompleted = updatedMatches.stream()
+                .filter(Match::isActive)
                 .allMatch(m -> m.getStatus() == MatchStatus.COMPLETED);
 
         gameWeek.setStatus(allCompleted ? GameweekStatus.FINISHED : GameweekStatus.ONGOING);
@@ -258,18 +263,31 @@ public class GameWeekService {
         System.out.println("📊 Current gameweek status: " + gameWeek.getStatus());
         System.out.println("📊 Total matches in gameweek: " + gameWeek.getMatches().size());
 
-        // Check if all matches are completed
-        long completedMatches = gameWeek.getMatches().stream()
+        // Filter active matches only
+        List<Match> activeMatches = gameWeek.getMatches().stream()
+                .filter(Match::isActive)
+                .toList();
+
+        long totalActiveMatches = activeMatches.size();
+        long completedMatches = activeMatches.stream()
                 .filter(match -> match.getStatus() == MatchStatus.COMPLETED)
                 .count();
 
-        System.out.println("✅ Completed matches: " + completedMatches + "/" + gameWeek.getMatches().size());
+        long inactiveCount = gameWeek.getMatches().stream()
+                .filter(match -> !match.isActive())
+                .count();
 
-        // Check if all matches are completed and gameweek is not already finished
-        if (completedMatches == gameWeek.getMatches().size() &&
+        System.out.println("⚽ Active matches: " + totalActiveMatches);
+        System.out.println("✅ Completed active matches: " + completedMatches + "/" + totalActiveMatches);
+        if (inactiveCount > 0) {
+            System.out.println("⚠️ Skipping " + inactiveCount + " inactive match(es)");
+        }
+
+        // Check if all active matches are completed and gameweek is not already finished
+        if (completedMatches == totalActiveMatches &&
                 gameWeek.getStatus() != GameweekStatus.FINISHED) {
 
-            System.out.println("🎯 All matches completed! Updating gameweek status to FINISHED");
+            System.out.println("🎯 All active matches completed! Updating gameweek status to FINISHED");
             gameWeek.setStatus(GameweekStatus.FINISHED);
             gameWeekRepository.save(gameWeek);
 
@@ -278,11 +296,18 @@ public class GameWeekService {
         } else {
             System.out.println("⏳ GameWeek " + gameWeekId + " is not ready to be finished");
             System.out.println("   Reason: " +
-                    (completedMatches != gameWeek.getMatches().size() ?
-                            "Not all matches completed (" + completedMatches + "/" + gameWeek.getMatches().size() + ")" :
+                    (completedMatches != totalActiveMatches ?
+                            "Not all active matches completed (" + completedMatches + "/" + totalActiveMatches + ")" :
                             "Already finished"));
             return false;
         }
     }
-
+    public GameWeek getByCompetitionAndWeek(LeagueTheme competition, int weekNumber) {
+        return gameWeekRepository.findByCompetitionAndWeekNumber(competition, weekNumber)
+                .orElseThrow(() -> new IllegalArgumentException("GameWeek not found for competition and week"));
+    }
+    public List<GameWeek> getUpcomingByCompetition(LeagueTheme competition) {
+        LocalDateTime now = LocalDateTime.now();
+        return gameWeekRepository.findByCompetitionAndJoinDeadlineAfter(competition, now);
+    }
 }

@@ -31,6 +31,7 @@ public class Match {
 
     private boolean finished;
     private String description;
+    private boolean active = true;
 
     @Enumerated(EnumType.STRING)
     private MatchStatus status;
