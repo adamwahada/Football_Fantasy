@@ -4,14 +4,15 @@ import FootballFantasy.fantasy.Entities.GameweekEntity.GameweekStatus;
 import FootballFantasy.fantasy.Entities.GameweekEntity.*;
 import FootballFantasy.fantasy.Repositories.GameweekRepository.GameWeekRepository;
 import FootballFantasy.fantasy.Repositories.GameweekRepository.MatchRepository;
-import jakarta.persistence.EntityManager;
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 @Service
 public class GameWeekService {
@@ -21,6 +22,80 @@ public class GameWeekService {
 
     @Autowired
     private MatchRepository matchRepository;
+
+    @Autowired
+    private PredictionService predictionService;
+
+    /**
+     * Helper method to find or create a match to prevent duplicates
+     */
+    private Match findOrCreateMatch(Match matchData) {
+        // Try to find existing match by home team, away team, and match date
+        Match existingMatch = matchRepository.findByHomeTeamAndAwayTeamAndMatchDate(
+                matchData.getHomeTeam(),
+                matchData.getAwayTeam(),
+                matchData.getMatchDate()
+        );
+
+        if (existingMatch != null) {
+            // Update existing match with new data
+            existingMatch.setMatchDate(matchData.getMatchDate());
+
+            if (matchData.getHomeScore() != null) {
+                existingMatch.setHomeScore(matchData.getHomeScore());
+            }
+            if (matchData.getAwayScore() != null) {
+                existingMatch.setAwayScore(matchData.getAwayScore());
+            }
+
+            // Respect input 'finished' and 'status' if provided; otherwise fallback
+            if (matchData.getStatus() != null) {
+                existingMatch.setStatus(matchData.getStatus());
+            } else {
+                boolean isCompleted = existingMatch.getHomeScore() != null && existingMatch.getAwayScore() != null;
+                existingMatch.setStatus(isCompleted ? MatchStatus.COMPLETED : MatchStatus.SCHEDULED);
+            }
+
+            existingMatch.setFinished(matchData.isFinished());
+
+            // Update prediction deadline based on match date
+            existingMatch.setPredictionDeadline(existingMatch.getMatchDate().minusMinutes(30));
+
+            return existingMatch;
+        } else {
+            // Create new match
+
+            // Use input values for finished and status, or fallback if null
+            if (matchData.getStatus() == null) {
+                boolean isCompleted = matchData.getHomeScore() != null && matchData.getAwayScore() != null;
+                matchData.setStatus(isCompleted ? MatchStatus.COMPLETED : MatchStatus.SCHEDULED);
+            }
+
+            // If finished was not set in input, set it based on status
+            if (!matchData.isFinished()) {
+                matchData.setFinished(matchData.getStatus() == MatchStatus.COMPLETED);
+            }
+
+            matchData.setPredictionDeadline(matchData.getMatchDate().minusMinutes(30));
+            return matchData;
+        }
+    }
+
+    /**
+     * Helper method to safely link a match to a gameweek
+     * A match can belong to multiple gameweeks (e.g., Premier League + Best Of)
+     */
+    private void linkMatchToGameWeek(Match match, GameWeek gameWeek) {
+        // Add gameweek to match's gameweeks collection (if not already present)
+        if (!match.getGameweeks().contains(gameWeek)) {
+            match.getGameweeks().add(gameWeek);
+        }
+
+        // Add match to gameweek's matches collection (if not already present)
+        if (!gameWeek.getMatches().contains(match)) {
+            gameWeek.getMatches().add(match);
+        }
+    }
 
     public GameWeek createGameWeek(GameWeek gameWeek) {
         return gameWeekRepository.save(gameWeek);
@@ -46,33 +121,32 @@ public class GameWeekService {
             match.getGameweeks().remove(gameWeek);
         }
         gameWeek.getMatches().clear();
-
         gameWeekRepository.delete(gameWeek);
     }
 
     @Transactional
-    public Match addMatchToGameWeek(Long gameWeekId, Match match) {
+    public Match addMatchToGameWeek(Long gameWeekId, Match matchData) {
         GameWeek gameWeek = gameWeekRepository.findById(gameWeekId)
                 .orElseThrow(() -> new IllegalArgumentException("GameWeek non trouvé"));
 
-        if (match.getMatchDate().isBefore(gameWeek.getStartDate()) || match.getMatchDate().isAfter(gameWeek.getEndDate())) {
+        if (matchData.getMatchDate().isBefore(gameWeek.getStartDate()) ||
+                matchData.getMatchDate().isAfter(gameWeek.getEndDate())) {
             throw new IllegalArgumentException("La date du match doit être comprise entre la date de début et de fin de la GameWeek.");
         }
 
-        match.setPredictionDeadline(match.getMatchDate().minusMinutes(30));
+        // Use helper method to find or create match (prevents duplicates)
+        Match match = findOrCreateMatch(matchData);
 
-        if (!match.getGameweeks().contains(gameWeek)) {
-            match.getGameweeks().add(gameWeek);
-        }
+        // Link match to gameweek
+        linkMatchToGameWeek(match, gameWeek);
 
-        if (!gameWeek.getMatches().contains(match)) {
-            gameWeek.getMatches().add(match);
-        }
-
-        matchRepository.save(match);
-        gameWeekRepository.save(gameWeek);
+        // Save the match
+        match = matchRepository.save(match);
 
         recalculateGameWeekDates(gameWeek);
+
+        // Update status of all affected gameweeks
+        updateAllAffectedGameWeekStatuses(List.of(match));
         return match;
     }
 
@@ -107,7 +181,6 @@ public class GameWeekService {
                 matchRepository.save(match);
             }
         }
-
         gameWeekRepository.save(gameWeek);
         recalculateGameWeekDates(gameWeek);
     }
@@ -120,13 +193,8 @@ public class GameWeekService {
         Match match = matchRepository.findById(matchId)
                 .orElseThrow(() -> new IllegalArgumentException("Match not found"));
 
-        if (!match.getGameweeks().contains(gameWeek)) {
-            match.getGameweeks().add(gameWeek);
-        }
-
-        if (!gameWeek.getMatches().contains(match)) {
-            gameWeek.getMatches().add(match);
-        }
+        // Use helper method to link (prevents duplicate linking)
+        linkMatchToGameWeek(match, gameWeek);
 
         matchRepository.save(match);
         gameWeekRepository.save(gameWeek);
@@ -146,14 +214,8 @@ public class GameWeekService {
             Match match = matchRepository.findById(matchId)
                     .orElseThrow(() -> new IllegalArgumentException("Match not found with ID: " + matchId));
 
-            if (!match.getGameweeks().contains(gameWeek)) {
-                match.getGameweeks().add(gameWeek);
-            }
-
-            if (!gameWeek.getMatches().contains(match)) {
-                gameWeek.getMatches().add(match);
-            }
-
+            // Use helper method to link (prevents duplicate linking)
+            linkMatchToGameWeek(match, gameWeek);
             updatedMatches.add(matchRepository.save(match));
         }
 
@@ -174,7 +236,6 @@ public class GameWeekService {
                 .filter(Match::isActive)
                 .allMatch(m -> m.getStatus() == MatchStatus.COMPLETED);
     }
-
 
     public void recalculateGameWeekDates(GameWeek gameWeek) {
         List<Match> matches = gameWeek.getMatches();
@@ -201,56 +262,149 @@ public class GameWeekService {
         gameWeekRepository.save(gameWeek);
     }
 
-    public List<GameWeek> getGameWeeksByCompetition(LeagueTheme Competition) {
-        return gameWeekRepository.findByCompetition(Competition);
+    /**
+     * Helper method to update status of all gameweeks that contain the given matches
+     */
+    private void updateAllAffectedGameWeekStatuses(List<Match> updatedMatches) {
+        Set<GameWeek> affectedGameWeeks = new HashSet<>();
+        for (Match match : updatedMatches) {
+            affectedGameWeeks.addAll(match.getGameweeks());
+        }
+
+        for (GameWeek gameWeek : affectedGameWeeks) {
+            System.out.println("🔄 Checking status for affected gameweek ID: " + gameWeek.getId());
+
+            List<Match> gameweekMatches = matchRepository.findByGameweeksId(gameWeek.getId());
+            boolean allCompleted = gameweekMatches.stream()
+                    .filter(Match::isActive)
+                    .allMatch(m -> m.getStatus() == MatchStatus.COMPLETED);
+
+            GameweekStatus newStatus = allCompleted ? GameweekStatus.FINISHED : GameweekStatus.ONGOING;
+
+            if (gameWeek.getStatus() != newStatus) {
+                System.out.println("📊 Updating gameweek " + gameWeek.getId() + " status from " +
+                        gameWeek.getStatus() + " to " + newStatus);
+                gameWeek.setStatus(newStatus);
+                gameWeekRepository.save(gameWeek);
+
+                // ✅ USE YOUR EXISTING METHOD
+                if (newStatus == GameweekStatus.FINISHED) {
+                    triggerPostGameWeekFinishedActions(gameWeek);
+                }
+            } else {
+                System.out.println("✓ Gameweek " + gameWeek.getId() + " status unchanged (" + newStatus + ")");
+            }
+        }
+    }
+    private void triggerPostGameWeekFinishedActions(GameWeek gameWeek) {
+        System.out.println("🏆 GameWeek " + gameWeek.getId() + " finished. Triggering post-processing...");
+
+        // 1. Find all session participations for this gameweek
+        List<SessionParticipation> participations = predictionService
+                .getSessionParticipationsByGameWeek(gameWeek.getId());
+
+        // 2. For each participation, calculate accuracy
+        for (SessionParticipation participation : participations) {
+            predictionService.calculatePredictionAccuracy(participation.getId());
+        }
+
+        // 3. Determine winners per session (you will implement this)
+        predictionService.determineWinnersForGameWeek(gameWeek.getId());
+        System.out.println("✅ Post-processing for gameweek " + gameWeek.getId() + " completed.");
     }
 
+    /**
+     * Update matches globally without forcing gameweek associations
+     * This method finds existing matches and updates them, then updates all affected gameweeks
+     * It does NOT create new gameweek links - matches keep their existing gameweek associations
+     */
     @Transactional
-    public void importMatchesToGameWeek(Long gameWeekId, List<Match> importedMatches) {
-        GameWeek gameWeek = gameWeekRepository.findById(gameWeekId)
-                .orElseThrow(() -> new IllegalArgumentException("GameWeek not found"));
+    public List<Match> updateMatchesGlobally(List<Match> matchUpdates) {
+        System.out.println("🌍 Starting global match updates for " + matchUpdates.size() + " matches");
 
-        for (Match importedMatch : importedMatches) {
+        List<Match> updatedMatches = new ArrayList<>();
+
+        for (Match matchUpdate : matchUpdates) {
+            // Find existing match (don't create new ones)
             Match existingMatch = matchRepository.findByHomeTeamAndAwayTeamAndMatchDate(
-                    importedMatch.getHomeTeam(),
-                    importedMatch.getAwayTeam(),
-                    importedMatch.getMatchDate()
+                    matchUpdate.getHomeTeam(),
+                    matchUpdate.getAwayTeam(),
+                    matchUpdate.getMatchDate()
             );
 
             if (existingMatch != null) {
-                existingMatch.setMatchDate(importedMatch.getMatchDate());
-                existingMatch.setHomeScore(importedMatch.getHomeScore());
-                existingMatch.setAwayScore(importedMatch.getAwayScore());
+                System.out.println("🔄 Updating existing match: " + existingMatch.getHomeTeam() + " vs " + existingMatch.getAwayTeam());
 
-                boolean isCompleted = importedMatch.getHomeScore() != null && importedMatch.getAwayScore() != null;
+                // Update match data (preserve existing gameweek associations)
+                existingMatch.setMatchDate(matchUpdate.getMatchDate());
+                if (matchUpdate.getHomeScore() != null) {
+                    existingMatch.setHomeScore(matchUpdate.getHomeScore());
+                }
+                if (matchUpdate.getAwayScore() != null) {
+                    existingMatch.setAwayScore(matchUpdate.getAwayScore());
+                }
+
+                // Update status based on scores
+                boolean isCompleted = existingMatch.getHomeScore() != null && existingMatch.getAwayScore() != null;
                 existingMatch.setFinished(isCompleted);
                 existingMatch.setStatus(isCompleted ? MatchStatus.COMPLETED : MatchStatus.SCHEDULED);
+                existingMatch.setPredictionDeadline(existingMatch.getMatchDate().minusMinutes(30));
 
-                existingMatch.setPredictionDeadline(importedMatch.getMatchDate().minusMinutes(30));
+                // Save and add to updated list
+                existingMatch = matchRepository.save(existingMatch);
+                updatedMatches.add(existingMatch);
 
-                if (!existingMatch.getGameweeks().contains(gameWeek)) {
-                    existingMatch.getGameweeks().add(gameWeek);
-                }
-                matchRepository.save(existingMatch);
+                System.out.println("✅ Match updated - Status: " + existingMatch.getStatus() +
+                        ", Belongs to " + existingMatch.getGameweeks().size() + " gameweek(s)");
             } else {
-                importedMatch.setFinished(importedMatch.getHomeScore() != null && importedMatch.getAwayScore() != null);
-                importedMatch.setPredictionDeadline(importedMatch.getMatchDate().minusMinutes(30));
-                importedMatch.getGameweeks().add(gameWeek);
-                matchRepository.save(importedMatch);
-                gameWeek.getMatches().add(importedMatch);
+                System.out.println("⚠️ Match not found in database: " + matchUpdate.getHomeTeam() + " vs " + matchUpdate.getAwayTeam() +
+                        " on " + matchUpdate.getMatchDate());
             }
         }
 
-        // ✅ Recalculate status after matches updated using fresh DB query
-        List<Match> updatedMatches = matchRepository.findByGameweeksId(gameWeekId);
-        boolean allCompleted = updatedMatches.stream()
-                .filter(Match::isActive)
-                .allMatch(m -> m.getStatus() == MatchStatus.COMPLETED);
+        // Update status of ALL gameweeks affected by the updated matches
+        if (!updatedMatches.isEmpty()) {
+            System.out.println("🔄 Updating status for all affected gameweeks...");
+            updateAllAffectedGameWeekStatuses(updatedMatches);
+        }
 
-        gameWeek.setStatus(allCompleted ? GameweekStatus.FINISHED : GameweekStatus.ONGOING);
+        System.out.println("✅ Global match update completed. Updated " + updatedMatches.size() + " matches");
+        return updatedMatches;
+    }
 
+    /**
+     * Import matches to a specific gameweek (creates new matches and links them)
+     * Use this when you want to create new matches for a specific gameweek
+     */
+    @Transactional
+    public void importMatchesToGameWeek(Long gameWeekId, List<Match> importedMatches) {
+        System.out.println("📥 Importing " + importedMatches.size() + " matches to gameweek " + gameWeekId);
+
+        GameWeek gameWeek = gameWeekRepository.findById(gameWeekId)
+                .orElseThrow(() -> new IllegalArgumentException("GameWeek not found"));
+
+        List<Match> updatedMatches = new ArrayList<>();
+
+        for (Match importedMatch : importedMatches) {
+            // Use helper method to find or create match (prevents duplicates)
+            Match match = findOrCreateMatch(importedMatch);
+
+            // Link to gameweek - allows same match to belong to multiple gameweeks
+            // (e.g., Premier League gameweek + Best Of gameweek)
+            linkMatchToGameWeek(match, gameWeek);
+
+            // Save the match and add to updated list
+            match = matchRepository.save(match);
+            updatedMatches.add(match);
+        }
+
+        // Recalculate dates for the current gameweek
         recalculateGameWeekDates(gameWeek);
-        gameWeekRepository.save(gameWeek);
+
+        // Update status of ALL gameweeks affected by the updated matches
+        updateAllAffectedGameWeekStatuses(updatedMatches);
+
+        System.out.println("✅ Import completed for gameweek " + gameWeekId);
     }
 
     @Transactional
@@ -283,7 +437,7 @@ public class GameWeekService {
             System.out.println("⚠️ Skipping " + inactiveCount + " inactive match(es)");
         }
 
-        // Check if all active matches are completed and gameweek is not already finished
+        // Check if all active matches are completed and status not yet FINISHED
         if (completedMatches == totalActiveMatches &&
                 gameWeek.getStatus() != GameweekStatus.FINISHED) {
 
@@ -291,21 +445,44 @@ public class GameWeekService {
             gameWeek.setStatus(GameweekStatus.FINISHED);
             gameWeekRepository.save(gameWeek);
 
-            System.out.println("✅ GameWeek " + gameWeekId + " status updated to FINISHED");
+            // Post-finish processing
+            System.out.println("🏆 Triggering post-finish processing...");
+
+            // 1. Get all participations of this gameweek
+            List<SessionParticipation> participations = predictionService.getSessionParticipationsByGameWeek(gameWeekId);
+
+            // 2. Calculate accuracy for each participation
+            for (SessionParticipation participation : participations) {
+                predictionService.calculatePredictionAccuracy(participation.getId());
+            }
+
+            // 3. Determine winners for all sessions in this gameweek
+            predictionService.determineWinnersForGameWeek(gameWeekId);
+
+            System.out.println("✅ Post-finish processing completed.");
+
             return true;
+
         } else {
             System.out.println("⏳ GameWeek " + gameWeekId + " is not ready to be finished");
             System.out.println("   Reason: " +
-                    (completedMatches != totalActiveMatches ?
-                            "Not all active matches completed (" + completedMatches + "/" + totalActiveMatches + ")" :
-                            "Already finished"));
+                    (completedMatches != totalActiveMatches
+                            ? "Not all matches are completed (" + completedMatches + "/" + totalActiveMatches + ")"
+                            : "GameWeek already finished or in another status"));
             return false;
         }
     }
+
     public GameWeek getByCompetitionAndWeek(LeagueTheme competition, int weekNumber) {
         return gameWeekRepository.findByCompetitionAndWeekNumber(competition, weekNumber)
                 .orElseThrow(() -> new IllegalArgumentException("GameWeek not found for competition and week"));
     }
+
+    public List<Match> getMatchesByCompetitionAndWeek(LeagueTheme competition, int weekNumber) {
+        GameWeek gameWeek = getByCompetitionAndWeek(competition, weekNumber);
+        return matchRepository.findByGameweeksId(gameWeek.getId());
+    }
+
     public List<GameWeek> getUpcomingByCompetition(LeagueTheme competition) {
         LocalDateTime now = LocalDateTime.now();
         return gameWeekRepository.findByCompetitionAndJoinDeadlineAfter(competition, now);

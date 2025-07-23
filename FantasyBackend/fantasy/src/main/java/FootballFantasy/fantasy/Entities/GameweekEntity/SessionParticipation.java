@@ -36,8 +36,10 @@ public class SessionParticipation {
     @Column(nullable = false)
     private BigDecimal amountPaid;
 
+    private Boolean isWinner = false;  // default false
+
     // Ranking within this session
-    private Integer rank;
+    private Integer ranking;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)

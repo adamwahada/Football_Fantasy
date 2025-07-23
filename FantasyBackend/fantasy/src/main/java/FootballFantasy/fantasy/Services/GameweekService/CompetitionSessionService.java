@@ -30,8 +30,12 @@ public class CompetitionSessionService {
     @Autowired
     private SessionParticipationRepository sessionParticipationRepository;
 
-    /*** Join a session (public or private) based on template.
-     * If no available session is found, create a new one from template. */
+    @Autowired
+    private PredictionService predictionService;
+
+    /**
+     * 🔒Join a session with locking (for actual session creation/joining)
+     */
     @Transactional
     public CompetitionSession joinOrCreateSession(Long gameweekId,
                                                   SessionType sessionType,
@@ -53,19 +57,15 @@ public class CompetitionSessionService {
 
         if (isPrivate) {
             if (accessKeyFromUser != null && !accessKeyFromUser.isBlank()) {
-                // JOIN existing private session by access key
+                // JOIN existing private session by access key (with lock)
                 session = competitionSessionRepository.findPrivateSessionByAccessKeyWithLock(accessKeyFromUser, competition)
-                        .orElseThrow(() -> new RuntimeException("Private session not found or invalid access key"));
-
-                if (!session.canJoin()) {
-                    throw new RuntimeException("Private session is not joinable");
-                }
+                        .orElseThrow(() -> new RuntimeException("Private session not found, full, or invalid access key"));
             } else {
                 // CREATE a new private session with a new unique access key
                 session = createNewSessionFromTemplate(gameWeek, template, true, competition);
             }
         } else {
-            // Public session logic (reuse or create)
+            // Public session logic (reuse or create) - with lock
             session = competitionSessionRepository.findAvailableSessionWithLock(gameweekId, competition, sessionType, buyInAmount)
                     .orElse(null);
             if (session == null) {
@@ -76,6 +76,9 @@ public class CompetitionSessionService {
         return session;
     }
 
+    /**
+     * 🏗️ Create actual session (saved to DB)
+     */
     public CompetitionSession createNewSessionFromTemplate(GameWeek gameWeek,
                                                            SessionTemplate template,
                                                            boolean isPrivate,
@@ -86,7 +89,7 @@ public class CompetitionSessionService {
 
         CompetitionSession session = new CompetitionSession();
         session.setGameweek(gameWeek);
-        session.setCompetition(competition);          // Set passed competition here
+        session.setCompetition(competition);
         session.setSessionName(template.getTemplateName());
         session.setSessionType(template.getSessionType());
         session.setBuyInAmount(template.getBuyInAmount());
@@ -96,14 +99,15 @@ public class CompetitionSessionService {
         session.setCreatedAt(LocalDateTime.now());
         session.setJoinDeadline(gameWeek.getJoinDeadline());
         session.setTotalPrizePool(BigDecimal.ZERO);
+
         if (isPrivate) {
             session.setAccessKey(UUID.randomUUID().toString().substring(0,8));
         }
+
         return competitionSessionRepository.save(session);
     }
 
-
-    // 🏆 Determine Winner and Assign Ranks
+    // 🏆 Determine Winner and Assign Ranks (FIXED)
     @Transactional
     public void determineWinner(Long sessionId) {
         CompetitionSession session = competitionSessionRepository.findById(sessionId)
@@ -115,16 +119,25 @@ public class CompetitionSessionService {
             throw new RuntimeException("No participants found in this session");
         }
 
-        // 1. Sort by accuracy (descending)
-        participations.sort(Comparator.comparingDouble(SessionParticipation::getAccuracyPercentage).reversed());
+        // 1. Calculate accuracy for all participants first
+        for (SessionParticipation participation : participations) {
+            predictionService.calculatePredictionAccuracy(participation.getId());
+        }
 
-        // 2. Assign ranks and calculate prize
+        // 2. Enhanced sorting with tiebreaker
+        participations.sort(Comparator
+                .comparingDouble(SessionParticipation::getAccuracyPercentage).reversed()
+                .thenComparingDouble(p -> predictionService.getTiebreakerScore(p.getId()))
+                .thenComparingInt(SessionParticipation::getTotalCorrectPredictions).reversed()
+                .thenComparing(SessionParticipation::getJoinedAt));
+
+        // 3. Assign ranks and calculate prize
         BigDecimal prizePool = session.getTotalPrizePool();
-        int rank = 1;
+        int ranking = 1;
 
         for (SessionParticipation p : participations) {
-            p.setRank(rank);
-            if (rank == 1) {
+            p.setRanking(ranking);
+            if (ranking == 1) {
                 // Winner gets full prize
                 p.setPrizeWon(prizePool);
                 session.setWinner(p.getUser());
@@ -133,15 +146,15 @@ public class CompetitionSessionService {
                 // Others get nothing (custom logic if needed)
                 p.setPrizeWon(BigDecimal.ZERO);
             }
-            rank++;
+            ranking++;
         }
 
-        // 3. Persist changes
+        // 4. Persist changes
         sessionParticipationRepository.saveAll(participations);
         competitionSessionRepository.save(session);
     }
 
-    //Automatic winner declenchement after the matches are finished
+    // Automatic winner determination after matches are finished
     @Transactional
     public void determineWinnersForCompletedGameWeek(Long gameWeekId) {
         List<CompetitionSession> sessions = competitionSessionRepository.findByGameweekId(gameWeekId);
@@ -152,8 +165,10 @@ public class CompetitionSessionService {
             }
         }
     }
-    /*** 🔐 Admin-triggered fallback to manually determine winners for a GameWeek.
-     * Useful when some matches are delayed, manually marked completed */
+
+    /**
+     * 🔐 Admin-triggered fallback to manually determine winners for a GameWeek.
+     */
     @Transactional
     public void manuallyTriggerWinnerDetermination(Long gameWeekId) {
         List<CompetitionSession> sessions = competitionSessionRepository.findByGameweekId(gameWeekId);
@@ -168,5 +183,4 @@ public class CompetitionSessionService {
             }
         }
     }
-
 }

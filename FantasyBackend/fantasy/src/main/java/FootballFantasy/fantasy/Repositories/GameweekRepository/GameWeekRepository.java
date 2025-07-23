@@ -2,6 +2,7 @@ package FootballFantasy.fantasy.Repositories.GameweekRepository;
 
 import FootballFantasy.fantasy.Entities.GameweekEntity.GameWeek;
 import FootballFantasy.fantasy.Entities.GameweekEntity.LeagueTheme;
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -20,8 +21,11 @@ public interface GameWeekRepository extends JpaRepository<GameWeek, Long> {
     WHERE gw.id = :id
   """)
     GameWeek findWithMatchesById(@Param("id") Long id);
+
+    @EntityGraph(attributePaths = "matches")
     Optional<GameWeek> findByCompetitionAndWeekNumber(LeagueTheme competition, int weekNumber);
 
+    @EntityGraph(attributePaths = "matches")
     List<GameWeek> findByCompetitionAndJoinDeadlineAfter(LeagueTheme competition, LocalDateTime now);
 
 }

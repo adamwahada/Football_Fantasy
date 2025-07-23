@@ -3,12 +3,16 @@ package FootballFantasy.fantasy.Controller.GameweekController;
 import FootballFantasy.fantasy.Entities.GameweekEntity.GameWeek;
 import FootballFantasy.fantasy.Entities.GameweekEntity.LeagueTheme;
 import FootballFantasy.fantasy.Entities.GameweekEntity.Match;
+import FootballFantasy.fantasy.Repositories.GameweekRepository.GameWeekRepository;
 import FootballFantasy.fantasy.Services.GameweekService.GameWeekService;
+import FootballFantasy.fantasy.Services.GameweekService.MatchService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/gameweeks")
@@ -16,12 +20,14 @@ public class GameWeekController {
 
     @Autowired
     private GameWeekService gameWeekService;
+    @Autowired
+    private GameWeekRepository gameWeekRepository;
 
     // ✅ Create a new GameWeek
     @PostMapping
 //    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
     public ResponseEntity<GameWeek> createGameWeek(@RequestBody GameWeek gameWeek) {
-        GameWeek saved = gameWeekService.createGameWeek(gameWeek);
+        GameWeek saved = gameWeekRepository.save(gameWeek);
         return ResponseEntity.ok(saved);
     }
     // ✅ update a GameWeek
@@ -97,11 +103,6 @@ public class GameWeekController {
         return ResponseEntity.ok(complete);
     }
 
-    @GetMapping("/theme/{theme}")
-    public List<GameWeek> getByCompetition(@PathVariable LeagueTheme Competition) {
-        return gameWeekService.getGameWeeksByCompetition(Competition);
-    }
-
     // Import multiple matches and link them to a specific GameWeek
     @PostMapping("/{gameWeekId}/import-matches")
     public ResponseEntity<String> importMatchesToGameWeek(
@@ -117,14 +118,39 @@ public class GameWeekController {
             return ResponseEntity.internalServerError().body("Unexpected error occurred.");
         }
     }
-    @GetMapping("/preview")
-    public ResponseEntity<GameWeek> previewGameweek(
-            @RequestParam LeagueTheme competition,
-            @RequestParam int week
+    @PutMapping("/matches/update-globally")
+    public ResponseEntity<Map<String, Object>> updateMatchesGlobally(
+            @RequestBody List<Match> matchUpdates
     ) {
-        GameWeek gameWeek = gameWeekService.getByCompetitionAndWeek(competition, week);
-        return ResponseEntity.ok(gameWeek);
+        try {
+            List<Match> updatedMatches = gameWeekService.updateMatchesGlobally(matchUpdates);
+
+            Map<String, Object> response = new HashMap<>();
+            response.put("message", "Matches updated successfully");
+            response.put("updatedCount", updatedMatches.size());
+            response.put("totalRequested", matchUpdates.size());
+
+            if (updatedMatches.size() < matchUpdates.size()) {
+                response.put("note", "Some matches were not found in database and were skipped");
+            }
+
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            Map<String, Object> errorResponse = new HashMap<>();
+            errorResponse.put("error", "Failed to update matches globally");
+            errorResponse.put("message", e.getMessage());
+            return ResponseEntity.internalServerError().body(errorResponse);
+        }
     }
+    @GetMapping("/matches-by-competition")
+    public ResponseEntity<List<Match>> getMatchesByCompetitionAndWeek(
+            @RequestParam LeagueTheme competition,
+            @RequestParam int weekNumber) {
+
+        List<Match> matches = gameWeekService.getMatchesByCompetitionAndWeek(competition, weekNumber);
+        return ResponseEntity.ok(matches);
+    }
+
     @GetMapping("/upcoming")
     public ResponseEntity<List<GameWeek>> getUpcomingGameweeks(
             @RequestParam LeagueTheme competition

@@ -5,6 +5,7 @@ import FootballFantasy.fantasy.Entities.GameweekEntity.*;
 import FootballFantasy.fantasy.Entities.UserEntity.UserEntity;
 import FootballFantasy.fantasy.Repositories.GameweekRepository.CompetitionSessionRepository;
 import FootballFantasy.fantasy.Repositories.GameweekRepository.GameWeekRepository;
+import FootballFantasy.fantasy.Repositories.GameweekRepository.PredictionRepository;
 import FootballFantasy.fantasy.Repositories.GameweekRepository.SessionParticipationRepository;
 import FootballFantasy.fantasy.Repositories.UserRepository.UserRepository;
 import FootballFantasy.fantasy.Services.UserService.UserService;
@@ -12,8 +13,6 @@ import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
-import FootballFantasy.fantasy.Dto.UserSessionStats;
-
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -33,13 +32,13 @@ public class SessionParticipationService {
     private UserRepository userRepository;
 
     @Autowired
-    @Lazy
-    private UserService userService;
+    private PredictionRepository predictionRepository;
 
     @Autowired
     private GameWeekRepository gameWeekRepository;
 
     @Autowired
+    @Lazy
     private CompetitionSessionService competitionSessionService;
 
     /**
@@ -270,10 +269,20 @@ public class SessionParticipationService {
      * Check if user can join a session type for a gameweek
      */
     public boolean canUserJoinSession(Long userId, Long gameweekId, SessionType sessionType,
-                                      BigDecimal buyInAmount,LeagueTheme competition) {
+                                      BigDecimal buyInAmount, LeagueTheme competition) {
         // Check if user already has an active participation for this gameweek/type/amount
-        return !sessionParticipationRepository.existsByUserIdAndGameweekIdAndSessionTypeAndBuyInAmountAndSession_Competition(
-                userId, gameweekId, sessionType, buyInAmount,competition);
+        boolean hasParticipation = sessionParticipationRepository.existsByUserIdAndGameweekIdAndSessionTypeAndBuyInAmountAndSession_Competition(
+                userId, gameweekId, sessionType, buyInAmount, competition);
+
+        if (hasParticipation) {
+            return false;
+        }
+
+        // Also check if user has predictions for this combination (edge case)
+        boolean hasPredictions = predictionRepository.existsByUserAndGameweekSession(
+                userId, gameweekId, sessionType, buyInAmount, competition);
+
+        return !hasPredictions;
     }
 
     /**
@@ -312,7 +321,7 @@ public class SessionParticipationService {
 
         int totalSessions = participations.size();
         int wonSessions = (int) participations.stream()
-                .filter(p -> p.getRank() != null && p.getRank() == 1)
+                .filter(p -> p.getRanking() != null && p.getRanking() == 1)
                 .count();
 
         BigDecimal totalWinnings = participations.stream()

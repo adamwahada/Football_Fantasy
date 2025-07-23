@@ -107,7 +107,7 @@ public interface SessionParticipationRepository extends JpaRepository<SessionPar
     List<SessionParticipation> findByUserIdOrderByAccuracyDesc(@Param("userId") Long userId);
 
     // Get user's won sessions (rank = 1)
-    @Query("SELECT sp FROM SessionParticipation sp WHERE sp.user.id = :userId AND sp.rank = 1")
+    @Query("SELECT sp FROM SessionParticipation sp WHERE sp.user.id = :userId AND sp.ranking = 1")
     List<SessionParticipation> findWonSessionsByUserId(@Param("userId") Long userId);
 
     // ===== STATISTICS QUERIES =====
@@ -117,7 +117,7 @@ public interface SessionParticipationRepository extends JpaRepository<SessionPar
     Long countTotalSessionsByUserId(@Param("userId") Long userId);
 
     // Count won sessions by user
-    @Query("SELECT COUNT(sp) FROM SessionParticipation sp WHERE sp.user.id = :userId AND sp.rank = 1")
+    @Query("SELECT COUNT(sp) FROM SessionParticipation sp WHERE sp.user.id = :userId AND sp.ranking = 1")
     Long countWonSessionsByUserId(@Param("userId") Long userId);
 
     // Get average accuracy for user
@@ -137,4 +137,6 @@ public interface SessionParticipationRepository extends JpaRepository<SessionPar
     // Get recent participations for user
     @Query("SELECT sp FROM SessionParticipation sp WHERE sp.user.id = :userId ORDER BY sp.joinedAt DESC")
     List<SessionParticipation> findByUserIdOrderByJoinedAtDesc(@Param("userId") Long userId);
+
+
 }
