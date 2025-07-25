@@ -286,4 +286,28 @@ public class UserService {
         public BigDecimal getNetProfit() { return netProfit; }
         public double getAverageAccuracy() { return averageAccuracy; }
     }
+
+    @Transactional
+    public void refundUser(Long userId, BigDecimal amount) {
+        UserEntity user = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        user.setBalance(user.getBalance().add(amount));
+        userRepository.save(user);
+    }
+
+    @Transactional
+    public void creditBalance(Long userId, BigDecimal amount) {
+        if (amount == null || amount.compareTo(BigDecimal.ZERO) <= 0) {
+            throw new IllegalArgumentException("Amount must be positive");
+        }
+
+        UserEntity user = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        user.setBalance(user.getBalance().add(amount));
+        userRepository.save(user);
+
+        System.out.println("💰 Admin credited " + amount + " to user " + userId + "; new balance: " + user.getBalance());
+    }
 }

@@ -1,11 +1,12 @@
 package FootballFantasy.fantasy.Controller.GameweekController;
 
+import FootballFantasy.fantasy.Dto.MatchWithIconsDTO;
 import FootballFantasy.fantasy.Entities.GameweekEntity.GameWeek;
 import FootballFantasy.fantasy.Entities.GameweekEntity.LeagueTheme;
 import FootballFantasy.fantasy.Entities.GameweekEntity.Match;
 import FootballFantasy.fantasy.Repositories.GameweekRepository.GameWeekRepository;
 import FootballFantasy.fantasy.Services.GameweekService.GameWeekService;
-import FootballFantasy.fantasy.Services.GameweekService.MatchService;
+import FootballFantasy.fantasy.Services.DataService.TeamIconService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -13,6 +14,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/gameweeks")
@@ -22,6 +24,10 @@ public class GameWeekController {
     private GameWeekService gameWeekService;
     @Autowired
     private GameWeekRepository gameWeekRepository;
+    @Autowired
+    private TeamIconService teamIconService;
+    @Autowired
+    private GameWeekService gameweekService;
 
     // ✅ Create a new GameWeek
     @PostMapping
@@ -58,6 +64,20 @@ public class GameWeekController {
     public ResponseEntity<List<Match>> getMatchesByGameWeek(@PathVariable Long gameWeekId) {
         List<Match> matches = gameWeekService.getMatchesByGameWeek(gameWeekId);
         return ResponseEntity.ok(matches);
+    }
+    @GetMapping("/{gameWeekId}/matches-with-icons")
+    public ResponseEntity<List<MatchWithIconsDTO>> getMatchesByGameWeekWithIcons(@PathVariable Long gameWeekId) {
+        try {
+            List<Match> matches = gameWeekService.getMatchesByGameWeek(gameWeekId);
+
+            List<MatchWithIconsDTO> matchesWithIcons = matches.stream()
+                    .map(this::convertToMatchWithIconsDTO)
+                    .collect(Collectors.toList());
+
+            return ResponseEntity.ok(matchesWithIcons);
+        } catch (Exception e) {
+            return ResponseEntity.internalServerError().build();
+        }
     }
 
     @DeleteMapping("/{gameWeekId}/matches")
@@ -157,6 +177,31 @@ public class GameWeekController {
     ) {
         List<GameWeek> upcomingGameweeks = gameWeekService.getUpcomingByCompetition(competition);
         return ResponseEntity.ok(upcomingGameweeks);
+    }
+    private MatchWithIconsDTO convertToMatchWithIconsDTO(Match match) {
+        return MatchWithIconsDTO.builder()
+                .id(match.getId())
+                .homeTeam(match.getHomeTeam())
+                .awayTeam(match.getAwayTeam())
+                .homeTeamIcon(teamIconService.getTeamIcon(match.getHomeTeam()))
+                .awayTeamIcon(teamIconService.getTeamIcon(match.getAwayTeam()))
+                .matchDate(match.getMatchDate())
+                .homeScore(match.getHomeScore())
+                .awayScore(match.getAwayScore())
+                .finished(match.isFinished())
+                .predictionDeadline(match.getPredictionDeadline())
+                .description(match.getDescription())
+                .build();
+    }
+
+    @PostMapping("/{id}/tiebreakers")
+    public ResponseEntity<Void> setTiebreakers(@PathVariable Long id, @RequestBody List<Long> matchIds) {
+        gameweekService.setTiebreakersForGameWeek(id, matchIds);
+        return ResponseEntity.ok().build();
+    }
+    @GetMapping("/{id}/tiebreaker-matches")
+    public List<Match> getTiebreakerMatches(@PathVariable Long id) {
+        return gameweekService.getTiebreakerMatches(id);
     }
 
 }

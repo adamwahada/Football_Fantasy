@@ -7,7 +7,9 @@ import lombok.*;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Entity
 @Data
@@ -37,6 +39,9 @@ public class GameWeek {
     @Column(nullable = false)
     private LocalDateTime joinDeadline;
     private String description;
+    // 🆕 Store the 3 tiebreaker match IDs as comma-separated string
+    @Column(name = "tiebreaker_match_ids", length = 100)
+    private String tiebreakerMatchIds;
 
     @JsonIgnore
     @ManyToMany(mappedBy = "gameweeks")
@@ -45,5 +50,21 @@ public class GameWeek {
     @JsonIgnore
     @OneToMany(mappedBy = "gameweek", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<CompetitionSession> sessions = new ArrayList<>();
+
+    @Transient
+    public List<Long> getTiebreakerMatchIdList() {
+        if (tiebreakerMatchIds == null || tiebreakerMatchIds.isEmpty()) return List.of();
+        return Arrays.stream(tiebreakerMatchIds.split(","))
+                .map(String::trim)
+                .map(Long::parseLong)
+                .collect(Collectors.toList());
+    }
+
+    @Transient
+    public void setTiebreakerMatchIdList(List<Long> ids) {
+        this.tiebreakerMatchIds = ids.stream()
+                .map(String::valueOf)
+                .collect(Collectors.joining(","));
+    }
 
 }

@@ -1,6 +1,7 @@
 package FootballFantasy.fantasy.Repositories.GameweekRepository;
 
 import FootballFantasy.fantasy.Entities.GameweekEntity.CompetitionSession;
+import FootballFantasy.fantasy.Entities.GameweekEntity.CompetitionSessionStatus;
 import FootballFantasy.fantasy.Entities.GameweekEntity.LeagueTheme;
 import FootballFantasy.fantasy.Entities.GameweekEntity.SessionType;
 import jakarta.persistence.LockModeType;
@@ -9,6 +10,7 @@ import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -49,4 +51,11 @@ public interface CompetitionSessionRepository extends JpaRepository<CompetitionS
                                                       @Param("sessionType") SessionType sessionType,
                                                       @Param("buyInAmount") BigDecimal buyInAmount,
                                                       @Param("competition") LeagueTheme competition);
+
+    List<CompetitionSession> findByStatusAndSessionTypeAndMaxParticipantsAndJoinDeadlineBefore(
+            CompetitionSessionStatus status,
+            SessionType type,
+            int maxParticipants,
+            LocalDateTime deadline
+    );
 }

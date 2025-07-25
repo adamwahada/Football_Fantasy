@@ -8,7 +8,11 @@ import lombok.*;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+import java.util.Random;
+import java.util.stream.Collectors;
+
 @Entity
 @Table(name = "competition_session")
 @Data
@@ -91,5 +95,15 @@ public class CompetitionSession {
     }
     public boolean isPrivate() {
         return accessKey != null && !accessKey.isEmpty();
+    }
+
+    @Transient
+    public List<Long> getTiebreakerMatchIds() {
+        List<Match> matches = new ArrayList<>(this.getGameweek().getMatches());
+        Collections.shuffle(matches, new Random(this.getId())); // session seed
+        return matches.stream()
+                .limit(3)
+                .map(Match::getId)
+                .toList();
     }
 }

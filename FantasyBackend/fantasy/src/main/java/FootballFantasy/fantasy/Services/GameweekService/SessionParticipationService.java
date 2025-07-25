@@ -53,6 +53,11 @@ public class SessionParticipationService {
                                                 String accessKeyFromUser,
                                                 Long userId) {
 
+        UserEntity user = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        validateUserHasBalance(user, buyInAmount);
+
         // ✅ Get the actual GameWeek and real competition from DB
         GameWeek gameWeek = gameWeekRepository.findById(gameweekId)
                 .orElseThrow(() -> new IllegalArgumentException("GameWeek not found"));
@@ -86,6 +91,7 @@ public class SessionParticipationService {
 
         UserEntity user = userRepository.findByKeycloakId(keycloakId)
                 .orElseThrow(() -> new RuntimeException("User not found with Keycloak ID: " + keycloakId));
+        validateUserHasBalance(user, buyInAmount);
 
         return joinCompetition(gameweekId, competitionFromFrontend, sessionType, buyInAmount,
                 isPrivate, accessKeyFromUser, user.getId()
@@ -107,6 +113,10 @@ public class SessionParticipationService {
 
         // Validate session state
         validateSessionForJoining(session);
+        // Validate user eligibility (terms, profile, etc.)
+        validateUserEligibility(user);
+        // ✅ Balance check
+        validateUserHasBalance(user, session.getBuyInAmount());
 
         // Check if user already joined this session
         if (sessionParticipationRepository.existsByUserIdAndSessionId(userId, sessionId)) {
@@ -126,6 +136,7 @@ public class SessionParticipationService {
 
         // Update session stats
         updateSessionStats(session);
+        user.setBalance(user.getBalance().subtract(session.getBuyInAmount()));
 
         // Save everything
         SessionParticipation savedParticipation = sessionParticipationRepository.save(participation);
@@ -411,6 +422,13 @@ public class SessionParticipationService {
         // If session is now full, change status
         if (session.getCurrentParticipants() >= session.getMaxParticipants()) {
             session.setStatus(CompetitionSessionStatus.FULL);
+        }
+    }
+    private void validateUserHasBalance(UserEntity user, BigDecimal buyInAmount) {
+        if (user.getBalance().compareTo(buyInAmount) < 0) {
+            throw new RuntimeException(
+                    "Insufficient balance: required " + buyInAmount + ", current balance " + user.getBalance()
+            );
         }
     }
 

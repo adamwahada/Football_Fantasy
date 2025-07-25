@@ -1,16 +1,14 @@
 package FootballFantasy.fantasy.Services.GameweekService;
 
 import FootballFantasy.fantasy.Entities.GameweekEntity.*;
-import FootballFantasy.fantasy.Repositories.GameweekRepository.CompetitionSessionRepository;
-import FootballFantasy.fantasy.Repositories.GameweekRepository.GameWeekRepository;
-import FootballFantasy.fantasy.Repositories.GameweekRepository.SessionParticipationRepository;
-import FootballFantasy.fantasy.Repositories.GameweekRepository.SessionTemplateRepository;
+import FootballFantasy.fantasy.Repositories.GameweekRepository.*;
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.UUID;
@@ -32,6 +30,9 @@ public class CompetitionSessionService {
 
     @Autowired
     private PredictionService predictionService;
+
+    @Autowired
+    private MatchRepository matchRepository;
 
     /**
      * 🔒Join a session with locking (for actual session creation/joining)

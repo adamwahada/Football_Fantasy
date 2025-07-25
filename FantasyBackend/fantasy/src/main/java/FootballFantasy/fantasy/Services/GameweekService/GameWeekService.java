@@ -487,4 +487,25 @@ public class GameWeekService {
         LocalDateTime now = LocalDateTime.now();
         return gameWeekRepository.findByCompetitionAndJoinDeadlineAfter(competition, now);
     }
+
+    public void setTiebreakersForGameWeek(Long gameweekId, List<Long> matchIds) {
+        if (matchIds.size() != 3) {
+            throw new IllegalArgumentException("Exactly 3 tiebreaker match IDs must be provided");
+        }
+
+        GameWeek gameWeek = gameWeekRepository.findById(gameweekId)
+                .orElseThrow(() -> new IllegalArgumentException("GameWeek not found"));
+
+        gameWeek.setTiebreakerMatchIdList(matchIds);
+        gameWeekRepository.save(gameWeek);
+    }
+
+    public List<Match> getTiebreakerMatches(Long gameweekId) {
+        GameWeek gameWeek = gameWeekRepository.findById(gameweekId)
+                .orElseThrow(() -> new IllegalArgumentException("GameWeek not found"));
+
+        List<Long> ids = gameWeek.getTiebreakerMatchIdList();
+        return matchRepository.findAllById(ids);
+    }
+
 }

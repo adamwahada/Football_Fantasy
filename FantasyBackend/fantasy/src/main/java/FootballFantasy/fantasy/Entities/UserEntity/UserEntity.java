@@ -5,6 +5,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
@@ -30,6 +31,9 @@ public class UserEntity {
     private LocalDate birthDate;
     private String referralCode;
     private Boolean termsAccepted;
+
+    @Column(precision = 10, scale = 2, nullable = false)
+    private BigDecimal balance = BigDecimal.ZERO;
 
     @JsonIgnore
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)

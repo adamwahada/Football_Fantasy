@@ -17,6 +17,8 @@ public class PredictionController {
 
     @Autowired
     private PredictionService predictionService;
+    @Autowired
+    private CompetitionSessionService competitionSessionService;
 
     @Autowired
     private SessionParticipationService sessionParticipationService;
@@ -64,4 +66,5 @@ public class PredictionController {
             ));
         }
     }
+
 }

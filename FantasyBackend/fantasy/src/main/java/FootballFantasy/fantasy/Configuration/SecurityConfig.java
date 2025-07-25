@@ -44,8 +44,11 @@ public class SecurityConfig {
                                 "/api/session-templates/**",
                                 "/api/competition-sessions/**",
                                 "/api/seed/**",
-                                "/api/predictions/**"
-
+                                "/api/predictions/**",
+                                "/assets/**",
+                                "/static/**",
+                                "/images/**",
+                                "/api/admin/**"
 
                                 ).permitAll()
 

@@ -46,7 +46,7 @@ public class GameweekPredictionSubmissionDTO {
     private String sessionDescription; // optional
 
     // Optional list of match IDs to be used for tie-breaker (e.g. 1 or 2 matches)
-    private List<Long> tiebreakerMatchIds;
+//    private List<Long> tiebreakerMatchIds;
 
     // Optional: whether the prediction is finalized
     private boolean complete;

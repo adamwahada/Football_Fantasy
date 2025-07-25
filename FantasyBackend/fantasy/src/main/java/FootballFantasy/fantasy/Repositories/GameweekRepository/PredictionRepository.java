@@ -31,8 +31,11 @@ public interface PredictionRepository extends JpaRepository<Prediction, Long> {
     List<Prediction> findByParticipationAndIsTiebreakerTrue(SessionParticipation participation);
 
     // 🏆 Find completed predictions (for accuracy calculation)
-    @Query("SELECT p FROM Prediction p WHERE p.participation = :participation AND p.match.status = 'FINISHED'")
-    List<Prediction> findCompletedPredictionsByParticipation(@Param("participation") SessionParticipation participation);
+    @Query("SELECT p FROM Prediction p " +
+            "JOIN p.match m " +
+            "WHERE p.participation.id = :participationId " +
+            "AND m.status = 'COMPLETED'")
+    List<Prediction> findCompletedPredictionsByParticipation(@Param("participationId") Long participationId);
 
     // 📊 Count correct predictions for a participation
     @Query("SELECT COUNT(p) FROM Prediction p WHERE p.participation = :participation AND p.isCorrect = true")

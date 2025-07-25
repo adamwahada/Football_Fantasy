@@ -97,55 +97,82 @@ public class PredictionService {
     @Transactional
     public List<Prediction> submitPredictions(GameweekPredictionSubmissionDTO submissionDTO,
                                               SessionParticipation participation) {
-
         UserEntity user = userRepository.findById(submissionDTO.getUserId())
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
-        Set<Long> submittedMatchIds = submissionDTO.getPredictions().stream()
-                .map(PredictionDTO::getMatchId)
-                .collect(Collectors.toSet());
+        GameWeek gameWeek = gameweekRepository.findById(submissionDTO.getGameweekId())
+                .orElseThrow(() -> new RuntimeException("Gameweek not found"));
 
-        List<Match> matches = matchRepository.findByGameweeksId(submissionDTO.getGameweekId());
-
-        Set<Long> matchIds = matches.stream().map(Match::getId).collect(Collectors.toSet());
-        if (!matchIds.equals(submittedMatchIds)) {
-            throw new RuntimeException("Submitted predictions do not match required matches for the gameweek");
+        List<Match> allMatches = matchRepository.findByGameweeksId(gameWeek.getId());
+        if (allMatches.isEmpty()) {
+            throw new RuntimeException("No matches found for this gameweek");
         }
 
-        List<Prediction> predictions = submissionDTO.getPredictions().stream().map(dto -> {
-            Match match = matchRepository.findById(dto.getMatchId())
-                    .orElseThrow(() -> new RuntimeException("Match not found: " + dto.getMatchId()));
+        // 🧠 Get tiebreakers from GameWeek entity
+        List<Long> tieBreakerIds = gameWeek.getTiebreakerMatchIdList();
 
-            return Prediction.builder()
-                    .user(user)
-                    .match(match)
-                    .predictedResult(dto.getPredictedResult())
-                    .predictedHomeScore(dto.getPredictedHomeScore())
-                    .predictedAwayScore(dto.getPredictedAwayScore())
-                    .isTiebreaker(dto.isValidForTiebreaker()) // ✅ no nulls now
-                    .participation(participation) // ✅ critical
-                    .predictionTime(LocalDateTime.now())
-                    .build();
-        }).collect(Collectors.toList());
+        // 🛡️ Validate: ensure user submitted all predictions
+        Set<Long> submittedMatchIds = submissionDTO.getPredictions().stream()
+                .map(PredictionDTO::getMatchId).collect(Collectors.toSet());
+        Set<Long> requiredMatchIds = allMatches.stream().map(Match::getId).collect(Collectors.toSet());
 
+        if (!submittedMatchIds.equals(requiredMatchIds)) {
+            throw new RuntimeException("Submitted predictions must cover all matches");
+        }
+
+        // Create predictions
+        List<Prediction> predictions = submissionDTO.getPredictions().stream()
+                .map(dto -> {
+                    Match match = matchRepository.findById(dto.getMatchId())
+                            .orElseThrow(() -> new RuntimeException("Match not found"));
+
+                    boolean isTiebreaker = tieBreakerIds.contains(match.getId());
+
+                    // ⛔ Winner-only allowed for normal matches
+                    if (!isTiebreaker && (dto.getPredictedHomeScore() != null || dto.getPredictedAwayScore() != null)) {
+                        throw new RuntimeException("Score prediction not allowed for non-tiebreaker matches");
+                    }
+
+                    // ⛔ Exact score required for tiebreaker matches
+                    if (isTiebreaker && (dto.getPredictedHomeScore() == null || dto.getPredictedAwayScore() == null)) {
+                        throw new RuntimeException("Exact score required for tiebreaker matches");
+                    }
+
+                    return Prediction.builder()
+                            .user(user)
+                            .match(match)
+                            .predictedResult(dto.getPredictedResult())
+                            .predictedHomeScore(isTiebreaker ? dto.getPredictedHomeScore() : null)
+                            .predictedAwayScore(isTiebreaker ? dto.getPredictedAwayScore() : null)
+                            .isTiebreaker(isTiebreaker)
+                            .participation(participation)
+                            .predictionTime(LocalDateTime.now())
+                            .build();
+                }).collect(Collectors.toList());
+
+        // 🔥 THIS IS THE MISSING PIECE - SAVE TO DATABASE!
         return predictionRepository.saveAll(predictions);
     }
+
 
 
     // 📊 Calculate accuracy after matches are completed
     @Transactional
     public void calculatePredictionAccuracy(Long participationId) {
+        System.out.println("🔍 [START] calculatePredictionAccuracy for participationId: " + participationId);
+
         SessionParticipation participation = sessionParticipationRepository.findById(participationId)
                 .orElseThrow(() -> new RuntimeException("Participation not found"));
 
         List<Prediction> completedPredictions = predictionRepository
-                .findCompletedPredictionsByParticipation(participation);
+                .findCompletedPredictionsByParticipation(participation.getId());
+
+        System.out.println("📊 Found " + completedPredictions.size() + " completed predictions");
 
         int totalPredictions = completedPredictions.size();
         int totalCorrect = 0;
 
         for (Prediction prediction : completedPredictions) {
-            // Calculate main prediction accuracy
             boolean isCorrect = isPredictionCorrect(prediction);
             prediction.setIsCorrect(isCorrect);
 
@@ -153,28 +180,33 @@ public class PredictionService {
                 totalCorrect++;
             }
 
-            // Tiebreaker score distance
             if (prediction.getIsTiebreaker() && prediction.hasScorePrediction()) {
                 prediction.calculateScoreDistance(
                         prediction.getMatch().getHomeScore(),
                         prediction.getMatch().getAwayScore()
                 );
             }
+
+            System.out.println("📌 Match: " + prediction.getMatch().getHomeTeam() + " vs " + prediction.getMatch().getAwayTeam() +
+                    ", Predicted: " + prediction.getPredictedResult() +
+                    ", Actual: " + prediction.getMatch().getHomeScore() + "-" + prediction.getMatch().getAwayScore() +
+                    ", Correct: " + isCorrect);
         }
 
-        // Update participation stats
         participation.setTotalPredictions(totalPredictions);
         participation.setTotalCorrectPredictions(totalCorrect);
 
         double accuracy = totalPredictions == 0 ? 0.0 : (totalCorrect * 100.0) / totalPredictions;
         participation.setAccuracyPercentage(accuracy);
-
-        // Optionally mark if the user completed all predictions
         participation.setHasCompletedAllPredictions(totalPredictions > 0);
 
-        // Save changes
         sessionParticipationRepository.save(participation);
-        predictionRepository.saveAll(completedPredictions); // optional but safe
+        predictionRepository.saveAll(completedPredictions);
+
+        System.out.println("✅ [END] Participation ID " + participationId +
+                " updated: total=" + totalPredictions +
+                ", correct=" + totalCorrect +
+                ", accuracy=" + accuracy);
     }
 
 
@@ -309,6 +341,18 @@ public class PredictionService {
 
     public List<SessionParticipation> getSessionParticipationsByGameWeek(Long gameweekId) {
         return sessionParticipationRepository.findByGameweekId(gameweekId);
+    }
+    @Transactional
+    public void finalizeGameweekAfterCompletion(Long gameweekId) {
+        List<SessionParticipation> participations = sessionParticipationRepository.findByGameweekId(gameweekId);
+
+        // Step 1: Calculate accuracy for all participations
+        for (SessionParticipation participation : participations) {
+            calculatePredictionAccuracy(participation.getId());
+        }
+
+        // Step 2: Determine winners for each session in this gameweek
+        determineWinnersForGameWeek(gameweekId);
     }
 
 }

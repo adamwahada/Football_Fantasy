@@ -3,7 +3,6 @@ package FootballFantasy.fantasy.Services.DataService;
 import FootballFantasy.fantasy.Dto.MatchResultDTO;
 import FootballFantasy.fantasy.Dto.MatchSeedDTO;
 import FootballFantasy.fantasy.Entities.GameweekEntity.*;
-import FootballFantasy.fantasy.Repositories.GameweekRepository.CompetitionSessionRepository;
 import FootballFantasy.fantasy.Repositories.GameweekRepository.GameWeekRepository;
 import FootballFantasy.fantasy.Repositories.GameweekRepository.MatchRepository;
 import FootballFantasy.fantasy.Services.GameweekService.CompetitionSessionService;
@@ -41,6 +40,8 @@ public class MatchSeederService {
     @Autowired
     private GameWeekService gameWeekService;
 
+    @Autowired
+    private TeamIconService teamIconService;
     /**
      * Seed matches initially from JSON (scores = 0, not finished)
      */
