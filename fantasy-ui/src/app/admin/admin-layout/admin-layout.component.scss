@@ -1,0 +1,39 @@
+.admin-layout {
+  display: flex;
+}
+
+app-admin-sidebar {
+  transition: width 0.2s, opacity 0.2s;
+}
+
+app-admin-sidebar[hidden] {
+  width: 0;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.sidebar-toggle {
+  position: fixed;
+  top: 1rem;
+  left: 1rem;
+  z-index: 100;
+  background: #2563eb;
+  color: #fff;
+  border: none;
+  border-radius: 50%;
+  width: 2.5rem;
+  height: 2.5rem;
+  font-size: 1.5rem;
+  cursor: pointer;
+}
+
+.admin-content {
+  flex: 1;
+  margin-left: 220px;
+  transition: margin-left 0.2s;
+  padding: 2rem;
+}
+
+.admin-content.full-width {
+  margin-left: 0;
+}

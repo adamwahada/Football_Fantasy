@@ -1,7 +1,3 @@
-
-
-<hr class="divider" />
-
 <h3 class="subtitle">Liste des matchs</h3>
 
 <!-- Filtres -->
@@ -25,6 +21,12 @@
 <div class="match-table-container">
   <table class="match-table">
     <thead>
+    <div style="display: flex; justify-content: flex-end; margin-bottom: 1rem;">
+    <button class="btn-add"
+        [routerLink]="['/admin/Addmatch']"
+        title="Ajouter un match">+
+    </button>
+    </div>
       <tr>
         <th>Équipe Domicile</th>
         <th>Équipe Extérieure</th>

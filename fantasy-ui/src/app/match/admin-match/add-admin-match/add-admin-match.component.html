@@ -1,0 +1,22 @@
+<form [formGroup]="matchForm" (ngSubmit)="onSubmit()" class="match-form">
+  <input formControlName="homeTeam" placeholder="Équipe Domicile" />
+  <input formControlName="awayTeam" placeholder="Équipe Extérieure" />
+
+  <!-- Séparation date + heure -->
+  <input formControlName="matchDate" type="date" />
+  <input formControlName="matchTime" type="time" />
+
+  <select formControlName="status">
+    <option *ngFor="let s of statuses" [value]="s">{{ s }}</option>
+  </select>
+
+  <input formControlName="homeScore" type="number" placeholder="Score Domicile" />
+  <input formControlName="awayScore" type="number" placeholder="Score Extérieur" />
+  <input formControlName="description" placeholder="Description" />
+  <label>
+    <input type="checkbox" formControlName="active" />
+    Actif ?
+  </label>
+
+  <button type="submit">{{ editingMatchId ? 'Mettre à jour' : 'Créer' }}</button>
+</form>

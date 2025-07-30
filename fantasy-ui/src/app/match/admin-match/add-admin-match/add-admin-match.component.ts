@@ -1,18 +1,17 @@
 import { Component, OnInit } from '@angular/core';
-import { Match, MatchService } from '../match.service';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule } from '@angular/forms';
-
+import { MatchService,Match } from '../../match.service';
 @Component({
   selector: 'app-admin-match',
-  templateUrl: './admin-match.component.html',
-  styleUrls: ['./admin-match.component.scss'],
+  templateUrl: './add-admin-match.component.html',
+  styleUrls: ['./add-admin-match.component.scss'],
   standalone: true,
   imports: [CommonModule, ReactiveFormsModule, FormsModule],
 })
-export class AdminMatchComponent implements OnInit {
+export class AddAdminMatchComponent implements OnInit {
   matches: Match[] = [];
   matchForm: FormGroup;
   editingMatchId: number | null = null;
