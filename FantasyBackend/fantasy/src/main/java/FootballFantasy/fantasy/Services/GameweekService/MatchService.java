@@ -10,6 +10,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 import java.util.List;
 
@@ -29,6 +30,7 @@ public class MatchService {
     @Autowired
     private ApplicationEventPublisher eventPublisher;
 
+    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
     public Match createMatch(Match match) {
         if (match.getGameweeks() != null) {
             for (GameWeek gw : match.getGameweeks()) {
@@ -47,6 +49,7 @@ public class MatchService {
         return matchRepository.save(match);
     }
 
+    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
     public Match updateMatch(Long matchId, Match updatedMatch) {
         System.out.println("🔄 MatchService.updateMatch called for match ID: " + matchId);
 
@@ -102,6 +105,7 @@ public class MatchService {
         return saved;
     }
 
+    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
     @Transactional
     public void deleteMatch(Long matchId) {
         Match match = matchRepository.findById(matchId)
@@ -131,6 +135,8 @@ public class MatchService {
                 : away > home ? match.getAwayTeam()
                 : "Draw";
     }
+
+    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
     @Transactional
     public Match setMatchActiveStatus(Long matchId, boolean active) {
         Match match = matchRepository.findById(matchId)

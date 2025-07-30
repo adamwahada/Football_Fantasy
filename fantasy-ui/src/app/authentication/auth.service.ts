@@ -262,7 +262,7 @@ getUserRoles(): string[] {
             if (roles.includes('admin')) {
               this.router.navigate(['/admin/referral']);
             } else {
-              this.router.navigate(['/dashboard']);
+              this.router.navigate(['/test']);
             }
           }, 100);
         } else {
@@ -280,6 +280,14 @@ getUserRoles(): string[] {
         }
         
         return throwError(() => new Error(errorMessage));
+      })
+    );
+  }
+  checkEmailVerified(): Observable<boolean> {
+    return this.http.get<boolean>(`${this.apiUrl}/email-verified`).pipe(
+      catchError((error: HttpErrorResponse) => {
+        console.error('❌ Erreur lors de la vérification de l\'email', error);
+        return throwError(() => new Error('Erreur lors de la vérification de l\'email'));
       })
     );
   }

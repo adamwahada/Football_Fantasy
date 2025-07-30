@@ -6,13 +6,12 @@ import FootballFantasy.fantasy.Repositories.GameweekRepository.GameWeekRepositor
 import FootballFantasy.fantasy.Repositories.GameweekRepository.MatchRepository;
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 public class GameWeekService {
@@ -25,6 +24,9 @@ public class GameWeekService {
 
     @Autowired
     private PredictionService predictionService;
+
+    @Autowired
+    private CompetitionSessionService competitionSessionService;
 
     /**
      * Helper method to find or create a match to prevent duplicates
@@ -263,7 +265,8 @@ public class GameWeekService {
     }
 
     /**
-     * Helper method to update status of all gameweeks that contain the given matches
+     * ✅ ENHANCED: Helper method to update status of all gameweeks that contain the given matches
+     * This triggers AUTOMATIC winner determination when gameweeks complete
      */
     private void updateAllAffectedGameWeekStatuses(List<Match> updatedMatches) {
         Set<GameWeek> affectedGameWeeks = new HashSet<>();
@@ -287,7 +290,7 @@ public class GameWeekService {
                 gameWeek.setStatus(newStatus);
                 gameWeekRepository.save(gameWeek);
 
-                // ✅ USE YOUR EXISTING METHOD
+                // ✅ AUTOMATIC WINNER DETERMINATION HAPPENS HERE
                 if (newStatus == GameweekStatus.FINISHED) {
                     triggerPostGameWeekFinishedActions(gameWeek);
                 }
@@ -296,21 +299,75 @@ public class GameWeekService {
             }
         }
     }
+
+    /**
+     * ✅ STREAMLINED: Remove duplicate logic - CompetitionSessionService handles everything
+     */
     private void triggerPostGameWeekFinishedActions(GameWeek gameWeek) {
-        System.out.println("🏆 GameWeek " + gameWeek.getId() + " finished. Triggering post-processing...");
+        System.out.println("🏆 GameWeek " + gameWeek.getId() + " finished. Triggering AUTOMATIC post-processing...");
 
-        // 1. Find all session participations for this gameweek
-        List<SessionParticipation> participations = predictionService
-                .getSessionParticipationsByGameWeek(gameWeek.getId());
+        // ✅ SINGLE CALL: This handles everything (accuracy calculation + winner determination + prize distribution)
+        competitionSessionService.determineWinnersForCompletedGameWeek(gameWeek.getId());
 
-        // 2. For each participation, calculate accuracy
-        for (SessionParticipation participation : participations) {
-            predictionService.calculatePredictionAccuracy(participation.getId());
+        System.out.println("✅ AUTOMATIC post-processing for gameweek " + gameWeek.getId() + " completed.");
+    }
+
+    /**
+     * ✅ SIMPLIFIED: Remove duplicate logic from updateStatusIfComplete
+     */
+    @Transactional
+    public boolean updateStatusIfComplete(Long gameWeekId) {
+        System.out.println("🔍 GameWeekService.updateStatusIfComplete called for gameweek ID: " + gameWeekId);
+
+        GameWeek gameWeek = gameWeekRepository.findById(gameWeekId)
+                .orElseThrow(() -> new IllegalArgumentException("GameWeek not found"));
+
+        System.out.println("📊 Current gameweek status: " + gameWeek.getStatus());
+        System.out.println("📊 Total matches in gameweek: " + gameWeek.getMatches().size());
+
+        // Filter active matches only
+        List<Match> activeMatches = gameWeek.getMatches().stream()
+                .filter(Match::isActive)
+                .toList();
+
+        long totalActiveMatches = activeMatches.size();
+        long completedMatches = activeMatches.stream()
+                .filter(match -> match.getStatus() == MatchStatus.COMPLETED)
+                .count();
+
+        long inactiveCount = gameWeek.getMatches().stream()
+                .filter(match -> !match.isActive())
+                .count();
+
+        System.out.println("⚽ Active matches: " + totalActiveMatches);
+        System.out.println("✅ Completed active matches: " + completedMatches + "/" + totalActiveMatches);
+        if (inactiveCount > 0) {
+            System.out.println("⚠️ Skipping " + inactiveCount + " inactive match(es)");
         }
 
-        // 3. Determine winners per session (you will implement this)
-        predictionService.determineWinnersForGameWeek(gameWeek.getId());
-        System.out.println("✅ Post-processing for gameweek " + gameWeek.getId() + " completed.");
+        // Check if all active matches are completed and status not yet FINISHED
+        if (completedMatches == totalActiveMatches &&
+                gameWeek.getStatus() != GameweekStatus.FINISHED) {
+
+            System.out.println("🎯 All active matches completed! Updating gameweek status to FINISHED");
+            gameWeek.setStatus(GameweekStatus.FINISHED);
+            gameWeekRepository.save(gameWeek);
+
+            // ✅ AUTOMATIC POST-PROCESSING (no duplicate logic!)
+            System.out.println("🏆 Triggering AUTOMATIC post-finish processing...");
+            triggerPostGameWeekFinishedActions(gameWeek);
+            System.out.println("✅ AUTOMATIC post-finish processing completed.");
+
+            return true;
+
+        } else {
+            System.out.println("⏳ GameWeek " + gameWeekId + " is not ready to be finished");
+            System.out.println("   Reason: " +
+                    (completedMatches != totalActiveMatches
+                            ? "Not all matches are completed (" + completedMatches + "/" + totalActiveMatches + ")"
+                            : "GameWeek already finished or in another status"));
+            return false;
+        }
     }
 
     /**
@@ -407,72 +464,6 @@ public class GameWeekService {
         System.out.println("✅ Import completed for gameweek " + gameWeekId);
     }
 
-    @Transactional
-    public boolean updateStatusIfComplete(Long gameWeekId) {
-        System.out.println("🔍 GameWeekService.updateStatusIfComplete called for gameweek ID: " + gameWeekId);
-
-        GameWeek gameWeek = gameWeekRepository.findById(gameWeekId)
-                .orElseThrow(() -> new IllegalArgumentException("GameWeek not found"));
-
-        System.out.println("📊 Current gameweek status: " + gameWeek.getStatus());
-        System.out.println("📊 Total matches in gameweek: " + gameWeek.getMatches().size());
-
-        // Filter active matches only
-        List<Match> activeMatches = gameWeek.getMatches().stream()
-                .filter(Match::isActive)
-                .toList();
-
-        long totalActiveMatches = activeMatches.size();
-        long completedMatches = activeMatches.stream()
-                .filter(match -> match.getStatus() == MatchStatus.COMPLETED)
-                .count();
-
-        long inactiveCount = gameWeek.getMatches().stream()
-                .filter(match -> !match.isActive())
-                .count();
-
-        System.out.println("⚽ Active matches: " + totalActiveMatches);
-        System.out.println("✅ Completed active matches: " + completedMatches + "/" + totalActiveMatches);
-        if (inactiveCount > 0) {
-            System.out.println("⚠️ Skipping " + inactiveCount + " inactive match(es)");
-        }
-
-        // Check if all active matches are completed and status not yet FINISHED
-        if (completedMatches == totalActiveMatches &&
-                gameWeek.getStatus() != GameweekStatus.FINISHED) {
-
-            System.out.println("🎯 All active matches completed! Updating gameweek status to FINISHED");
-            gameWeek.setStatus(GameweekStatus.FINISHED);
-            gameWeekRepository.save(gameWeek);
-
-            // Post-finish processing
-            System.out.println("🏆 Triggering post-finish processing...");
-
-            // 1. Get all participations of this gameweek
-            List<SessionParticipation> participations = predictionService.getSessionParticipationsByGameWeek(gameWeekId);
-
-            // 2. Calculate accuracy for each participation
-            for (SessionParticipation participation : participations) {
-                predictionService.calculatePredictionAccuracy(participation.getId());
-            }
-
-            // 3. Determine winners for all sessions in this gameweek
-            predictionService.determineWinnersForGameWeek(gameWeekId);
-
-            System.out.println("✅ Post-finish processing completed.");
-
-            return true;
-
-        } else {
-            System.out.println("⏳ GameWeek " + gameWeekId + " is not ready to be finished");
-            System.out.println("   Reason: " +
-                    (completedMatches != totalActiveMatches
-                            ? "Not all matches are completed (" + completedMatches + "/" + totalActiveMatches + ")"
-                            : "GameWeek already finished or in another status"));
-            return false;
-        }
-    }
-
     public GameWeek getByCompetitionAndWeek(LeagueTheme competition, int weekNumber) {
         return gameWeekRepository.findByCompetitionAndWeekNumber(competition, weekNumber)
                 .orElseThrow(() -> new IllegalArgumentException("GameWeek not found for competition and week"));
@@ -496,9 +487,52 @@ public class GameWeekService {
         GameWeek gameWeek = gameWeekRepository.findById(gameweekId)
                 .orElseThrow(() -> new IllegalArgumentException("GameWeek not found"));
 
+        // Fetch all match IDs in the gameweek
+        List<Match> gameweekMatches = matchRepository.findByGameweeksId(gameweekId);
+        Set<Long> validMatchIds = gameweekMatches.stream()
+                .map(Match::getId)
+                .collect(Collectors.toSet());
+
+        // Validate the submitted matchIds
+        for (Long id : matchIds) {
+            if (!validMatchIds.contains(id)) {
+                throw new IllegalArgumentException("Match ID " + id + " does not belong to GameWeek " + gameweekId);
+            }
+        }
+
         gameWeek.setTiebreakerMatchIdList(matchIds);
         gameWeekRepository.save(gameWeek);
     }
+    public void updateTiebreakers(Long gameweekId, List<Long> newMatchIds) {
+        GameWeek gameWeek = gameWeekRepository.findById(gameweekId)
+                .orElseThrow(() -> new IllegalArgumentException("GameWeek not found"));
+
+        // If empty/null input, remove tiebreakers
+        if (newMatchIds == null || newMatchIds.isEmpty()) {
+            gameWeek.setTiebreakerMatchIdList(Collections.emptyList());
+            gameWeekRepository.save(gameWeek);
+            return;
+        }
+
+        // Validate size
+        if (newMatchIds.size() != 3) {
+            throw new IllegalArgumentException("Exactly 3 tiebreaker match IDs must be provided");
+        }
+
+        // Validate that the matches belong to the GameWeek
+        List<Match> matches = matchRepository.findByGameweeksId(gameweekId);
+        Set<Long> validMatchIds = matches.stream().map(Match::getId).collect(Collectors.toSet());
+
+        for (Long id : newMatchIds) {
+            if (!validMatchIds.contains(id)) {
+                throw new IllegalArgumentException("Match ID " + id + " does not belong to GameWeek " + gameweekId);
+            }
+        }
+
+        gameWeek.setTiebreakerMatchIdList(newMatchIds);
+        gameWeekRepository.save(gameWeek);
+    }
+
 
     public List<Match> getTiebreakerMatches(Long gameweekId) {
         GameWeek gameWeek = gameWeekRepository.findById(gameweekId)
@@ -508,4 +542,48 @@ public class GameWeekService {
         return matchRepository.findAllById(ids);
     }
 
+    // ✅ NEW: Scheduled task to handle expired sessions (runs every 5 minutes)
+    @Scheduled(fixedRate = 300000) // 5 minutes
+    @Transactional
+    public void processExpiredSessions() {
+        System.out.println("🔍 Checking for expired sessions that need refunds...");
+
+        LocalDateTime now = LocalDateTime.now();
+
+        // Find sessions that are OPEN but past their join deadline
+        // Note: You'll need to add this method to CompetitionSessionRepository
+        try {
+            List<CompetitionSession> expiredSessions = competitionSessionService
+                    .findExpiredOpenSessions(now);
+
+            for (CompetitionSession session : expiredSessions) {
+                try {
+                    System.out.println("⏰ Processing expired session: " + session.getId());
+
+                    // If it's a one-vs-one with only 1 participant, refund them
+                    if (session.getSessionType() == SessionType.ONE_VS_ONE &&
+                            session.getCurrentParticipants() == 1) {
+
+                        competitionSessionService.determineWinner(session.getId()); // This will trigger refund logic
+                        System.out.println("✅ Refund processed for expired one-vs-one session: " + session.getId());
+
+                    } else if (session.getCurrentParticipants() == 1) {
+                        // Any session with only 1 participant gets refunded
+                        competitionSessionService.determineWinner(session.getId());
+                        System.out.println("✅ Refund processed for expired single-participant session: " + session.getId());
+
+                    } else if (session.getCurrentParticipants() == 0) {
+                        // Mark as cancelled if no participants
+                        competitionSessionService.cancelEmptySession(session.getId());
+                        System.out.println("❌ Cancelled expired session with no participants: " + session.getId());
+                    }
+
+                } catch (Exception e) {
+                    System.err.println("❌ Error processing expired session " + session.getId() + ": " + e.getMessage());
+                }
+            }
+        } catch (Exception e) {
+            System.err.println("❌ Error in processExpiredSessions: " + e.getMessage());
+        }
+    }
 }

@@ -1,0 +1,86 @@
+<h2 class="title">Gestion des Matchs</h2>
+
+<form [formGroup]="matchForm" (ngSubmit)="onSubmit()" class="match-form">
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+    <input formControlName="homeTeam" placeholder="Équipe Domicile" class="input" />
+    <input formControlName="awayTeam" placeholder="Équipe Extérieure" class="input" />
+    <input formControlName="matchDate" type="datetime-local" class="input" />
+    <select formControlName="status" class="input">
+      <option *ngFor="let s of statuses" [value]="s">{{ s }}</option>
+    </select>
+    <input formControlName="homeScore" type="number" placeholder="Score Domicile" class="input" min="0" />
+    <input formControlName="awayScore" type="number" placeholder="Score Extérieur" class="input" min="0" />
+    <input formControlName="description" placeholder="Description (facultatif)" class="input col-span-full" />
+    <label class="checkbox-label col-span-full">
+      <input type="checkbox" formControlName="active" />
+      Actif ?
+    </label>
+  </div>
+  <!-- Filtres -->
+<div class="filters" style="margin-bottom: 1rem; display: flex; gap: 1rem; align-items: center;">
+  <label>
+    Statut :
+    <select [(ngModel)]="statusFilter">
+      <option value="">Tous</option>
+      <option value="active">Actif</option>
+      <option value="inactive">Inactif</option>
+    </select>
+  </label>
+  <label>
+    Date :
+    <input type="date" [(ngModel)]="dateFilter" />
+  </label>
+  <button (click)="resetFilters()" class="btn-secondary">Réinitialiser les filtres</button>
+</div>
+
+  <div class="form-buttons">
+    <button type="submit" class="btn-primary">
+      {{ editingMatchId ? 'Mettre à jour' : 'Créer' }} Match
+    </button>
+    <button type="button" (click)="resetForm()" class="btn-secondary">Réinitialiser</button>
+  </div>
+</form>
+
+<hr class="divider" />
+
+<h3 class="subtitle">Liste des matchs</h3>
+
+<div class="match-table-container">
+  <table class="match-table">
+    <thead>
+      <tr>
+        <th>Équipe Domicile</th>
+        <th>Équipe Extérieure</th>
+        <th>Statut</th>
+        <th>Date</th>
+        <th>Score</th>
+        <th>Actif</th>
+        <th>Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr *ngFor="let match of matches">
+        <td>{{ match.homeTeam }}</td>
+        <td>{{ match.awayTeam }}</td>
+        <td>{{ match.status }}</td>
+        <td>{{ match.matchDate | date: 'short' }}</td>
+        <td>
+          {{ match.homeScore ?? '-' }} - {{ match.awayScore ?? '-' }}
+        </td>
+        <td>
+          <span [class.active]="match.active" [class.inactive]="!match.active">
+            {{ match.active ? 'Oui' : 'Non' }}
+          </span>
+        </td>
+        <td class="actions">
+          <button (click)="editMatch(match)" title="Modifier" class="btn-icon blue">✏️</button>
+          <button (click)="deleteMatch(match.id!)" title="Supprimer" class="btn-icon red">🗑️</button>
+          <button (click)="toggleActive(match)" title="Activer / Désactiver" class="btn-icon gray">
+            {{ match.active ? '🔕' : '🔔' }}
+          </button>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+
+</div>

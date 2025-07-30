@@ -305,39 +305,6 @@ public class PredictionService {
         Double score = predictionRepository.getTiebreakerScore(participationId);
         return score != null ? score : 999999.0; // High penalty if no tiebreaker predictions
     }
-    @Transactional
-    public void determineWinnersForGameWeek(Long gameweekId) {
-        // 1. Get all participations related to this GameWeek
-        List<SessionParticipation> participations = getSessionParticipationsByGameWeek(gameweekId);
-
-        // 2. Group participations by session
-        Map<Long, List<SessionParticipation>> groupedBySession = participations.stream()
-                .collect(Collectors.groupingBy(sp -> sp.getSession().getId()));
-
-        // 3. For each session, find the winner(s)
-        for (List<SessionParticipation> sessionParticipations : groupedBySession.values()) {
-            // Sort by accuracy DESC, then tiebreaker score ASC
-            sessionParticipations.sort(Comparator
-                    .comparingDouble(SessionParticipation::getAccuracyPercentage).reversed()
-                    .thenComparingDouble(sp -> getTiebreakerScore(sp.getId()))
-            );
-
-            if (!sessionParticipations.isEmpty()) {
-                // Mark the first participant as winner
-                SessionParticipation winner = sessionParticipations.get(0);
-                winner.setIsWinner(true);
-                sessionParticipationRepository.save(winner);
-
-                // Reset any previous winners (in case they exist) except this one
-                sessionParticipations.stream()
-                        .filter(sp -> !sp.equals(winner) && Boolean.TRUE.equals(sp.getIsWinner()))
-                        .forEach(sp -> {
-                            sp.setIsWinner(false);
-                            sessionParticipationRepository.save(sp);
-                        });
-            }
-        }
-    }
 
     public List<SessionParticipation> getSessionParticipationsByGameWeek(Long gameweekId) {
         return sessionParticipationRepository.findByGameweekId(gameweekId);
@@ -351,8 +318,9 @@ public class PredictionService {
             calculatePredictionAccuracy(participation.getId());
         }
 
-        // Step 2: Determine winners for each session in this gameweek
-        determineWinnersForGameWeek(gameweekId);
+        // Step 2: Let CompetitionSessionService handle winner determination and prize distribution
+        // Remove the duplicate winner logic from here
+        System.out.println("✅ Gameweek " + gameweekId + " predictions finalized. Use CompetitionSessionService.determineWinnersForCompletedGameWeek() for winner determination.");
     }
 
 }

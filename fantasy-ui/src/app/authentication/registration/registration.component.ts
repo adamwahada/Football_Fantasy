@@ -473,8 +473,13 @@ export class RegistrationComponent implements OnInit, AfterViewInit, OnDestroy {
 
       const response = await this.authService.registerUser(formData).toPromise();
       console.log('✅ Registration successful:', response);
-      this.snackBar.open('Inscription réussie ! Vous pouvez maintenant vous connecter.', 'Fermer', { duration: 5000, panelClass: 'snackbar-success' });
-      this.router.navigate(['/login']);
+      this.snackBar.open(
+        'Inscription réussie ! Vérifiez votre email pour activer votre compte.',
+        'Fermer',
+        { duration: 7000, panelClass: 'snackbar-success' }
+      );
+      this.router.navigate(['/email-verification']);
+      return;
     } catch (error: any) {
       console.error('❌ Registration failed:', error);
       const msg = (error.message || '').toLowerCase();

@@ -199,6 +199,14 @@ public class GameWeekController {
         gameweekService.setTiebreakersForGameWeek(id, matchIds);
         return ResponseEntity.ok().build();
     }
+    @PutMapping("/gameweek/{gameweekId}/update-tiebreakers")
+    public ResponseEntity<String> updateTiebreakers(
+            @PathVariable Long gameweekId,
+            @RequestBody List<Long> matchIds) {
+
+        gameweekService.updateTiebreakers(gameweekId, matchIds);
+        return ResponseEntity.ok("✅ Tiebreakers updated for GameWeek " + gameweekId);
+    }
     @GetMapping("/{id}/tiebreaker-matches")
     public List<Match> getTiebreakerMatches(@PathVariable Long id) {
         return gameweekService.getTiebreakerMatches(id);

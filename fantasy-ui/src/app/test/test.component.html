@@ -1,0 +1,16 @@
+<div style="text-align:center; margin-top: 2rem;">
+    <h2>Test User/Admin API</h2>
+  
+    <button (click)="testUserEndpoint()">Test User API</button>
+    <button (click)="testAdminEndpoint()">Test Admin API</button>
+  
+    <div *ngIf="message" style="margin-top: 1rem; padding: 1rem; border: 1px solid #ccc;">
+      <h3>API Response:</h3>
+      <pre>{{ message }}</pre>
+    </div>
+  
+    <div *ngIf="error" style="margin-top: 1rem; padding: 1rem; border: 1px solid red; color: red;">
+      <h3>Error:</h3>
+      <pre>{{ error }}</pre>
+    </div>
+  </div>

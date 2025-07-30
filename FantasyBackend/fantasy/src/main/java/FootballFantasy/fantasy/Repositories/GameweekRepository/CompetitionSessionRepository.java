@@ -58,4 +58,9 @@ public interface CompetitionSessionRepository extends JpaRepository<CompetitionS
             int maxParticipants,
             LocalDateTime deadline
     );
+    @Query("SELECT cs FROM CompetitionSession cs WHERE cs.status = :status AND cs.joinDeadline < :deadline")
+    List<CompetitionSession> findByStatusAndJoinDeadlineBefore(
+            @Param("status") CompetitionSessionStatus status,
+            @Param("deadline") LocalDateTime deadline
+    );
 }

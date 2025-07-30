@@ -23,10 +23,10 @@ export class SigninComponent implements OnInit {
       console.log('✅ Déjà connecté - rôles:', userRoles);
 
       // Redirection selon les rôles
-      if (userRoles.includes('admin')) {
-        this.router.navigate(['/admin/referral']);
-      } else if (userRoles.includes('user')) {
-        this.router.navigate(['/dashboard']); // ou une autre page utilisateur
+    if (userRoles.includes('ROLE_ADMIN')) {
+      this.router.navigate(['/admin/referral']);
+    } else if (userRoles.includes('ROLE_USER')) {
+      this.router.navigate(['/user-dashboard']);
       } else {
         this.router.navigate(['/unauthorized']);
       }

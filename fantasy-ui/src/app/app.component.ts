@@ -1,10 +1,8 @@
-import { Component, OnInit } from '@angular/core';
+import { Component } from '@angular/core';
+import { RouterModule, Router, Event, NavigationStart, NavigationEnd } from '@angular/router';
+import { AuthService } from './core/services/auth.service'; // adapte le chemin selon ton arborescence
 import { CommonModule } from '@angular/common';
-import { ApiService } from './services/api.service';
-import { HttpErrorResponse } from '@angular/common/http';
 import { RouterOutlet } from '@angular/router';
-import { AuthService } from './core/services/auth.service';
-
 @Component({
   selector: 'app-root',
   standalone: true,
@@ -12,17 +10,24 @@ import { AuthService } from './core/services/auth.service';
   templateUrl: './app.component.html',
   styleUrls: ['./app.component.scss']
 })
-export class AppComponent implements OnInit {
-  message: string = '';
-  error: string = '';
+export class AppComponent {
+  currentUrl!: string;
 
   constructor(
-    public auth: AuthService,
-    private api: ApiService
-  ) {}
-
-  ngOnInit() {
-    this.auth.isLoggedIn();
+    public _router: Router,
+    public auth: AuthService
+  ) {
+    this._router.events.subscribe((routerEvent: Event) => {
+      if (routerEvent instanceof NavigationStart) {
+        this.currentUrl = routerEvent.url.substring(
+          routerEvent.url.lastIndexOf('/') + 1
+        );
+      }
+      if (routerEvent instanceof NavigationEnd) {
+        // navigation terminée
+      }
+      window.scrollTo(0, 0); // scroll en haut après chaque navigation
+    });
   }
 
   login() {
@@ -34,35 +39,6 @@ export class AppComponent implements OnInit {
   }
 
   register(): void {
-    // Optional: implement registration route
-  }
-
-  testUserEndpoint() {
-    this.clearMessages();
-    this.api.getUserData().subscribe({
-      next: (response) => {
-        this.message = JSON.stringify(response, null, 2);
-      },
-      error: (error: HttpErrorResponse) => {
-        this.error = `Status: ${error.status}, Message: ${error.message}`;
-      }
-    });
-  }
-
-  testAdminEndpoint() {
-    this.clearMessages();
-    this.api.getAdminData().subscribe({
-      next: (response) => {
-        this.message = JSON.stringify(response, null, 2);
-      },
-      error: (error: HttpErrorResponse) => {
-        this.error = `Status: ${error.status}, Message: ${error.message}`;
-      }
-    });
-  }
-
-  private clearMessages() {
-    this.message = '';
-    this.error = '';
+    // Implémente l'inscription ici
   }
 }

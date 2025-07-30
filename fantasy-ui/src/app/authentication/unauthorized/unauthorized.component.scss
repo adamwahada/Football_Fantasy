@@ -1,0 +1,59 @@
+.unauthorized-bg {
+  min-height: 90vh;
+  background: #222;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+}
+
+.unauthorized-404 {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 10rem;
+  font-weight: 800;
+  color: #027B08;
+  letter-spacing: 1.5rem;
+  display: flex;
+  align-items: center;
+  margin-bottom: 2rem;
+}
+
+.digit-static {
+  display: inline-block;
+}
+
+.digit-animate {
+  animation: bounce 1s infinite;
+  color: #fff;
+  text-shadow: 0 0 30px #43ea4a, 0 0 60px #43ea4a;
+}
+
+@keyframes bounce {
+  0%, 100% { transform: translateY(0);}
+  50% { transform: translateY(-30px);} /* was -20px */
+}
+
+.unauthorized-message {
+  font-size: 1.8rem; /* was 1.3rem */
+  color: #ccc;
+  text-align: center;
+  margin-bottom: 2.5rem;
+  max-width: 800px;
+}
+
+.unauthorized-home-btn {
+  background: #027b08;
+  color: #232323;
+  border: none;
+  padding: 1rem 2.5rem; /* increased padding */
+  border-radius: 10px;
+  font-size: 1.3rem; /* was 1.1rem */
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.unauthorized-home-btn:hover {
+  background:#027B08;
+}
