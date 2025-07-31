@@ -1,1 +1,48 @@
-<p>edit-admin-match works!</p>
+<h2>Modifier le match</h2>
+
+<form [formGroup]="matchForm" (ngSubmit)="onSubmit()">
+  <div class="form-group">
+    <label>Équipe Domicile</label>
+    <input formControlName="homeTeam" class="input" />
+  </div>
+  <div class="form-group">
+    <label>Équipe Extérieure</label>
+    <input formControlName="awayTeam" class="input" />
+  </div>
+  <div class="form-group">
+    <label>Date</label>
+    <input type="date" formControlName="matchDate" class="input" />
+  </div>
+  <div class="form-group">
+    <label>Heure</label>
+    <input type="time" formControlName="matchTime" class="input" />
+  </div>
+  <div class="form-group">
+    <label>Score Domicile</label>
+    <input type="number" formControlName="homeScore" class="input" min="0" />
+  </div>
+  <div class="form-group">
+    <label>Score Extérieur</label>
+    <input type="number" formControlName="awayScore" class="input" min="0" />
+  </div>
+  <div class="form-group">
+    <label>Description</label>
+    <input formControlName="description" class="input" />
+  </div>
+  <div class="form-group">
+    <label>Statut</label>
+    <select formControlName="status" class="input">
+      <option value="SCHEDULED">Prévu</option>
+      <option value="LIVE">En cours</option>
+      <option value="COMPLETED">Terminé</option>
+      <option value="CANCELED">Annulé</option>
+    </select>
+  </div>
+  <div class="form-group">
+    <label>
+      <input type="checkbox" formControlName="active" />
+      Actif ?
+    </label>
+  </div>
+  <button type="submit" class="btn-primary" [disabled]="matchForm.invalid">Enregistrer</button>
+</form>

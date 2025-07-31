@@ -52,10 +52,9 @@
           </span>
         </td>
         <td class="actions">
-          <button (click)="editMatch(match)" title="Modifier" class="btn-icon blue">✏️</button>
-          <button (click)="deleteMatch(match.id!)" title="Supprimer" class="btn-icon red">🗑️</button>
+          <button [routerLink]="['/admin/match/Editmatch', match.id]" title="Modifier" class="btn-icon blue">✏️</button>          <button (click)="deleteMatch(match.id!)" title="Supprimer" class="btn-icon red">🗑️</button>
           <button (click)="toggleActive(match)" title="Activer / Désactiver" class="btn-icon gray">
-            {{ match.active ? '🔕' : '🔔' }}
+            {{ match.active ? '🔔' : '🔕' }}
           </button>
         </td>
       </tr>

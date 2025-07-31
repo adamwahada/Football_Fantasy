@@ -17,7 +17,7 @@ export const adminRoutes: Routes = [
       { path: 'Addmatch', component: AddAdminMatchComponent },
       { path: 'Allmatch', component: AllAdminMatchComponent },
 
-      { path: 'match/edit/:id', component: EditAdminMatchComponent },
+      { path: 'match/Editmatch/:id', component: EditAdminMatchComponent },
 
       { path: '', redirectTo: 'referral', pathMatch: 'full' },
     ]

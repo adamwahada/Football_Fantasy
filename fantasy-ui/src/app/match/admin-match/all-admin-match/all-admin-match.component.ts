@@ -5,7 +5,7 @@ import { FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
-
+import { Router } from '@angular/router';
 
 @Component({
   selector: 'app-admin-match',
@@ -26,7 +26,9 @@ export class AllAdminMatchComponent implements OnInit {
   appliedStatusFilter: string = '';
   appliedDateFilter: string = '';
 
-  constructor(private matchService: MatchService, private fb: FormBuilder) {
+  constructor(private matchService: MatchService,
+     private fb: FormBuilder,
+     private router: Router) {
     this.matchForm = this.fb.group({
       homeTeam: ['', Validators.required],
       awayTeam: ['', Validators.required],

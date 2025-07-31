@@ -1,22 +1,168 @@
-<form [formGroup]="matchForm" (ngSubmit)="onSubmit()" class="match-form">
-  <input formControlName="homeTeam" placeholder="Équipe Domicile" />
-  <input formControlName="awayTeam" placeholder="Équipe Extérieure" />
+<div class="container">
+  <div class="form-header">
+    <h1>⚽ Gestion des Matchs</h1>
+    <p>{{ editingMatchId ? 'Modifier le match' : 'Créer un nouveau match' }}</p>
+  </div>
 
-  <!-- Séparation date + heure -->
-  <input formControlName="matchDate" type="date" />
-  <input formControlName="matchTime" type="time" />
+  <form [formGroup]="matchForm" (ngSubmit)="onSubmit()" class="match-form">
+    <!-- Section Équipes -->
+    <div class="form-section">
+      <h3 class="section-title">Équipes</h3>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Équipe Domicile *</label>
+          <input 
+            type="text" 
+            class="form-control" 
+            formControlName="homeTeam" 
+            placeholder="Ex: Paris Saint-Germain"
+            [ngClass]="{'invalid': matchForm.get('homeTeam')?.invalid && matchForm.get('homeTeam')?.touched}"
+          >
+          <div class="error" *ngIf="matchForm.get('homeTeam')?.invalid && matchForm.get('homeTeam')?.touched">
+            Le nom de l'équipe domicile est requis.
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Équipe Extérieure *</label>
+          <input 
+            type="text" 
+            class="form-control" 
+            formControlName="awayTeam" 
+            placeholder="Ex: Olympique de Marseille"
+            [ngClass]="{'invalid': matchForm.get('awayTeam')?.invalid && matchForm.get('awayTeam')?.touched}"
+          >
+          <div class="error" *ngIf="matchForm.get('awayTeam')?.invalid && matchForm.get('awayTeam')?.touched">
+            Le nom de l'équipe extérieure est requis.
+          </div>
+        </div>
+      </div>
+    </div>
 
-  <select formControlName="status">
-    <option *ngFor="let s of statuses" [value]="s">{{ s }}</option>
-  </select>
+    <!-- Section Date & Heure -->
+    <div class="form-section">
+      <h3 class="section-title">Planification</h3>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Date du Match *</label>
+          <input 
+            type="date" 
+            class="form-control" 
+            formControlName="matchDate"
+            [ngClass]="{'invalid': matchForm.get('matchDate')?.invalid && matchForm.get('matchDate')?.touched}"
+          >
+          <div class="error" *ngIf="matchForm.get('matchDate')?.invalid && matchForm.get('matchDate')?.touched">
+            La date du match est requise.
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Heure du Match *</label>
+          <input 
+            type="time" 
+            class="form-control" 
+            formControlName="matchTime"
+            [ngClass]="{'invalid': matchForm.get('matchTime')?.invalid && matchForm.get('matchTime')?.touched}"
+          >
+          <div class="error" *ngIf="matchForm.get('matchTime')?.invalid && matchForm.get('matchTime')?.touched">
+            L'heure du match est requise.
+          </div>
+        </div>
+      </div>
+    </div>
 
-  <input formControlName="homeScore" type="number" placeholder="Score Domicile" />
-  <input formControlName="awayScore" type="number" placeholder="Score Extérieur" />
-  <input formControlName="description" placeholder="Description" />
-  <label>
-    <input type="checkbox" formControlName="active" />
-    Actif ?
-  </label>
+    <!-- Section Statut -->
+    <div class="form-section">
+      <h3 class="section-title">Statut</h3>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Statut du Match *</label>
+          <select 
+            class="form-control" 
+            formControlName="status"
+            [ngClass]="{'invalid': matchForm.get('status')?.invalid && matchForm.get('status')?.touched}"
+            (change)="onStatusChange()"
+          >
+            <option value="">Sélectionner un statut</option>
+            <option *ngFor="let status of statuses" [value]="status">
+              {{ getStatusLabel(status) }}
+            </option>
+          </select>
+          <div class="error" *ngIf="matchForm.get('status')?.invalid && matchForm.get('status')?.touched">
+            Le statut du match est requis.
+          </div>
+        </div>
+        <div class="form-group">
+          <div class="checkbox-group">
+            <input type="checkbox" formControlName="active" id="active">
+            <label for="active">Match Actif</label>
+          </div>
+        </div>
+      </div>
+    </div>
 
-  <button type="submit">{{ editingMatchId ? 'Mettre à jour' : 'Créer' }}</button>
-</form>
+    <!-- Section Scores -->
+    <div class="form-section">
+      <h3 class="section-title">Scores</h3>
+      <div class="form-row" [ngClass]="{'score-disabled': isScoreDisabled()}">
+        <div class="form-group">
+          <label class="form-label">Score Domicile</label>
+          <input 
+            type="number" 
+            class="form-control" 
+            formControlName="homeScore" 
+            placeholder="0"
+            min="0"
+            [disabled]="isScoreDisabled()"
+          >
+        </div>
+        <div class="form-group">
+          <label class="form-label">Score Extérieur</label>
+          <input 
+            type="number" 
+            class="form-control" 
+            formControlName="awayScore" 
+            placeholder="0"
+            min="0"
+            [disabled]="isScoreDisabled()"
+          >
+        </div>
+      </div>
+      <div class="score-hint" *ngIf="isScoreDisabled()">
+        <small>💡 Les scores sont automatiquement définis à 0 pour les matchs programmés</small>
+      </div>
+    </div>
+
+    <!-- Section Description -->
+    <div class="form-section">
+      <h3 class="section-title">Détails Supplémentaires</h3>
+      <div class="form-group full-width">
+        <label class="form-label">Description</label>
+        <textarea 
+          class="form-control" 
+          formControlName="description" 
+          placeholder="Informations supplémentaires sur le match..."
+          rows="4"
+        ></textarea>
+      </div>
+    </div>
+
+    <!-- Submit Button -->
+    <div class="form-actions">
+      <button type="button" class="btn-secondary" (click)="resetForm()" *ngIf="editingMatchId">
+        Annuler
+      </button>
+      <button 
+        type="submit" 
+        class="submit-btn"
+        [disabled]="matchForm.invalid || isSubmitting"
+      >
+        <span *ngIf="!isSubmitting">
+          {{ editingMatchId ? 'Mettre à jour le Match' : 'Créer le Match' }}
+        </span>
+        <span *ngIf="isSubmitting" class="loading">
+          <span class="spinner"></span>
+          Traitement...
+        </span>
+      </button>
+    </div>
+  </form>
+</div>
