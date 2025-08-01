@@ -1,11 +1,21 @@
 import { Component, OnInit } from '@angular/core';
-import { FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { FormBuilder, FormGroup, Validators, FormControl, AbstractControl } from '@angular/forms';
 import { FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule } from '@angular/forms';
 import { MatchService, Match } from '../../match.service'; 
-import { Router } 
-from '@angular/router';
+import { TeamService, TeamIcon } from '../../team.service';
+import { Router } from '@angular/router';
+import { TEAMS } from '../../../shared/constants/team-list';
+import { Observable, startWith, map } from 'rxjs';
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatInputModule } from '@angular/material/input';
+import { MatAutocompleteModule } from '@angular/material/autocomplete';
+import { MatIconModule } from '@angular/material/icon';
+import { MatButtonModule } from '@angular/material/button';
+import { MatDatepickerModule } from '@angular/material/datepicker';
+import { MatNativeDateModule } from '@angular/material/core';
+import { NgxMaterialTimepickerModule } from 'ngx-material-timepicker';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 
 @Component({
@@ -13,168 +23,223 @@ import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
   templateUrl: './add-admin-match.component.html',
   styleUrls: ['./add-admin-match.component.scss'],
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, FormsModule, MatSnackBarModule],
+  imports: [
+    CommonModule, 
+    ReactiveFormsModule, 
+    FormsModule, 
+    MatSnackBarModule,
+    MatFormFieldModule,
+    MatInputModule,
+    MatAutocompleteModule,
+    MatIconModule,
+    MatButtonModule,
+    MatDatepickerModule,
+    MatNativeDateModule,
+    NgxMaterialTimepickerModule
+  ],
 })
 export class AddAdminMatchComponent implements OnInit {
-  matches: Match[] = [];
   matchForm: FormGroup;
-  editingMatchId: number | null = null;
   isSubmitting: boolean = false;
+  teams = TEAMS;
   
-  statuses = ['SCHEDULED', 'LIVE', 'COMPLETED', 'CANCELED'];
+  // Team icons properties
+  teamsWithIcons: TeamIcon[] = [];
+  teamIconsMap: {[key: string]: string} = {};
+
+  // Observables pour l'autocomplete
+  filteredHomeTeams!: Observable<TeamIcon[]>;
+  filteredAwayTeams!: Observable<TeamIcon[]>;
   
-  // Status labels for display
-  statusLabels: { [key: string]: string } = {
-    'SCHEDULED': 'PROGRAMMÉ',
-    'LIVE': 'EN COURS',
-    'COMPLETED': 'TERMINÉ',
-    'CANCELED': 'ANNULÉ'
-  };
-
-  // Filtres
-  statusFilter: string = '';
-  dateFilter: string = '';
-  appliedStatusFilter: string = '';
-  appliedDateFilter: string = '';
-
   constructor(
     private matchService: MatchService, 
+    public teamService: TeamService,
     private fb: FormBuilder, 
     private router: Router, 
     private snackBar: MatSnackBar
   ) {
     this.matchForm = this.fb.group({
-      homeTeam: ['', [Validators.required, Validators.minLength(2)]],
-      awayTeam: ['', [Validators.required, Validators.minLength(2)]],
+      homeTeam: ['', [Validators.required, this.teamValidator.bind(this)]],
+      awayTeam: ['', [Validators.required, this.teamValidator.bind(this)]],
       matchDate: ['', Validators.required],
-      matchTime: ['', Validators.required], 
+      matchTime: ['', Validators.required],
       homeScore: [0],
       awayScore: [0],
       description: [''],
       status: ['SCHEDULED', Validators.required],
       active: [true],
       gameweeks: this.fb.array([]),
-    });
-
-    // Add real-time validation
-    this.setupFormValidation();
+    }, { validators: this.teamsCannotBeSame });
   }
 
   ngOnInit(): void {
-    this.loadMatches();
-    this.setupStatusChangeHandler();
+    this.loadTeamIcons();
   }
 
-  /**
-   * Setup real-time form validation
-   */
-  private setupFormValidation(): void {
-    // Mark fields as touched when they lose focus for immediate validation feedback
-    Object.keys(this.matchForm.controls).forEach(key => {
-      const control = this.matchForm.get(key);
-      if (control) {
-        control.valueChanges.subscribe(() => {
-          if (control.invalid && control.errors) {
-            // Clear error styling when user starts typing
-            if (control.value && control.value.toString().trim() !== '') {
-              control.markAsUntouched();
-            }
-          }
-        });
-      }
-    });
-  }
-
-  /**
-   * Setup status change handler to manage score fields
-   */
-  private setupStatusChangeHandler(): void {
-    this.matchForm.get('status')?.valueChanges.subscribe(status => {
-      this.onStatusChange();
-    });
-  }
-
-  /**
-   * Load all matches
-   */
-  loadMatches(): void {
-    this.matchService.getAllMatches().subscribe({
-      next: (data) => {
-        this.matches = data;
+  // Load team icons
+  loadTeamIcons(): void {
+    this.teamService.getAllTeamIcons().subscribe({
+      next: (icons) => {
+        this.teamIconsMap = icons;
+        this.teamsWithIcons = this.teamService.getTeamsWithIcons(this.teams, icons)
+          .filter(team => this.teams.includes(team.name));
+        this.setupAutocomplete();
       },
       error: (error) => {
-        console.error('Erreur lors du chargement des matchs:', error);
-        this.showSnackbar('Erreur lors du chargement des matchs.', 'error');
+        console.error('Error loading team icons:', error);
+        this.teamsWithIcons = this.teams.map(team => ({
+          name: team,
+          iconUrl: this.teamService.getDefaultIconPath(team),
+          league: 'Unknown'
+        }));
+        this.setupAutocomplete();
       }
     });
   }
 
-  /**
-   * Handle form submission with comprehensive validation
-   */
-  onSubmit(): void {
-    // Mark all fields as touched to show validation errors
-    this.markFormGroupTouched(this.matchForm);
+  // Setup autocomplete
+  private setupAutocomplete(): void {
+    const homeTeamControl = this.matchForm.get('homeTeam')!;
+    const awayTeamControl = this.matchForm.get('awayTeam')!;
 
-    if (this.matchForm.invalid) {
-      this.showSnackbar('Veuillez corriger les erreurs dans le formulaire.', 'error');
-      this.scrollToFirstError();
-      return;
+    this.filteredHomeTeams = homeTeamControl.valueChanges.pipe(
+      startWith(''),
+      map(value => this.filterTeams(value))
+    );
+
+    this.filteredAwayTeams = awayTeamControl.valueChanges.pipe(
+      startWith(''),
+      map(value => this.filterTeams(value))
+    );
+  }
+
+  // Filter teams based on input
+  private filterTeams(value: string): TeamIcon[] {
+    if (!value || typeof value !== 'string') {
+      return this.teamsWithIcons;
     }
-
-    // Prevent double submission
-    if (this.isSubmitting) {
-      return;
-    }
-
-    this.isSubmitting = true;
-
-    const formValue = this.matchForm.value;
     
-    // Combine date and time
-    let combinedDateTime = '';
-    if (formValue.matchDate && formValue.matchTime) {
-      combinedDateTime = `${formValue.matchDate}T${formValue.matchTime}:00`;
-    } else if (formValue.matchDate) {
-      combinedDateTime = `${formValue.matchDate}T00:00:00`;
+    const filterValue = value.toLowerCase().trim();
+    return this.teamsWithIcons.filter(team => 
+      team.name.toLowerCase().includes(filterValue)
+    );
+  }
+
+  // Custom validator for teams
+  private teamValidator(control: AbstractControl) {
+    if (!control.value || control.value.trim() === '') {
+      return null; // Let required validator handle empty values
     }
+    
+    const isValidTeam = this.teams.includes(control.value);
+    return isValidTeam ? null : { invalidTeam: true };
+  }
 
-    const match: Match = {
-      ...formValue,
-      matchDate: combinedDateTime
-    };
-
-    // Remove matchTime as it's combined with matchDate
-    delete (match as any).matchTime;
-
-    // Set scores to 0 for scheduled matches
-    if (match.status === 'SCHEDULED') {
-      match.homeScore = 0;
-      match.awayScore = 0;
+  // Validator to ensure teams are different
+  private teamsCannotBeSame(group: AbstractControl) {
+    if (!(group instanceof FormGroup)) return null;
+    
+    const home = group.get('homeTeam')?.value;
+    const away = group.get('awayTeam')?.value;
+    
+    if (home && away && home === away) {
+      return { sameTeams: true };
     }
+    return null;
+  }
 
-    // Ensure scores are numbers
-    match.homeScore = Number(match.homeScore) || 0;
-    match.awayScore = Number(match.awayScore) || 0;
-
-    if (this.editingMatchId) {
-      this.updateMatch(match);
+  // Handle team selection from autocomplete
+  onTeamSelected(teamName: string, isHomeTeam: boolean): void {
+    if (isHomeTeam) {
+      this.matchForm.patchValue({ homeTeam: teamName });
     } else {
-      this.createMatch(match);
+      this.matchForm.patchValue({ awayTeam: teamName });
     }
   }
 
-  /**
-   * Create new match
-   */
+  // Get selected team icon
+  getSelectedTeamIcon(teamName: string): TeamIcon | null {
+    if (!teamName) return null;
+    return this.teamsWithIcons.find(team => team.name === teamName) || null;
+  }
+
+  // Clear team selection
+  clearHomeTeam(): void {
+    this.matchForm.patchValue({ homeTeam: '' });
+    this.matchForm.get('homeTeam')?.markAsUntouched();
+  }
+
+  clearAwayTeam(): void {
+    this.matchForm.patchValue({ awayTeam: '' });
+    this.matchForm.get('awayTeam')?.markAsUntouched();
+  }
+
+  // Handle image error
+  onImageError(event: Event, teamName: string): void {
+    const img = event.target as HTMLImageElement;
+    img.src = this.teamService.getDefaultIconPath(teamName);
+  }
+
+  // Handle form submission
+onSubmit(): void {
+  this.markFormGroupTouched(this.matchForm);
+  if (this.matchForm.invalid) {
+    this.showValidationErrors();
+    return;
+  }
+  if (this.isSubmitting) return;
+  this.isSubmitting = true;
+
+  const formValue = this.matchForm.value;
+
+  // ✅ Convertir correctement l'objet Date en YYYY-MM-DD
+  const date = formValue.matchDate;
+  if (!(date instanceof Date) || isNaN(date.getTime())) {
+    this.showSnackbar('Date invalide', 'error');
+    this.isSubmitting = false;
+    return;
+  }
+
+  const dateString = this.formatDateToISO(date); // Utilise ta fonction utilitaire
+  const timeString = formValue.matchTime || '00:00'; // HH:mm
+
+  const [hours, minutes] = timeString.split(':');
+  const combinedDateTime = new Date(date);
+  combinedDateTime.setHours(Number(hours), Number(minutes), 0, 0);
+
+  // ⚠️ Envoi au backend : soit en string ISO, soit en objet
+  const match: Match = {
+    ...formValue,
+    matchDate: combinedDateTime.toISOString(), // ✅ Format standard ISO 8601
+  };
+
+  delete (match as any).matchTime;
+
+  if (match.status === 'SCHEDULED') {
+    match.homeScore = 0;
+    match.awayScore = 0;
+  }
+  match.homeScore = Number(match.homeScore) || 0;
+  match.awayScore = Number(match.awayScore) || 0;
+
+  this.createMatch(match);
+}
+
+// ✅ Fonction utilitaire
+private formatDateToISO(date: Date): string {
+  const year = date.getFullYear();
+  const month = (date.getMonth() + 1).toString().padStart(2, '0');
+  const day = date.getDate().toString().padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
+
+  // Create new match
   private createMatch(match: Match): void {
     this.matchService.createMatch(match).subscribe({
       next: () => {
         this.showSnackbar('Match créé avec succès!', 'success');
         this.resetForm();
-        this.loadMatches();
         
-        // Navigate to all matches page after a short delay
         setTimeout(() => {
           this.router.navigate(['/admin/Allmatch']);
         }, 1500);
@@ -189,162 +254,57 @@ export class AddAdminMatchComponent implements OnInit {
     });
   }
 
-  /**
-   * Update existing match
-   */
-  private updateMatch(match: Match): void {
-    this.matchService.updateMatch(this.editingMatchId!, match).subscribe({
-      next: () => {
-        this.showSnackbar('Match mis à jour avec succès!', 'success');
-        this.resetForm();
-        this.loadMatches();
-      },
-      error: (error) => {
-        console.error('Erreur lors de la mise à jour :', error);
-        this.showSnackbar('Erreur lors de la mise à jour du match.', 'error');
-      },
-      complete: () => {
-        this.isSubmitting = false;
-      }
-    });
-  }
-
-  /**
-   * Edit a match
-   */
-  editMatch(match: Match): void {
-    this.editingMatchId = match.id || null;
-    
-    const dateTime = this.extractDateAndTime(match.matchDate);
-    
-    this.matchForm.patchValue({
-      homeTeam: match.homeTeam,
-      awayTeam: match.awayTeam,
-      matchDate: dateTime.date,
-      matchTime: dateTime.time,
-      homeScore: match.homeScore,
-      awayScore: match.awayScore,
-      description: match.description,
-      status: match.status,
-      active: match.active
-    });
-
-    // Scroll to form
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  }
-
-  /**
-   * Delete a match
-   */
-  deleteMatch(id: number): void {
-    if (confirm('Voulez-vous vraiment supprimer ce match ?')) {
-      this.matchService.deleteMatch(id).subscribe({
-        next: () => {
-          this.showSnackbar('Match supprimé avec succès.', 'success');
-          this.loadMatches();
-        },
-        error: (error) => {
-          console.error('Erreur lors de la suppression :', error);
-          this.showSnackbar('Erreur lors de la suppression du match.', 'error');
-        }
-      });
-    }
-  }
-
-  /**
-   * Toggle match active status
-   */
-  toggleActive(match: Match): void {
-    const newStatus = !match.active;
-    this.matchService.setMatchActiveStatus(match.id!, newStatus).subscribe({
-      next: () => {
-        match.active = newStatus;
-        this.showSnackbar(
-          `Match ${newStatus ? 'activé' : 'désactivé'} avec succès.`, 
-          'success'
-        );
-      },
-      error: (error) => {
-        console.error('Erreur lors du changement de statut :', error);
-        this.showSnackbar('Erreur lors du changement de statut.', 'error');
-      }
-    });
-  }
-
-  /**
-   * Handle status change to manage score fields
-   */
-  onStatusChange(): void {
-    const status = this.matchForm.get('status')?.value;
-    
-    if (status === 'SCHEDULED') {
-      // Reset and disable scores for scheduled matches
-      this.matchForm.patchValue({
-        homeScore: 0,
-        awayScore: 0
-      });
-    }
-  }
-
-  /**
-   * Check if score fields should be disabled
-   */
-  isScoreDisabled(): boolean {
-    return this.matchForm.get('status')?.value === 'SCHEDULED';
-  }
-
-  /**
-   * Get display label for status
-   */
-  getStatusLabel(status: string): string {
-    return this.statusLabels[status] || status;
-  }
-
-  /**
-   * Extract date and time from datetime string for editing
-   */
-  extractDateAndTime(dateTime: any): { date: string, time: string } {
-    if (!dateTime) return { date: '', time: '' };
-
-    const d = new Date(dateTime);
-    
-    if (isNaN(d.getTime())) {
-      return { date: '', time: '' };
-    }
-    
-    const year = d.getFullYear();
-    const month = String(d.getMonth() + 1).padStart(2, '0');
-    const day = String(d.getDate()).padStart(2, '0');
-    const hours = String(d.getHours()).padStart(2, '0');
-    const minutes = String(d.getMinutes()).padStart(2, '0');
-
-    return {
-      date: `${year}-${month}-${day}`,
-      time: `${hours}:${minutes}`
-    };
-  }
-
-  /**
-   * Reset form to initial state
-   */
+  // Reset form to initial state
   resetForm(): void {
     this.matchForm.reset({
+      homeTeam: '',
+      awayTeam: '',
+      matchDate: '',
+      matchTime: '',
       status: 'SCHEDULED',
       active: true,
       homeScore: 0,
-      awayScore: 0
+      awayScore: 0,
+      description: '',
+      gameweeks: []
     });
     
-    this.editingMatchId = null;
     this.isSubmitting = false;
-    
-    // Clear all touched states and errors
     this.markFormGroupUntouched(this.matchForm);
   }
 
-  /**
-   * Mark all form controls as touched
-   */
+  // Show validation errors
+  private showValidationErrors(): void {
+    const errors = [];
+    
+    if (this.matchForm.get('homeTeam')?.hasError('required')) {
+      errors.push('Équipe domicile requise');
+    }
+    if (this.matchForm.get('homeTeam')?.hasError('invalidTeam')) {
+      errors.push('Équipe domicile non valide');
+    }
+    if (this.matchForm.get('awayTeam')?.hasError('required')) {
+      errors.push('Équipe extérieure requise');
+    }
+    if (this.matchForm.get('awayTeam')?.hasError('invalidTeam')) {
+      errors.push('Équipe extérieure non valide');
+    }
+    if (this.matchForm.hasError('sameTeams')) {
+      errors.push('Les équipes doivent être différentes');
+    }
+    if (this.matchForm.get('matchDate')?.hasError('required')) {
+      errors.push('Date du match requise');
+    }
+    if (this.matchForm.get('matchTime')?.hasError('required')) {
+      errors.push('Heure du match requise');
+    }
+
+    const message = errors.length > 0 ? errors.join(', ') : 'Veuillez corriger les erreurs dans le formulaire.';
+    this.showSnackbar(message, 'error');
+    this.scrollToFirstError();
+  }
+
+  // Mark all form controls as touched
   private markFormGroupTouched(formGroup: FormGroup): void {
     Object.keys(formGroup.controls).forEach(key => {
       const control = formGroup.get(key);
@@ -356,9 +316,7 @@ export class AddAdminMatchComponent implements OnInit {
     });
   }
 
-  /**
-   * Mark all form controls as untouched
-   */
+  // Mark all form controls as untouched
   private markFormGroupUntouched(formGroup: FormGroup): void {
     Object.keys(formGroup.controls).forEach(key => {
       const control = formGroup.get(key);
@@ -370,23 +328,23 @@ export class AddAdminMatchComponent implements OnInit {
     });
   }
 
-/**
-   * Scroll to first error field
-   */
+  // Scroll to first error field
   private scrollToFirstError(): void {
-    const firstErrorElement = document.querySelector('.form-control.invalid');
+    const firstErrorElement = document.querySelector('.form-control.ng-invalid, .mat-form-field.ng-invalid');
     if (firstErrorElement) {
       firstErrorElement.scrollIntoView({ 
         behavior: 'smooth', 
         block: 'center' 
       });
-      (firstErrorElement as HTMLElement).focus();
+      
+      const input = firstErrorElement.querySelector('input');
+      if (input) {
+        input.focus();
+      }
     }
   }
 
-  /**
-   * Show snackbar notification
-   */
+  // Show snackbar notification
   private showSnackbar(message: string, type: 'success' | 'error'): void {
     this.snackBar.open(message, 'Fermer', {
       duration: type === 'success' ? 3000 : 5000,
@@ -396,176 +354,27 @@ export class AddAdminMatchComponent implements OnInit {
     });
   }
 
-  /**
-   * Apply filters to the matches list
-   */
-  applyFilters(): void {
-    this.appliedStatusFilter = this.statusFilter;
-    this.appliedDateFilter = this.dateFilter;
+  // Helper methods for template
+  get homeTeamValue(): string {
+    return this.matchForm.get('homeTeam')?.value || '';
   }
 
-  /**
-   * Clear all filters
-   */
-  clearFilters(): void {
-    this.statusFilter = '';
-    this.dateFilter = '';
-    this.appliedStatusFilter = '';
-    this.appliedDateFilter = '';
+  get awayTeamValue(): string {
+    return this.matchForm.get('awayTeam')?.value || '';
   }
 
-  /**
-   * Get filtered matches based on applied filters
-   */
-  getFilteredMatches(): Match[] {
-    let filteredMatches = [...this.matches];
-
-    // Filter by status
-    if (this.appliedStatusFilter) {
-      filteredMatches = filteredMatches.filter(match => 
-        match.status === this.appliedStatusFilter
-      );
-    }
-
-    // Filter by date
-    if (this.appliedDateFilter) {
-      filteredMatches = filteredMatches.filter(match => {
-        const matchDate = new Date(match.matchDate).toDateString();
-        const filterDate = new Date(this.appliedDateFilter).toDateString();
-        return matchDate === filterDate;
-      });
-    }
-
-    return filteredMatches;
+  get homeTeamIcon(): TeamIcon | null {
+    return this.getSelectedTeamIcon(this.homeTeamValue);
   }
 
-  /**
-   * Format date for display
-   */
-  formatDate(dateString: string): string {
-    if (!dateString) return '';
-    
-    const date = new Date(dateString);
-    if (isNaN(date.getTime())) return '';
-    
-    return date.toLocaleDateString('fr-FR', {
-      weekday: 'short',
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
-    });
+  get awayTeamIcon(): TeamIcon | null {
+    return this.getSelectedTeamIcon(this.awayTeamValue);
   }
 
-  /**
-   * Format time for display
-   */
-  formatTime(dateString: string): string {
-    if (!dateString) return '';
-    
-    const date = new Date(dateString);
-    if (isNaN(date.getTime())) return '';
-    
-    return date.toLocaleTimeString('fr-FR', {
-      hour: '2-digit',
-      minute: '2-digit'
-    });
+  // Get today's date in YYYY-MM-DD format
+  getTodayDate(): string {
+    const today = new Date();
+    return today.toISOString().split('T')[0];
   }
-
-  /**
-   * Get status badge class for styling
-   */
-  getStatusBadgeClass(status: string): string {
-    const statusClasses: { [key: string]: string } = {
-      'SCHEDULED': 'status-scheduled',
-      'LIVE': 'status-live',
-      'COMPLETED': 'status-completed',
-      'CANCELED': 'status-canceled'
-    };
-    
-    return statusClasses[status] || 'status-default';
-  }
-
-  /**
-   * Check if match is editable
-   */
-  isMatchEditable(match: Match): boolean {
-    // You can add business logic here to determine if a match can be edited
-    // For example, completed matches might not be editable
-    return match.status !== 'COMPLETED' || this.editingMatchId === match.id;
-  }
-
-  /**
-   * Navigate to all matches page
-   */
-  goToAllMatches(): void {
-    this.router.navigate(['/admin/Allmatch']);
-  }
-
-  /**
-   * Get form control error message
-   */
-  getErrorMessage(controlName: string): string {
-    const control = this.matchForm.get(controlName);
-    
-    if (control?.hasError('required')) {
-      return `Le champ ${controlName} est requis.`;
-    }
-    
-    if (control?.hasError('minlength')) {
-      const minLength = control.errors?.['minlength'].requiredLength;
-      return `Le champ doit contenir au moins ${minLength} caractères.`;
-    }
-    
-    return 'Champ invalide.';
-  }
-
-  /**
-   * Check if form field has error
-   */
-  hasError(controlName: string): boolean {
-    const control = this.matchForm.get(controlName);
-    return !!(control?.invalid && control?.touched);
-  }
-
-  /**
-   * Duplicate match
-   */
-  duplicateMatch(match: Match): void {
-    const duplicatedMatch = {
-      ...match,
-      homeTeam: `${match.homeTeam} (Copie)`,
-      awayTeam: match.awayTeam,
-      status: 'SCHEDULED',
-      homeScore: 0,
-      awayScore: 0,
-      active: true
-    };
-    
-    // Remove id to create new match
-    delete duplicatedMatch.id;
-    
-    // Fill the form with duplicated data
-    const dateTime = this.extractDateAndTime(duplicatedMatch.matchDate);
-    
-    this.matchForm.patchValue({
-      homeTeam: duplicatedMatch.homeTeam,
-      awayTeam: duplicatedMatch.awayTeam,
-      matchDate: dateTime.date,
-      matchTime: dateTime.time,
-      homeScore: duplicatedMatch.homeScore,
-      awayScore: duplicatedMatch.awayScore,
-      description: duplicatedMatch.description,
-      status: duplicatedMatch.status,
-      active: duplicatedMatch.active
-    });
-    
-    this.editingMatchId = null;
-    
-    // Scroll to form
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-    
-    this.showSnackbar('Match dupliqué. Modifiez les détails si nécessaire.', 'success');
-  }
+  
 }

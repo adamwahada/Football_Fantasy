@@ -1,168 +1,274 @@
-<div class="container">
+<div class="match-form-container">
   <div class="form-header">
-    <h1>⚽ Gestion des Matchs</h1>
-    <p>{{ editingMatchId ? 'Modifier le match' : 'Créer un nouveau match' }}</p>
+    <h2>Ajouter un Nouveau Match</h2>
+    <p>Remplissez les informations du match</p>
   </div>
 
-  <form [formGroup]="matchForm" (ngSubmit)="onSubmit()" class="match-form">
+  <form [formGroup]="matchForm" (ngSubmit)="onSubmit()" class="match-form" novalidate>
+    
     <!-- Section Équipes -->
     <div class="form-section">
-      <h3 class="section-title">Équipes</h3>
-      <div class="form-row">
-        <div class="form-group">
+      <h3 class="section-title">
+        <mat-icon>sports_soccer</mat-icon>
+        Équipes
+      </h3>
+      
+      <div class="teams-container">
+        <!-- Équipe Domicile -->
+        <div class="team-form-group">
           <label class="form-label">Équipe Domicile *</label>
-          <input 
-            type="text" 
-            class="form-control" 
-            formControlName="homeTeam" 
-            placeholder="Ex: Paris Saint-Germain"
-            [ngClass]="{'invalid': matchForm.get('homeTeam')?.invalid && matchForm.get('homeTeam')?.touched}"
-          >
-          <div class="error" *ngIf="matchForm.get('homeTeam')?.invalid && matchForm.get('homeTeam')?.touched">
-            Le nom de l'équipe domicile est requis.
+          <mat-form-field appearance="outline" class="team-field">
+            <mat-label>Sélectionner l'équipe domicile</mat-label>
+            <input 
+              type="text"
+              matInput
+              formControlName="homeTeam"
+              [matAutocomplete]="homeAuto"
+              placeholder="Tapez pour rechercher..."
+            >
+            
+            <!-- Icône de l'équipe sélectionnée -->
+            <div matSuffix class="suffix-container">
+              <img 
+                *ngIf="homeTeamIcon" 
+                class="selected-team-icon"
+                [src]="homeTeamIcon.iconUrl"
+                [alt]="homeTeamIcon.name"
+                (error)="onImageError($event, homeTeamIcon.name)"
+              />
+              <button 
+                *ngIf="homeTeamValue" 
+                matSuffix 
+                mat-icon-button 
+                type="button" 
+                (click)="clearHomeTeam()"
+                class="clear-button"
+                title="Effacer la sélection"
+              >
+                <mat-icon>close</mat-icon>
+              </button>
+            </div>
+
+            <mat-autocomplete 
+              #homeAuto="matAutocomplete"
+              (optionSelected)="onTeamSelected($event.option.value, true)"
+              class="team-autocomplete"
+            >
+              <mat-option *ngFor="let team of filteredHomeTeams | async" [value]="team.name">
+                <div class="team-option">
+                  <img 
+                    [src]="team.iconUrl" 
+                    [alt]="team.name" 
+                    class="team-icon-small"
+                    (error)="onImageError($event, team.name)"
+                  />
+                  <span class="team-name">{{ team.name }}</span>
+                  <span class="team-league">{{ team.league }}</span>
+                </div>
+              </mat-option>
+            </mat-autocomplete>
+          </mat-form-field>
+
+          <!-- Messages d'erreur pour équipe domicile -->
+          <div class="error-messages" 
+               *ngIf="matchForm.get('homeTeam')?.invalid && matchForm.get('homeTeam')?.touched">
+            <div class="error-message" *ngIf="matchForm.get('homeTeam')?.hasError('required')">
+              <mat-icon>error</mat-icon>
+              L'équipe domicile est requise
+            </div>
+            <div class="error-message" *ngIf="matchForm.get('homeTeam')?.hasError('invalidTeam')">
+              <mat-icon>error</mat-icon>
+              Veuillez sélectionner une équipe valide dans la liste
+            </div>
           </div>
         </div>
-        <div class="form-group">
+
+        <!-- VS Separator -->
+        <div class="vs-separator">
+          <div class="vs-circle">VS</div>
+        </div>
+
+        <!-- Équipe Extérieure -->
+        <div class="team-form-group">
           <label class="form-label">Équipe Extérieure *</label>
-          <input 
-            type="text" 
-            class="form-control" 
-            formControlName="awayTeam" 
-            placeholder="Ex: Olympique de Marseille"
-            [ngClass]="{'invalid': matchForm.get('awayTeam')?.invalid && matchForm.get('awayTeam')?.touched}"
-          >
-          <div class="error" *ngIf="matchForm.get('awayTeam')?.invalid && matchForm.get('awayTeam')?.touched">
-            Le nom de l'équipe extérieure est requis.
+          <mat-form-field appearance="outline" class="team-field">
+            <mat-label>Sélectionner l'équipe extérieure</mat-label>
+            <input 
+              type="text"
+              matInput
+              formControlName="awayTeam"
+              [matAutocomplete]="awayAuto"
+              placeholder="Tapez pour rechercher..."
+            >
+            
+            <!-- Icône de l'équipe sélectionnée -->
+            <div matSuffix class="suffix-container">
+              <img 
+                *ngIf="awayTeamIcon" 
+                class="selected-team-icon"
+                [src]="awayTeamIcon.iconUrl"
+                [alt]="awayTeamIcon.name"
+                (error)="onImageError($event, awayTeamIcon.name)"
+              />
+              <button 
+                *ngIf="awayTeamValue" 
+                matSuffix 
+                mat-icon-button 
+                type="button" 
+                (click)="clearAwayTeam()"
+                class="clear-button"
+                title="Effacer la sélection"
+              >
+                <mat-icon>close</mat-icon>
+              </button>
+            </div>
+
+            <mat-autocomplete 
+              #awayAuto="matAutocomplete"
+              (optionSelected)="onTeamSelected($event.option.value, false)"
+              class="team-autocomplete"
+            >
+              <mat-option *ngFor="let team of filteredAwayTeams | async" [value]="team.name">
+                <div class="team-option">
+                  <img 
+                    [src]="team.iconUrl" 
+                    [alt]="team.name" 
+                    class="team-icon-small"
+                    (error)="onImageError($event, team.name)"
+                  />
+                  <span class="team-name">{{ team.name }}</span>
+                  <span class="team-league">{{ team.league }}</span>
+                </div>
+              </mat-option>
+            </mat-autocomplete>
+          </mat-form-field>
+
+          <!-- Messages d'erreur pour équipe extérieure -->
+          <div class="error-messages" 
+               *ngIf="matchForm.get('awayTeam')?.invalid && matchForm.get('awayTeam')?.touched">
+            <div class="error-message" *ngIf="matchForm.get('awayTeam')?.hasError('required')">
+              <mat-icon>error</mat-icon>
+              L'équipe extérieure est requise
+            </div>
+            <div class="error-message" *ngIf="matchForm.get('awayTeam')?.hasError('invalidTeam')">
+              <mat-icon>error</mat-icon>
+              Veuillez sélectionner une équipe valide dans la liste
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Erreur équipes identiques -->
+      <div class="error-messages global-error" 
+           *ngIf="matchForm.hasError('sameTeams') && (matchForm.get('homeTeam')?.touched || matchForm.get('awayTeam')?.touched)">
+        <div class="error-message">
+          <mat-icon>error</mat-icon>
+          Les équipes domicile et extérieure doivent être différentes
+        </div>
+      </div>
+      <!-- Section Date & Heure -->
+      <div class="form-section">
+        <h3 class="section-title">Planification</h3>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Date du Match *</label>
+            <mat-form-field appearance="outline" class="full-width">
+              <input
+                matInput
+                [matDatepicker]="picker"
+                formControlName="matchDate"
+                [ngClass]="{'invalid': matchForm.get('matchDate')?.invalid && matchForm.get('matchDate')?.touched}"
+              />
+              <mat-datepicker-toggle matSuffix [for]="picker"></mat-datepicker-toggle>
+              <mat-datepicker #picker></mat-datepicker>
+            </mat-form-field>
+            <div class="error" *ngIf="matchForm.get('matchDate')?.invalid && matchForm.get('matchDate')?.touched">
+              La date du match est requise.
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Heure du Match *</label>
+            <input 
+              type="time" 
+              class="form-control" 
+              formControlName="matchTime"
+              [ngClass]="{'invalid': matchForm.get('matchTime')?.invalid && matchForm.get('matchTime')?.touched}"
+            >
+            <div class="error" *ngIf="matchForm.get('matchTime')?.invalid && matchForm.get('matchTime')?.touched">
+              L'heure du match est requise.
+            </div>
           </div>
         </div>
       </div>
     </div>
-
-    <!-- Section Date & Heure -->
+    
+    <!-- Section Description (Optionnelle) -->
     <div class="form-section">
-      <h3 class="section-title">Planification</h3>
-      <div class="form-row">
-        <div class="form-group">
-          <label class="form-label">Date du Match *</label>
-          <input 
-            type="date" 
-            class="form-control" 
-            formControlName="matchDate"
-            [ngClass]="{'invalid': matchForm.get('matchDate')?.invalid && matchForm.get('matchDate')?.touched}"
-          >
-          <div class="error" *ngIf="matchForm.get('matchDate')?.invalid && matchForm.get('matchDate')?.touched">
-            La date du match est requise.
-          </div>
-        </div>
-        <div class="form-group">
-          <label class="form-label">Heure du Match *</label>
-          <input 
-            type="time" 
-            class="form-control" 
-            formControlName="matchTime"
-            [ngClass]="{'invalid': matchForm.get('matchTime')?.invalid && matchForm.get('matchTime')?.touched}"
-          >
-          <div class="error" *ngIf="matchForm.get('matchTime')?.invalid && matchForm.get('matchTime')?.touched">
-            L'heure du match est requise.
-          </div>
-        </div>
+      <h3 class="section-title">
+        <mat-icon>description</mat-icon>
+        Description
+        <span class="optional">(Optionnel)</span>
+      </h3>
+      
+      <div class="form-group">
+        <mat-form-field appearance="outline" class="description-field">
+          <mat-label>Description du match</mat-label>
+          <textarea 
+            matInput 
+            formControlName="description"
+            rows="3"
+            placeholder="Informations supplémentaires sur le match..."
+          ></textarea>
+          <mat-icon matSuffix>notes</mat-icon>
+        </mat-form-field>
       </div>
     </div>
 
     <!-- Section Statut -->
     <div class="form-section">
-      <h3 class="section-title">Statut</h3>
-      <div class="form-row">
-        <div class="form-group">
-          <label class="form-label">Statut du Match *</label>
-          <select 
-            class="form-control" 
-            formControlName="status"
-            [ngClass]="{'invalid': matchForm.get('status')?.invalid && matchForm.get('status')?.touched}"
-            (change)="onStatusChange()"
-          >
-            <option value="">Sélectionner un statut</option>
-            <option *ngFor="let status of statuses" [value]="status">
-              {{ getStatusLabel(status) }}
-            </option>
-          </select>
-          <div class="error" *ngIf="matchForm.get('status')?.invalid && matchForm.get('status')?.touched">
-            Le statut du match est requis.
-          </div>
+      <h3 class="section-title">
+        <mat-icon>info</mat-icon>
+        Statut du Match
+      </h3>
+      
+      <div class="status-info">
+        <div class="status-badge scheduled">
+          <mat-icon>schedule</mat-icon>
+          <span>PROGRAMMÉ</span>
         </div>
-        <div class="form-group">
-          <div class="checkbox-group">
-            <input type="checkbox" formControlName="active" id="active">
-            <label for="active">Match Actif</label>
-          </div>
-        </div>
+        <p class="status-description">
+          Le match sera créé avec le statut "Programmé" et les scores seront initialisés à 0-0.
+        </p>
       </div>
     </div>
 
-    <!-- Section Scores -->
-    <div class="form-section">
-      <h3 class="section-title">Scores</h3>
-      <div class="form-row" [ngClass]="{'score-disabled': isScoreDisabled()}">
-        <div class="form-group">
-          <label class="form-label">Score Domicile</label>
-          <input 
-            type="number" 
-            class="form-control" 
-            formControlName="homeScore" 
-            placeholder="0"
-            min="0"
-            [disabled]="isScoreDisabled()"
-          >
-        </div>
-        <div class="form-group">
-          <label class="form-label">Score Extérieur</label>
-          <input 
-            type="number" 
-            class="form-control" 
-            formControlName="awayScore" 
-            placeholder="0"
-            min="0"
-            [disabled]="isScoreDisabled()"
-          >
-        </div>
-      </div>
-      <div class="score-hint" *ngIf="isScoreDisabled()">
-        <small>💡 Les scores sont automatiquement définis à 0 pour les matchs programmés</small>
-      </div>
-    </div>
-
-    <!-- Section Description -->
-    <div class="form-section">
-      <h3 class="section-title">Détails Supplémentaires</h3>
-      <div class="form-group full-width">
-        <label class="form-label">Description</label>
-        <textarea 
-          class="form-control" 
-          formControlName="description" 
-          placeholder="Informations supplémentaires sur le match..."
-          rows="4"
-        ></textarea>
-      </div>
-    </div>
-
-    <!-- Submit Button -->
+    <!-- Boutons d'action -->
     <div class="form-actions">
-      <button type="button" class="btn-secondary" (click)="resetForm()" *ngIf="editingMatchId">
-        Annuler
+      <button 
+        type="button" 
+        mat-stroked-button 
+        color="warn"
+        class="action-btn reset-btn" 
+        (click)="resetForm()"
+        [disabled]="isSubmitting"
+      >
+        <mat-icon>refresh</mat-icon>
+        Réinitialiser
       </button>
+      
       <button 
         type="submit" 
-        class="submit-btn"
+        mat-raised-button 
+        color="primary"
+        class="action-btn submit-btn" 
         [disabled]="matchForm.invalid || isSubmitting"
       >
-        <span *ngIf="!isSubmitting">
-          {{ editingMatchId ? 'Mettre à jour le Match' : 'Créer le Match' }}
-        </span>
-        <span *ngIf="isSubmitting" class="loading">
-          <span class="spinner"></span>
-          Traitement...
-        </span>
+        <mat-icon *ngIf="!isSubmitting">add</mat-icon>
+        <mat-icon *ngIf="isSubmitting" class="spinning">sync</mat-icon>
+        {{ isSubmitting ? 'Création...' : 'Créer le Match' }}
       </button>
     </div>
+
   </form>
 </div>

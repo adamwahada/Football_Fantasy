@@ -53,7 +53,7 @@ export class AuthService {
   
     // Otherwise, perform default redirects
     if (roles.includes('ROLE_ADMIN')) {
-      this.router.navigate(['/admin/referral']);
+      this.router.navigate(['/admin/Allmatch']);
       } else if (roles.includes('ROLE_USER')) {
       this.router.navigate(['/user-dashboard']);
     } else {

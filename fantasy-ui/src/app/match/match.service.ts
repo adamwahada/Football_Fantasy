@@ -17,6 +17,23 @@ export interface Match {
   gameweeks?: { id: number }[]; 
 }
 
+export interface MatchWithIconsDTO {
+  id?: number;
+  homeTeam: string;
+  awayTeam: string;
+  homeTeamIcon: string;
+  awayTeamIcon: string;
+  matchDate: string;
+  homeScore?: number;
+  awayScore?: number;
+  finished?: boolean;
+  predictionDeadline?: string;
+  description?: string;
+  status: 'SCHEDULED' | 'LIVE' | 'COMPLETED' | 'CANCELED';
+  active?: boolean;
+  gameweeks?: { id: number }[];
+}
+
 @Injectable({
   providedIn: 'root',
 })
@@ -30,9 +47,19 @@ export class MatchService {
     return this.http.get<Match[]>(this.apiUrl);
   }
 
+  // ✅ Récupérer tous les matchs avec icônes
+  getAllMatchesWithIcons(): Observable<MatchWithIconsDTO[]> {
+    return this.http.get<MatchWithIconsDTO[]>(`${this.apiUrl}/with-icons`);
+  }
+
   // ✅ Récupérer un match par ID
   getMatchById(id: number): Observable<Match> {
     return this.http.get<Match>(`${this.apiUrl}/${id}`);
+  }
+
+  // ✅ Récupérer un match par ID avec icônes
+  getMatchByIdWithIcons(id: number): Observable<MatchWithIconsDTO> {
+    return this.http.get<MatchWithIconsDTO>(`${this.apiUrl}/${id}/with-icons`);
   }
 
   // ✅ Créer un match (ADMIN)
@@ -50,7 +77,7 @@ export class MatchService {
     return this.http.delete<void>(`${this.apiUrl}/${id}`);
   }
 
-  // ✅ Obtenir le vainqueur d’un match
+  // ✅ Obtenir le vainqueur d'un match
   getMatchWinner(id: number): Observable<string> {
     return this.http.get(`${this.apiUrl}/${id}/winner`, { responseType: 'text' });
   }

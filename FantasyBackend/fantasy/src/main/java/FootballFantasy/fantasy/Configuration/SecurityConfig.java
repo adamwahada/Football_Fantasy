@@ -48,7 +48,8 @@ public class SecurityConfig {
                                 "/assets/**",
                                 "/static/**",
                                 "/images/**",
-                                "/api/admin/**"
+                                "/api/admin/**",
+                                "/api/teams/**"
 
                                 ).permitAll()
 
