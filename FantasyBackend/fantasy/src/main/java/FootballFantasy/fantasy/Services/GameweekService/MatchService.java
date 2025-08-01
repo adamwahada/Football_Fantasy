@@ -14,6 +14,7 @@ import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 import java.util.List;
+import java.util.Optional;
 
 @Service
 public class MatchService {
@@ -33,20 +34,42 @@ public class MatchService {
 
     @PreAuthorize("hasAuthority('ROLE_ADMIN')")
     public Match createMatch(Match match) {
+        // ✅ 1. Check for duplicate BEFORE any other logic
+        Optional<Match> existingMatch = matchRepository.findDuplicateMatch(
+                match.getHomeTeam(),
+                match.getAwayTeam(),
+                match.getMatchDate()
+        );
+
+        if (existingMatch.isPresent()) {
+            throw new RuntimeException("Un match entre " + match.getHomeTeam() +
+                    " et " + match.getAwayTeam() + " le " +
+                    match.getMatchDate().toLocalDate() + " existe déjà.");
+        }
+
+        // ✅ 2. Validate gameweeks (if present)
         if (match.getGameweeks() != null) {
             for (GameWeek gw : match.getGameweeks()) {
                 GameWeek gameWeek = gameWeekRepository.findById(gw.getId())
                         .orElseThrow(() -> new IllegalArgumentException("GameWeek not found with ID: " + gw.getId()));
+
+                // Ensure match date is within gameweek boundaries
                 if (match.getMatchDate().isBefore(gameWeek.getStartDate()) ||
                         match.getMatchDate().isAfter(gameWeek.getEndDate())) {
-                    throw new IllegalArgumentException("Match date outside GameWeek boundaries");
+                    throw new IllegalArgumentException("Match date is outside the boundaries of GameWeek '");
                 }
+
+                // Ensure bidirectional relationship
                 if (!gameWeek.getMatches().contains(match)) {
                     gameWeek.getMatches().add(match);
                 }
             }
         }
+
+        // ✅ 3. Set prediction deadline
         match.setPredictionDeadline(match.getMatchDate().minusMinutes(30));
+
+        // ✅ 4. Save and return
         return matchRepository.save(match);
     }
 

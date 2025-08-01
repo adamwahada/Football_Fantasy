@@ -192,7 +192,6 @@ onSubmit(): void {
 
   const formValue = this.matchForm.value;
 
-  // ✅ Convertir correctement l'objet Date en YYYY-MM-DD
   const date = formValue.matchDate;
   if (!(date instanceof Date) || isNaN(date.getTime())) {
     this.showSnackbar('Date invalide', 'error');
@@ -200,17 +199,18 @@ onSubmit(): void {
     return;
   }
 
-  const dateString = this.formatDateToISO(date); // Utilise ta fonction utilitaire
-  const timeString = formValue.matchTime || '00:00'; // HH:mm
-
+  const timeString = formValue.matchTime || '00:00';
   const [hours, minutes] = timeString.split(':');
-  const combinedDateTime = new Date(date);
-  combinedDateTime.setHours(Number(hours), Number(minutes), 0, 0);
 
-  // ⚠️ Envoi au backend : soit en string ISO, soit en objet
+  // ✅ Construire une date locale au format ISO sans 'Z' (indique que c'est local)
+  const year = date.getFullYear();
+  const month = (date.getMonth() + 1).toString().padStart(2, '0');
+  const day = date.getDate().toString().padStart(2, '0');
+  const localDateTimeString = `${year}-${month}-${day}T${hours}:${minutes}:00`;
+
   const match: Match = {
     ...formValue,
-    matchDate: combinedDateTime.toISOString(), // ✅ Format standard ISO 8601
+    matchDate: localDateTimeString // ✅ Pas de conversion UTC
   };
 
   delete (match as any).matchTime;

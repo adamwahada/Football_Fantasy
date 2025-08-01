@@ -86,33 +86,34 @@ public class TeamIconService {
 
     private void initializeLaLigaTeams() {
         String league = "La Liga";
-        addTeam("Alaves", league, "/assets/images/teams/alaves.png");
-        addTeam("Almeria", league, "/assets/images/teams/almeria.png");
-        addTeam("Athletic Club", league, "/assets/images/teams/athletic-bilbao.png");
+
+        addTeam("Deportivo Alavés", league, "/assets/images/teams/alaves.png");
+        addTeam("Ath. Bilbao", league, "/assets/images/teams/athletic-bilbao.png");
         addTeam("Atlético Madrid", league, "/assets/images/teams/atletico-madrid.png");
-        addTeam("Barcelona", league, "/assets/images/teams/barcelona.png");
-        addTeam("Cadiz", league, "/assets/images/teams/cadiz.png");
+        addTeam("Barcelone", league, "/assets/images/teams/barcelona.png");
         addTeam("Celta Vigo", league, "/assets/images/teams/celta-vigo.png");
+        addTeam("Elche", league, "/assets/images/teams/elche.png");
+        addTeam("Espanyol", league, "/assets/images/teams/espanyol.png");
         addTeam("Getafe", league, "/assets/images/teams/getafe.png");
         addTeam("Girona", league, "/assets/images/teams/girona.png");
-        addTeam("Granada", league, "/assets/images/teams/granada.png");
-        addTeam("Las Palmas", league, "/assets/images/teams/las-palmas.png");
-        addTeam("Leganés", league, "/assets/images/teams/leganes.png");
-        addTeam("Mallorca", league, "/assets/images/teams/mallorca.png");
+        addTeam("Levante", league, "/assets/images/teams/levante.png");
+        addTeam("Majorque", league, "/assets/images/teams/mallorca.png");
         addTeam("Osasuna", league, "/assets/images/teams/osasuna.png");
-        addTeam("Rayo Vallecano", league, "/assets/images/teams/rayo-vallecano.png");
-        addTeam("Real Betis", league, "/assets/images/teams/real-betis.png");
+        addTeam("Rayo", league, "/assets/images/teams/rayo-vallecano.png");
+        addTeam("Betis", league, "/assets/images/teams/real-betis.png");
         addTeam("Real Madrid", league, "/assets/images/teams/real-madrid.png");
+        addTeam("Real Oviedo", league, "/assets/images/teams/real-oviedo.png");
         addTeam("Real Sociedad", league, "/assets/images/teams/real-sociedad.png");
-        addTeam("Sevilla", league, "/assets/images/teams/sevilla.png");
+        addTeam("Séville", league, "/assets/images/teams/sevilla.png");
+        addTeam("Valence", league, "/assets/images/teams/valencia.png");
         addTeam("Villarreal", league, "/assets/images/teams/villarreal.png");
     }
 
     private void initializeLigue1Teams() {
         String league = "Ligue 1";
+        addTeam("Angers", league, "/assets/images/teams/angers.png");
         addTeam("Auxerre", league, "/assets/images/teams/auxerre.png");
         addTeam("Brest", league, "/assets/images/teams/brest.png");
-        addTeam("Clermont", league, "/assets/images/teams/clermont.png");
         addTeam("Le Havre", league, "/assets/images/teams/le-havre.png");
         addTeam("Lens", league, "/assets/images/teams/lens.png");
         addTeam("Lille", league, "/assets/images/teams/lille.png");
@@ -121,17 +122,14 @@ public class TeamIconService {
         addTeam("Olympique de Marseille", league, "/assets/images/teams/marseille.png");
         addTeam("Metz", league, "/assets/images/teams/metz.png");
         addTeam("Monaco", league, "/assets/images/teams/monaco.png");
-        addTeam("Montpellier", league, "/assets/images/teams/montpellier.png");
         addTeam("Nantes", league, "/assets/images/teams/nantes.png");
         addTeam("Nice", league, "/assets/images/teams/nice.png");
         addTeam("Paris FC", league, "/assets/images/teams/paris-fc.png");
         addTeam("Paris Saint-Germain", league, "/assets/images/teams/psg.png");
-        addTeam("Reims", league, "/assets/images/teams/reims.png");
         addTeam("Rennes", league, "/assets/images/teams/rennes.png");
         addTeam("Strasbourg", league, "/assets/images/teams/strasbourg.png");
         addTeam("Toulouse", league, "/assets/images/teams/toulouse.png");
     }
-
     private void initializeBundesligaTeams() {
         String league = "Bundesliga";
         addTeam("Augsburg", league, "/assets/images/teams/augsburg.png");
