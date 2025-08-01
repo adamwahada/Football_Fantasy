@@ -16,9 +16,7 @@ export const adminRoutes: Routes = [
       { path: 'referral', component: ReferralCodeManagerComponent },
       { path: 'Addmatch', component: AddAdminMatchComponent },
       { path: 'Allmatch', component: AllAdminMatchComponent },
-
       { path: 'match/Editmatch/:id', component: EditAdminMatchComponent },
-
       { path: '', redirectTo: 'referral', pathMatch: 'full' },
     ]
   }

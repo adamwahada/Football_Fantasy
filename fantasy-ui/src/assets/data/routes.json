@@ -28,6 +28,27 @@
           "submenu": []
         }
       ]
+    },
+    {
+      "path": "",
+      "title": "Parrainage",
+      "iconType": "material-icons-outlined",
+      "icon": "card_giftcard",
+      "class": "menu-toggle",
+      "groupTitle": false,
+      "role": ["Admin"],
+      "submenu": [
+        {
+          "path": "/admin/referral",
+          "title": "Code de parrainage",
+          "iconType": "",
+          "icon": "",
+          "class": "ml-menu",
+          "role": ["Admin"],
+          "submenu": []
+        }
+      ]
     }
+
   ]
 }

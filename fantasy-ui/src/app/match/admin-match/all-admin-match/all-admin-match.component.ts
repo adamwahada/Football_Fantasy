@@ -19,6 +19,7 @@ export class AllAdminMatchComponent implements OnInit {
   matchForm: FormGroup;
   editingMatchId: number | null = null;
   statuses = ['SCHEDULED', 'LIVE', 'COMPLETED', 'CANCELED'];
+  selectedMatchIds = new Set<number>();
 
   // Filtres
   statusFilter: string = '';
@@ -185,4 +186,106 @@ export class AllAdminMatchComponent implements OnInit {
     this.appliedStatusFilter = '';
     this.appliedDateFilter = '';
   }
+  resetMatch(match: Match): void {
+  if (!confirm(`Réinitialiser le match ${match.homeTeam} vs ${match.awayTeam} ?`)) {
+    return;
+  }
+
+  const updatedMatch: Match = {
+    ...match,
+    status: 'SCHEDULED',
+    homeScore: 0,
+    awayScore: 0,
+  };
+
+  this.matchService.updateMatch(match.id!, updatedMatch).subscribe({
+    next: () => {
+      // Mettre à jour localement pour refléter le changement immédiat
+      match.status = 'SCHEDULED';
+      match.homeScore = 0;
+      match.awayScore = 0;
+      alert('Match réinitialisé avec succès.');
+    },
+    error: (err) => {
+      console.error('Erreur lors de la réinitialisation du match', err);
+      alert('Erreur lors de la réinitialisation. Veuillez réessayer.');
+    }
+  });
+}
+  allSelected(): boolean {
+    const filtered = this.filteredMatches();
+    return filtered.length > 0 && filtered.every(m => this.selectedMatchIds.has(m.id!));
+  }
+
+toggleSelectAll(event: Event): void {
+  const input = event.target as HTMLInputElement;
+  const checked = input.checked;
+  const filtered = this.filteredMatches();
+  if (checked) {
+    filtered.forEach(m => this.selectedMatchIds.add(m.id!));
+  } else {
+    filtered.forEach(m => this.selectedMatchIds.delete(m.id!));
+  }
+}
+
+onSelectionChange(match: Match, event: Event): void {
+  const checked = (event.target as HTMLInputElement).checked;
+  if (checked) {
+    this.selectedMatchIds.add(match.id!);
+  } else {
+    this.selectedMatchIds.delete(match.id!);
+  }
+}
+
+  getSelectedMatches(): Match[] {
+    return this.matches.filter(m => this.selectedMatchIds.has(m.id!));
+  }
+  deleteSelectedMatches(): void {
+  const selected = this.getSelectedMatches();
+  if (selected.length === 0) return;
+
+  if (!confirm(`Voulez-vous supprimer ${selected.length} match(s) sélectionné(s) ?`)) return;
+
+  const deletes = selected.map(m => this.matchService.deleteMatch(m.id!).toPromise());
+
+  Promise.all(deletes)
+    .then(() => {
+      alert(`${selected.length} match(s) supprimé(s) avec succès.`);
+      this.selectedMatchIds.clear();
+      this.loadMatches();
+    })
+    .catch(err => {
+      console.error('Erreur lors de la suppression multiple', err);
+      alert('Erreur lors de la suppression. Veuillez réessayer.');
+    });
+}
+
+resetSelectedMatches(): void {
+  const selected = this.getSelectedMatches();
+  if (selected.length === 0) return;
+
+  if (!confirm(`Voulez-vous réinitialiser ${selected.length} match(s) sélectionné(s) ?`)) return;
+
+  const resets = selected.map(m => {
+    const updatedMatch: Match = {
+      ...m,
+      status: 'SCHEDULED',
+      homeScore: 0,
+      awayScore: 0,
+    };
+    return this.matchService.updateMatch(m.id!, updatedMatch).toPromise();
+  });
+
+  Promise.all(resets)
+    .then(() => {
+      alert(`${selected.length} match(s) réinitialisé(s) avec succès.`);
+      this.selectedMatchIds.clear();
+      this.loadMatches();
+    })
+    .catch(err => {
+      console.error('Erreur lors de la réinitialisation multiple', err);
+      alert('Erreur lors de la réinitialisation. Veuillez réessayer.');
+    });
+}
+
 }

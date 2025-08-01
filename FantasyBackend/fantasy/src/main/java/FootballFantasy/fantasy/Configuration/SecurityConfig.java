@@ -48,8 +48,8 @@ public class SecurityConfig {
                                 "/assets/**",
                                 "/static/**",
                                 "/images/**",
-                                "/api/admin/**"
-
+                                "/api/admin/**",
+                                "/api/chat/**"
                                 ).permitAll()
 
                                 // All other requests must be authenticated

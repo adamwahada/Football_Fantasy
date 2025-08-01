@@ -19,15 +19,26 @@
 </div>
 
 <div class="match-table-container">
+  <div style="display: flex; justify-content: flex-end; margin-bottom: 1rem; gap: 1rem;">
+    <button class="btn-secondary" (click)="deleteSelectedMatches()" [disabled]="getSelectedMatches().length === 0">
+      Supprimer sélectionnés
+    </button>
+    <button class="btn-secondary" (click)="resetSelectedMatches()" [disabled]="getSelectedMatches().length === 0">
+      Réinitialiser sélectionnés
+    </button>
+    <button class="btn-add" [routerLink]="['/admin/Addmatch']" title="Ajouter un match">+</button>
+  </div>
   <table class="match-table">
     <thead>
-    <div style="display: flex; justify-content: flex-end; margin-bottom: 1rem;">
-    <button class="btn-add"
-        [routerLink]="['/admin/Addmatch']"
-        title="Ajouter un match">+
-    </button>
-    </div>
       <tr>
+        <th>
+          <input
+            type="checkbox"
+            [checked]="allSelected()"
+            (change)="toggleSelectAll($event)"
+            aria-label="Tout sélectionner"
+          />
+        </th>
         <th>Équipe Domicile</th>
         <th>Équipe Extérieure</th>
         <th>Statut</th>
@@ -39,22 +50,52 @@
     </thead>
     <tbody>
       <tr *ngFor="let match of filteredMatches()">
+        <td>
+          <input
+            type="checkbox"
+            [checked]="selectedMatchIds.has(match.id!)"
+            (change)="onSelectionChange(match, $event)"
+            aria-label="Sélectionner match"
+          />
+        </td>
         <td>{{ match.homeTeam }}</td>
         <td>{{ match.awayTeam }}</td>
         <td>{{ match.status }}</td>
         <td>{{ match.matchDate | date: 'dd/MM/yyyy HH:mm' }}</td>
-        <td>
-          {{ match.homeScore ?? '-' }} - {{ match.awayScore ?? '-' }}
-        </td>
+        <td>{{ match.homeScore ?? '-' }} - {{ match.awayScore ?? '-' }}</td>
         <td>
           <span [class.active]="match.active" [class.inactive]="!match.active">
             {{ match.active ? 'Oui' : 'Non' }}
           </span>
         </td>
         <td class="actions">
-          <button [routerLink]="['/admin/match/Editmatch', match.id]" title="Modifier" class="btn-icon blue">✏️</button>          <button (click)="deleteMatch(match.id!)" title="Supprimer" class="btn-icon red">🗑️</button>
-          <button (click)="toggleActive(match)" title="Activer / Désactiver" class="btn-icon gray">
+          <button
+            [routerLink]="['/admin/match/Editmatch', match.id]"
+            title="Modifier"
+            class="btn-icon blue"
+          >
+            ✏️
+          </button>
+          <button
+            (click)="deleteMatch(match.id!)"
+            title="Supprimer"
+            class="btn-icon red"
+          >
+            🗑️
+          </button>
+          <button
+            (click)="toggleActive(match)"
+            title="Activer / Désactiver"
+            class="btn-icon gray"
+          >
             {{ match.active ? '🔔' : '🔕' }}
+          </button>
+          <button
+            (click)="resetMatch(match)"
+            title="Réinitialiser"
+            class="btn-icon orange"
+          >
+            ♻️
           </button>
         </td>
       </tr>
