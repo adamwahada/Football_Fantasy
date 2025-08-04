@@ -1,52 +1,70 @@
 package FootballFantasy.fantasy.Configuration;
 
+import FootballFantasy.fantasy.Dto.ChatDto.UserStatusDTO;
 import FootballFantasy.fantasy.Services.ChatService.ChatService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.event.EventListener;
-import org.springframework.messaging.simp.SimpMessageSendingOperations;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.messaging.simp.stomp.StompHeaderAccessor;
 import org.springframework.stereotype.Component;
-import org.springframework.web.socket.messaging.SessionConnectedEvent;
+import org.springframework.web.socket.messaging.SessionConnectEvent;
 import org.springframework.web.socket.messaging.SessionDisconnectEvent;
 
-import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 @Component
-@Slf4j
 @RequiredArgsConstructor
+@Slf4j
 public class WebSocketEventListener {
 
-    private final SimpMessageSendingOperations messagingTemplate;
+    private final SimpMessagingTemplate messagingTemplate;
     private final ChatService chatService;
 
+    // Store online users
+    private final ConcurrentHashMap<String, String> onlineUsers = new ConcurrentHashMap<>();
+
     @EventListener
-    public void handleWebSocketConnectListener(SessionConnectedEvent event) {
+    public void handleWebSocketConnectListener(SessionConnectEvent event) {
         StompHeaderAccessor headerAccessor = StompHeaderAccessor.wrap(event.getMessage());
-        String userId = headerAccessor.getFirstNativeHeader("userId");
+        String sessionId = headerAccessor.getSessionId();
 
-        if (userId != null) {
-            log.info("User {} connected", userId);
-            chatService.userConnected(Long.parseLong(userId));
+        if (headerAccessor.getUser() != null) {
+            String userId = headerAccessor.getUser().getName();
+            onlineUsers.put(sessionId, userId);
 
-            // Notifier les autres utilisateurs que cet utilisateur est en ligne
-            messagingTemplate.convertAndSend("/topic/user-status",
-                    Map.of("userId", userId, "status", "ONLINE"));
+            log.info("User {} connected with session {}", userId, sessionId);
+
+            // Broadcast user online status
+            UserStatusDTO statusDTO = UserStatusDTO.builder()
+                    .userId(Long.parseLong(userId))
+                    .isOnline(true)
+                    .build();
+
+            messagingTemplate.convertAndSend("/topic/user-status", statusDTO);
         }
     }
 
     @EventListener
     public void handleWebSocketDisconnectListener(SessionDisconnectEvent event) {
         StompHeaderAccessor headerAccessor = StompHeaderAccessor.wrap(event.getMessage());
-        String userId = headerAccessor.getFirstNativeHeader("userId");
+        String sessionId = headerAccessor.getSessionId();
 
+        String userId = onlineUsers.remove(sessionId);
         if (userId != null) {
-            log.info("User {} disconnected", userId);
-            chatService.userDisconnected(Long.parseLong(userId));
+            log.info("User {} disconnected from session {}", userId, sessionId);
 
-            // Notifier les autres utilisateurs que cet utilisateur est hors ligne
-            messagingTemplate.convertAndSend("/topic/user-status",
-                    Map.of("userId", userId, "status", "OFFLINE"));
+            // Broadcast user offline status
+            UserStatusDTO statusDTO = UserStatusDTO.builder()
+                    .userId(Long.parseLong(userId))
+                    .isOnline(false)
+                    .build();
+
+            messagingTemplate.convertAndSend("/topic/user-status", statusDTO);
         }
+    }
+
+    public boolean isUserOnline(String userId) {
+        return onlineUsers.containsValue(userId);
     }
 }

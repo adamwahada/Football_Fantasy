@@ -1,5 +1,8 @@
 package FootballFantasy.fantasy.Entities.UserEntity;
 
+import FootballFantasy.fantasy.Entities.Chat.ChatMessage;
+import FootballFantasy.fantasy.Entities.Chat.ChatParticipant;
+import FootballFantasy.fantasy.Entities.Chat.MessageStatus;
 import FootballFantasy.fantasy.Entities.GameweekEntity.SessionParticipation;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
@@ -38,4 +41,19 @@ public class UserEntity {
     @JsonIgnore
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<SessionParticipation> sessionParticipations = new ArrayList<>();
+ //chat
+
+
+@JsonIgnore
+@OneToMany(mappedBy = "sender", cascade = CascadeType.ALL)
+private List<ChatMessage> sentMessages = new ArrayList<>();
+
+@JsonIgnore
+@OneToMany(mappedBy = "user", cascade = CascadeType.ALL)
+private List<ChatParticipant> chatParticipations = new ArrayList<>();
+
+@JsonIgnore
+@OneToMany(mappedBy = "user", cascade = CascadeType.ALL)
+private List<MessageStatus> messageStatuses = new ArrayList<>();
+
 }

@@ -1,9 +1,15 @@
 package FootballFantasy.fantasy.Entities.Chat;
 
 import FootballFantasy.fantasy.Entities.UserEntity.UserEntity;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.*;
+import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.UpdateTimestamp;
+
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @Table(name = "chat_rooms")
@@ -16,23 +22,34 @@ public class ChatRoom {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @ManyToOne
-    @JoinColumn(name = "user1_id")
-    private UserEntity user1;
+    @Column(unique = true, nullable = false)
+    private String roomId; // UUID pour identifier la room
 
-    @ManyToOne
-    @JoinColumn(name = "user2_id")
-    private UserEntity user2;
+    @Enumerated(EnumType.STRING)
+    private ChatRoomType type; // PRIVATE, GROUP
 
-    @Column(name = "created_at")
+    private String name; // Pour les groupes
+    private String description; // Pour les groupes
+    private String avatar; // URL de l'avatar du groupe
+
+    @CreationTimestamp
     private LocalDateTime createdAt;
 
-    @Column(name = "last_message_at")
-    private LocalDateTime lastMessageAt;
+    @UpdateTimestamp
+    private LocalDateTime updatedAt;
 
-    @PrePersist
-    protected void onCreate() {
-        createdAt = LocalDateTime.now();
-        lastMessageAt = LocalDateTime.now();
+    private LocalDateTime lastActivity;
+
+    @JsonIgnore
+    @OneToMany(mappedBy = "chatRoom", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<ChatMessage> messages = new ArrayList<>();
+
+    @JsonIgnore
+    @OneToMany(mappedBy = "chatRoom", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<ChatParticipant> participants = new ArrayList<>();
+
+    // Méthodes utilitaires
+    public void updateLastActivity() {
+        this.lastActivity = LocalDateTime.now();
     }
 }

@@ -5,19 +5,13 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.time.LocalDateTime;
-
 @Data
+@Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@Builder
-public class ChatUserDTO {
-    private Long id;
+public class UserStatusDTO {
+    private Long userId;
     private String username;
-    private String firstName;
-    private String lastName;
-    private String lastMessage;
-    private LocalDateTime lastMessageTime;
-    private Integer unreadCount;
     private Boolean isOnline;
+    private String lastSeen;
 }

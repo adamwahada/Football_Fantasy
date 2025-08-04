@@ -1,6 +1,5 @@
 package FootballFantasy.fantasy.Configuration;
 
-
 import org.springframework.context.annotation.Configuration;
 import org.springframework.messaging.simp.config.MessageBrokerRegistry;
 import org.springframework.web.socket.config.annotation.EnableWebSocketMessageBroker;
@@ -13,20 +12,19 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
 
     @Override
     public void configureMessageBroker(MessageBrokerRegistry config) {
-        // Prefix pour les messages envoyés du serveur vers le client
+        // Enable a simple memory-based message broker to carry messages back to the client
         config.enableSimpleBroker("/topic", "/queue");
-        // Prefix pour les messages envoyés du client vers le serveur
+        // Set prefix for messages that are bound for @MessageMapping methods
         config.setApplicationDestinationPrefixes("/app");
-        // Prefix pour les messages privés
+        // Set prefix for user-specific destinations
         config.setUserDestinationPrefix("/user");
     }
 
     @Override
     public void registerStompEndpoints(StompEndpointRegistry registry) {
-        // Endpoint WebSocket avec support SockJS pour les navigateurs qui ne supportent pas WebSocket
+        // Register STOMP endpoint with SockJS fallback
         registry.addEndpoint("/ws")
                 .setAllowedOriginPatterns("*")
                 .withSockJS();
     }
 }
-
