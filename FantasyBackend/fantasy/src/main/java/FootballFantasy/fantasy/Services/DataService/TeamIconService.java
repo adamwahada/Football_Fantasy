@@ -87,25 +87,25 @@ public class TeamIconService {
     private void initializeLaLigaTeams() {
         String league = "La Liga";
 
-        addTeam("Deportivo Alavés", league, "/assets/images/teams/alaves.png");
+        addTeam("Deportivo Alaves", league, "/assets/images/teams/alaves.png");
         addTeam("Ath. Bilbao", league, "/assets/images/teams/athletic-bilbao.png");
-        addTeam("Atlético Madrid", league, "/assets/images/teams/atletico-madrid.png");
-        addTeam("Barcelone", league, "/assets/images/teams/barcelona.png");
+        addTeam("Atletico Madrid", league, "/assets/images/teams/atletico-madrid.png");
+        addTeam("Barcelona", league, "/assets/images/teams/barcelona.png");
         addTeam("Celta Vigo", league, "/assets/images/teams/celta-vigo.png");
         addTeam("Elche", league, "/assets/images/teams/elche.png");
         addTeam("Espanyol", league, "/assets/images/teams/espanyol.png");
         addTeam("Getafe", league, "/assets/images/teams/getafe.png");
         addTeam("Girona", league, "/assets/images/teams/girona.png");
         addTeam("Levante", league, "/assets/images/teams/levante.png");
-        addTeam("Majorque", league, "/assets/images/teams/mallorca.png");
+        addTeam("Mallorca", league, "/assets/images/teams/mallorca.png");
         addTeam("Osasuna", league, "/assets/images/teams/osasuna.png");
-        addTeam("Rayo", league, "/assets/images/teams/rayo-vallecano.png");
-        addTeam("Betis", league, "/assets/images/teams/real-betis.png");
+        addTeam("Rayo Vallecano", league, "/assets/images/teams/rayo-vallecano.png");
+        addTeam("Real Betis", league, "/assets/images/teams/real-betis.png");
         addTeam("Real Madrid", league, "/assets/images/teams/real-madrid.png");
         addTeam("Real Oviedo", league, "/assets/images/teams/real-oviedo.png");
         addTeam("Real Sociedad", league, "/assets/images/teams/real-sociedad.png");
-        addTeam("Séville", league, "/assets/images/teams/sevilla.png");
-        addTeam("Valence", league, "/assets/images/teams/valencia.png");
+        addTeam("Seville", league, "/assets/images/teams/sevilla.png");
+        addTeam("Valencia", league, "/assets/images/teams/valencia.png");
         addTeam("Villarreal", league, "/assets/images/teams/villarreal.png");
     }
 
@@ -138,7 +138,6 @@ public class TeamIconService {
         addTeam("Bochum", league, "/assets/images/teams/bochum.png");
         addTeam("Borussia Dortmund", league, "/assets/images/teams/borussia-dortmund.png");
         addTeam("Borussia Mönchengladbach", league, "/assets/images/teams/monchengladbach.png");
-        addTeam("Darmstadt", league, "/assets/images/teams/darmstadt.png");
         addTeam("Eintracht Frankfurt", league, "/assets/images/teams/eintracht-frankfurt.png");
         addTeam("Freiburg", league, "/assets/images/teams/freiburg.png");
         addTeam("Heidenheim", league, "/assets/images/teams/heidenheim.png");
@@ -146,12 +145,12 @@ public class TeamIconService {
         addTeam("Koln", league, "/assets/images/teams/koln.png");
         addTeam("Mainz", league, "/assets/images/teams/mainz.png");
         addTeam("RB Leipzig", league, "/assets/images/teams/rb-leipzig.png");
-        addTeam("Schalke 04", league, "/assets/images/teams/schalke.png");
         addTeam("Stuttgart", league, "/assets/images/teams/stuttgart.png");
         addTeam("Union Berlin", league, "/assets/images/teams/union-berlin.png");
         addTeam("Werder Bremen", league, "/assets/images/teams/werder-bremen.png");
         addTeam("Wolfsburg", league, "/assets/images/teams/wolfsburg.png");
         addTeam("Hamburg", league, "/assets/images/teams/hamburg.png");
+        addTeam("St Pauli", league, "/assets/images/teams/pauli.png");
     }
 
     private void initializeOtherLeagueTeams() {
