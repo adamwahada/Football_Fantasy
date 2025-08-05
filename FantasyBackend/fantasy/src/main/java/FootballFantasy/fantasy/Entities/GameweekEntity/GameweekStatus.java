@@ -3,5 +3,6 @@ package FootballFantasy.fantasy.Entities.GameweekEntity;
 public enum GameweekStatus {
     UPCOMING,
     ONGOING,
-    FINISHED
+    FINISHED,
+    CANCELLED,
 }

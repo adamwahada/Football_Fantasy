@@ -38,7 +38,7 @@ export class AllAdminGameweekComponent implements OnInit {
 
   statuses = [
     { value: 'UPCOMING', label: 'Upcoming' },
-    { value: 'ACTIVE', label: 'Active' },
+    { value: 'ONGOING', label: 'Ongoing' },
     { value: 'COMPLETED', label: 'Completed' },
     { value: 'CANCELLED', label: 'Cancelled' }
   ];
