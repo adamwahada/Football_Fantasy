@@ -1,6 +1,6 @@
 [
   {
-    "homeTeam": "Gérone FC",
+    "homeTeam": "Girona",
     "awayTeam": "Rayo Vallecano",
     "matchDate": "2025-08-15T18:00:00"
   },
@@ -10,38 +10,38 @@
     "matchDate": "2025-08-15T20:30:00"
   },
   {
-    "homeTeam": "Deportivo Alavés",
-    "awayTeam": "Levante UD",
+    "homeTeam": "Deportivo Alaves",
+    "awayTeam": "Levante",
     "matchDate": "2025-08-16T16:00:00"
   },
   {
-    "homeTeam": "Majorque",
-    "awayTeam": "FC Barcelone",
+    "homeTeam": "Mallorca",
+    "awayTeam": "Barcelona",
     "matchDate": "2025-08-16T18:30:00"
   },
   {
-    "homeTeam": "Valence",
+    "homeTeam": "Valencia",
     "awayTeam": "Real Sociedad",
     "matchDate": "2025-08-16T20:30:00"
   },
   {
     "homeTeam": "Celta Vigo",
-    "awayTeam": "Getafe CF",
+    "awayTeam": "Getafe",
     "matchDate": "2025-08-17T16:00:00"
   },
   {
-    "homeTeam": "Athletic Bilbao",
-    "awayTeam": "FC Séville",
+    "homeTeam": "Ath. Bilbao",
+    "awayTeam": "Seville",
     "matchDate": "2025-08-17T18:30:00"
   },
   {
     "homeTeam": "Espanyol",
-    "awayTeam": "Atlético de Madrid",
+    "awayTeam": "Atletico Madrid",
     "matchDate": "2025-08-17T20:30:00"
   },
   {
-    "homeTeam": "Elche CF",
-    "awayTeam": "Betis Séville",
+    "homeTeam": "Elche",
+    "awayTeam": "Real Betis",
     "matchDate": "2025-08-18T20:00:00"
   },
   {

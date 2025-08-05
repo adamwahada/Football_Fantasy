@@ -110,7 +110,6 @@ public class MatchService {
         if (shouldPublishEvent) {
             System.out.println("🚀 Publishing MatchCompletedEvent for match ID: " + matchId);
 
-            // Check if we're in a transaction
             boolean inTransaction = org.springframework.transaction.support.TransactionSynchronizationManager.isActualTransactionActive();
             System.out.println("📝 Transaction active: " + inTransaction);
 
@@ -126,8 +125,17 @@ public class MatchService {
             System.out.println("⏭️ No event published - status didn't change to COMPLETED");
         }
 
+        // ✅ If match was reverted from COMPLETED → not COMPLETED, reevaluate gameweek status
+        if (oldStatus == MatchStatus.COMPLETED && saved.getStatus() != MatchStatus.COMPLETED) {
+            for (GameWeek gameWeek : saved.getGameweeks()) {
+                System.out.println("🔁 Match reverted to non-COMPLETED. Reevaluating Gameweek " + gameWeek.getId());
+                gameWeekService.updateStatusIfRescheduled(gameWeek.getId());
+            }
+        }
+
         return saved;
     }
+
 
     @PreAuthorize("hasAuthority('ROLE_ADMIN')")
     @Transactional
@@ -165,7 +173,19 @@ public class MatchService {
     public Match setMatchActiveStatus(Long matchId, boolean active) {
         Match match = matchRepository.findById(matchId)
                 .orElseThrow(() -> new IllegalArgumentException("Match not found with ID: " + matchId));
+
+        boolean wasActive = match.isActive();
         match.setActive(active);
-        return matchRepository.save(match);
+        Match savedMatch = matchRepository.save(match);
+
+        if (wasActive != active) {
+            // Re-evaluate status for each related gameweek
+            for (GameWeek gw : match.getGameweeks()) {
+                gameWeekService.updateStatusIfComplete(gw.getId());
+            }
+        }
+
+        return savedMatch;
     }
+
 }
