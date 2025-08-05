@@ -23,7 +23,7 @@ public class GameWeekSeeder implements CommandLineRunner {
 
     private static final List<LeagueTheme> TARGET_COMPETITIONS = List.of(
             LeagueTheme.PREMIER_LEAGUE,
-            LeagueTheme.BUENDSLIGUA,
+            LeagueTheme.BUNDESLIGA,
             LeagueTheme.LIGUE_ONE,
             LeagueTheme.SERIE_A,
             LeagueTheme.LA_LIGA

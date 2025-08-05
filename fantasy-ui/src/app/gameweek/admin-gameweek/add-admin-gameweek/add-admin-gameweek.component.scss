@@ -1,0 +1,395 @@
+// Variables
+$primary-color: #2563eb;
+$primary-hover: #1d4ed8;
+$secondary-color: #64748b;
+$success-color: #10b981;
+$error-color: #ef4444;
+$warning-color: #f59e0b;
+$background-color: #f8fafc;
+$card-background: #ffffff;
+$border-color: #e2e8f0;
+$text-primary: #1e293b;
+$text-secondary: #64748b;
+$text-muted: #94a3b8;
+
+// Mixins
+@mixin glass-effect {
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+@mixin shadow-sm {
+  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+}
+
+@mixin shadow-md {
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+}
+
+@mixin shadow-lg {
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+}
+
+@mixin transition-smooth {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+// Main Container
+.add-gameweek-container {
+  min-height: 100vh;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  padding: 2rem 1rem;
+  
+  @media (max-width: 768px) {
+    padding: 1rem 0.5rem;
+  }
+}
+
+// Header Section
+.header-section {
+  text-align: center;
+  margin-bottom: 3rem;
+  
+  .page-title {
+    font-size: 2.5rem;
+    font-weight: 700;
+    color: white;
+    margin-bottom: 0.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.75rem;
+    
+    @media (max-width: 768px) {
+      font-size: 2rem;
+    }
+    
+    .icon-plus::before {
+      content: '+';
+      background: $primary-color;
+      color: white;
+      border-radius: 50%;
+      width: 3rem;
+      height: 3rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.5rem;
+      font-weight: bold;
+    }
+  }
+  
+  .page-subtitle {
+    font-size: 1.125rem;
+    color: rgba(255, 255, 255, 0.9);
+    margin: 0;
+  }
+}
+
+// Form Container
+.form-container {
+  max-width: 800px;
+  margin: 0 auto;
+  @include glass-effect;
+  border-radius: 1.5rem;
+  padding: 2.5rem;
+  @include shadow-lg;
+  
+  @media (max-width: 768px) {
+    padding: 1.5rem;
+    border-radius: 1rem;
+  }
+}
+
+// Form Grid
+.form-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.5rem;
+  margin-bottom: 2rem;
+  
+  @media (max-width: 768px) {
+    grid-template-columns: 1fr;
+    gap: 1.25rem;
+  }
+  
+  .full-width {
+    grid-column: 1 / -1;
+  }
+}
+
+// Form Groups
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.form-label {
+  font-weight: 600;
+  color: $text-primary;
+  font-size: 0.875rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  
+  .required {
+    color: $error-color;
+    margin-left: 0.25rem;
+  }
+}
+
+// Form Inputs
+.form-input,
+.form-select,
+.form-textarea {
+  padding: 0.875rem 1rem;
+  border: 2px solid $border-color;
+  border-radius: 0.75rem;
+  font-size: 1rem;
+  color: $text-primary;
+  background: white;
+  @include transition-smooth;
+  
+  &:focus {
+    outline: none;
+    border-color: $primary-color;
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+    transform: translateY(-1px);
+  }
+  
+  &.error {
+    border-color: $error-color;
+    box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.1);
+  }
+  
+  &::placeholder {
+    color: $text-muted;
+  }
+}
+
+.form-textarea {
+  resize: vertical;
+  min-height: 100px;
+  font-family: inherit;
+}
+
+.form-select {
+  cursor: pointer;
+  
+  option {
+    padding: 0.5rem;
+  }
+}
+
+// Input Help Text
+.input-help {
+  font-size: 0.75rem;
+  color: $text-muted;
+  font-style: italic;
+}
+
+// Error Messages
+.error-message {
+  color: $error-color;
+  font-size: 0.875rem;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  
+  &::before {
+    content: '⚠';
+    font-size: 0.75rem;
+  }
+}
+
+// Alert Messages
+.alert {
+  padding: 1rem 1.25rem;
+  border-radius: 0.75rem;
+  margin-bottom: 1.5rem;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  font-weight: 500;
+  
+  &.alert-success {
+    background: rgba(16, 185, 129, 0.1);
+    color: darken($success-color, 10%);
+    border: 1px solid rgba(16, 185, 129, 0.2);
+    
+    .icon-check::before {
+      content: '✓';
+      color: $success-color;
+      font-weight: bold;
+    }
+  }
+  
+  &.alert-error {
+    background: rgba(239, 68, 68, 0.1);
+    color: darken($error-color, 10%);
+    border: 1px solid rgba(239, 68, 68, 0.2);
+    
+    .icon-error::before {
+      content: '✕';
+      color: $error-color;
+      font-weight: bold;
+    }
+  }
+}
+
+// Form Actions
+.form-actions {
+  display: flex;
+  gap: 1rem;
+  justify-content: flex-end;
+  padding-top: 1.5rem;
+  border-top: 1px solid $border-color;
+  
+  @media (max-width: 768px) {
+    flex-direction: column-reverse;
+    gap: 0.75rem;
+  }
+}
+
+// Buttons
+.btn {
+  padding: 0.875rem 1.5rem;
+  border-radius: 0.75rem;
+  font-weight: 600;
+  font-size: 0.875rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  cursor: pointer;
+  border: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  @include transition-smooth;
+  min-width: 120px;
+  
+  &:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none !important;
+  }
+  
+  &:not(:disabled):hover {
+    transform: translateY(-2px);
+    @include shadow-md;
+  }
+  
+  &:not(:disabled):active {
+    transform: translateY(0);
+  }
+}
+
+.btn-primary {
+  background: linear-gradient(135deg, $primary-color, $primary-hover);
+  color: white;
+  
+  &:not(:disabled):hover {
+    background: linear-gradient(135deg, $primary-hover, darken($primary-hover, 10%));
+  }
+}
+
+.btn-secondary {
+  background: $secondary-color;
+  color: white;
+  
+  &:not(:disabled):hover {
+    background: darken($secondary-color, 10%);
+  }
+}
+
+.btn-outline {
+  background: transparent;
+  color: $secondary-color;
+  border: 2px solid $secondary-color;
+  
+  &:not(:disabled):hover {
+    background: $secondary-color;
+    color: white;
+  }
+}
+
+// Button Icons
+.icon-arrow-left::before { content: '←'; }
+.icon-refresh::before { content: '↻'; }
+.icon-save::before { content: '💾'; }
+
+// Loading Spinner
+.loading-spinner {
+  width: 1rem;
+  height: 1rem;
+  border: 2px solid transparent;
+  border-top: 2px solid currentColor;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+// Responsive Design
+@media (max-width: 640px) {
+  .form-actions .btn {
+    width: 100%;
+    justify-content: center;
+  }
+  
+  .header-section .page-title {
+    flex-direction: column;
+    gap: 1rem;
+  }
+}
+
+// Focus-visible for accessibility
+.btn:focus-visible,
+.form-input:focus-visible,
+.form-select:focus-visible,
+.form-textarea:focus-visible {
+  outline: 2px solid $primary-color;
+  outline-offset: 2px;
+}
+
+// Smooth animations
+* {
+  box-sizing: border-box;
+}
+
+.form-container {
+  animation: slideUp 0.6s ease-out;
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+// Print styles
+@media print {
+  .add-gameweek-container {
+    background: white !important;
+    
+    .form-container {
+      box-shadow: none !important;
+      border: 1px solid #ccc !important;
+    }
+    
+    .form-actions {
+      display: none !important;
+    }
+  }
+}

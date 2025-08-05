@@ -6,7 +6,6 @@ import FootballFantasy.fantasy.Entities.GameweekEntity.MatchStatus;
 import FootballFantasy.fantasy.Events.MatchCompletedEvent;
 import FootballFantasy.fantasy.Repositories.GameweekRepository.GameWeekRepository;
 import FootballFantasy.fantasy.Repositories.GameweekRepository.MatchRepository;
-import FootballFantasy.fantasy.Services.DataService.TeamIconService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;

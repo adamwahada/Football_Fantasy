@@ -1,11 +1,286 @@
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
+import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
+import { Router } from '@angular/router';
+import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
+import { RouterLink } from '@angular/router';
+import { GameweekService, Gameweek } from '../../gameweek.service';
+import { MatchWithIconsDTO } from '../../../match/match.service';
+import { ShowGameweekMatchesComponent } from '../show-gameweek-matches/show-gameweek-matches.component';
 
 @Component({
   selector: 'app-all-admin-gameweek',
-  imports: [],
+  standalone: true,
+  imports: [CommonModule, ReactiveFormsModule, FormsModule, RouterLink, ShowGameweekMatchesComponent],
   templateUrl: './all-admin-gameweek.component.html',
-  styleUrl: './all-admin-gameweek.component.scss'
+  styleUrls: ['./all-admin-gameweek.component.scss']
 })
-export class AllAdminGameweekComponent {
+export class AllAdminGameweekComponent implements OnInit {
+  gameweeks: Gameweek[] = [];
+  gameweekForm: FormGroup;
+  editingGameweekId: number | null = null;
+  selectedGameweekIds = new Set<number>();
+
+  statusFilter: string = '';
+  competitionFilter: string = '';
+  appliedStatusFilter: string = '';
+  appliedCompetitionFilter: string = '';
+
+  competitions = [
+    { value: 'PREMIER_LEAGUE', label: 'Premier League' },
+    { value: 'LA_LIGA', label: 'La Liga' },
+    { value: 'SERIE_A', label: 'Serie A' },
+    { value: 'BUNDESLIGA', label: 'Bundesliga' },
+    { value: 'LIGUE_1', label: 'Ligue 1' },
+    { value: 'CHAMPIONS_LEAGUE', label: 'Champions League' },
+    { value: 'EUROPA_LEAGUE', label: 'Europa League' }
+  ];
+
+  statuses = [
+    { value: 'UPCOMING', label: 'Upcoming' },
+    { value: 'ACTIVE', label: 'Active' },
+    { value: 'COMPLETED', label: 'Completed' },
+    { value: 'CANCELLED', label: 'Cancelled' }
+  ];
+
+  // ✅ Show Matches UI State
+  matchesForSelectedGameweek: MatchWithIconsDTO[] = [];
+  selectedGameweekForMatches: Gameweek | null = null;
+  loadingMatches: boolean = false;
+  matchesLoadError: string | null = null;
+
+  constructor(
+    private gameweekService: GameweekService,
+    private fb: FormBuilder,
+    private router: Router
+  ) {
+    this.gameweekForm = this.fb.group({
+      weekNumber: ['', [Validators.required, Validators.min(1), Validators.max(50)]],
+      status: ['UPCOMING', Validators.required],
+      competition: ['', Validators.required],
+      startDate: ['', Validators.required],
+      startTime: ['', Validators.required],
+      endDate: ['', Validators.required],
+      endTime: ['', Validators.required],
+      joinDeadline: ['', Validators.required],
+      joinDeadlineTime: ['', Validators.required],
+      description: ['']
+    });
+  }
+
+  ngOnInit(): void {
+    this.loadGameweeks();
+  }
+
+  loadGameweeks(): void {
+    this.gameweekService.getAllGameweeks().subscribe({
+      next: (data) => this.gameweeks = data,
+      error: (err) => console.error('Erreur chargement gameweeks:', err)
+    });
+  }
+
+  onSubmit(): void {
+    if (this.gameweekForm.invalid) return;
+
+    const formValue = this.gameweekForm.value;
+    const startDateTime = `${formValue.startDate}T${formValue.startTime}:00`;
+    const endDateTime = `${formValue.endDate}T${formValue.endTime}:00`;
+    const joinDeadlineDateTime = `${formValue.joinDeadline}T${formValue.joinDeadlineTime}:00`;
+
+    const gameweek: Gameweek = {
+      ...formValue,
+      startDate: startDateTime,
+      endDate: endDateTime,
+      joinDeadline: joinDeadlineDateTime
+    };
+
+    delete (gameweek as any).startTime;
+    delete (gameweek as any).endTime;
+    delete (gameweek as any).joinDeadlineTime;
+
+    if (this.editingGameweekId) {
+      this.gameweekService.updateGameweek(this.editingGameweekId, gameweek).subscribe({
+        next: () => {
+          this.loadGameweeks();
+          this.resetForm();
+        },
+        error: (error) => console.error('Error updating gameweek:', error)
+      });
+    } else {
+      this.gameweekService.createGameweek(gameweek).subscribe({
+        next: () => {
+          this.loadGameweeks();
+          this.resetForm();
+        },
+        error: (error) => console.error('Error creating gameweek:', error)
+      });
+    }
+  }
+
+  editGameweek(gameweek: Gameweek): void {
+    this.editingGameweekId = gameweek.id!;
+    const start = this.extractDateAndTime(gameweek.startDate);
+    const end = this.extractDateAndTime(gameweek.endDate);
+    const deadline = this.extractDateAndTime(gameweek.joinDeadline);
+
+    this.gameweekForm.patchValue({
+      ...gameweek,
+      startDate: start.date,
+      startTime: start.time,
+      endDate: end.date,
+      endTime: end.time,
+      joinDeadline: deadline.date,
+      joinDeadlineTime: deadline.time
+    });
+  }
+
+  deleteGameweek(id: number): void {
+    if (confirm('Voulez-vous supprimer cette gameweek ?')) {
+      this.gameweekService.deleteGameweek(id).subscribe(() => this.loadGameweeks());
+    }
+  }
+
+  extractDateAndTime(dateTime: any): { date: string, time: string } {
+    const d = new Date(dateTime);
+    return {
+      date: d.toISOString().split('T')[0],
+      time: d.toTimeString().slice(0, 5)
+    };
+  }
+
+  resetForm(): void {
+    this.gameweekForm.reset({ status: 'UPCOMING' });
+    this.editingGameweekId = null;
+  }
+
+  filteredGameweeks() {
+    return this.gameweeks
+      .filter(gw => !this.appliedStatusFilter || gw.status === this.appliedStatusFilter)
+      .filter(gw => !this.appliedCompetitionFilter || gw.competition === this.appliedCompetitionFilter);
+  }
+
+  applyFilters() {
+    this.appliedStatusFilter = this.statusFilter;
+    this.appliedCompetitionFilter = this.competitionFilter;
+  }
+
+  resetFilters() {
+    this.statusFilter = '';
+    this.competitionFilter = '';
+    this.appliedStatusFilter = '';
+    this.appliedCompetitionFilter = '';
+  }
+
+  allSelected(): boolean {
+    const filtered = this.filteredGameweeks();
+    return filtered.length > 0 && filtered.every(gw => this.selectedGameweekIds.has(gw.id!));
+  }
+
+  toggleSelectAll(event: Event): void {
+    const checked = (event.target as HTMLInputElement).checked;
+    const filtered = this.filteredGameweeks();
+    filtered.forEach(gw => checked ? this.selectedGameweekIds.add(gw.id!) : this.selectedGameweekIds.delete(gw.id!));
+  }
+
+  onSelectionChange(gameweek: Gameweek, event: Event): void {
+    const checked = (event.target as HTMLInputElement).checked;
+    checked ? this.selectedGameweekIds.add(gameweek.id!) : this.selectedGameweekIds.delete(gameweek.id!);
+  }
+
+  getSelectedGameweeks(): Gameweek[] {
+    return this.gameweeks.filter(gw => this.selectedGameweekIds.has(gw.id!));
+  }
+
+  deleteSelectedGameweeks(): void {
+    const selected = this.getSelectedGameweeks();
+    if (!selected.length) return;
+    if (!confirm(`Supprimer ${selected.length} gameweek(s) ?`)) return;
+
+    const deletes = selected.map(gw => this.gameweekService.deleteGameweek(gw.id!).toPromise());
+    Promise.all(deletes).then(() => {
+      alert(`Supprimé(s) avec succès.`);
+      this.selectedGameweekIds.clear();
+      this.loadGameweeks();
+    }).catch(err => {
+      console.error('Erreur suppression multiple', err);
+      alert('Erreur suppression.');
+    });
+  }
+
+  formatDate(dateString: string): string {
+    return new Date(dateString).toLocaleDateString('fr-FR', {
+      year: 'numeric', month: 'short', day: 'numeric',
+      hour: '2-digit', minute: '2-digit'
+    });
+  }
+
+  formatCompetition(competition: string): string {
+    return this.competitions.find(c => c.value === competition)?.label || competition.replace(/_/g, ' ');
+  }
+
+  getStatusClass(status: string): string {
+    const map: { [key: string]: string } = {
+      'UPCOMING': 'badge bg-primary',
+      'ACTIVE': 'badge bg-success',
+      'COMPLETED': 'badge bg-secondary',
+      'CANCELLED': 'badge bg-danger'
+    };
+    return map[status] || 'badge bg-light';
+  }
+
+  trackByGameweek(index: number, gameweek: Gameweek): number {
+    return gameweek.id!;
+  }
+
+showMatches(gameweek: Gameweek): void {
+  this.selectedGameweekForMatches = gameweek;
+  this.loadingMatches = true;
+  this.matchesLoadError = null;
+  this.matchesForSelectedGameweek = [];
+
+  this.gameweekService.getMatchesWithIcons(gameweek.id!).subscribe({
+    next: (matches) => {
+      this.matchesForSelectedGameweek = matches;
+      this.loadingMatches = false;
+    },
+    error: (err) => {
+      this.matchesLoadError = 'Erreur lors du chargement des matchs.';
+      this.loadingMatches = false;
+      console.error(err);
+    }
+  });
+}
+closeMatchesModal(): void {
+  this.selectedGameweekForMatches = null;
+  this.matchesForSelectedGameweek = [];
+  this.matchesLoadError = null;
+}
+
+getTimeLeft(deadline: string): string {
+  if (!deadline) return '';
+
+  const now = new Date();
+  const end = new Date(deadline);
+  const diff = end.getTime() - now.getTime();
+
+  if (diff <= 0) {
+    return 'Deadline passed';
+  }
+
+  const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+  const hours = Math.floor((diff / (1000 * 60 * 60)) % 24);
+  const minutes = Math.floor((diff / (1000 * 60)) % 60);
+
+  let result = `Days: ${days}`;
+
+  if (days < 7) {
+    result += ` Hrs: ${hours}`;
+    if (hours < 24) {
+      result += ` Min: ${minutes}`;
+    }
+  }
+
+  return result;
+}
 
 }

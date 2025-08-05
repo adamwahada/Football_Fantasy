@@ -41,7 +41,7 @@ public class TeamIconService {
         addTeam("Arsenal", league, "/assets/images/teams/arsenal.png");
         addTeam("Aston Villa", league, "/assets/images/teams/aston-villa.png");
         addTeam("Brentford", league, "/assets/images/teams/brentford.png");
-        addTeam("Brighton & Hove Albion", league, "/assets/images/teams/brighton.png");
+        addTeam("Brighton and Hove Albion", league, "/assets/images/teams/brighton.png");
         addTeam("Burnley", league, "/assets/images/teams/burnley.png");
         addTeam("Chelsea", league, "/assets/images/teams/chelsea.png");
         addTeam("Crystal Palace", league, "/assets/images/teams/crystal-palace.png");

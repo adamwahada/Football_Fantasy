@@ -72,10 +72,11 @@ public class MatchSeederService {
                 match.setFinished(false);
                 match.setStatus(MatchStatus.SCHEDULED);
                 match.setPredictionDeadline(dto.getMatchDate().minusMinutes(30));
+
                 matchRepository.save(match);
             }
 
-            // Add link between gameweek and match only if missing
+            // Associations gameweek <-> match
             if (!match.getGameweeks().contains(gameWeek)) {
                 match.getGameweeks().add(gameWeek);
             }

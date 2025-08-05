@@ -68,12 +68,7 @@ public class GameWeekController {
     @GetMapping("/{gameWeekId}/matches-with-icons")
     public ResponseEntity<List<MatchWithIconsDTO>> getMatchesByGameWeekWithIcons(@PathVariable Long gameWeekId) {
         try {
-            List<Match> matches = gameWeekService.getMatchesByGameWeek(gameWeekId);
-
-            List<MatchWithIconsDTO> matchesWithIcons = matches.stream()
-                    .map(this::convertToMatchWithIconsDTO)
-                    .collect(Collectors.toList());
-
+            List<MatchWithIconsDTO> matchesWithIcons = gameWeekService.getMatchesByGameWeekWithIcons(gameWeekId);
             return ResponseEntity.ok(matchesWithIcons);
         } catch (Exception e) {
             return ResponseEntity.internalServerError().build();
@@ -212,4 +207,10 @@ public class GameWeekController {
         return gameweekService.getTiebreakerMatches(id);
     }
 
+    @GetMapping
+    public ResponseEntity<List<GameWeek>> getAllGameweeks() {
+        List<GameWeek> all = gameWeekRepository.findAll();
+        return ResponseEntity.ok(all);
+    }
 }
+

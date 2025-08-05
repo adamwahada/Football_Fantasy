@@ -1,11 +1,13 @@
 package FootballFantasy.fantasy.Services.GameweekService;
 
+import FootballFantasy.fantasy.Dto.MatchWithIconsDTO;
 import FootballFantasy.fantasy.Entities.GameweekEntity.GameweekStatus;
 import FootballFantasy.fantasy.Entities.GameweekEntity.*;
 import FootballFantasy.fantasy.Events.MatchCompletedEvent;
 import FootballFantasy.fantasy.Events.MatchRescheduledEvent;
 import FootballFantasy.fantasy.Repositories.GameweekRepository.GameWeekRepository;
 import FootballFantasy.fantasy.Repositories.GameweekRepository.MatchRepository;
+import FootballFantasy.fantasy.Services.DataService.TeamIconService;
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationEventPublisher;
@@ -32,6 +34,9 @@ public class GameWeekService {
 
     @Autowired
     private CompetitionSessionService competitionSessionService;
+
+    @Autowired
+    private TeamIconService teamIconService;
 
     /**
      * Helper method to find or create a match to prevent duplicates
@@ -159,6 +164,27 @@ public class GameWeekService {
 
     public List<Match> getMatchesByGameWeek(Long gameWeekId) {
         return matchRepository.findByGameweeksId(gameWeekId);
+    }
+
+    // ✅ New method to return Matches with team icons
+    public List<MatchWithIconsDTO> getMatchesByGameWeekWithIcons(Long gameWeekId) {
+        List<Match> matches = matchRepository.findByGameweeksId(gameWeekId);
+        return matches.stream()
+                .map(match -> MatchWithIconsDTO.builder()
+                        .id(match.getId())
+                        .homeTeam(match.getHomeTeam())
+                        .awayTeam(match.getAwayTeam())
+                        .homeTeamIcon(teamIconService.getTeamIcon(match.getHomeTeam()))
+                        .awayTeamIcon(teamIconService.getTeamIcon(match.getAwayTeam()))
+                        .matchDate(match.getMatchDate())
+                        .homeScore(match.getHomeScore())
+                        .awayScore(match.getAwayScore())
+                        .finished(match.isFinished())
+                        .predictionDeadline(match.getPredictionDeadline())
+                        .description(match.getDescription())
+                        .build()
+                )
+                .collect(Collectors.toList());
     }
 
     @Transactional

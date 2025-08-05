@@ -53,10 +53,10 @@ private convertToFullUrl(relativePath: string): string {
 
   private getLeagueFromTeam(teamName: string): string {
     // This is a simple implementation - you could also get this from your backend
-    const premierLeagueTeams = ['Arsenal', 'Aston Villa', 'Brentford', 'Brighton & Hove Albion', 'Burnley', 'Chelsea', 'Crystal Palace', 'Everton', 'Fulham', 'Liverpool', 'Leeds United', 'Manchester City', 'Manchester United', 'Newcastle United', 'Nottingham Forest', 'Sunderland', 'Tottenham Hotspur', 'West Ham United', 'Wolverhampton Wanderers', 'Bournemouth'];
+    const premierLeagueTeams = ['Arsenal', 'Aston Villa', 'Brentford', 'Brighton and Hove Albion', 'Burnley', 'Chelsea', 'Crystal Palace', 'Everton', 'Fulham', 'Liverpool', 'Leeds United', 'Manchester City', 'Manchester United', 'Newcastle United', 'Nottingham Forest', 'Sunderland', 'Tottenham Hotspur', 'West Ham United', 'Wolverhampton Wanderers', 'Bournemouth'];
     const serieATeams = ['AC Milan', 'Atalanta', 'Bologna', 'Cagliari', 'Como', 'Cremonese', 'Fiorentina', 'Genoa', 'Inter', 'Juventus', 'Lazio', 'Lecce', 'Napoli', 'Parma', 'Pisa', 'Roma', 'Sassuolo', 'Torino', 'Udinese', 'Hellas Verona'];
     const laLigaTeams = ['Deportivo Alaves','Athletic Bilbao','Atletico Madrid','Barcelona','Celta Vigo','Elche','Espanyol','Getafe','Girona','Levante','Mallorca','Osasuna','Rayo Vallecano','Real Betis','Real Madrid','Real Oviedo','Real Sociedad','Sevilla','Valencia','Villarreal'];
-    const ligue1Teams = ['Auxerre', 'Brest', 'Clermont', 'Le Havre', 'Lens', 'Lille', 'Lorient', 'Olympique de Lyon', 'Olympique de Marseille', 'Metz', 'Monaco', 'Montpellier', 'Nantes', 'Nice', 'Paris FC', 'Paris Saint-Germain', 'Reims', 'Rennes', 'Strasbourg', 'Toulouse'];
+    const ligue1Teams = ['Angers','Auxerre','Brest','Le Havre','Lens','Lille','Lorient','Lyon','Marseille','Metz','Monaco','Nantes','Nice','Paris SG','Paris FC','Rennes','Strasbourg','Toulouse'];
     const bundesligaTeams = ['Augsburg', 'Bayer Leverkusen', 'Bayern Munich', 'Bochum', 'Borussia Dortmund', 'Borussia Mönchengladbach', 'Darmstadt', 'Eintracht Frankfurt', 'Freiburg', 'Heidenheim', 'Hoffenheim', 'Koln', 'Mainz', 'RB Leipzig', 'Schalke 04', 'Stuttgart', 'Union Berlin', 'Werder Bremen', 'Wolfsburg', 'Hamburg'];
 
     const eredivisieTeams = ['PSV Eindhoven', 'Ajax Amsterdam'];

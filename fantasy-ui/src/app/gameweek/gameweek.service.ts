@@ -2,11 +2,22 @@ import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { Match, MatchWithIconsDTO } from '../match/match.service';
+
+export type LeagueTheme =
+  | 'PREMIER_LEAGUE'
+  | 'SERIE_A'
+  | 'CHAMPIONS_LEAGUE'
+  | 'EUROPE_LEAGUE'
+  | 'BUNDESLIGA'          
+  | 'LA_LIGA'
+  | 'LIGUE_ONE'
+  | 'BESTOFF'
+  | 'CONFERENCE_LEAGUE';
 export interface Gameweek {
   id?: number;
   weekNumber: number;
   status: string;
-  competition: string;
+  competition: LeagueTheme ;
   startDate: string;
   endDate: string;
   joinDeadline: string;
@@ -42,8 +53,8 @@ export class GameweekService {
   }
 
   // ✅ GET matches with team icons
-  getMatchesWithIcons(gameweekId: number): Observable<any[]> {
-    return this.http.get<any[]>(`${this.apiUrl}/${gameweekId}/matches-with-icons`);
+  getMatchesWithIcons(gameweekId: number): Observable<MatchWithIconsDTO[]> {
+    return this.http.get<MatchWithIconsDTO[]>(`${this.apiUrl}/${gameweekId}/matches-with-icons`);
   }
 
   // ✅ POST create new gameweek

@@ -1,0 +1,48 @@
+<div class="modal-overlay" (click)="close.emit()">
+  <div class="matches-card" (click)="$event.stopPropagation()">
+    <div class="header">
+      <h3>
+        Matchs pour la semaine {{ gameweek.weekNumber }} ({{ formatCompetition(gameweek.competition) }})
+      </h3>
+      <button (click)="close.emit()" class="btn-close">✖</button>
+    </div>
+
+    <div *ngIf="matches.length === 0" class="no-matches">
+      Aucun match trouvé pour cette gameweek.
+    </div>
+
+    <div class="cards-container">
+      <div
+        *ngFor="let match of matches"
+        class="match-card"
+        [ngClass]="{ 'completed': match.finished }"
+      >
+        <div class="team home">
+          <img [src]="getFullIconUrl(match.homeTeamIcon)" alt="{{ match.homeTeam }}" class="team-icon" />
+          {{ match.homeTeam }}
+          <span *ngIf="match.finished && match.homeScore != null && match.awayScore != null && match.homeScore > match.awayScore" class="winner-marker">🏆</span>
+        </div>
+
+        <div class="vs">vs</div>
+
+        <div class="team away">
+          <img [src]="getFullIconUrl(match.awayTeamIcon)" alt="{{ match.awayTeam }}" class="team-icon" />
+          {{ match.awayTeam }}
+          <span *ngIf="match.finished && match.homeScore != null && match.awayScore != null && match.awayScore > match.homeScore" class="winner-marker">🏆</span>
+        </div>
+
+        <div class="match-date">
+          {{ match.matchDate | date: 'dd/MM/yyyy HH:mm' }}
+        </div>
+
+        <div class="score" *ngIf="match.finished">
+          {{ match.homeScore }} - {{ match.awayScore }}
+        </div>
+
+        <div class="status">
+          {{ match.finished ? 'Fini' : 'À venir' }}
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

@@ -2,7 +2,7 @@ export const TEAMS = [
   'Arsenal',
   'Aston Villa',
   'Brentford',
-  'Brighton & Hove Albion',
+  'Brighton and Hove Albion',
   'Burnley',
   'Chelsea',
   'Crystal Palace',

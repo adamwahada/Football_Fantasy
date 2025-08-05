@@ -29,6 +29,35 @@
         }
       ]
     },
+        {
+      "path": "",
+      "title": "Gameweeks",
+      "iconType": "material-icons-outlined",
+      "icon": "sports_soccer",
+      "class": "menu-toggle",
+      "groupTitle": false,
+      "role": ["Admin"],
+      "submenu": [
+        {
+          "path": "/admin/allgameweek",
+          "title": "Tous les Gameweeks",
+          "iconType": "",
+          "icon": "",
+          "class": "ml-menu",
+          "role": ["Admin"],
+          "submenu": []
+        },
+        {
+          "path": "/admin/AddGameweek",
+          "title": "Ajouter un Gameweek",
+          "iconType": "",
+          "icon": "",
+          "class": "ml-menu",
+          "role": ["Admin"],
+          "submenu": []
+        }
+      ]
+    },
     {
       "path": "",
       "title": "Parrainage",

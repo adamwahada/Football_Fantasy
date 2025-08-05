@@ -5,7 +5,7 @@ public enum LeagueTheme {
     SERIE_A,
     CHAMPIONS_LEAGUE,
     EUROPE_LEAGUE,
-    BUENDSLIGUA,
+    BUNDESLIGA,
     LA_LIGA,
     LIGUE_ONE,
     BESTOFF,
