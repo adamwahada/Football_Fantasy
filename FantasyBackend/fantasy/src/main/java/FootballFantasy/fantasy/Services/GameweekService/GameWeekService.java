@@ -140,12 +140,6 @@ public class GameWeekService {
     public Match addMatchToGameWeek(Long gameWeekId, Match matchData) {
         GameWeek gameWeek = gameWeekRepository.findById(gameWeekId)
                 .orElseThrow(() -> new IllegalArgumentException("GameWeek non trouvé"));
-
-        if (matchData.getMatchDate().isBefore(gameWeek.getStartDate()) ||
-                matchData.getMatchDate().isAfter(gameWeek.getEndDate())) {
-            throw new IllegalArgumentException("La date du match doit être comprise entre la date de début et de fin de la GameWeek.");
-        }
-
         // Use helper method to find or create match (prevents duplicates)
         Match match = findOrCreateMatch(matchData);
 
@@ -155,11 +149,43 @@ public class GameWeekService {
         // Save the match
         match = matchRepository.save(match);
 
+        // ✅ THIS IS THE KEY: Recalculate dates AFTER adding the match
         recalculateGameWeekDates(gameWeek);
 
         // Update status of all affected gameweeks
         updateAllAffectedGameWeekStatuses(List.of(match));
         return match;
+    }
+
+    // 2. ADD a new flexible method (optional - for creating gameweeks automatically)
+    @Transactional
+    public Match addMatchToGameweekOrCreate(String competition, Integer weekNumber, Match matchData) {
+        // Find or create gameweek
+        Optional<GameWeek> existingGameweek = gameWeekRepository.findByCompetitionAndWeekNumber(
+                LeagueTheme.valueOf(competition), weekNumber);
+
+        GameWeek gameweek;
+        if (existingGameweek.isPresent()) {
+            gameweek = existingGameweek.get();
+            System.out.println("✅ Found existing gameweek: " + competition + " Week " + weekNumber);
+        } else {
+            // Create new gameweek with flexible dates
+            gameweek = new GameWeek();
+            gameweek.setCompetition(LeagueTheme.valueOf(competition));
+            gameweek.setWeekNumber(weekNumber);
+            gameweek.setStatus(GameweekStatus.UPCOMING);
+            gameweek.setDescription("Week " + weekNumber + " - " + competition);
+
+            // Initial dates - will be recalculated when match is added
+            gameweek.setStartDate(matchData.getMatchDate());
+            gameweek.setEndDate(matchData.getMatchDate().plusHours(2).plusMinutes(30));
+            gameweek.setJoinDeadline(matchData.getMatchDate().minusHours(1));
+
+            gameweek = gameWeekRepository.save(gameweek);
+            System.out.println("✅ Created new flexible gameweek: " + competition + " Week " + weekNumber);
+        }
+
+        return addMatchToGameWeek(gameweek.getId(), matchData);
     }
 
     public List<Match> getMatchesByGameWeek(Long gameWeekId) {
@@ -290,10 +316,16 @@ public class GameWeekService {
 
             gameWeek.setStartDate(earliest);
             gameWeek.setEndDate(latest.plusHours(2).plusMinutes(30));
-            gameWeek.setJoinDeadline(earliest.minusMinutes(30));
+            gameWeek.setJoinDeadline(earliest.minusHours(1)); // 1 hour before first match
+
+            System.out.println("📅 GameWeek " + gameWeek.getId() + " dates recalculated: " +
+                    "Start=" + gameWeek.getStartDate() +
+                    ", End=" + gameWeek.getEndDate() +
+                    ", JoinDeadline=" + gameWeek.getJoinDeadline());
         }
 
         gameWeekRepository.save(gameWeek);
+
     }
 
     /**

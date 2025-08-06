@@ -142,4 +142,14 @@ export class GameweekService {
   getTiebreakerMatches(gameweekId: number): Observable<Match[]> {
     return this.http.get<Match[]>(`${this.apiUrl}/${gameweekId}/tiebreaker-matches`);
   }
+
+  /*** ✅ ADD this new method for flexible gameweek creation
+ * Creates match with automatic gameweek creation/adaptation */
+addMatchToGameweekFlexible(competition: string, weekNumber: number, match: Match): Observable<Match> {
+  const params = new HttpParams()
+    .set('competition', competition)
+    .set('weekNumber', weekNumber.toString());
+    
+  return this.http.post<Match>(`${this.apiUrl}/matches`, match, { params });
+}
 }

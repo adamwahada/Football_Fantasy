@@ -8,6 +8,7 @@ import FootballFantasy.fantasy.Repositories.GameweekRepository.GameWeekRepositor
 import FootballFantasy.fantasy.Services.GameweekService.GameWeekService;
 import FootballFantasy.fantasy.Services.DataService.TeamIconService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -50,7 +51,21 @@ public class GameWeekController {
         gameWeekService.deleteGameWeek(gameWeekId);
         return ResponseEntity.noContent().build(); // 204 No Content
     }
-
+    @PostMapping("/matches")
+    public ResponseEntity<Match> addMatchWithFlexibleGameweek(
+            @RequestParam String competition,
+            @RequestParam Integer weekNumber,
+            @RequestBody Match match) {
+        try {
+            Match createdMatch = gameWeekService.addMatchToGameweekOrCreate(competition, weekNumber, match);
+            return ResponseEntity.ok(createdMatch);
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(null);
+        } catch (Exception e) {
+            System.err.println("Error creating match with flexible gameweek: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
+        }
+    }
 
     // ✅ Add a Match to a GameWeek
     @PostMapping("/{gameWeekId}/matches")

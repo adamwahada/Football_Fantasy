@@ -15,6 +15,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
 import { MatDatepickerModule } from '@angular/material/datepicker';
 import { MatNativeDateModule } from '@angular/material/core';
+import { MatSelectModule } from '@angular/material/select';
 import { NgxMaterialTimepickerModule } from 'ngx-material-timepicker';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { GameweekService, Gameweek } from '../../../gameweek/gameweek.service';
@@ -36,7 +37,8 @@ import { GameweekService, Gameweek } from '../../../gameweek/gameweek.service';
     MatButtonModule,
     MatDatepickerModule,
     MatNativeDateModule,
-    NgxMaterialTimepickerModule,
+    MatSelectModule,
+    NgxMaterialTimepickerModule
   ],
 })
 export class AddAdminMatchComponent implements OnInit {
@@ -47,16 +49,12 @@ export class AddAdminMatchComponent implements OnInit {
   // Team icons properties
   teamsWithIcons: TeamIcon[] = [];
   teamIconsMap: {[key: string]: string} = {};
-  gameweeks: Gameweek[] = [];
-  
-  // Gameweek properties
-  selectedGameweeks: Gameweek[] = [];
-  gameweekInput = new FormControl('');
 
   // Observables pour l'autocomplete
   filteredHomeTeams!: Observable<TeamIcon[]>;
   filteredAwayTeams!: Observable<TeamIcon[]>;
-  filteredGameweeks!: Observable<Gameweek[]>;
+
+  gameweeks: Gameweek[] = [];
   
   constructor(
     private matchService: MatchService, 
@@ -64,27 +62,38 @@ export class AddAdminMatchComponent implements OnInit {
     private fb: FormBuilder, 
     private router: Router, 
     private snackBar: MatSnackBar,
-    private gameweekService: GameweekService
-  ) {
-    this.matchForm = this.fb.group({
-      homeTeam: ['', [Validators.required, this.teamValidator.bind(this)]],
-      awayTeam: ['', [Validators.required, this.teamValidator.bind(this)]],
-      matchDate: ['', Validators.required],
-      matchTime: ['', Validators.required],
-      homeScore: [0],
-      awayScore: [0],
-      description: [''],
-      status: ['SCHEDULED', Validators.required],
-      active: [true],
-      gameweeks: [[]],
-    }, { validators: this.teamsCannotBeSame });
+    private gameweekService: GameweekService)
+   {
+  this.matchForm = this.fb.group({
+    homeTeam: ['', [Validators.required, this.teamValidator.bind(this)]],
+    awayTeam: ['', [Validators.required, this.teamValidator.bind(this)]],
+    matchDate: ['', Validators.required],
+    matchTime: ['', Validators.required],
+    homeScore: [0],
+    awayScore: [0],
+    description: [''],
+    status: ['SCHEDULED', Validators.required],
+    active: [true],
+    league: [''],
+    weekNumber: [null, [ Validators.min(1)]],
+  }, { validators: this.teamsCannotBeSame });
   }
 
   ngOnInit(): void {
     this.loadTeamIcons();
-    this.gameweekService.getAllGameweeks().subscribe(data => {
-      this.gameweeks = data;
-      this.setupGameweekAutocomplete();
+    this.loadGameweeks();
+  }
+
+  loadGameweeks(): void {
+    this.gameweekService.getAllGameweeks().subscribe({
+      next: (gws: Gameweek[]) => {
+        this.gameweeks = gws;
+        console.log('Gameweeks chargés:', this.gameweeks);
+      },
+      error: (err: any) => {
+        console.error('Erreur chargement gameweeks', err);
+        this.showSnackbar('Erreur lors du chargement des gameweeks', 'error');
+      }
     });
   }
 
@@ -125,14 +134,6 @@ export class AddAdminMatchComponent implements OnInit {
     );
   }
 
-  // Setup gameweek autocomplete
-  private setupGameweekAutocomplete(): void {
-    this.filteredGameweeks = this.gameweekInput.valueChanges.pipe(
-      startWith(''),
-      map(value => this.filterGameweeks(value || ''))
-    );
-  }
-
   // Filter teams based on input
   private filterTeams(value: string): TeamIcon[] {
     if (!value || typeof value !== 'string') {
@@ -143,71 +144,6 @@ export class AddAdminMatchComponent implements OnInit {
     return this.teamsWithIcons.filter(team => 
       team.name.toLowerCase().includes(filterValue)
     );
-  }
-
-  // Filter gameweeks based on input
-  private filterGameweeks(value: string): Gameweek[] {
-    if (!value || typeof value !== 'string') {
-      return this.gameweeks;
-    }
-    
-    const filterValue = value.toLowerCase().trim();
-    return this.gameweeks.filter(gameweek => {
-      const description = gameweek.description;
-      return description ? description.toLowerCase().includes(filterValue) : false;
-    });
-  }
-
-  // Add gameweek to selection
-  addGameweek(gameweek: Gameweek): void {
-    if (gameweek && !this.isGameweekSelected(gameweek.id!)) {
-      this.selectedGameweeks.push(gameweek);
-      this.updateFormGameweeks();
-    }
-  }
-
-  // Remove gameweek from selection
-  removeGameweek(gameweekId: number): void {
-    this.selectedGameweeks = this.selectedGameweeks.filter(gw => gw.id !== gameweekId);
-    this.updateFormGameweeks();
-  }
-
-  // Clear all selected gameweeks
-  clearAllGameweeks(): void {
-    this.selectedGameweeks = [];
-    this.updateFormGameweeks();
-  }
-
-  // Check if gameweek is already selected
-  isGameweekSelected(gameweekId: number): boolean {
-    return this.selectedGameweeks.some(gw => gw.id === gameweekId);
-  }
-
-  // Update form control with selected gameweeks
-  private updateFormGameweeks(): void {
-    const gameweekIds = this.selectedGameweeks.map(gw => ({ id: gw.id }));
-    this.matchForm.patchValue({ gameweeks: gameweekIds });
-  }
-
-  // Format gameweek date for display
-  formatGameweekDate(dateString: string): string {
-    if (!dateString) return '';
-    
-    try {
-      const date = new Date(dateString);
-      return date.toLocaleDateString('fr-FR', {
-        day: '2-digit',
-        month: '2-digit',
-        year: 'numeric'
-      });
-    } catch (error) {
-      return dateString;
-    }
-  }
-
-  // Track by function for ngFor performance
-  trackByGameweekId(index: number, gameweek: Gameweek): number {
-    return gameweek.id!;
   }
 
   // Custom validator for teams
@@ -266,63 +202,115 @@ export class AddAdminMatchComponent implements OnInit {
   }
 
   // Handle form submission
-  onSubmit(): void {
-    this.markFormGroupTouched(this.matchForm);
-    if (this.matchForm.invalid) {
-      this.showValidationErrors();
-      return;
-    }
-    if (this.isSubmitting) return;
-    this.isSubmitting = true;
+onSubmit(): void {
+  this.markFormGroupTouched(this.matchForm);
 
-    const formValue = this.matchForm.value;
-
-    const date = formValue.matchDate;
-    if (!(date instanceof Date) || isNaN(date.getTime())) {
-      this.showSnackbar('Date invalide', 'error');
-      this.isSubmitting = false;
-      return;
-    }
-
-    const timeString = formValue.matchTime || '00:00';
-    const [hours, minutes] = timeString.split(':');
-
-    // ✅ Construire une date locale au format ISO sans 'Z' (indique que c'est local)
-    const year = date.getFullYear();
-    const month = (date.getMonth() + 1).toString().padStart(2, '0');
-    const day = date.getDate().toString().padStart(2, '0');
-    const localDateTimeString = `${year}-${month}-${day}T${hours}:${minutes}:00`;
-
-    const match: Match = {
-      ...formValue,
-      matchDate: localDateTimeString // ✅ Pas de conversion UTC
-    };
-
-    delete (match as any).matchTime;
-
-    if (match.status === 'SCHEDULED') {
-      match.homeScore = 0;
-      match.awayScore = 0;
-    }
-    match.homeScore = Number(match.homeScore) || 0;
-    match.awayScore = Number(match.awayScore) || 0;
-
-    this.createMatch(match);
+  if (this.matchForm.invalid) {
+    this.showValidationErrors();
+    return;
   }
 
-  // ✅ Fonction utilitaire
-  private formatDateToISO(date: Date): string {
-    const year = date.getFullYear();
-    const month = (date.getMonth() + 1).toString().padStart(2, '0');
-    const day = date.getDate().toString().padStart(2, '0');
-    return `${year}-${month}-${day}`;
+  if (this.isSubmitting) return;
+  this.isSubmitting = true;
+
+  const formValue = this.matchForm.value;
+
+  // Validation de la date
+  const date = formValue.matchDate;
+  if (!(date instanceof Date) || isNaN(date.getTime())) {
+    this.showSnackbar('Date invalide', 'error');
+    this.isSubmitting = false;
+    return;
   }
 
-  // Create new match
-  private createMatch(match: Match): void {
-    this.matchService.createMatch(match).subscribe({
-      next: () => {
+  // Construction de la date/heure
+  const timeString = formValue.matchTime || '00:00';
+  const [hours, minutes] = timeString.split(':');
+  const year = date.getFullYear();
+  const month = (date.getMonth() + 1).toString().padStart(2, '0');
+  const day = date.getDate().toString().padStart(2, '0');
+  const localDateTimeString = `${year}-${month}-${day}T${hours}:${minutes}:00`;
+
+  // Construction de l'objet match
+  const match: Match = {
+    homeTeam: formValue.homeTeam,
+    awayTeam: formValue.awayTeam,
+    matchDate: localDateTimeString,
+    homeScore: formValue.status === 'SCHEDULED' ? 0 : Number(formValue.homeScore) || 0,
+    awayScore: formValue.status === 'SCHEDULED' ? 0 : Number(formValue.awayScore) || 0,
+    description: formValue.description || '',
+    status: formValue.status,
+    active: formValue.active
+  };
+
+  // Cas 1 : avec gameweek
+  if (formValue.weekNumber && formValue.league) {
+    this.gameweekService.addMatchToGameweekFlexible(
+      formValue.league,
+      formValue.weekNumber,
+      match
+    ).subscribe({
+      next: (createdMatch) => {
+        console.log('Match créé avec gameweek flexible:', createdMatch);
         this.showSnackbar('Match créé avec succès!', 'success');
+        this.resetForm();
+
+        setTimeout(() => {
+          this.router.navigate(['/admin/Allmatch']);
+        }, 1500);
+      },
+      error: (error) => {
+        this.handleError(error);
+      },
+      complete: () => {
+        this.isSubmitting = false;
+      }
+    });
+  } 
+  // Cas 2 : sans gameweek
+  else {
+    this.matchService.createMatch(match).subscribe({
+      next: (createdMatch) => {
+        console.log('Match créé sans gameweek:', createdMatch);
+        this.showSnackbar('Match créé avec succès !', 'success');
+        this.resetForm();
+
+        setTimeout(() => {
+          this.router.navigate(['/admin/Allmatch']);
+        }, 1500);
+      },
+      error: (error) => {
+        this.handleError(error);
+      },
+      complete: () => {
+        this.isSubmitting = false;
+      }
+    });
+  }
+}
+
+// Méthode pour centraliser la gestion des erreurs
+private handleError(error: any): void {
+  console.error('Erreur lors de la création :', error);
+  let errorMessage = 'Erreur lors de la création du match.';
+
+  if (error.error?.message) {
+    errorMessage = error.error.message;
+  } else if (error.message) {
+    errorMessage = error.message;
+  }
+
+  this.showSnackbar(errorMessage, 'error');
+  this.isSubmitting = false;
+}
+
+
+  // Create new match using GameweekService.addMatchToGameweek
+  private createMatchInGameweek(match: Match, gameweekId: number): void {
+    this.gameweekService.addMatchToGameweek(gameweekId, match).subscribe({
+      next: (createdMatch) => {
+        console.log('Match créé et ajouté au gameweek:', createdMatch);
+        this.showSnackbar('Match créé avec succès et ajouté au gameweek!', 'success');
         this.resetForm();
         
         setTimeout(() => {
@@ -331,7 +319,16 @@ export class AddAdminMatchComponent implements OnInit {
       },
       error: (error) => {
         console.error('Erreur lors de la création :', error);
-        this.showSnackbar('Erreur lors de la création du match.', 'error');
+        let errorMessage = 'Erreur lors de la création du match.';
+        
+        if (error.error?.message) {
+          errorMessage = error.error.message;
+        } else if (error.message) {
+          errorMessage = error.message;
+        }
+        
+        this.showSnackbar(errorMessage, 'error');
+        this.isSubmitting = false;
       },
       complete: () => {
         this.isSubmitting = false;
@@ -351,13 +348,9 @@ export class AddAdminMatchComponent implements OnInit {
       homeScore: 0,
       awayScore: 0,
       description: '',
-      gameweeks: []
+      league: '',
+      weekNumber: null
     });
-    
-    // Reset gameweek selection
-    this.selectedGameweeks = [];
-    this.gameweekInput.setValue('');
-    
     this.isSubmitting = false;
     this.markFormGroupUntouched(this.matchForm);
   }

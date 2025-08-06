@@ -202,60 +202,68 @@
         </div>
       </div>
     </div>
-            <!-- Section Compétition et Week Number -->
-            <div class="form-section">
-                <h3 class="section-title">
-                    <i class="material-icons">sports</i>
-                    Informations Compétition
-                </h3>
+    <!-- Section Compétition et Week Number -->
+    <div class="form-section">
+        <h3 class="section-title">
+            <mat-icon>sports</mat-icon>
+            Informations Compétition
+        </h3>
 
-                <div class="form-row">
-                    <!-- Sélection compétition -->
-                    <div class="form-group">
-                        <label class="form-label">Compétition *</label>
-                        <div class="select-field">
-                            <select class="select-control" required>
-                                <option value="">Sélectionner la compétition</option>
-                                <option value="PREMIER_LEAGUE">Premier League</option>
-                                <option value="SERIE_A">Serie A</option>
-                                <option value="CHAMPIONS_LEAGUE">Champions League</option>
-                                <option value="EUROPE_LEAGUE">Europe League</option>
-                                <option value="BUNDESLIGA">Bundesliga</option>
-                                <option value="LA_LIGA">La Liga</option>
-                                <option value="LIGUE_ONE">Ligue 1</option>
-                                <option value="BESTOFF">Best Off</option>
-                                <option value="CONFERENCE_LEAGUE">Conference League</option>
-                            </select>
-                            <i class="material-icons select-arrow">arrow_drop_down</i>
-                        </div>
-                        <div class="error-messages" style="display: none;">
-                            <div class="error-message">
-                                <i class="material-icons">error</i>
-                                La compétition est requise
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Saisie week number -->
-                    <div class="form-group">
-                        <label class="form-label">Numéro de la semaine *</label>
-                        <input 
-                            type="number"
-                            class="form-control"
-                            min="1"
-                            placeholder="Entrez le numéro de la semaine"
-                            required
-                        />
-                        <div class="error-messages" style="display: none;">
-                            <div class="error-message">
-                                <i class="material-icons">error</i>
-                                Le numéro de la semaine est requis et doit être supérieur ou égal à 1
-                            </div>
-                        </div>
+        <div class="form-row">
+            <!-- Sélection compétition - CONNECTÉ au FormGroup -->
+            <div class="form-group">
+                <label class="form-label">Compétition *</label>
+                <mat-form-field appearance="outline" class="full-width">
+                    <mat-label>Sélectionner la compétition</mat-label>
+                    <mat-select formControlName="league" required>
+                        <mat-option value="">Sélectionner la compétition</mat-option>
+                        <mat-option value="PREMIER_LEAGUE">Premier League</mat-option>
+                        <mat-option value="SERIE_A">Serie A</mat-option>
+                        <mat-option value="CHAMPIONS_LEAGUE">Champions League</mat-option>
+                        <mat-option value="EUROPE_LEAGUE">Europe League</mat-option>
+                        <mat-option value="BUNDESLIGA">Bundesliga</mat-option>
+                        <mat-option value="LA_LIGA">La Liga</mat-option>
+                        <mat-option value="LIGUE_ONE">Ligue 1</mat-option>
+                        <mat-option value="BESTOFF">Best Off</mat-option>
+                        <mat-option value="CONFERENCE_LEAGUE">Conference League</mat-option>
+                    </mat-select>
+                </mat-form-field>
+                
+                <!-- Messages d'erreur pour compétition -->
+                <div class="error-messages" 
+                    *ngIf="matchForm.get('league')?.invalid && matchForm.get('league')?.touched">
+                    <div class="error-message" *ngIf="matchForm.get('league')?.hasError('required')">
+                        <mat-icon>error</mat-icon>
+                        La compétition est requise
                     </div>
                 </div>
             </div>
-    
+
+            <!-- Saisie week number - CONNECTÉ au FormGroup -->
+            <div class="form-group">
+                <label class="form-label">Numéro de la semaine (optionnel)</label>
+                <mat-form-field appearance="outline" class="full-width">
+                    <mat-label>Entrez le numéro de la semaine</mat-label>
+                    <input 
+                        matInput
+                        type="number"
+                        formControlName="weekNumber"
+                        min="1"
+                        placeholder="Entrez le numéro de la semaine (optionnel)"
+                    />
+                </mat-form-field>
+                
+                <!-- Messages d'erreur pour week number -->
+                <div class="error-messages" 
+                    *ngIf="matchForm.get('weekNumber')?.invalid && matchForm.get('weekNumber')?.touched">
+                    <div class="error-message" *ngIf="matchForm.get('weekNumber')?.hasError('min')">
+                        <mat-icon>error</mat-icon>
+                        Le numéro de la semaine doit être supérieur ou égal à 1
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
     <!-- Section Description (Optionnelle) -->
     <div class="form-section">
       <h3 class="section-title">
