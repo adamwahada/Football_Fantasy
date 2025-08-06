@@ -1,6 +1,6 @@
 import { Component, Input, Output, EventEmitter } from '@angular/core';
 import { Match, MatchWithIconsDTO } from '../../../match/match.service';
-import { Gameweek } from '../../gameweek.service';
+import { Gameweek,GameweekService } from '../../gameweek.service';
 import { CommonModule } from '@angular/common';
 
 @Component({
@@ -8,11 +8,12 @@ import { CommonModule } from '@angular/common';
   templateUrl: './show-gameweek-matches.component.html',
   styleUrls: ['./show-gameweek-matches.component.scss'],
   standalone: true,
-  imports: [CommonModule]
+  imports: [CommonModule, CommonModule]
 })
+
 export class ShowGameweekMatchesComponent {
   @Input() gameweek!: Gameweek;
-
+  constructor(private gameweekService: GameweekService) {}
   private _matches: MatchWithIconsDTO[] = [];
 
   @Input() set matches(value: MatchWithIconsDTO[]) {
@@ -59,5 +60,21 @@ export class ShowGameweekMatchesComponent {
     default:
       return 'À venir';
   }
+}
+removeMatch(matchId: number): void {
+  if (!this.gameweek?.id) return;
+
+  const confirmDelete = confirm('Voulez-vous vraiment retirer ce match de cette gameweek ?');
+  if (!confirmDelete) return;
+
+  this.gameweekService.deleteSelectedMatches(this.gameweek.id, [matchId]).subscribe({
+    next: () => {
+      this._matches = this._matches.filter(m => m.id !== matchId);
+    },
+    error: (err) => {
+      console.error('Erreur lors de la suppression du match :', err);
+      alert('Erreur lors de la suppression du match.');
+    }
+  });
 }
 }

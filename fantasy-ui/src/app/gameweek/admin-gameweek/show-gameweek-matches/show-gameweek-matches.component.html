@@ -20,10 +20,18 @@
           'inactive': match.active === false
         }"
       >
+              <!-- Action Buttons -->
+        <div class="actions">
+          <button (click)="removeMatch(match.id!)" class="action-btn delete">🗑 </button>
+        </div>
         <div class="team home">
           <img [src]="getFullIconUrl(match.homeTeamIcon)" alt="{{ match.homeTeam }}" class="team-icon" />
           {{ match.homeTeam }}
-          <span *ngIf="match.finished && match.homeScore != null && match.awayScore != null && match.homeScore > match.awayScore" class="winner-marker">🏆</span>
+          <span
+            *ngIf="match.finished && match.homeScore != null && match.awayScore != null && match.homeScore > match.awayScore"
+            class="winner-marker"
+            >🏆</span
+          >
         </div>
 
         <div class="vs">vs</div>
@@ -31,7 +39,11 @@
         <div class="team away">
           <img [src]="getFullIconUrl(match.awayTeamIcon)" alt="{{ match.awayTeam }}" class="team-icon" />
           {{ match.awayTeam }}
-          <span *ngIf="match.finished && match.homeScore != null && match.awayScore != null && match.awayScore > match.homeScore" class="winner-marker">🏆</span>
+          <span
+            *ngIf="match.finished && match.homeScore != null && match.awayScore != null && match.awayScore > match.homeScore"
+            class="winner-marker"
+            >🏆</span
+          >
         </div>
 
         <div class="match-date">
@@ -42,12 +54,16 @@
           {{ match.homeScore }} - {{ match.awayScore }}
         </div>
 
-        <div class="status" 
-             [ngClass]="{
-               'status-cancelled': match.active === false
-             }">
+        <div
+          class="status"
+          [ngClass]="{
+            'status-cancelled': match.active === false
+          }"
+        >
           {{ getMatchStatus(match) }}
         </div>
+
+
       </div>
     </div>
   </div>

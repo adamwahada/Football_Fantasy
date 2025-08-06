@@ -13,6 +13,7 @@
 
 .matches-card {
   background: white;
+  position: relative;
   padding: 2rem;
   border-radius: 12px;
   width: 80%;
@@ -127,4 +128,20 @@
 .winner-marker {
   margin-left: 0.5rem;
   font-size: 1.2rem;
+}
+
+.delete-icon-btn {
+  position: absolute;
+  top: 0.5rem;
+  right: 0.5rem;
+  background: transparent;
+  border: none;
+  font-size: 1.2rem;
+  cursor: pointer;
+  color: #c00;
+}
+
+.delete-icon-btn:hover {
+  color: red;
+  transform: scale(1.2);
 }
