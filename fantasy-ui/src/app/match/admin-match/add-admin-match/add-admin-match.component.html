@@ -202,6 +202,100 @@
         </div>
       </div>
     </div>
+    <!-- Section Gameweeks (Optionnelle) -->
+<div class="form-section">
+  <h3 class="section-title">
+    <mat-icon>calendar_view_week</mat-icon>
+    Journées (Gameweeks)
+    <span class="optional">(Optionnel)</span>
+  </h3>
+  
+  <div class="form-group">
+    <label class="form-label">Sélectionner les journées</label>
+    <mat-form-field appearance="outline" class="gameweek-field full-width">
+      <mat-label>Rechercher et sélectionner des journées</mat-label>
+      <input 
+        type="text"
+        matInput
+        #gameweekInput
+        [matAutocomplete]="gameweekAuto"
+        placeholder="Tapez pour rechercher une journée..."
+        (keydown.enter)="$event.preventDefault()"
+      >
+      
+      <div matSuffix class="suffix-container">
+        <mat-icon>search</mat-icon>
+      </div>
+
+      <mat-autocomplete 
+        #gameweekAuto="matAutocomplete"
+        (optionSelected)="addGameweek($event.option.value); gameweekInput.value = ''"
+        class="gameweek-autocomplete"
+      >
+        <mat-option 
+          *ngFor="let gameweek of filteredGameweeks | async" 
+          [value]="gameweek"
+          (click)="gameweek.id !== undefined && removeGameweek(gameweek.id)"
+        >
+          <div class="gameweek-option">
+            <div class="gameweek-info">
+              <span class="gameweek-name">{{ gameweek.description || 'Gameweek #' + gameweek.id }}</span>
+              <span class="gameweek-details" *ngIf="gameweek.startDate && gameweek.endDate">
+                {{ formatGameweekDate(gameweek.startDate) }} - {{ formatGameweekDate(gameweek.endDate) }}
+              </span>
+            </div>
+            <mat-icon class="selected-icon" *ngIf="gameweek.id !== undefined && isGameweekSelected(gameweek.id)">check_circle</mat-icon>
+          </div>
+        </mat-option>
+      </mat-autocomplete>
+    </mat-form-field>
+    
+    <!-- Selected Gameweeks Display -->
+    <div class="selected-gameweeks" *ngIf="selectedGameweeks.length > 0">
+      <h4 class="selected-title">
+        <mat-icon>event_note</mat-icon>
+        Journées sélectionnées ({{ selectedGameweeks.length }})
+      </h4>
+      
+      <div class="gameweek-chips">
+        <div 
+          class="gameweek-chip" 
+          *ngFor="let gameweek of selectedGameweeks; trackBy: trackByGameweekId"
+        >
+          <div class="chip-content">
+            <mat-icon class="chip-icon">calendar_view_week</mat-icon>
+            <span class="chip-name">{{ gameweek.description || 'Gameweek #' + gameweek.id }}</span>
+            <span class="chip-details" *ngIf="gameweek.startDate">
+              {{ formatGameweekDate(gameweek.startDate) }}
+            </span>
+          </div>
+          <button 
+            type="button"
+            mat-icon-button 
+            class="remove-chip-btn"
+            (click)="gameweek.id !== undefined && removeGameweek(gameweek.id)"
+            title="Retirer cette journée"
+          >
+            <mat-icon>close</mat-icon>
+          </button>
+        </div>
+      </div>
+      
+      <button 
+        type="button"
+        mat-stroked-button 
+        color="warn" 
+        class="clear-all-btn"
+        (click)="clearAllGameweeks()"
+        *ngIf="selectedGameweeks.length > 1"
+      >
+        <mat-icon>clear_all</mat-icon>
+        Tout effacer
+      </button>
+    </div>
+  </div>
+</div>
+    
     
     <!-- Section Description (Optionnelle) -->
     <div class="form-section">
@@ -222,8 +316,10 @@
           ></textarea>
           <mat-icon matSuffix>notes</mat-icon>
         </mat-form-field>
+        
       </div>
     </div>
+    
 
     <!-- Section Statut -->
     <div class="form-section">

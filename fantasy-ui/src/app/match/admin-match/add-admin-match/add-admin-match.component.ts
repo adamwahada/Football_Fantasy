@@ -17,6 +17,7 @@ import { MatDatepickerModule } from '@angular/material/datepicker';
 import { MatNativeDateModule } from '@angular/material/core';
 import { NgxMaterialTimepickerModule } from 'ngx-material-timepicker';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
+import { GameweekService, Gameweek } from '../../../gameweek/gameweek.service';
 
 @Component({
   selector: 'app-admin-match',
@@ -35,7 +36,7 @@ import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
     MatButtonModule,
     MatDatepickerModule,
     MatNativeDateModule,
-    NgxMaterialTimepickerModule
+    NgxMaterialTimepickerModule,
   ],
 })
 export class AddAdminMatchComponent implements OnInit {
@@ -46,17 +47,24 @@ export class AddAdminMatchComponent implements OnInit {
   // Team icons properties
   teamsWithIcons: TeamIcon[] = [];
   teamIconsMap: {[key: string]: string} = {};
+  gameweeks: Gameweek[] = [];
+  
+  // Gameweek properties
+  selectedGameweeks: Gameweek[] = [];
+  gameweekInput = new FormControl('');
 
   // Observables pour l'autocomplete
   filteredHomeTeams!: Observable<TeamIcon[]>;
   filteredAwayTeams!: Observable<TeamIcon[]>;
+  filteredGameweeks!: Observable<Gameweek[]>;
   
   constructor(
     private matchService: MatchService, 
     public teamService: TeamService,
     private fb: FormBuilder, 
     private router: Router, 
-    private snackBar: MatSnackBar
+    private snackBar: MatSnackBar,
+    private gameweekService: GameweekService
   ) {
     this.matchForm = this.fb.group({
       homeTeam: ['', [Validators.required, this.teamValidator.bind(this)]],
@@ -68,12 +76,16 @@ export class AddAdminMatchComponent implements OnInit {
       description: [''],
       status: ['SCHEDULED', Validators.required],
       active: [true],
-      gameweeks: this.fb.array([]),
+      gameweeks: [[]],
     }, { validators: this.teamsCannotBeSame });
   }
 
   ngOnInit(): void {
     this.loadTeamIcons();
+    this.gameweekService.getAllGameweeks().subscribe(data => {
+      this.gameweeks = data;
+      this.setupGameweekAutocomplete();
+    });
   }
 
   // Load team icons
@@ -113,6 +125,14 @@ export class AddAdminMatchComponent implements OnInit {
     );
   }
 
+  // Setup gameweek autocomplete
+  private setupGameweekAutocomplete(): void {
+    this.filteredGameweeks = this.gameweekInput.valueChanges.pipe(
+      startWith(''),
+      map(value => this.filterGameweeks(value || ''))
+    );
+  }
+
   // Filter teams based on input
   private filterTeams(value: string): TeamIcon[] {
     if (!value || typeof value !== 'string') {
@@ -123,6 +143,71 @@ export class AddAdminMatchComponent implements OnInit {
     return this.teamsWithIcons.filter(team => 
       team.name.toLowerCase().includes(filterValue)
     );
+  }
+
+  // Filter gameweeks based on input
+  private filterGameweeks(value: string): Gameweek[] {
+    if (!value || typeof value !== 'string') {
+      return this.gameweeks;
+    }
+    
+    const filterValue = value.toLowerCase().trim();
+    return this.gameweeks.filter(gameweek => {
+      const description = gameweek.description;
+      return description ? description.toLowerCase().includes(filterValue) : false;
+    });
+  }
+
+  // Add gameweek to selection
+  addGameweek(gameweek: Gameweek): void {
+    if (gameweek && !this.isGameweekSelected(gameweek.id!)) {
+      this.selectedGameweeks.push(gameweek);
+      this.updateFormGameweeks();
+    }
+  }
+
+  // Remove gameweek from selection
+  removeGameweek(gameweekId: number): void {
+    this.selectedGameweeks = this.selectedGameweeks.filter(gw => gw.id !== gameweekId);
+    this.updateFormGameweeks();
+  }
+
+  // Clear all selected gameweeks
+  clearAllGameweeks(): void {
+    this.selectedGameweeks = [];
+    this.updateFormGameweeks();
+  }
+
+  // Check if gameweek is already selected
+  isGameweekSelected(gameweekId: number): boolean {
+    return this.selectedGameweeks.some(gw => gw.id === gameweekId);
+  }
+
+  // Update form control with selected gameweeks
+  private updateFormGameweeks(): void {
+    const gameweekIds = this.selectedGameweeks.map(gw => ({ id: gw.id }));
+    this.matchForm.patchValue({ gameweeks: gameweekIds });
+  }
+
+  // Format gameweek date for display
+  formatGameweekDate(dateString: string): string {
+    if (!dateString) return '';
+    
+    try {
+      const date = new Date(dateString);
+      return date.toLocaleDateString('fr-FR', {
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric'
+      });
+    } catch (error) {
+      return dateString;
+    }
+  }
+
+  // Track by function for ngFor performance
+  trackByGameweekId(index: number, gameweek: Gameweek): number {
+    return gameweek.id!;
   }
 
   // Custom validator for teams
@@ -181,57 +266,57 @@ export class AddAdminMatchComponent implements OnInit {
   }
 
   // Handle form submission
-onSubmit(): void {
-  this.markFormGroupTouched(this.matchForm);
-  if (this.matchForm.invalid) {
-    this.showValidationErrors();
-    return;
+  onSubmit(): void {
+    this.markFormGroupTouched(this.matchForm);
+    if (this.matchForm.invalid) {
+      this.showValidationErrors();
+      return;
+    }
+    if (this.isSubmitting) return;
+    this.isSubmitting = true;
+
+    const formValue = this.matchForm.value;
+
+    const date = formValue.matchDate;
+    if (!(date instanceof Date) || isNaN(date.getTime())) {
+      this.showSnackbar('Date invalide', 'error');
+      this.isSubmitting = false;
+      return;
+    }
+
+    const timeString = formValue.matchTime || '00:00';
+    const [hours, minutes] = timeString.split(':');
+
+    // ✅ Construire une date locale au format ISO sans 'Z' (indique que c'est local)
+    const year = date.getFullYear();
+    const month = (date.getMonth() + 1).toString().padStart(2, '0');
+    const day = date.getDate().toString().padStart(2, '0');
+    const localDateTimeString = `${year}-${month}-${day}T${hours}:${minutes}:00`;
+
+    const match: Match = {
+      ...formValue,
+      matchDate: localDateTimeString // ✅ Pas de conversion UTC
+    };
+
+    delete (match as any).matchTime;
+
+    if (match.status === 'SCHEDULED') {
+      match.homeScore = 0;
+      match.awayScore = 0;
+    }
+    match.homeScore = Number(match.homeScore) || 0;
+    match.awayScore = Number(match.awayScore) || 0;
+
+    this.createMatch(match);
   }
-  if (this.isSubmitting) return;
-  this.isSubmitting = true;
 
-  const formValue = this.matchForm.value;
-
-  const date = formValue.matchDate;
-  if (!(date instanceof Date) || isNaN(date.getTime())) {
-    this.showSnackbar('Date invalide', 'error');
-    this.isSubmitting = false;
-    return;
+  // ✅ Fonction utilitaire
+  private formatDateToISO(date: Date): string {
+    const year = date.getFullYear();
+    const month = (date.getMonth() + 1).toString().padStart(2, '0');
+    const day = date.getDate().toString().padStart(2, '0');
+    return `${year}-${month}-${day}`;
   }
-
-  const timeString = formValue.matchTime || '00:00';
-  const [hours, minutes] = timeString.split(':');
-
-  // ✅ Construire une date locale au format ISO sans 'Z' (indique que c'est local)
-  const year = date.getFullYear();
-  const month = (date.getMonth() + 1).toString().padStart(2, '0');
-  const day = date.getDate().toString().padStart(2, '0');
-  const localDateTimeString = `${year}-${month}-${day}T${hours}:${minutes}:00`;
-
-  const match: Match = {
-    ...formValue,
-    matchDate: localDateTimeString // ✅ Pas de conversion UTC
-  };
-
-  delete (match as any).matchTime;
-
-  if (match.status === 'SCHEDULED') {
-    match.homeScore = 0;
-    match.awayScore = 0;
-  }
-  match.homeScore = Number(match.homeScore) || 0;
-  match.awayScore = Number(match.awayScore) || 0;
-
-  this.createMatch(match);
-}
-
-// ✅ Fonction utilitaire
-private formatDateToISO(date: Date): string {
-  const year = date.getFullYear();
-  const month = (date.getMonth() + 1).toString().padStart(2, '0');
-  const day = date.getDate().toString().padStart(2, '0');
-  return `${year}-${month}-${day}`;
-}
 
   // Create new match
   private createMatch(match: Match): void {
@@ -268,6 +353,10 @@ private formatDateToISO(date: Date): string {
       description: '',
       gameweeks: []
     });
+    
+    // Reset gameweek selection
+    this.selectedGameweeks = [];
+    this.gameweekInput.setValue('');
     
     this.isSubmitting = false;
     this.markFormGroupUntouched(this.matchForm);
@@ -376,5 +465,4 @@ private formatDateToISO(date: Date): string {
     const today = new Date();
     return today.toISOString().split('T')[0];
   }
-  
 }

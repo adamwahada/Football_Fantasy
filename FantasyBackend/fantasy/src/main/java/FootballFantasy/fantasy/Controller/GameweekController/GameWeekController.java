@@ -183,6 +183,7 @@ public class GameWeekController {
                 .matchDate(match.getMatchDate())
                 .homeScore(match.getHomeScore())
                 .awayScore(match.getAwayScore())
+                .active(match.isActive())
                 .finished(match.isFinished())
                 .predictionDeadline(match.getPredictionDeadline())
                 .description(match.getDescription())

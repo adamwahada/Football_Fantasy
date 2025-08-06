@@ -38,18 +38,26 @@ export class ShowGameweekMatchesComponent {
     return `${this.baseUrl}${relativePath}`;
   }
 
-  getMatchStatus(match: MatchWithIconsDTO): string {
-    // Vérifier d'abord si le match est inactif (active = 0)
-    if ((match.active as any) === 0) {
-      return 'Inactif';
-    }
-    
-    // Vérifier si le match est terminé (finished = 1)
-    if ((match.finished as any) === 1) {
-      return 'Fini';
-    }
-    
-    // Sinon c'est un match à venir
-    return 'À venir';
+
+  getMatchStatus(match: any): string {
+  if (!match.active || match.active === false) {
+    return 'Inactif';
   }
+  
+  if (match.finished) {
+    return 'Fini';
+  }
+  
+  switch (match.status) {
+    case 'LIVE':
+      return 'En cours';
+    case 'COMPLETED':
+      return 'Fini';
+    case 'CANCELED':
+      return 'Annulé';
+    case 'SCHEDULED':
+    default:
+      return 'À venir';
+  }
+}
 }

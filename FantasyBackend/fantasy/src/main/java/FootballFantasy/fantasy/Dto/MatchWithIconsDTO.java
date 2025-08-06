@@ -16,6 +16,7 @@ public class MatchWithIconsDTO {
     private LocalDateTime matchDate;
     private Integer homeScore;
     private Integer awayScore;
+    private boolean active;
     private boolean finished;
     private LocalDateTime predictionDeadline;
     private String description;

@@ -58,6 +58,7 @@
   align-items: center;
   box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
   border: 2px solid #ddd;
+  transition: all 0.3s ease;
 }
 
 .team {
@@ -99,11 +100,15 @@
 // Styles pour les matchs désactivés/inactifs
 .match-card.inactive {
   background-color: #ffebee; /* rouge très clair */
-  border-color: #f44336; /* rouge */
+  border: 2px solid #f44336; /* rouge */
   opacity: 0.9;
   
   .team, .vs, .match-date {
     color: #b71c1c; /* texte rouge foncé */
+  }
+  
+  .team-icon {
+    filter: grayscale(50%) brightness(0.8);
   }
 }
 
@@ -118,13 +123,8 @@
   font-size: 0.9rem;
 }
 
-// Style alternatif pour status inactif
-.status {
-  &:contains("Inactif") {
-    color: #f44336;
-    font-weight: bold;
-    background-color: rgba(244, 67, 54, 0.1);
-    padding: 0.3rem 0.6rem;
-    border-radius: 4px;
-  }
+// Winner marker styling
+.winner-marker {
+  margin-left: 0.5rem;
+  font-size: 1.2rem;
 }

@@ -15,7 +15,10 @@
       <div
         *ngFor="let match of matches"
         class="match-card"
-        [ngClass]="{ 'completed': match.finished }"
+        [ngClass]="{ 
+          'completed': match.finished,
+          'inactive': match.active === false
+        }"
       >
         <div class="team home">
           <img [src]="getFullIconUrl(match.homeTeamIcon)" alt="{{ match.homeTeam }}" class="team-icon" />
@@ -39,8 +42,11 @@
           {{ match.homeScore }} - {{ match.awayScore }}
         </div>
 
-        <div class="status">
-          {{ match.finished ? 'Fini' : 'À venir' }}
+        <div class="status" 
+             [ngClass]="{
+               'status-cancelled': match.active === false
+             }">
+          {{ getMatchStatus(match) }}
         </div>
       </div>
     </div>
