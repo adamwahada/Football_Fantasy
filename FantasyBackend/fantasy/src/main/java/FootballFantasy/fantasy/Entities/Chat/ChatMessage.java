@@ -43,10 +43,11 @@ public class ChatMessage {
     private LocalDateTime timestamp;
 
     private LocalDateTime editedAt;
-    @Column(nullable = false)
+    @Column(name = "is_deleted", nullable = false)
     private Boolean isDeleted = false;
 
-    @Column(nullable = false)
+
+    @Column(name = "is_edited", nullable = false)
     private Boolean isEdited = false;
 
 

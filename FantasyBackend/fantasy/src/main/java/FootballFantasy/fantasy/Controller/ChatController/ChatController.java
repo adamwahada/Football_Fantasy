@@ -7,19 +7,24 @@ import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/chat")
 @RequiredArgsConstructor
+@Slf4j
 @Tag(name = "Chat", description = "Chat management API")
 @SecurityRequirement(name = "bearerAuth")
 public class ChatController {
@@ -62,11 +67,28 @@ public class ChatController {
     @Operation(summary = "Send message")
     @PostMapping("/messages")
     public ResponseEntity<ChatMessageDTO> sendMessage(
-            @Valid @RequestBody SendMessageDTO messageDTO,
-            Authentication authentication) {
-        Long userId = extractUserIdFromAuth(authentication);
-        ChatMessageDTO message = chatService.sendMessage(messageDTO, userId);
-        return ResponseEntity.ok(message);
+            @RequestBody SendMessageDTO messageDto,
+            @AuthenticationPrincipal Jwt jwt) {
+
+        try {
+            String keycloakId = jwt.getSubject();
+            Long userId = chatService.getUserIdByKeycloakId(keycloakId);
+
+            // Validation
+            if (messageDto.getContent() == null || messageDto.getContent().trim().isEmpty()) {
+                return ResponseEntity.badRequest().build();
+            }
+
+            if (messageDto.getRoomId() == null) {
+                return ResponseEntity.badRequest().build();
+            }
+
+            ChatMessageDTO sentMessage = chatService.sendMessage(messageDto, userId);
+            return ResponseEntity.ok(sentMessage);
+        } catch (Exception e) {
+            log.error("Error sending message: ", e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
     }
 
     @Operation(summary = "Get room messages")
@@ -82,17 +104,23 @@ public class ChatController {
         return ResponseEntity.ok(messages);
     }
 
-    @Operation(summary = "Mark message as read")
     @PostMapping("/messages/{messageId}/read")
     public ResponseEntity<Void> markAsRead(
             @PathVariable Long messageId,
             @RequestParam String roomId,
-            Authentication authentication) {
-        Long userId = extractUserIdFromAuth(authentication);
-        chatService.markAsRead(roomId, messageId, userId);
-        return ResponseEntity.ok().build();
-    }
+            @AuthenticationPrincipal Jwt jwt) {
 
+        try {
+            String keycloakId = jwt.getSubject();
+            Long userId = chatService.getUserIdByKeycloakId(keycloakId);
+
+            chatService.markAsRead(roomId, messageId, userId);
+            return ResponseEntity.ok().build();
+        } catch (Exception e) {
+            log.error("Error marking message as read: ", e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
+    }
     @Operation(summary = "Search messages in room")
     @GetMapping("/rooms/{roomId}/search")
     public ResponseEntity<List<ChatMessageDTO>> searchMessages(
@@ -104,15 +132,27 @@ public class ChatController {
         return ResponseEntity.ok(messages);
     }
 
-    @Operation(summary = "Edit message")
     @PutMapping("/messages/{messageId}")
     public ResponseEntity<ChatMessageDTO> editMessage(
             @PathVariable Long messageId,
-            @RequestBody String newContent,
-            Authentication authentication) {
-        Long userId = extractUserIdFromAuth(authentication);
-        ChatMessageDTO message = chatService.editMessage(messageId, newContent, userId);
-        return ResponseEntity.ok(message);
+            @RequestBody Map<String, String> requestBody, // CORRIGÉ - Accepter JSON
+            @AuthenticationPrincipal Jwt jwt) {
+
+        try {
+            String keycloakId = jwt.getSubject();
+            Long userId = chatService.getUserIdByKeycloakId(keycloakId);
+
+            String newContent = requestBody.get("content"); // CORRIGÉ
+            if (newContent == null || newContent.trim().isEmpty()) {
+                return ResponseEntity.badRequest().build();
+            }
+
+            ChatMessageDTO updatedMessage = chatService.editMessage(messageId, newContent, userId);
+            return ResponseEntity.ok(updatedMessage);
+        } catch (Exception e) {
+            log.error("Error editing message: ", e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
     }
 
     @Operation(summary = "Delete message")

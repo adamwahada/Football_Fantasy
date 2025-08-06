@@ -1,9 +1,8 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
-import {BehaviorSubject, Observable, Subject} from 'rxjs';
+import { Observable } from 'rxjs';
 import { environment } from '../../../environments/environment';
-import {ChatMessageDTO, ChatParticipantDTO, ChatRoomDTO, CreateGroupDTO, SendMessageDTO} from "../chat.models";
-
+import { ChatMessageDTO, ChatParticipantDTO, ChatRoomDTO, CreateGroupDTO, SendMessageDTO } from "../chat.models";
 
 @Injectable({
   providedIn: 'root'
@@ -28,7 +27,7 @@ export class ChatService {
     return this.http.post<ChatRoomDTO>(`${this.baseUrl}/rooms/group`, groupData);
   }
 
-  // Send message
+  // Send message - CORRIGÉ
   sendMessage(messageData: SendMessageDTO): Observable<ChatMessageDTO> {
     return this.http.post<ChatMessageDTO>(`${this.baseUrl}/messages`, messageData);
   }
@@ -42,10 +41,9 @@ export class ChatService {
     return this.http.get<any>(`${this.baseUrl}/rooms/${roomId}/messages`, { params });
   }
 
-  // Mark message as read
+  // Mark message as read - CORRIGÉ
   markAsRead(messageId: number, roomId: string): Observable<void> {
-    const params = new HttpParams().set('roomId', roomId);
-    return this.http.post<void>(`${this.baseUrl}/messages/${messageId}/read`, {}, { params });
+    return this.http.post<void>(`${this.baseUrl}/messages/${messageId}/read?roomId=${roomId}`, {});
   }
 
   // Search messages
@@ -54,13 +52,16 @@ export class ChatService {
     return this.http.get<ChatMessageDTO[]>(`${this.baseUrl}/rooms/${roomId}/search`, { params });
   }
 
-  // Edit message
+  // Edit message - CORRIGÉ pour envoyer JSON
   editMessage(messageId: number, newContent: string): Observable<ChatMessageDTO> {
-    return this.http.put<ChatMessageDTO>(`${this.baseUrl}/messages/${messageId}`, newContent, {
-      headers: {
-        'Content-Type': 'text/plain'
-      }
-    });
+    return this.http.put<ChatMessageDTO>(`${this.baseUrl}/messages/${messageId}`,
+        { content: newContent }, // Envoi en JSON au lieu de text/plain
+        {
+          headers: {
+            'Content-Type': 'application/json'
+          }
+        }
+    );
   }
 
   // Delete message

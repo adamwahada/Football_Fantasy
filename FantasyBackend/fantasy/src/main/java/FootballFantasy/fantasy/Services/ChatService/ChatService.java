@@ -73,6 +73,17 @@ public class ChatService {
 
         return convertToDTO(chatRoom, userId1);
     }
+    public ChatRoomDTO createOrGetPrivateChat(Long currentUserId, Long otherUserId) {
+        // Chercher d'abord un chat privé existant
+        Optional<ChatRoom> existingRoom = chatRoomRepository.findPrivateChatRoom(currentUserId, otherUserId, ChatRoomType.PRIVATE);
+
+        if (existingRoom.isPresent()) {
+            return convertToDTO(existingRoom.get(), currentUserId);
+        }
+
+        // Sinon, utiliser la méthode existante
+        return getOrCreatePrivateChat(currentUserId, otherUserId);
+    }
 
     // Créer un groupe
     public ChatRoomDTO createGroup(String name, String description, Long creatorId, List<Long> participantIds) {
@@ -118,23 +129,21 @@ public class ChatService {
         ChatRoom chatRoom = chatRoomRepository.findByRoomId(messageDto.getRoomId())
                 .orElseThrow(() -> new RuntimeException("Chat room not found"));
 
-        UserEntity sender = userRepository.findById(senderId).orElseThrow();
+        UserEntity sender = userRepository.findById(senderId)
+                .orElseThrow(() -> new RuntimeException("User not found"));
 
-        // Option 1: Utiliser l'ID numérique (garder votre repository actuel)
-        if (!chatParticipantRepository.existsByChatRoomIdAndUserIdAndIsActiveTrue(chatRoom.getId(), senderId)) {
+        // CORRIGÉ - Utiliser le roomId UUID au lieu de l'ID numérique
+        if (!chatParticipantRepository.existsByRoomIdAndUserIdAndIsActiveTrue(messageDto.getRoomId(), senderId)) {
             throw new RuntimeException("User is not a participant of this chat");
         }
-
-        // OU Option 2: Utiliser le roomId UUID (modifier votre repository)
-        // if (!chatParticipantRepository.existsByRoomIdAndUserIdAndIsActiveTrue(messageDto.getRoomId(), senderId)) {
-        //     throw new RuntimeException("User is not a participant of this chat");
-        // }
 
         ChatMessage message = ChatMessage.builder()
                 .content(messageDto.getContent())
                 .type(messageDto.getType())
                 .sender(sender)
                 .chatRoom(chatRoom)
+                .isDeleted(false)
+                .isEdited(false)
                 .build();
 
         if (messageDto.getReplyToId() != null) {
@@ -166,11 +175,13 @@ public class ChatService {
     }
 
     // Récupérer les messages d'une room
+    // CORRECTION 3: Dans getRoomMessages(), même problème de vérification
     public Page<ChatMessageDTO> getRoomMessages(String roomId, Long userId, Pageable pageable) {
         ChatRoom chatRoom = chatRoomRepository.findByRoomId(roomId)
                 .orElseThrow(() -> new RuntimeException("Chat room not found"));
 
-        if (!chatParticipantRepository.existsByChatRoomIdAndUserIdAndIsActiveTrue(chatRoom.getId(), userId)) {
+        // CORRIGÉ - Utiliser roomId UUID
+        if (!chatParticipantRepository.existsByRoomIdAndUserIdAndIsActiveTrue(roomId, userId)) {
             throw new RuntimeException("User is not a participant of this chat");
         }
 
@@ -179,7 +190,6 @@ public class ChatService {
 
         return messages.map(message -> convertToMessageDTO(message, userId));
     }
-
     // Récupérer les chats de l'utilisateur
     public List<ChatRoomDTO> getUserChats(Long userId) {
         List<ChatRoom> chatRooms = chatRoomRepository.findUserChatRooms(userId);
@@ -257,23 +267,6 @@ public class ChatService {
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
     public Long getUserIdByKeycloakId(String keycloakId) {
         UserEntity user = userRepository.findByKeycloakId(keycloakId)
                 .orElseThrow(() -> new RuntimeException("User not found"));
@@ -284,7 +277,8 @@ public class ChatService {
         ChatRoom chatRoom = chatRoomRepository.findByRoomId(roomId)
                 .orElseThrow(() -> new RuntimeException("Chat room not found"));
 
-        if (!chatParticipantRepository.existsByChatRoomIdAndUserIdAndIsActiveTrue(chatRoom.getId(), userId)) {
+        // CORRIGÉ - Utiliser roomId UUID
+        if (!chatParticipantRepository.existsByRoomIdAndUserIdAndIsActiveTrue(roomId, userId)) {
             throw new RuntimeException("User is not a participant of this chat");
         }
 
@@ -295,6 +289,7 @@ public class ChatService {
                 .map(message -> convertToMessageDTO(message, userId))
                 .collect(Collectors.toList());
     }
+
 
     public ChatMessageDTO editMessage(Long messageId, String newContent, Long userId) {
         ChatMessage message = chatMessageRepository.findById(messageId)
@@ -308,14 +303,18 @@ public class ChatService {
             throw new RuntimeException("Cannot edit deleted message");
         }
 
-        message.setContent(newContent);
+        // AJOUTÉ - Validation du contenu
+        if (newContent == null || newContent.trim().isEmpty()) {
+            throw new RuntimeException("Message content cannot be empty");
+        }
+
+        message.setContent(newContent.trim());
         message.setIsEdited(true);
         message.setEditedAt(LocalDateTime.now());
 
         message = chatMessageRepository.save(message);
         return convertToMessageDTO(message, userId);
     }
-
     public void deleteMessage(Long messageId, Long userId) {
         ChatMessage message = chatMessageRepository.findById(messageId)
                 .orElseThrow(() -> new RuntimeException("Message not found"));
@@ -337,9 +336,9 @@ public class ChatService {
             throw new RuntimeException("Can only add participants to groups");
         }
 
-        // Vérifier que l'utilisateur est admin
+        // CORRIGÉ - Vérifier que l'utilisateur est admin avec roomId UUID
         ChatParticipant adminParticipant = chatParticipantRepository
-                .findByChatRoomIdAndUserId(chatRoom.getId(), adminId)
+                .findByRoomIdAndUserId(roomId, adminId)
                 .orElseThrow(() -> new RuntimeException("User is not a participant"));
 
         if (adminParticipant.getRole() != ParticipantRole.ADMIN) {
@@ -347,7 +346,7 @@ public class ChatService {
         }
 
         for (Long userId : userIds) {
-            if (!chatParticipantRepository.existsByChatRoomIdAndUserIdAndIsActiveTrue(chatRoom.getId(), userId)) {
+            if (!chatParticipantRepository.existsByRoomIdAndUserIdAndIsActiveTrue(roomId, userId)) {
                 UserEntity user = userRepository.findById(userId).orElseThrow();
                 ChatParticipant participant = ChatParticipant.builder()
                         .user(user)
@@ -368,9 +367,9 @@ public class ChatService {
             throw new RuntimeException("Can only remove participants from groups");
         }
 
-        // Vérifier que l'utilisateur est admin
+        // CORRIGÉ - Vérifier que l'utilisateur est admin avec roomId UUID
         ChatParticipant adminParticipant = chatParticipantRepository
-                .findByChatRoomIdAndUserId(chatRoom.getId(), adminId)
+                .findByRoomIdAndUserId(roomId, adminId)
                 .orElseThrow(() -> new RuntimeException("User is not a participant"));
 
         if (adminParticipant.getRole() != ParticipantRole.ADMIN) {
@@ -378,7 +377,7 @@ public class ChatService {
         }
 
         ChatParticipant participantToRemove = chatParticipantRepository
-                .findByChatRoomIdAndUserId(chatRoom.getId(), participantId)
+                .findByRoomIdAndUserId(roomId, participantId)
                 .orElseThrow(() -> new RuntimeException("Participant not found"));
 
         participantToRemove.setIsActive(false);
@@ -394,7 +393,7 @@ public class ChatService {
         }
 
         ChatParticipant participant = chatParticipantRepository
-                .findByChatRoomIdAndUserId(chatRoom.getId(), userId)
+                .findByRoomIdAndUserId(roomId, userId)
                 .orElseThrow(() -> new RuntimeException("User is not a participant"));
 
         participant.setIsActive(false);
@@ -409,9 +408,9 @@ public class ChatService {
             throw new RuntimeException("Can only update group information");
         }
 
-        // Vérifier que l'utilisateur est admin
+        // CORRIGÉ - Vérifier que l'utilisateur est admin avec roomId UUID
         ChatParticipant participant = chatParticipantRepository
-                .findByChatRoomIdAndUserId(chatRoom.getId(), userId)
+                .findByRoomIdAndUserId(roomId, userId)
                 .orElseThrow(() -> new RuntimeException("User is not a participant"));
 
         if (participant.getRole() != ParticipantRole.ADMIN) {
@@ -431,7 +430,7 @@ public class ChatService {
                 .orElseThrow(() -> new RuntimeException("Chat room not found"));
 
         ChatParticipant participant = chatParticipantRepository
-                .findByChatRoomIdAndUserId(chatRoom.getId(), userId)
+                .findByRoomIdAndUserId(roomId, userId)
                 .orElseThrow(() -> new RuntimeException("User is not a participant"));
 
         participant.setLastSeenAt(LocalDateTime.now());
@@ -443,12 +442,8 @@ public class ChatService {
 
 
 
-
     public boolean isUserParticipant(String roomId, Long userId) {
-        ChatRoom chatRoom = chatRoomRepository.findByRoomId(roomId)
-                .orElseThrow(() -> new RuntimeException("Chat room not found"));
-
-        return chatParticipantRepository.existsByChatRoomIdAndUserIdAndIsActiveTrue(chatRoom.getId(), userId);
+        return chatParticipantRepository.existsByRoomIdAndUserIdAndIsActiveTrue(roomId, userId);
     }
 
     public List<ChatParticipantDTO> getActiveParticipants(String roomId) {
