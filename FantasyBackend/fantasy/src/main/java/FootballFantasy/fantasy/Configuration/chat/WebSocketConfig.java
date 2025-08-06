@@ -1,4 +1,4 @@
-package FootballFantasy.fantasy.Configuration;
+package FootballFantasy.fantasy.Configuration.chat;
 
 import org.springframework.context.annotation.Configuration;
 import org.springframework.messaging.simp.config.MessageBrokerRegistry;

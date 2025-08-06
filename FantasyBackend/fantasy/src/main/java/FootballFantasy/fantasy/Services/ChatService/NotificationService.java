@@ -1,6 +1,6 @@
 package FootballFantasy.fantasy.Services.ChatService;
 
-import FootballFantasy.fantasy.Configuration.WebSocketEventListener;
+import FootballFantasy.fantasy.Configuration.chat.WebSocketEventListener;
 import FootballFantasy.fantasy.Dto.ChatDto.ChatMessageDTO;
 import FootballFantasy.fantasy.Dto.ChatDto.TypingIndicatorDTO;
 import FootballFantasy.fantasy.Entities.Chat.ChatParticipant;

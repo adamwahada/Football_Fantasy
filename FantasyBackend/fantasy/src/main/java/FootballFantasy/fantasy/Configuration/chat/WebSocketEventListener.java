@@ -1,4 +1,4 @@
-package FootballFantasy.fantasy.Configuration;
+package FootballFantasy.fantasy.Configuration.chat;
 
 import FootballFantasy.fantasy.Dto.ChatDto.UserStatusDTO;
 import FootballFantasy.fantasy.Services.ChatService.ChatService;

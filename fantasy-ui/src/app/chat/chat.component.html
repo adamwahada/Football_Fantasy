@@ -1,0 +1,186 @@
+<!-- chat.component.html -->
+<div class="chat-container">
+
+    <!-- Message d'erreur global -->
+    <div *ngIf="error" class="error-message" (click)="clearError()">
+        {{ error }} (Cliquer pour fermer)
+    </div>
+
+    <!-- Loading -->
+    <div *ngIf="loading" class="loading">
+        Chargement...
+    </div>
+
+    <div class="chat-layout">
+
+        <!-- SIDEBAR - Liste des chats -->
+        <div class="sidebar">
+            <h3>Mes Chats</h3>
+
+            <!-- Bouton refresh -->
+            <button (click)="loadUserChats()" class="btn btn-small">🔄 Actualiser</button>
+
+            <!-- Liste des chats -->
+            <div class="chat-list">
+                <div
+                        *ngFor="let room of chatRooms"
+                        class="chat-item"
+                        [class.active]="selectedRoom?.id === room.id"
+                        (click)="selectRoom(room)">
+
+                    <div class="chat-info">
+                        <strong>{{ room.name }}</strong>
+                        <span class="chat-type">[{{ room.type }}]</span>
+                        <span *ngIf="room.unreadCount > 0" class="unread-badge">{{ room.unreadCount }}</span>
+                    </div>
+
+                    <div class="chat-meta">
+                        <small>{{ formatDate(room.lastActivity) }}</small>
+                    </div>
+                </div>
+            </div>
+
+            <!-- CRÉATION DE CHATS -->
+            <div class="chat-creation">
+
+                <h4>Créer Chat Privé</h4>
+                <div class="form-group">
+                    <input
+                            [(ngModel)]="otherUserId"
+                            placeholder="ID utilisateur"
+                            class="input">
+                    <button (click)="createPrivateChat()" class="btn btn-small">Créer</button>
+                </div>
+
+                <h4>Créer Groupe</h4>
+                <div class="form-group">
+                    <input
+                            [(ngModel)]="groupName"
+                            placeholder="Nom du groupe"
+                            class="input">
+                    <input
+                            [(ngModel)]="groupDescription"
+                            placeholder="Description"
+                            class="input">
+                    <input
+                            [(ngModel)]="participantIds"
+                            placeholder="IDs participants (1,2,3)"
+                            class="input">
+                    <button (click)="createGroup()" class="btn btn-small">Créer Groupe</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- CONTENU PRINCIPAL -->
+        <div class="main-content">
+
+            <div *ngIf="!selectedRoom" class="no-selection">
+                Sélectionnez un chat pour commencer
+            </div>
+
+            <div *ngIf="selectedRoom" class="chat-content">
+
+                <!-- HEADER DU CHAT -->
+                <div class="chat-header">
+                    <div class="chat-title">
+                        <h2>{{ selectedRoom.name }}</h2>
+                        <span class="chat-type-badge">{{ selectedRoom.type }}</span>
+                    </div>
+
+                    <div class="chat-actions">
+                        <button *ngIf="selectedRoom.type === 'GROUP'" (click)="addParticipant()" class="btn btn-small">
+                            ➕ Ajouter
+                        </button>
+                        <button *ngIf="selectedRoom.type === 'GROUP'" (click)="leaveGroup()" class="btn btn-danger btn-small">
+                            🚪 Quitter
+                        </button>
+                    </div>
+                </div>
+
+                <!-- PARTICIPANTS (pour les groupes) -->
+                <div *ngIf="selectedRoom.type === 'GROUP' && participants.length > 0" class="participants-section">
+                    <h4>Participants ({{ participants.length }})</h4>
+                    <div class="participants-list">
+                        <div *ngFor="let participant of participants" class="participant-item">
+                            <span class="participant-name">{{ participant.fullName }}</span>
+                            <span class="participant-role">[{{ participant.role }}]</span>
+                            <button
+                                    *ngIf="participant.role !== 'ADMIN'"
+                                    (click)="removeParticipant(participant.userId)"
+                                    class="btn btn-danger btn-tiny">
+                                ❌
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- RECHERCHE -->
+                <div class="search-section">
+                    <div class="search-bar">
+                        <input
+                                [(ngModel)]="searchQuery"
+                                placeholder="Rechercher dans les messages..."
+                                class="input">
+                        <button (click)="searchMessages()" class="btn btn-small">🔍 Rechercher</button>
+                        <button *ngIf="searchResults.length > 0" (click)="clearSearch()" class="btn btn-small">✖️ Effacer</button>
+                    </div>
+
+                    <!-- Résultats de recherche -->
+                    <div *ngIf="searchResults.length > 0" class="search-results">
+                        <h4>Résultats de recherche ({{ searchResults.length }})</h4>
+                        <div class="message-list">
+                            <div *ngFor="let message of searchResults" class="message-item search-result">
+                                <div class="message-header">
+                                    <strong>{{ message.senderName }}</strong>
+                                    <span class="message-time">{{ formatDate(message.timestamp) }}</span>
+                                </div>
+                                <div class="message-content">{{ message.content }}</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- MESSAGES -->
+                <div class="messages-section">
+                    <h4>Messages ({{ messages.length }})</h4>
+
+                    <div class="message-list">
+                        <div *ngFor="let message of messages" class="message-item">
+
+                            <div class="message-header">
+                                <strong>{{ message.senderName }}</strong>
+                                <span class="message-time">{{ formatDate(message.timestamp) }}</span>
+                                <span *ngIf="message.isEdited" class="edited-indicator">(modifié)</span>
+                                <span *ngIf="message.status" class="message-status">[{{ message.status }}]</span>
+                            </div>
+
+                            <div class="message-content">{{ message.content }}</div>
+
+                            <div class="message-actions">
+                                <button (click)="editMessage(message.id, message.content)" class="btn btn-tiny">✏️ Modifier</button>
+                                <button (click)="deleteMessage(message.id)" class="btn btn-danger btn-tiny">🗑️ Supprimer</button>
+                                <button (click)="markAsRead(message.id)" class="btn btn-tiny">👁️ Lu</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ENVOI DE MESSAGE -->
+                <div class="message-input-section">
+                    <div class="message-input">
+            <textarea
+                    [(ngModel)]="newMessage"
+                    placeholder="Tapez votre message..."
+                    class="message-textarea"
+                    (keydown)="onKeyDown($event)">
+            </textarea>
+                        <button (click)="sendMessage()" class="btn btn-primary">📤 Envoyer</button>
+                    </div>
+                    <small>Ctrl + Entrée pour envoyer</small>
+                </div>
+
+            </div>
+        </div>
+
+    </div>
+</div>

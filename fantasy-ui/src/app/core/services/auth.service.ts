@@ -1,9 +1,13 @@
 import { Injectable } from '@angular/core';
 import { KeycloakService } from '../../keycloak.service';
 import { Router } from '@angular/router';
+import { JwtHelperService } from '@auth0/angular-jwt';
+
 
 @Injectable({ providedIn: 'root' })
 export class AuthService {
+  private jwtHelper = new JwtHelperService();
+
   constructor(
     public keycloakService: KeycloakService,
     private router: Router
@@ -60,4 +64,20 @@ export class AuthService {
       this.router.navigate(['/unauthorized']);
     }
   }
+  getToken(): string {
+    return localStorage.getItem('access_token') || '';
+  }
+
+  getUserId(): number {
+    const token = this.getToken();
+    if (!token) return 0;
+    const decoded = this.jwtHelper.decodeToken(token);
+    return decoded.sub || 0;
+  }
+
+  isAuthenticated(): boolean {
+    const token = this.getToken();
+    return !this.jwtHelper.isTokenExpired(token);
+  }
+
 }
