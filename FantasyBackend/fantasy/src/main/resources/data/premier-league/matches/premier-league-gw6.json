@@ -1,52 +1,52 @@
 [
   {
-    "homeTeam": "Manchester United",
-    "awayTeam": "Sunderland",
-    "matchDate": "2025-10-04T15:00:00"
-  },
-  {
-    "homeTeam": "Leeds United",
-    "awayTeam": "Tottenham",
-    "matchDate": "2025-10-04T15:00:00"
-  },
-  {
-    "homeTeam": "Chelsea",
-    "awayTeam": "Liverpool",
-    "matchDate": "2025-10-04T15:00:00"
-  },
-  {
-    "homeTeam": "Everton",
-    "awayTeam": "Crystal Palace",
-    "matchDate": "2025-10-04T15:00:00"
-  },
-  {
-    "homeTeam": "Newcastle",
-    "awayTeam": "Nottm Forest",
-    "matchDate": "2025-10-04T15:00:00"
-  },
-  {
-    "homeTeam": "Bournemouth",
-    "awayTeam": "Fulham",
-    "matchDate": "2025-10-04T15:00:00"
-  },
-  {
     "homeTeam": "Brentford",
-    "awayTeam": "Manchester City",
-    "matchDate": "2025-10-04T15:00:00"
-  },
-  {
-    "homeTeam": "Arsenal",
-    "awayTeam": "West Ham",
-    "matchDate": "2025-10-04T15:00:00"
-  },
-  {
-    "homeTeam": "Wolves",
-    "awayTeam": "Brighton",
-    "matchDate": "2025-10-04T15:00:00"
+    "awayTeam": "Manchester United",
+    "matchDate": "2025-09-27T12:30:00"
   },
   {
     "homeTeam": "Aston Villa",
+    "awayTeam": "Fulham",
+    "matchDate": "2025-09-27T15:00:00"
+  },
+  {
+    "homeTeam": "Chelsea",
+    "awayTeam": "Brighton and Hove Albion",
+    "matchDate": "2025-09-27T15:00:00"
+  },
+  {
+    "homeTeam": "Crystal Palace",
+    "awayTeam": "Liverpool",
+    "matchDate": "2025-09-27T15:00:00"
+  },
+  {
+    "homeTeam": "Leeds United",
+    "awayTeam": "Bournemouth",
+    "matchDate": "2025-09-27T15:00:00"
+  },
+  {
+    "homeTeam": "Manchester City",
     "awayTeam": "Burnley",
-    "matchDate": "2025-10-04T15:00:00"
+    "matchDate": "2025-09-27T15:00:00"
+  },
+  {
+    "homeTeam": "Nottingham Forest",
+    "awayTeam": "Sunderland",
+    "matchDate": "2025-09-27T17:30:00"
+  },
+  {
+    "homeTeam": "Tottenham Hotspur",
+    "awayTeam": "Wolverhampton Wanderers",
+    "matchDate": "2025-09-28T14:00:00"
+  },
+  {
+    "homeTeam": "Newcastle United",
+    "awayTeam": "Arsenal",
+    "matchDate": "2025-09-28T16:30:00"
+  },
+  {
+    "homeTeam": "Everton",
+    "awayTeam": "West Ham United",
+    "matchDate": "2025-09-29T20:00:00"
   }
 ]

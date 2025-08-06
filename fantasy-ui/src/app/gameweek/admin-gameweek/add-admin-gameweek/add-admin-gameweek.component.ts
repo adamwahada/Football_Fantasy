@@ -113,7 +113,7 @@ export class AddAdminGameweekComponent implements OnInit {
         this.isLoading = false;
         this.successMessage = 'Gameweek created successfully!';
         setTimeout(() => {
-          this.router.navigate(['/admin/gameweeks']);
+          this.router.navigate(['/admin/allgameweek']);
         }, 2000);
       },
       error: (error) => {

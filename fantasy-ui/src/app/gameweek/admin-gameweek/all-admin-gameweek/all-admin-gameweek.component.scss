@@ -56,6 +56,19 @@
       }
     }
   }
+  .row-finished {
+  background-color: #d4edda !important; /* Vert clair */
+}
+
+.row-ongoing {
+  background-color: #efce60 !important; /* Jaune/orange clair */
+}
+
+
+
+.row-cancelled {
+  background-color: #fe99a2 !important; /* Rouge clair */
+}
 
   // États actif/inactif
   span.active {

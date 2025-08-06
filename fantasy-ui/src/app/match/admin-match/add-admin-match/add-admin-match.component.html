@@ -202,100 +202,59 @@
         </div>
       </div>
     </div>
-    <!-- Section Gameweeks (Optionnelle) -->
-<div class="form-section">
-  <h3 class="section-title">
-    <mat-icon>calendar_view_week</mat-icon>
-    Journées (Gameweeks)
-    <span class="optional">(Optionnel)</span>
-  </h3>
-  
-  <div class="form-group">
-    <label class="form-label">Sélectionner les journées</label>
-    <mat-form-field appearance="outline" class="gameweek-field full-width">
-      <mat-label>Rechercher et sélectionner des journées</mat-label>
-      <input 
-        type="text"
-        matInput
-        #gameweekInput
-        [matAutocomplete]="gameweekAuto"
-        placeholder="Tapez pour rechercher une journée..."
-        (keydown.enter)="$event.preventDefault()"
-      >
-      
-      <div matSuffix class="suffix-container">
-        <mat-icon>search</mat-icon>
-      </div>
+            <!-- Section Compétition et Week Number -->
+            <div class="form-section">
+                <h3 class="section-title">
+                    <i class="material-icons">sports</i>
+                    Informations Compétition
+                </h3>
 
-      <mat-autocomplete 
-        #gameweekAuto="matAutocomplete"
-        (optionSelected)="addGameweek($event.option.value); gameweekInput.value = ''"
-        class="gameweek-autocomplete"
-      >
-        <mat-option 
-          *ngFor="let gameweek of filteredGameweeks | async" 
-          [value]="gameweek"
-          (click)="gameweek.id !== undefined && removeGameweek(gameweek.id)"
-        >
-          <div class="gameweek-option">
-            <div class="gameweek-info">
-              <span class="gameweek-name">{{ gameweek.description || 'Gameweek #' + gameweek.id }}</span>
-              <span class="gameweek-details" *ngIf="gameweek.startDate && gameweek.endDate">
-                {{ formatGameweekDate(gameweek.startDate) }} - {{ formatGameweekDate(gameweek.endDate) }}
-              </span>
+                <div class="form-row">
+                    <!-- Sélection compétition -->
+                    <div class="form-group">
+                        <label class="form-label">Compétition *</label>
+                        <div class="select-field">
+                            <select class="select-control" required>
+                                <option value="">Sélectionner la compétition</option>
+                                <option value="PREMIER_LEAGUE">Premier League</option>
+                                <option value="SERIE_A">Serie A</option>
+                                <option value="CHAMPIONS_LEAGUE">Champions League</option>
+                                <option value="EUROPE_LEAGUE">Europe League</option>
+                                <option value="BUNDESLIGA">Bundesliga</option>
+                                <option value="LA_LIGA">La Liga</option>
+                                <option value="LIGUE_ONE">Ligue 1</option>
+                                <option value="BESTOFF">Best Off</option>
+                                <option value="CONFERENCE_LEAGUE">Conference League</option>
+                            </select>
+                            <i class="material-icons select-arrow">arrow_drop_down</i>
+                        </div>
+                        <div class="error-messages" style="display: none;">
+                            <div class="error-message">
+                                <i class="material-icons">error</i>
+                                La compétition est requise
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Saisie week number -->
+                    <div class="form-group">
+                        <label class="form-label">Numéro de la semaine *</label>
+                        <input 
+                            type="number"
+                            class="form-control"
+                            min="1"
+                            placeholder="Entrez le numéro de la semaine"
+                            required
+                        />
+                        <div class="error-messages" style="display: none;">
+                            <div class="error-message">
+                                <i class="material-icons">error</i>
+                                Le numéro de la semaine est requis et doit être supérieur ou égal à 1
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
-            <mat-icon class="selected-icon" *ngIf="gameweek.id !== undefined && isGameweekSelected(gameweek.id)">check_circle</mat-icon>
-          </div>
-        </mat-option>
-      </mat-autocomplete>
-    </mat-form-field>
-    
-    <!-- Selected Gameweeks Display -->
-    <div class="selected-gameweeks" *ngIf="selectedGameweeks.length > 0">
-      <h4 class="selected-title">
-        <mat-icon>event_note</mat-icon>
-        Journées sélectionnées ({{ selectedGameweeks.length }})
-      </h4>
-      
-      <div class="gameweek-chips">
-        <div 
-          class="gameweek-chip" 
-          *ngFor="let gameweek of selectedGameweeks; trackBy: trackByGameweekId"
-        >
-          <div class="chip-content">
-            <mat-icon class="chip-icon">calendar_view_week</mat-icon>
-            <span class="chip-name">{{ gameweek.description || 'Gameweek #' + gameweek.id }}</span>
-            <span class="chip-details" *ngIf="gameweek.startDate">
-              {{ formatGameweekDate(gameweek.startDate) }}
-            </span>
-          </div>
-          <button 
-            type="button"
-            mat-icon-button 
-            class="remove-chip-btn"
-            (click)="gameweek.id !== undefined && removeGameweek(gameweek.id)"
-            title="Retirer cette journée"
-          >
-            <mat-icon>close</mat-icon>
-          </button>
-        </div>
-      </div>
-      
-      <button 
-        type="button"
-        mat-stroked-button 
-        color="warn" 
-        class="clear-all-btn"
-        (click)="clearAllGameweeks()"
-        *ngIf="selectedGameweeks.length > 1"
-      >
-        <mat-icon>clear_all</mat-icon>
-        Tout effacer
-      </button>
-    </div>
-  </div>
-</div>
-    
     
     <!-- Section Description (Optionnelle) -->
     <div class="form-section">
@@ -316,7 +275,6 @@
           ></textarea>
           <mat-icon matSuffix>notes</mat-icon>
         </mat-form-field>
-        
       </div>
     </div>
     

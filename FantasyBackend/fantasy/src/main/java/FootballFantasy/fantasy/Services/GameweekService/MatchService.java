@@ -91,7 +91,20 @@ public class MatchService {
         existing.setMatchDate(updatedMatch.getMatchDate());
         existing.setHomeScore(updatedMatch.getHomeScore());
         existing.setAwayScore(updatedMatch.getAwayScore());
-        existing.setFinished(updatedMatch.isFinished());
+        existing.setHomeTeam(updatedMatch.getHomeTeam());
+        existing.setAwayTeam(updatedMatch.getAwayTeam());
+        existing.setMatchDate(updatedMatch.getMatchDate());
+        existing.setHomeScore(updatedMatch.getHomeScore());
+        existing.setAwayScore(updatedMatch.getAwayScore());
+        existing.setDescription(updatedMatch.getDescription());
+        existing.setStatus(updatedMatch.getStatus());
+        if (updatedMatch.getStatus() == MatchStatus.SCHEDULED) {
+            existing.setFinished(false);
+        } else if (updatedMatch.getStatus() == MatchStatus.COMPLETED) {
+            existing.setFinished(true);
+        } else {
+            existing.setFinished(updatedMatch.isFinished());
+        }
         existing.setDescription(updatedMatch.getDescription());
         existing.setStatus(updatedMatch.getStatus());
 

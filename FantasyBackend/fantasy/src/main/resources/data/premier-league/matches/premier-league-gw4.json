@@ -2,21 +2,11 @@
   {
     "homeTeam": "Arsenal",
     "awayTeam": "Nottingham Forest",
-    "matchDate": "2025-09-13T15:00:00"
+    "matchDate": "2025-09-13T12:30:00"
   },
   {
     "homeTeam": "Bournemouth",
     "awayTeam": "Brighton and Hove Albion",
-    "matchDate": "2025-09-13T15:00:00"
-  },
-  {
-    "homeTeam": "Brentford",
-    "awayTeam": "Chelsea",
-    "matchDate": "2025-09-13T15:00:00"
-  },
-  {
-    "homeTeam": "Burnley",
-    "awayTeam": "Liverpool",
     "matchDate": "2025-09-13T15:00:00"
   },
   {
@@ -35,11 +25,6 @@
     "matchDate": "2025-09-13T15:00:00"
   },
   {
-    "homeTeam": "Manchester City",
-    "awayTeam": "Manchester United",
-    "matchDate": "2025-09-13T15:00:00"
-  },
-  {
     "homeTeam": "Newcastle United",
     "awayTeam": "Wolverhampton Wanderers",
     "matchDate": "2025-09-13T15:00:00"
@@ -47,6 +32,21 @@
   {
     "homeTeam": "West Ham United",
     "awayTeam": "Tottenham Hotspur",
-    "matchDate": "2025-09-13T15:00:00"
+    "matchDate": "2025-09-13T17:30:00"
+  },
+  {
+    "homeTeam": "Brentford",
+    "awayTeam": "Chelsea",
+    "matchDate": "2025-09-13T20:00:00"
+  },
+  {
+    "homeTeam": "Burnley",
+    "awayTeam": "Liverpool",
+    "matchDate": "2025-09-14T14:00:00"
+  },
+  {
+    "homeTeam": "Manchester City",
+    "awayTeam": "Manchester United",
+    "matchDate": "2025-09-14T16:30:00"
   }
 ]

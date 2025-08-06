@@ -135,7 +135,6 @@ public class TeamIconService {
         addTeam("Augsburg", league, "/assets/images/teams/augsburg.png");
         addTeam("Bayer Leverkusen", league, "/assets/images/teams/bayer-leverkusen.png");
         addTeam("Bayern Munich", league, "/assets/images/teams/bayern-munich.png");
-        addTeam("Bochum", league, "/assets/images/teams/bochum.png");
         addTeam("Borussia Dortmund", league, "/assets/images/teams/borussia-dortmund.png");
         addTeam("Borussia Mönchengladbach", league, "/assets/images/teams/monchengladbach.png");
         addTeam("Eintracht Frankfurt", league, "/assets/images/teams/eintracht-frankfurt.png");

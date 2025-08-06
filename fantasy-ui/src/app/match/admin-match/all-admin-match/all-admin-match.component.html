@@ -4,7 +4,7 @@
 <div class="filters" style="margin-bottom: 1rem; display: flex; gap: 1rem; align-items: center;">
   <label>
     Statut :
-    <select [(ngModel)]="statusFilter">
+    <select [(ngModel)]="statusFilter" (change)="applyFilters()">
       <option value="">Tous</option>
       <option value="active">Actif</option>
       <option value="inactive">Inactif</option>
@@ -12,22 +12,46 @@
   </label>
   <label>
     Date :
-    <input type="date" [(ngModel)]="dateFilter" />
+    <input type="date" [(ngModel)]="dateFilter" (change)="applyFilters()" />
   </label>
   <button type="button" (click)="applyFilters()" class="btn-primary">Filtrer</button>
   <button (click)="resetFilters()" class="btn-secondary">Réinitialiser</button>
 </div>
 
+<!-- Active Filters Display -->
+<div class="active-filters" *ngIf="statusFilter || dateFilter" 
+     style="margin-bottom: 1rem; padding: 0.5rem; background-color: #f5f5f5; border-radius: 4px;">
+  <span style="font-weight: bold; margin-right: 0.5rem;">Filtres actifs:</span>
+  <span *ngIf="statusFilter" class="filter-chip" style="background: #28a745; color: white; padding: 2px 8px; border-radius: 12px; margin-right: 0.5rem; font-size: 0.8em;">
+    📊 {{ statusFilter === 'active' ? 'Actif' : 'Inactif' }}
+  </span>
+  <span *ngIf="dateFilter" class="filter-chip" style="background: #007bff; color: white; padding: 2px 8px; border-radius: 12px; margin-right: 0.5rem; font-size: 0.8em;">
+    📅 {{ dateFilter | date: 'dd/MM/yyyy' }}
+  </span>
+</div>
+
 <div class="match-table-container">
-  <div style="display: flex; justify-content: flex-end; margin-bottom: 1rem; gap: 1rem;">
-    <button class="btn-secondary" (click)="deleteSelectedMatches()" [disabled]="getSelectedMatches().length === 0">
-      Supprimer sélectionnés
-    </button>
-    <button class="btn-secondary" (click)="resetSelectedMatches()" [disabled]="getSelectedMatches().length === 0">
-      Réinitialiser sélectionnés
-    </button>
-    <button class="btn-add" [routerLink]="['/admin/Addmatch']" title="Ajouter un match">+</button>
+  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+    <div>
+      <span style="color: #666;">
+        Affichage {{ dataSource.filteredData.length }} résultat(s) 
+        <span *ngIf="dataSource.filteredData.length !== matches.length">
+          sur {{ matches.length }} total
+        </span>
+      </span>
+    </div>
+    
+    <div style="display: flex; gap: 1rem;">
+      <button class="btn-secondary" (click)="deleteSelectedMatches()" [disabled]="selectedMatchIds.size === 0">
+        Supprimer sélectionnés ({{ selectedMatchIds.size }})
+      </button>
+      <button class="btn-secondary" (click)="resetSelectedMatches()" [disabled]="selectedMatchIds.size === 0">
+        Réinitialiser sélectionnés ({{ selectedMatchIds.size }})
+      </button>
+      <button class="btn-add" [routerLink]="['/admin/Addmatch']" title="Ajouter un match">+</button>
+    </div>
   </div>
+
   <table class="match-table">
     <thead>
       <tr>
@@ -36,6 +60,7 @@
             type="checkbox"
             [checked]="allSelected()"
             (change)="toggleSelectAll($event)"
+            [indeterminate]="selectedMatchIds.size > 0 && !allSelected()"
             aria-label="Tout sélectionner"
           />
         </th>
@@ -49,7 +74,7 @@
       </tr>
     </thead>
     <tbody>
-      <tr *ngFor="let match of filteredMatches()">
+      <tr *ngFor="let match of getPagedData()">
         <td>
           <input
             type="checkbox"
@@ -99,6 +124,28 @@
           </button>
         </td>
       </tr>
+
+      <!-- No result row -->
+      <tr *ngIf="dataSource.filteredData.length === 0">
+        <td colspan="8" class="text-center text-muted py-4">
+          <div style="padding: 2rem; text-align: center; color: #666;">
+            <div style="font-size: 3rem; margin-bottom: 1rem;">⚽</div>
+            <div style="font-size: 1.1rem; font-weight: 500;">Aucun match trouvé</div>
+            <div style="font-size: 0.9rem; margin-top: 0.5rem;">
+              Essayez de modifier vos filtres de recherche
+            </div>
+          </div>
+        </td>
+      </tr>
     </tbody>
   </table>
+
+  <!-- Paginator -->
+  <mat-paginator
+    [length]="dataSource.filteredData.length"
+    [pageSize]="10"
+    [pageSizeOptions]="[5, 10, 25, 50, 100]"
+    showFirstLastButtons
+    aria-label="Sélectionnez la page des résultats des matchs">
+  </mat-paginator>
 </div>

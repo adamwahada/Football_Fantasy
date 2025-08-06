@@ -1,14 +1,18 @@
 <h3 class="subtitle">Liste des gameweeks</h3>
+
+<!-- Modal backdrop -->
 <div class="modal-backdrop" *ngIf="selectedGameweekForMatches" (click)="closeMatchesModal()"></div>
-<!-- Modal -->
+
+<!-- Modal content -->
 <div class="modal" *ngIf="selectedGameweekForMatches" role="dialog" aria-modal="true">
   <app-show-gameweek-matches
     [gameweek]="selectedGameweekForMatches"
     [matches]="matchesForSelectedGameweek"
-    (close)="closeMatchesModal()"
-  ></app-show-gameweek-matches>
+    (close)="closeMatchesModal()">
+  </app-show-gameweek-matches>
 </div>
-<!-- Filtres -->
+
+<!-- Filters -->
 <div class="filters" style="margin-bottom: 1rem; display: flex; gap: 1rem; align-items: center;">
   <label>
     Statut :
@@ -17,6 +21,7 @@
       <option *ngFor="let status of statuses" [value]="status.value">{{ status.label }}</option>
     </select>
   </label>
+
   <label>
     Compétition :
     <select [(ngModel)]="competitionFilter">
@@ -24,16 +29,18 @@
       <option *ngFor="let comp of competitions" [value]="comp.value">{{ comp.label }}</option>
     </select>
   </label>
+
   <button type="button" (click)="applyFilters()" class="btn-primary">Filtrer</button>
-  <button (click)="resetFilters()" class="btn-secondary">Réinitialiser</button>
+  <button type="button" (click)="resetFilters()" class="btn-secondary">Réinitialiser</button>
 </div>
 
+<!-- Table + Actions -->
 <div class="gameweek-table-container">
   <div style="display: flex; justify-content: flex-end; margin-bottom: 1rem; gap: 1rem;">
     <button class="btn-secondary" (click)="deleteSelectedGameweeks()" [disabled]="selectedGameweekIds.size === 0">
       Supprimer sélectionnés
     </button>
-    <button class="btn-add" [routerLink]="['/admin/gameweek/AddGameweek']" title="Ajouter un gameweek">+</button>
+    <button class="btn-add" [routerLink]="['/admin/AddGameweek']" title="Ajouter un gameweek">+</button>
   </div>
 
   <table class="match-table">
@@ -44,8 +51,7 @@
             type="checkbox"
             [checked]="allSelected()"
             (change)="toggleSelectAll($event)"
-            aria-label="Tout sélectionner"
-          />
+            aria-label="Tout sélectionner" />
         </th>
         <th>Semaine</th>
         <th>Compétition</th>
@@ -56,15 +62,16 @@
         <th>Actions</th>
       </tr>
     </thead>
+
     <tbody>
-      <tr *ngFor="let gameweek of filteredGameweeks(); trackBy: trackByGameweek">
+      <tr *ngFor="let gameweek of getPagedData(); trackBy: trackByGameweek"
+          [ngClass]="getRowClass(gameweek.status)">
         <td>
           <input
             type="checkbox"
             [checked]="selectedGameweekIds.has(gameweek.id!)"
             (change)="onSelectionChange(gameweek, $event)"
-            aria-label="Sélectionner"
-          />
+            aria-label="Sélectionner" />
         </td>
         <td>{{ gameweek.weekNumber }}</td>
         <td>{{ formatCompetition(gameweek.competition) }}</td>
@@ -75,39 +82,45 @@
         </td>
         <td>{{ gameweek.startDate | date: 'dd/MM/yyyy HH:mm' }}</td>
         <td>{{ gameweek.endDate | date: 'dd/MM/yyyy HH:mm' }}</td>
-        <td class="deadline-timer" *ngIf="gameweek.joinDeadline"> {{ getTimeLeft(gameweek.joinDeadline) }}
+        <td class="deadline-timer" *ngIf="gameweek.joinDeadline">
+          {{ getTimeLeft(gameweek.joinDeadline) }}
         </td>
         <td class="actions">
           <button
             [routerLink]="['/admin/gameweek/editGameweek', gameweek.id]"
             title="Modifier"
-            class="btn-icon blue"
-          >
+            class="btn-icon blue">
             ✏️
           </button>
           <button
             (click)="deleteGameweek(gameweek.id!)"
             title="Supprimer"
-            class="btn-icon red"
-          >
+            class="btn-icon red">
             🗑️
           </button>
-          <!-- Bouton football pour afficher la carte des matchs -->
           <button
             (click)="showMatches(gameweek)"
             title="Voir les matchs"
-            class="btn-icon green"
-          >
+            class="btn-icon green">
             ⚽️
           </button>
         </td>
       </tr>
-      <tr *ngIf="filteredGameweeks().length === 0">
-        <td colspan="9" class="text-center text-muted py-4">
+
+      <!-- No result row -->
+      <tr *ngIf="dataSource.filteredData.length === 0">
+        <td colspan="8" class="text-center text-muted py-4">
           Aucune gameweek trouvée
         </td>
       </tr>
     </tbody>
   </table>
-</div>
 
+  <!-- Paginator placed outside tbody -->
+<mat-paginator
+  [length]="dataSource.filteredData.length"
+  [pageSize]="10"
+  [pageSizeOptions]="[10, 19, 38, 300]"
+  showFirstLastButtons>
+</mat-paginator>
+</div>

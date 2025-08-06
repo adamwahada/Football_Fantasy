@@ -57,7 +57,7 @@ private convertToFullUrl(relativePath: string): string {
     const serieATeams = ['AC Milan', 'Atalanta', 'Bologna', 'Cagliari', 'Como', 'Cremonese', 'Fiorentina', 'Genoa', 'Inter', 'Juventus', 'Lazio', 'Lecce', 'Napoli', 'Parma', 'Pisa', 'Roma', 'Sassuolo', 'Torino', 'Udinese', 'Hellas Verona'];
     const laLigaTeams = ['Deportivo Alaves','Athletic Bilbao','Atletico Madrid','Barcelona','Celta Vigo','Elche','Espanyol','Getafe','Girona','Levante','Mallorca','Osasuna','Rayo Vallecano','Real Betis','Real Madrid','Real Oviedo','Real Sociedad','Sevilla','Valencia','Villarreal'];
     const ligue1Teams = ['Angers','Auxerre','Brest','Le Havre','Lens','Lille','Lorient','Lyon','Marseille','Metz','Monaco','Nantes','Nice','Paris SG','Paris FC','Rennes','Strasbourg','Toulouse'];
-    const bundesligaTeams = ['Augsburg', 'Bayer Leverkusen', 'Bayern Munich', 'Bochum', 'Borussia Dortmund', 'Borussia Mönchengladbach', 'Darmstadt', 'Eintracht Frankfurt', 'Freiburg', 'Heidenheim', 'Hoffenheim', 'Koln', 'Mainz', 'RB Leipzig', 'Schalke 04', 'Stuttgart', 'Union Berlin', 'Werder Bremen', 'Wolfsburg', 'Hamburg'];
+    const bundesligaTeams = ['Augsburg', 'Bayer Leverkusen', 'Bayern Munich', 'Borussia Dortmund', 'Borussia Mönchengladbach', 'Darmstadt', 'Eintracht Frankfurt', 'Freiburg', 'Heidenheim', 'Hoffenheim', 'Koln', 'Mainz', 'RB Leipzig', 'Schalke 04', 'Stuttgart', 'Union Berlin', 'Werder Bremen', 'Wolfsburg', 'Hamburg'];
 
     const eredivisieTeams = ['PSV Eindhoven', 'Ajax Amsterdam'];
     const primeiraLigaTeams = ['Sporting CP'];

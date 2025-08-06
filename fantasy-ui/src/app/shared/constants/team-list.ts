@@ -88,7 +88,6 @@ export const TEAMS = [
   'Augsburg',
   'Bayer Leverkusen',
   'Bayern Munich',
-  'Bochum',
   'Borussia Dortmund',
   'Borussia Mönchengladbach',
   'Eintracht Frankfurt',
