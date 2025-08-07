@@ -20,9 +20,17 @@
                 🔄 Actualiser
             </button>
 
+            <!-- Bouton debug temporaire -->
+            <button (click)="getCurrentUserId()" class="btn btn-small" style="background: orange; margin-top: 5px;">
+                🐛 Debug User ID ({{currentUserId || 'NULL'}})
+            </button>
+
             <!-- Liste des chats -->
             <div class="chat-list">
-                <div *ngFor="let room of chatRooms" class="chat-item" [class.active]="selectedRoom?.id === room.id" (click)="selectRoom(room)">
+                <div *ngFor="let room of chatRooms"
+                     class="chat-item"
+                     [class.active]="selectedRoom?.id === room.id"
+                     (click)="selectRoom(room)">
                     <div class="chat-avatar">
                         <div class="avatar-circle">
                             {{ getInitials(room.name) }}
@@ -53,7 +61,9 @@
                         <mat-label>ID utilisateur</mat-label>
                         <input matInput [(ngModel)]="otherUserId" placeholder="Ex: 123">
                     </mat-form-field>
-                    <button mat-raised-button color="primary" (click)="createPrivateChat()" [disabled]="!otherUserId.trim()">
+                    <button mat-raised-button color="primary"
+                            (click)="createPrivateChat()"
+                            [disabled]="!otherUserId.trim()">
                         Créer Chat
                     </button>
                 </div>
@@ -64,18 +74,17 @@
                         <mat-label>Nom du groupe</mat-label>
                         <input matInput [(ngModel)]="groupName" placeholder="Mon groupe">
                     </mat-form-field>
-
                     <mat-form-field appearance="outline" class="full-width">
                         <mat-label>Description</mat-label>
                         <input matInput [(ngModel)]="groupDescription" placeholder="Description du groupe">
                     </mat-form-field>
-
                     <mat-form-field appearance="outline" class="full-width">
                         <mat-label>IDs participants</mat-label>
                         <input matInput [(ngModel)]="participantIds" placeholder="1,2,3">
                     </mat-form-field>
-
-                    <button mat-raised-button color="accent" (click)="createGroup()" [disabled]="!groupName.trim()">
+                    <button mat-raised-button color="accent"
+                            (click)="createGroup()"
+                            [disabled]="!groupName.trim()">
                         Créer Groupe
                     </button>
                 </div>
@@ -109,13 +118,17 @@
                             </div>
                         </div>
                     </div>
-
                     <div class="chat-actions">
-                        <button *ngIf="selectedRoom.type === 'GROUP'" mat-button (click)="addParticipant()" [disabled]="!isGroupAdmin()">
+                        <button *ngIf="selectedRoom.type === 'GROUP'"
+                                mat-button
+                                (click)="addParticipant()"
+                                [disabled]="!isGroupAdmin()">
                             <mat-icon>person_add</mat-icon>
                             Ajouter
                         </button>
-                        <button *ngIf="selectedRoom.type === 'GROUP'" mat-button color="warn" (click)="leaveGroup()">
+                        <button *ngIf="selectedRoom.type === 'GROUP'"
+                                mat-button color="warn"
+                                (click)="leaveGroup()">
                             <mat-icon>exit_to_app</mat-icon>
                             Quitter
                         </button>
@@ -132,8 +145,13 @@
                             <p>Soyez le premier à envoyer un message !</p>
                         </div>
 
-                        <!-- Liste des messages -->
-                        <div *ngFor="let message of messages; trackBy: trackMessage" class="message-item" [class.own-message]="message.senderId === currentUserId" [class.other-message]="message.senderId !== currentUserId">
+                        <!-- Messages -->
+                        <div *ngFor="let message of messages; trackBy: trackMessage"
+                             class="message-item"
+                             [class.own-message]="message.senderId === currentUserId"
+                             [class.other-message]="message.senderId !== currentUserId">
+
+                            <!-- Avatar de l'expéditeur pour les messages reçus -->
                             <div *ngIf="message.senderId !== currentUserId" class="message-avatar">
                                 <div class="avatar-circle small">
                                     {{ getInitials(message.senderName) }}
@@ -141,6 +159,12 @@
                             </div>
 
                             <div class="message-content">
+                                <!-- Indicateur de réponse (si replyToId existe) -->
+                                <div *ngIf="message.replyToId" class="reply-indicator">
+                                    <div class="reply-sender">Réponse à {{ getRepliedMessageSender(message.replyToId) }}</div>
+                                    <div class="reply-content">{{ getRepliedMessageContent(message.replyToId) }}</div>
+                                </div>
+
                                 <div class="message-bubble">
                                     <div class="message-header">
                                         <span class="sender-name">{{ message.senderName }}</span>
@@ -160,25 +184,90 @@
                                 </div>
                             </div>
 
+                            <!-- Avatar de l'expéditeur pour les messages envoyés -->
                             <div *ngIf="message.senderId === currentUserId" class="message-avatar">
                                 <div class="avatar-circle small">
                                     {{ getInitials(message.senderName) }}
                                 </div>
                             </div>
+
+                            <!-- Menu d'actions -->
+                            <div class="message-actions">
+                                <button mat-icon-button
+                                        class="message-actions-btn"
+                                        (click)="toggleMessageMenu(message, $event)">
+                                    <mat-icon>more_vert</mat-icon>
+                                </button>
+
+                                <!-- Menu contextuel corrigé -->
+                                <div class="message-context-menu" *ngIf="showMenuFor === message.id">
+                                    <button (click)="replyToMessage(message)">
+                                        <mat-icon>reply</mat-icon>
+                                        <span>Répondre</span>
+                                    </button>
+
+                                    <!-- Debug info - À supprimer après test -->
+                                    <div style="font-size: 10px; color: #999; padding: 5px;"
+                                         *ngIf="showMenuFor === message.id">
+                                        Debug: currentUserId={{currentUserId}}, senderId={{message.senderId}},
+                                        canEdit={{canEditMessage(message)}}
+                                    </div>
+
+                                    <button *ngIf="canEditMessage(message)"
+                                            (click)="editMessage(message.id, message.content)">
+                                        <mat-icon>edit</mat-icon>
+                                        <span>Modifier</span>
+                                    </button>
+
+                                    <button *ngIf="canEditMessage(message)"
+                                            (click)="deleteMessage(message.id)">
+                                        <mat-icon>delete</mat-icon>
+                                        <span>Supprimer</span>
+                                    </button>
+
+                                    <button (click)="copyMessage(message.content)">
+                                        <mat-icon>content_copy</mat-icon>
+                                        <span>Copier</span>
+                                    </button>
+                                </div>
+                            </div>
                         </div>
                     </div>
-                </div>
 
-                <!-- ENVOI DE MESSAGE -->
-                <div class="message-input-container">
-                    <mat-form-field appearance="outline" class="message-input-field">
-                        <mat-label>Tapez votre message...</mat-label>
-                        <textarea matInput [(ngModel)]="newMessage" (keydown)="onKeyDown($event)" [disabled]="sendingMessage" placeholder="Votre message..." cdkTextareaAutosize cdkAutosizeMinRows="1" cdkAutosizeMaxRows="4"></textarea>
-                    </mat-form-field>
-                    <button mat-fab color="primary" (click)="sendMessage()" [disabled]="!newMessage.trim() || sendingMessage" class="send-button" matTooltip="Envoyer le message (Enter)">
-                        <mat-icon *ngIf="!sendingMessage">send</mat-icon>
-                        <mat-progress-spinner *ngIf="sendingMessage" diameter="24" color="accent"></mat-progress-spinner>
-                    </button>
+                    <!-- Zone d'envoi de message -->
+                    <div class="message-input-container">
+                        <!-- Aperçu de la réponse -->
+                        <div *ngIf="replyingTo" class="reply-preview">
+                            <span>Réponse à {{ replyingTo.senderName }}:</span>
+                            <span>{{ replyingTo.content }}</span>
+                            <button mat-icon-button (click)="cancelReply()">
+                                <mat-icon>close</mat-icon>
+                            </button>
+                        </div>
+
+                        <mat-form-field appearance="outline" class="message-input-field">
+                            <mat-label>Tapez votre message...</mat-label>
+                            <textarea matInput
+                                      [(ngModel)]="newMessage"
+                                      (keydown)="onKeyDown($event)"
+                                      [disabled]="sendingMessage"
+                                      placeholder="Votre message..."
+                                      cdkTextareaAutosize
+                                      cdkAutosizeMinRows="1"
+                                      cdkAutosizeMaxRows="4"></textarea>
+                        </mat-form-field>
+
+                        <button mat-fab color="primary"
+                                (click)="sendMessage()"
+                                [disabled]="!newMessage.trim() || sendingMessage"
+                                class="send-button"
+                                matTooltip="Envoyer le message (Enter)">
+                            <mat-icon *ngIf="!sendingMessage">send</mat-icon>
+                            <mat-progress-spinner *ngIf="sendingMessage"
+                                                  diameter="24"
+                                                  color="accent"></mat-progress-spinner>
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>
