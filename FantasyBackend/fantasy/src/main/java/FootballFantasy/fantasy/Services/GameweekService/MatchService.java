@@ -144,6 +144,10 @@ public class MatchService {
                 gameWeekService.updateStatusIfRescheduled(gameWeek.getId());
             }
         }
+        for (GameWeek gw : saved.getGameweeks()) {
+            gameWeekService.updateStatusIfComplete(gw.getId());
+        }
+
 
         return saved;
     }

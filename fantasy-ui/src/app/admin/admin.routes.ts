@@ -18,6 +18,7 @@ export const adminRoutes: Routes = [
       { path: 'referral', component: ReferralCodeManagerComponent },
       { path: 'Addmatch', component: AddAdminMatchComponent },
       { path: 'Allmatch', component: AllAdminMatchComponent },
+      { path: 'Allmatch/select/:gameweekId', component: AllAdminMatchComponent }, 
       { path: 'match/Editmatch/:id', component: EditAdminMatchComponent },
       { path: 'AddGameweek', component :AddAdminGameweekComponent},
       { path: 'allgameweek', component: AllAdminGameweekComponent },

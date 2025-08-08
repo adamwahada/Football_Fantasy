@@ -30,7 +30,6 @@ export class AddAdminGameweekComponent implements OnInit {
 
   statuses = [
     { value: 'UPCOMING', label: 'Upcoming' },
-    { value: 'ACTIVE', label: 'Active' },
     { value: 'COMPLETED', label: 'Completed' },
     { value: 'CANCELLED', label: 'Cancelled' }
   ];
@@ -139,7 +138,7 @@ export class AddAdminGameweekComponent implements OnInit {
   }
 
   onCancel(): void {
-    this.router.navigate(['/admin/gameweeks']);
+    this.router.navigate(['/admin/allgameweek']);
   }
 
   getFieldError(fieldName: string): string {

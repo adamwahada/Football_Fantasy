@@ -127,6 +127,15 @@
     }
   }
 }
+.row-green {
+  background-color: #d4edda !important;
+  color: #000000;
+}
+
+.row-red {
+  background-color: #f8d7da !important;
+  color: #000000;
+}
 
 // Responsive
 @media (max-width: 768px) {
@@ -173,4 +182,5 @@
     transform: scale(1.08);
   }
 }
+
 }

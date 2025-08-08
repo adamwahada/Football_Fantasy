@@ -360,4 +360,7 @@ toggleSelectAll(event: Event): void {
   trackByGameweek(index: number, gameweek: Gameweek): number {
     return gameweek.id!;
   }
+  selectMatches(gameweekId: number): void {
+  this.router.navigate(['/admin/Allmatch/select', gameweekId]);
+  }
 }

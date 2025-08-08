@@ -3,6 +3,16 @@
 <!-- Filtres -->
 <div class="filters" style="margin-bottom: 1rem; display: flex; gap: 1rem; align-items: center;">
   <label>
+    Statut du match :
+    <select [(ngModel)]="matchStatusFilter" (change)="applyFilters()">
+      <option value="">Tous</option>
+      <option value="SCHEDULED">Scheduled</option>
+      <option value="COMPLETED">Completed</option>
+      <option value="CANCELED">Cancelled</option>
+    </select>
+  </label>
+
+  <label>
     Statut :
     <select [(ngModel)]="statusFilter" (change)="applyFilters()">
       <option value="">Tous</option>
@@ -14,6 +24,8 @@
     Date :
     <input type="date" [(ngModel)]="dateFilter" (change)="applyFilters()" />
   </label>
+
+<!-- Boutons -->
   <button type="button" (click)="applyFilters()" class="btn-primary">Filtrer</button>
   <button (click)="resetFilters()" class="btn-secondary">Réinitialiser</button>
 </div>
@@ -27,6 +39,9 @@
   </span>
   <span *ngIf="dateFilter" class="filter-chip" style="background: #007bff; color: white; padding: 2px 8px; border-radius: 12px; margin-right: 0.5rem; font-size: 0.8em;">
     📅 {{ dateFilter | date: 'dd/MM/yyyy' }}
+  </span>
+    <span *ngIf="matchStatusFilter" class="filter-chip" style="background: #ffc107; color: white; padding: 2px 8px; border-radius: 12px; margin-right: 0.5rem; font-size: 0.8em;">
+    🏟 {{ matchStatusFilter === 'SCHEDULED' ? 'Prévu' : matchStatusFilter === 'COMPLETED' ? 'Terminé' : 'Annulé' }}
   </span>
 </div>
 
@@ -47,6 +62,9 @@
       </button>
       <button class="btn-secondary" (click)="resetSelectedMatches()" [disabled]="selectedMatchIds.size === 0">
         Réinitialiser sélectionnés ({{ selectedMatchIds.size }})
+      </button>
+      <button *ngIf="gameweekId && selectedMatchIds.size > 0" (click)="linkSelectedMatchesToGameweek()">
+        Link Selected Matches to Gameweek
       </button>
       <button class="btn-add" [routerLink]="['/admin/Addmatch']" title="Ajouter un match">+</button>
     </div>
@@ -74,7 +92,13 @@
       </tr>
     </thead>
     <tbody>
-      <tr *ngFor="let match of getPagedData()">
+      <tr
+        *ngFor="let match of getPagedData()"
+        [ngClass]="{
+          'row-green': match.status === 'COMPLETED',
+          'row-red': match.status === 'CANCELED'
+        }"
+      >
         <td>
           <input
             type="checkbox"
@@ -124,7 +148,6 @@
           </button>
         </td>
       </tr>
-
       <!-- No result row -->
       <tr *ngIf="dataSource.filteredData.length === 0">
         <td colspan="8" class="text-center text-muted py-4">

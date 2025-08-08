@@ -8,13 +8,17 @@ import { RouterLink } from '@angular/router';
 import { Router } from '@angular/router';
 import { MatPaginator, MatPaginatorModule } from '@angular/material/paginator';
 import { MatTableDataSource } from '@angular/material/table';
+import { ActivatedRoute } from '@angular/router';
+import { GameweekService } from '../../../gameweek/gameweek.service';
+
 
 @Component({
   selector: 'app-admin-match',
   templateUrl: './all-admin-match.component.html',
   styleUrls: ['./all-admin-match.component.scss'],
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, FormsModule, RouterLink, MatPaginatorModule],
+  imports: [CommonModule, ReactiveFormsModule, FormsModule,
+     RouterLink, MatPaginatorModule,],
 })
 export class AllAdminMatchComponent implements OnInit, AfterViewInit {
   matches: Match[] = [];
@@ -23,6 +27,9 @@ export class AllAdminMatchComponent implements OnInit, AfterViewInit {
   statuses = ['SCHEDULED', 'LIVE', 'COMPLETED', 'CANCELED'];
   selectedMatchIds = new Set<number>();
   dataSource = new MatTableDataSource<Match>();
+  matchStatusFilter: string = '';
+  gameweekId?: number;
+
 
   @ViewChild(MatPaginator) paginator!: MatPaginator;
 
@@ -31,13 +38,16 @@ export class AllAdminMatchComponent implements OnInit, AfterViewInit {
   dateFilter: string = '';
   appliedFilters = {
     status: '',
-    date: ''
+    date: '',
+    matchStatus: ''
   };
 
   constructor(
     private matchService: MatchService,
     private fb: FormBuilder,
-    private router: Router
+    private router: Router,
+    private route: ActivatedRoute,
+    private gameweekService: GameweekService
   ) {
     this.matchForm = this.fb.group({
       homeTeam: ['', Validators.required],
@@ -53,13 +63,29 @@ export class AllAdminMatchComponent implements OnInit, AfterViewInit {
     });
   }
 
-  ngOnInit(): void {
-    this.loadMatches();
-    this.setupFilters();
-  }
+
+ngOnInit(): void {
+  this.loadMatches();
+  this.setupFilters();
+
+  // Read gameweekId from route params if exists
+  this.route.paramMap.subscribe(params => {
+    const gwId = params.get('gameweekId');
+    if (gwId) {
+      this.gameweekId = +gwId;
+    }
+  });
+}
 
   ngAfterViewInit(): void {
     this.dataSource.paginator = this.paginator;
+      // Read gameweekId from route params if exists
+  this.route.paramMap.subscribe(params => {
+    const gwId = params.get('gameweekId');
+    if (gwId) {
+      this.gameweekId = +gwId;
+    }
+  });
   }
 
 setupFilters(): void {
@@ -68,27 +94,23 @@ setupFilters(): void {
     date?: string;
   }
 
-  this.dataSource.filterPredicate = (data: Match, filter: string): boolean => {
-    if (!filter) return true;
+this.dataSource.filterPredicate = (data: any, filter: string) => {
+  const filters = JSON.parse(filter);
+  
+  const matchesStatus = filters.status
+    ? (filters.status === 'active' ? data.active : !data.active)
+    : true;
 
-    const filterObj = JSON.parse(filter) as MatchFilter;
+  const matchesDate = filters.date
+    ? new Date(data.matchDate).toDateString() === new Date(filters.date).toDateString()
+    : true;
 
-    let statusMatch = true;
+  const matchesMatchStatus = filters.matchStatus
+    ? data.status === filters.matchStatus
+    : true;
 
-    if (typeof filterObj.status === 'string') {
-      if (filterObj.status === 'active') {
-        statusMatch = Boolean(data.active) === true;
-      } else if (filterObj.status === 'inactive') {
-        statusMatch = Boolean(data.active) === false;
-      }
-    }
-
-const dateMatch = !filterObj.date || 
-  (typeof data.matchDate === 'string' && data.matchDate.slice(0, 10) === filterObj.date);
-
-
-    return statusMatch && dateMatch;
-  };
+  return matchesStatus && matchesDate && matchesMatchStatus;
+};
 }
   loadMatches(): void {
     this.matchService.getAllMatches().subscribe((data) => {
@@ -101,31 +123,36 @@ const dateMatch = !filterObj.date ||
     });
   }
 
-  applyFilters(): void {
-    this.appliedFilters = {
-      status: this.statusFilter,
-      date: this.dateFilter
-    };
+applyFilters(): void {
+  this.appliedFilters = {
+    status: this.statusFilter,
+    date: this.dateFilter,
+    matchStatus: this.matchStatusFilter 
+  };
 
-    this.dataSource.filter = JSON.stringify(this.appliedFilters);
+  this.dataSource.filter = JSON.stringify(this.appliedFilters);
 
-    if (this.dataSource.paginator) {
-      this.dataSource.paginator.firstPage();
-    }
-
-    this.selectedMatchIds.clear();
+  if (this.dataSource.paginator) {
+    this.dataSource.paginator.firstPage();
   }
 
-  resetFilters(): void {
-    this.statusFilter = '';
-    this.dateFilter = '';
-    this.appliedFilters = {
-      status: '',
-      date: ''
-    };
-    this.dataSource.filter = '';
-    this.selectedMatchIds.clear();
-  }
+  this.selectedMatchIds.clear();
+}
+
+resetFilters(): void {
+  this.statusFilter = '';
+  this.dateFilter = '';
+  this.matchStatusFilter = ''; 
+
+  this.appliedFilters = {
+    status: '',
+    date: '',
+    matchStatus: '' 
+  };
+
+  this.dataSource.filter = '';
+  this.selectedMatchIds.clear();
+}
 
   getPagedData(): Match[] {
     if (!this.dataSource.paginator) {
@@ -343,4 +370,24 @@ const dateMatch = !filterObj.date ||
         alert('Erreur lors de la réinitialisation. Veuillez réessayer.');
       });
   }
+
+  
+linkSelectedMatchesToGameweek(): void {
+  if (!this.gameweekId) return;
+
+  const matchIds = Array.from(this.selectedMatchIds);
+  this.gameweekService.linkMultipleMatches(this.gameweekId, matchIds).subscribe({
+    next: () => {
+      alert(`${matchIds.length} matches linked to Gameweek ${this.gameweekId}`);
+      this.selectedMatchIds.clear();
+      this.loadMatches();
+      // Optionally navigate back to gameweek list or details page
+      this.router.navigate(['/admin/allgameweek', this.gameweekId]);
+    },
+    error: (err) => {
+      console.error('Error linking matches to gameweek', err);
+      alert('Failed to link matches. Please try again.');
+    }
+  });
+}
 }

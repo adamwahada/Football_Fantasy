@@ -1,3 +1,5 @@
+@use "sass:color";
+
 // Variables
 $primary-color: #2563eb;
 $primary-hover: #1d4ed8;
@@ -216,7 +218,7 @@ $text-muted: #94a3b8;
   
   &.alert-success {
     background: rgba(16, 185, 129, 0.1);
-    color: darken($success-color, 10%);
+    color: color.adjust($success-color, $lightness: -10%);
     border: 1px solid rgba(16, 185, 129, 0.2);
     
     .icon-check::before {
@@ -228,7 +230,7 @@ $text-muted: #94a3b8;
   
   &.alert-error {
     background: rgba(239, 68, 68, 0.1);
-    color: darken($error-color, 10%);
+    color: color.adjust($error-color, $lightness: -10%);
     border: 1px solid rgba(239, 68, 68, 0.2);
     
     .icon-error::before {
@@ -291,7 +293,7 @@ $text-muted: #94a3b8;
   color: white;
   
   &:not(:disabled):hover {
-    background: linear-gradient(135deg, $primary-hover, darken($primary-hover, 10%));
+    background: linear-gradient(135deg, $primary-hover, color.adjust($primary-hover, $lightness: -10%));
   }
 }
 
@@ -300,7 +302,7 @@ $text-muted: #94a3b8;
   color: white;
   
   &:not(:disabled):hover {
-    background: darken($secondary-color, 10%);
+    background: color.adjust($secondary-color, $lightness: -10%);
   }
 }
 
