@@ -5,17 +5,22 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { GameweekService, Gameweek } from '../../gameweek.service';
-import { MatchWithIconsDTO } from '../../../match/match.service';
+import { Match, MatchWithIconsDTO } from '../../../match/match.service';
 import { MatPaginator, MatPaginatorModule } from '@angular/material/paginator';
 import { MatTableDataSource } from '@angular/material/table';
 import { AfterViewInit, ViewChild } from '@angular/core';
+import { MatchService } from '../../../match/match.service';
+import { MatIconModule } from '@angular/material/icon';
+import { MatButtonModule } from '@angular/material/button';
+import { MatTooltipModule } from '@angular/material/tooltip';
 import { ShowGameweekMatchesComponent } from '../show-gameweek-matches/show-gameweek-matches.component';
 
 @Component({
   selector: 'app-all-admin-gameweek',
   standalone: true,
   imports: [CommonModule, ReactiveFormsModule, FormsModule, 
-    MatPaginatorModule, MatPaginator,
+    MatPaginatorModule, MatPaginator,MatIconModule,
+    MatButtonModule, MatTooltipModule,
     RouterLink, ShowGameweekMatchesComponent],
   templateUrl: './all-admin-gameweek.component.html',
   styleUrls: ['./all-admin-gameweek.component.scss']
@@ -59,7 +64,8 @@ export class AllAdminGameweekComponent implements OnInit, AfterViewInit {
   constructor(
     private gameweekService: GameweekService,
     private fb: FormBuilder,
-    private router: Router
+    private router: Router,
+    private matchService: MatchService
   ) {
     this.gameweekForm = this.fb.group({
       weekNumber: ['', [Validators.required, Validators.min(1), Validators.max(50)]],
@@ -342,6 +348,9 @@ toggleSelectAll(event: Event): void {
       hour: '2-digit', minute: '2-digit'
     });
   }
+  addNew() {
+  this.router.navigate(['/admin/AddGameweek']);
+}
 
   formatCompetition(competition: string): string {
     return this.competitions.find(c => c.value === competition)?.label || competition.replace(/_/g, ' ');
@@ -363,4 +372,38 @@ toggleSelectAll(event: Event): void {
   selectMatches(gameweekId: number): void {
   this.router.navigate(['/admin/Allmatch/select', gameweekId]);
   }
+resetGameweek(gameweekId: number): void {
+  if (!confirm('Voulez-vous réinitialiser tous les matchs de ce gameweek ?')) {
+    return;
+  }
+
+  this.gameweekService.getMatchesByGameweek(gameweekId).subscribe({
+    next: (matches) => {
+      const resets = matches.map(m => {
+        const updatedMatch: Match = {
+          ...m,
+          status: 'SCHEDULED', // ✅ OK if 'SCHEDULED' is in the Match type
+          homeScore: 0,
+          awayScore: 0
+        };
+        return this.matchService.updateMatch(m.id!, updatedMatch).toPromise();
+      });
+
+      Promise.all(resets)
+        .then(() => {
+          alert(`Tous les matchs du gameweek ${gameweekId} ont été réinitialisés.`);
+        })
+        .catch(err => {
+          console.error('Erreur lors de la réinitialisation', err);
+          alert('Erreur lors de la réinitialisation. Veuillez réessayer.');
+        });
+    },
+    error: (err) => {
+      console.error('Erreur récupération des matchs du gameweek', err);
+      alert('Impossible de récupérer les matchs du gameweek.');
+    }
+  });
+}
+
+
 }

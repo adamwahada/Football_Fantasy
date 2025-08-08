@@ -179,7 +179,7 @@ public class GameWeekService {
             // Initial dates - will be recalculated when match is added
             gameweek.setStartDate(matchData.getMatchDate());
             gameweek.setEndDate(matchData.getMatchDate().plusHours(2).plusMinutes(30));
-            gameweek.setJoinDeadline(matchData.getMatchDate().minusHours(1));
+            gameweek.setJoinDeadline(matchData.getMatchDate().minusMinutes(30));
 
             gameweek = gameWeekRepository.save(gameweek);
             System.out.println("✅ Created new flexible gameweek: " + competition + " Week " + weekNumber);
@@ -303,6 +303,9 @@ public class GameWeekService {
             gameWeek.setStartDate(null);
             gameWeek.setEndDate(null);
             gameWeek.setJoinDeadline(null);
+            // Valeur par défaut : 1er janvier 2026 00:00
+            LocalDateTime defaultJoinDeadline = LocalDateTime.of(2026, 1, 1, 1, 0);
+            gameWeek.setJoinDeadline(defaultJoinDeadline);
         } else {
             LocalDateTime earliest = matches.stream()
                     .map(Match::getMatchDate)
@@ -316,7 +319,7 @@ public class GameWeekService {
 
             gameWeek.setStartDate(earliest);
             gameWeek.setEndDate(latest.plusHours(2).plusMinutes(30));
-            gameWeek.setJoinDeadline(earliest.minusHours(1)); // 1 hour before first match
+            gameWeek.setJoinDeadline(earliest.minusMinutes(30));
 
             System.out.println("📅 GameWeek " + gameWeek.getId() + " dates recalculated: " +
                     "Start=" + gameWeek.getStartDate() +

@@ -40,7 +40,10 @@
     <button class="btn-secondary" (click)="deleteSelectedGameweeks()" [disabled]="selectedGameweekIds.size === 0">
       Supprimer sélectionnés
     </button>
-    <button class="btn-add" [routerLink]="['/admin/AddGameweek']" title="Ajouter un gameweek">+</button>
+    <button mat-icon-button (click)="addNew()" class="col-green" matTooltip="Ajouter un gameweek">
+  <mat-icon>add_circle_outline</mat-icon>
+</button>
+
   </div>
 
   <table class="match-table">
@@ -86,25 +89,55 @@
           {{ getTimeLeft(gameweek.joinDeadline) }}
         </td>
         <td class="actions">
+          <!-- Modifier -->
           <button
+            mat-icon-button
+            class="btn-icon blue"
             [routerLink]="['/admin/gameweek/editGameweek', gameweek.id]"
-            title="Modifier"
-            class="btn-icon blue">
-            ✏️
+            matTooltip="Modifier"
+            aria-label="Modifier">
+            <mat-icon>edit</mat-icon>
           </button>
+
+          <!-- Supprimer -->
           <button
+            mat-icon-button
+            class="btn-icon red"
             (click)="deleteGameweek(gameweek.id!)"
-            title="Supprimer"
-            class="btn-icon red">
-            🗑️
+            matTooltip="Supprimer"
+            aria-label="Supprimer">
+            <mat-icon>delete_outline</mat-icon>
           </button>
+
+          <!-- Voir les matchs -->
           <button
+            mat-icon-button
+            class="btn-icon green"
             (click)="showMatches(gameweek)"
-            title="Voir les matchs"
-            class="btn-icon green">
-            ⚽️
+            matTooltip="Voir les matchs"
+            aria-label="Voir les matchs">
+            <mat-icon>sports_soccer</mat-icon>
           </button>
-          <button (click)="selectMatches(gameweek.id!)">➕</button>
+
+          <!-- Ajouter des matchs -->
+          <button
+            mat-icon-button
+            class="btn-icon blue"
+            (click)="selectMatches(gameweek.id!)"
+            matTooltip="Ajouter des matchs"
+            aria-label="Ajouter des matchs">
+            <mat-icon>add_circle_outline</mat-icon>
+          </button>
+
+          <!-- Réinitialiser -->
+          <button
+            mat-icon-button
+            class="btn-icon orange"
+            (click)="resetGameweek(gameweek.id!)"
+            matTooltip="Réinitialiser Gameweek"
+            aria-label="Réinitialiser tous les matchs">
+            <mat-icon>autorenew</mat-icon>
+          </button>
         </td>
       </tr>
 
