@@ -4,7 +4,7 @@
 <div class="filters" style="margin-bottom: 1rem; display: flex; gap: 1rem; align-items: center;">
   <label>
     Statut du match :
-    <select [(ngModel)]="matchStatusFilter" (change)="applyFilters()">
+    <select name="matchStatusFilter" [(ngModel)]="matchStatusFilter" (change)="applyFilters()">
       <option value="">Tous</option>
       <option value="SCHEDULED">Scheduled</option>
       <option value="COMPLETED">Completed</option>
@@ -12,61 +12,107 @@
     </select>
   </label>
 
+  <label>Date Range:
+  <select [formControl]="filterControl">
+    <option value="all">Tous</option>
+    <option value="nextDay">Tomorrow</option>
+    <option value="next3Days">3 days</option>
+    <option value="nextWeek">7 days</option>
+  </select>
+  </label>
+
   <label>
     Statut :
-    <select [(ngModel)]="statusFilter" (change)="applyFilters()">
+    <select name="statusFilter" [(ngModel)]="statusFilter" (change)="applyFilters()">
       <option value="">Tous</option>
       <option value="active">Actif</option>
       <option value="inactive">Inactif</option>
     </select>
   </label>
+
   <label>
     Date :
-    <input type="date" [(ngModel)]="dateFilter" (change)="applyFilters()" />
+    <input type="date" name="dateFilter" [(ngModel)]="dateFilter" (change)="applyFilters()" />
   </label>
 
-<!-- Boutons -->
-  <button type="button" (click)="applyFilters()" class="btn-primary">Filtrer</button>
-  <button (click)="resetFilters()" class="btn-secondary">Réinitialiser</button>
 </div>
 
 <!-- Active Filters Display -->
-<div class="active-filters" *ngIf="statusFilter || dateFilter" 
-     style="margin-bottom: 1rem; padding: 0.5rem; background-color: #f5f5f5; border-radius: 4px;">
-  <span style="font-weight: bold; margin-right: 0.5rem;">Filtres actifs:</span>
-  <span *ngIf="statusFilter" class="filter-chip" style="background: #28a745; color: white; padding: 2px 8px; border-radius: 12px; margin-right: 0.5rem; font-size: 0.8em;">
-    📊 {{ statusFilter === 'active' ? 'Actif' : 'Inactif' }}
-  </span>
-  <span *ngIf="dateFilter" class="filter-chip" style="background: #007bff; color: white; padding: 2px 8px; border-radius: 12px; margin-right: 0.5rem; font-size: 0.8em;">
-    📅 {{ dateFilter | date: 'dd/MM/yyyy' }}
-  </span>
-    <span *ngIf="matchStatusFilter" class="filter-chip" style="background: #ffc107; color: white; padding: 2px 8px; border-radius: 12px; margin-right: 0.5rem; font-size: 0.8em;">
-    🏟 {{ matchStatusFilter === 'SCHEDULED' ? 'Prévu' : matchStatusFilter === 'COMPLETED' ? 'Terminé' : 'Annulé' }}
-  </span>
+<div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 1rem; flex-wrap: wrap;">
+  <div class="active-filters" *ngIf="statusFilter || dateFilter || matchStatusFilter || filterControl.value !== 'all'"
+       style="padding: 0.5rem; background-color: #f5f5f5; border-radius: 4px; display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; flex: 1;">
+    <span style="font-weight: bold;">Filtres actifs:</span>
+
+    <span *ngIf="statusFilter" class="filter-chip" style="background: #28a745; color: white; padding: 2px 8px; border-radius: 12px; font-size: 0.8em; cursor: pointer;"
+          (click)="statusFilter = ''; applyFilters()">
+      📊 {{ statusFilter === 'active' ? 'Actif' : 'Inactif' }} ✕
+    </span>
+
+    <span *ngIf="dateFilter" class="filter-chip" style="background: #007bff; color: white; padding: 2px 8px; border-radius: 12px; font-size: 0.8em; cursor: pointer;"
+          (click)="dateFilter = ''; applyFilters()">
+      📅 {{ dateFilter | date: 'dd/MM/yyyy' }} ✕
+    </span>
+
+    <span *ngIf="matchStatusFilter" class="filter-chip" style="background: #ffc107; color: white; padding: 2px 8px; border-radius: 12px; font-size: 0.8em; cursor: pointer;"
+          (click)="matchStatusFilter = ''; applyFilters()">
+      🏟 {{ matchStatusFilter === 'SCHEDULED' ? 'Prévu' : matchStatusFilter === 'COMPLETED' ? 'Terminé' : 'Annulé' }} ✕
+    </span>
+
+    <span *ngIf="filterControl.value !== 'all'" class="filter-chip" style="background: #17a2b8; color: white; padding: 2px 8px; border-radius: 12px; font-size: 0.8em; cursor: pointer;"
+          (click)="filterControl.setValue('all'); applyFilters()">
+      📅 {{ filterControl.value | titlecase }} ✕
+    </span>
+  </div>
+
+  <button *ngIf="statusFilter || dateFilter || matchStatusFilter || filterControl.value !== 'all'"
+          type="button" (click)="resetFilters()" class="btn-secondary" style="white-space: nowrap;">
+    Réinitialiser
+  </button>
 </div>
 
+
 <div class="match-table-container">
-  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+  <div
+    style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;"
+  >
     <div>
       <span style="color: #666;">
-        Affichage {{ dataSource.filteredData.length }} résultat(s) 
+        Affichage {{ dataSource.filteredData.length }} résultat(s)
         <span *ngIf="dataSource.filteredData.length !== matches.length">
           sur {{ matches.length }} total
         </span>
       </span>
     </div>
-    
+
     <div style="display: flex; gap: 1rem;">
-      <button class="btn-secondary" (click)="deleteSelectedMatches()" [disabled]="selectedMatchIds.size === 0">
+      <button
+        class="btn-secondary"
+        (click)="deleteSelectedMatches()"
+        [disabled]="selectedMatchIds.size === 0"
+      >
         Supprimer sélectionnés ({{ selectedMatchIds.size }})
       </button>
-      <button class="btn-secondary" (click)="resetSelectedMatches()" [disabled]="selectedMatchIds.size === 0">
+      <button
+        class="btn-secondary"
+        (click)="resetSelectedMatches()"
+        [disabled]="selectedMatchIds.size === 0"
+      >
         Réinitialiser sélectionnés ({{ selectedMatchIds.size }})
       </button>
-      <button *ngIf="gameweekId && selectedMatchIds.size > 0" (click)="linkSelectedMatchesToGameweek()">
-        Link Selected Matches to Gameweek
+      <button
+        *ngIf="gameweekId && selectedMatchIds.size > 0"
+        (click)="linkSelectedMatchesToGameweek()"
+        class="btn-secondary"
+      >
+        Lier les matchs sélectionnés à la Gameweek
       </button>
-      <button class="btn-add" [routerLink]="['/admin/Addmatch']" title="Ajouter un match">+</button>
+      <button
+        class="btn-add"
+        [routerLink]="['/admin/Addmatch']"
+        title="Ajouter un match"
+      >
+        +
+      </button>
     </div>
   </div>
 
@@ -125,29 +171,18 @@
           >
             ✏️
           </button>
-          <button
-            (click)="deleteMatch(match.id!)"
-            title="Supprimer"
-            class="btn-icon red"
-          >
+          <button (click)="deleteMatch(match.id!)" title="Supprimer" class="btn-icon red">
             🗑️
           </button>
-          <button
-            (click)="toggleActive(match)"
-            title="Activer / Désactiver"
-            class="btn-icon gray"
-          >
+          <button (click)="toggleActive(match)" title="Activer / Désactiver" class="btn-icon gray">
             {{ match.active ? '🔔' : '🔕' }}
           </button>
-          <button
-            (click)="resetMatch(match)"
-            title="Réinitialiser"
-            class="btn-icon orange"
-          >
+          <button (click)="resetMatch(match)" title="Réinitialiser" class="btn-icon orange">
             ♻️
           </button>
         </td>
       </tr>
+
       <!-- No result row -->
       <tr *ngIf="dataSource.filteredData.length === 0">
         <td colspan="8" class="text-center text-muted py-4">
@@ -169,6 +204,7 @@
     [pageSize]="10"
     [pageSizeOptions]="[5, 10, 25, 50, 100]"
     showFirstLastButtons
-    aria-label="Sélectionnez la page des résultats des matchs">
+    aria-label="Sélectionnez la page des résultats des matchs"
+  >
   </mat-paginator>
 </div>
