@@ -654,25 +654,23 @@ public class GameWeekService {
         GameWeek gameWeek = gameWeekRepository.findById(gameweekId)
                 .orElseThrow(() -> new IllegalArgumentException("GameWeek not found"));
 
-        // If empty/null input, remove tiebreakers
         if (newMatchIds == null || newMatchIds.isEmpty()) {
             gameWeek.setTiebreakerMatchIdList(Collections.emptyList());
             gameWeekRepository.save(gameWeek);
             return;
         }
 
-        // Validate size
         if (newMatchIds.size() != 3) {
             throw new IllegalArgumentException("Exactly 3 tiebreaker match IDs must be provided");
         }
 
-        // Validate that the matches belong to the GameWeek
-        List<Match> matches = matchRepository.findByGameweeksId(gameweekId);
+        // Récupère tous les matchs liés à la gameweek ET actifs
+        List<Match> matches = matchRepository.findByGameweeksIdAndActiveTrue(gameweekId);
         Set<Long> validMatchIds = matches.stream().map(Match::getId).collect(Collectors.toSet());
 
         for (Long id : newMatchIds) {
             if (!validMatchIds.contains(id)) {
-                throw new IllegalArgumentException("Match ID " + id + " does not belong to GameWeek " + gameweekId);
+                throw new IllegalArgumentException("Match ID " + id + " does not belong to GameWeek " + gameweekId + " or is inactive");
             }
         }
 
@@ -801,6 +799,30 @@ public class GameWeekService {
         } else {
             System.out.println("✓ Gameweek " + gameweekId + " status unchanged (" + newStatus + ")");
             return false;
+        }
+    }
+
+    @Transactional
+    public void removeMatchesFromTiebreakers(Long gameweekId, List<Long> matchIdsToRemove) {
+        GameWeek gameWeek = gameWeekRepository.findById(gameweekId)
+                .orElseThrow(() -> new IllegalArgumentException("GameWeek not found"));
+
+        List<Long> currentTiebreakers = gameWeek.getTiebreakerMatchIdList();
+        if (currentTiebreakers == null || currentTiebreakers.isEmpty()) {
+            return;
+        }
+
+        // Récupérer une copie modifiable au cas où
+        List<Long> modifiableTiebreakers = new ArrayList<>(currentTiebreakers);
+
+        System.out.println("Avant suppression: " + modifiableTiebreakers);
+        boolean modified = modifiableTiebreakers.removeAll(matchIdsToRemove);
+        System.out.println("Après suppression: " + modifiableTiebreakers);
+
+        if (modified) {
+            gameWeek.setTiebreakerMatchIdList(modifiableTiebreakers);
+            gameWeekRepository.save(gameWeek);
+            System.out.println("Tiebreakers mis à jour avec succès.");
         }
     }
 }

@@ -513,6 +513,52 @@ private loadGameweekCounts(gameweeks: Gameweek[]): Promise<void> {
     });
   }
 
+onMatchesUpdated(data: {gameweek: Gameweek, matches: MatchWithIconsDTO[]}): void {
+  console.log('✅ Received matches update from child component');
+  
+  // Update the matches array for the modal
+  this.matchesForSelectedGameweek = data.matches;
+  
+  // Update the selected gameweek with fresh data
+  this.selectedGameweekForMatches = data.gameweek;
+  
+  // Find and update the gameweek in your main data source
+  const gameweekIndex = this.dataSource.data.findIndex(gw => gw.id === data.gameweek.id);
+  if (gameweekIndex !== -1) {
+    // Update the gameweek in the data source
+    this.dataSource.data[gameweekIndex] = data.gameweek;
+    
+    // Recalculate counts for this specific gameweek
+    this.updateSingleGameweekCounts(data.gameweek, data.matches);
+    
+    // Trigger change detection for the table
+    this.dataSource._updateChangeSubscription();
+  }
+  
+  // Also update the gameweeks array
+  const mainGameweekIndex = this.gameweeks.findIndex(gw => gw.id === data.gameweek.id);
+  if (mainGameweekIndex !== -1) {
+    this.gameweeks[mainGameweekIndex] = data.gameweek;
+  }
+}
 
+// Helper method to update counts for a single gameweek
+private updateSingleGameweekCounts(gameweek: Gameweek, matches: MatchWithIconsDTO[]): void {
+  // Update matches count
+  (gameweek as any).matchesCount = matches.length;
+  
+  // Update tiebreaker count
+  if (gameweek.tiebreakerMatchIds) {
+    const tiebreakerIds = gameweek.tiebreakerMatchIds.split(',').filter(id => id.trim());
+    (gameweek as any).tiebreakerCount = tiebreakerIds.length;
+  } else {
+    (gameweek as any).tiebreakerCount = 0;
+  }
+  
+  console.log('✅ Updated counts for gameweek', gameweek.id, {
+    matches: (gameweek as any).matchesCount,
+    tiebreakers: (gameweek as any).tiebreakerCount
+  });
+}
 
 }

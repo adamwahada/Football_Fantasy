@@ -53,16 +53,23 @@
         }"
         (click)="isSelectionMode ? toggleMatchSelection(match.id!) : null"
       >
-        <!-- Indicateur de sélection -->
+        <!-- Selection indicator -->
         <div *ngIf="isSelectionMode" class="selection-indicator">
           <span class="checkbox" [ngClass]="{'checked': isMatchSelected(match.id!)}">
             {{ isMatchSelected(match.id!) ? '✓' : '' }}
           </span>
         </div>
 
-        <!-- Action Buttons - cachés en mode sélection -->
+        <!-- Action Buttons - hidden in selection mode -->
         <div class="actions" *ngIf="!isSelectionMode">
-          <button (click)="removeMatch(match.id!)" class="action-btn delete">🗑 </button>
+          <button 
+            (click)="toggleActive(match)" 
+            class="action-btn toggle-active"
+            [title]="match.active ? 'Désactiver' : 'Activer'"
+            [ngClass]="{'inactive-btn': !match.active, 'active-btn': match.active}">
+            {{ match.active ? '🔔' : '🔕' }}
+          </button>
+          <button (click)="removeMatch(match.id!)" class="action-btn delete">🗑</button>
         </div>
 
         <div class="team home">
@@ -71,8 +78,7 @@
           <span
             *ngIf="match.finished && match.homeScore != null && match.awayScore != null && match.homeScore > match.awayScore"
             class="winner-marker"
-            >🏆</span
-          >
+          >🏆</span>
         </div>
 
         <div class="vs">vs</div>
@@ -83,8 +89,7 @@
           <span
             *ngIf="match.finished && match.homeScore != null && match.awayScore != null && match.awayScore > match.homeScore"
             class="winner-marker"
-            >🏆</span
-          >
+          >🏆</span>
         </div>
 
         <div class="match-date">
@@ -104,7 +109,6 @@
           {{ getMatchStatus(match) }}
         </div>
       </div>
-    </div>
-
+</div>
   </div>
 </div>

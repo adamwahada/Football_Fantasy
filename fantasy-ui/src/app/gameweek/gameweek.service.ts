@@ -161,4 +161,9 @@ getMatchesCount(gameweekId: number): Observable<number> {
 getTiebreakerCount(gameweekId: number): Observable<number> {
   return this.http.get<number>(`${this.apiUrl}/${gameweekId}/tiebreaker-count`);
 }
+deleteTiebreakerMatches(gameweekId: number, matchIds: number[]): Observable<void> {
+  return this.http.request<void>('delete', `${this.apiUrl}/gameweeks/${gameweekId}/tiebreakers`, {
+    body: matchIds
+  });
+}
 }

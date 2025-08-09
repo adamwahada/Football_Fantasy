@@ -19,4 +19,6 @@ public interface MatchRepository extends JpaRepository<Match, Long> {
     Optional<Match> findDuplicateMatch(@Param("homeTeam") String homeTeam,
                                        @Param("awayTeam") String awayTeam,
                                        @Param("matchDate") LocalDateTime matchDate);
+    List<Match> findByGameweeksIdAndActiveTrue(Long gameweekId);
+
 }

@@ -8,6 +8,7 @@
   <app-show-gameweek-matches
     [gameweek]="selectedGameweekForMatches"
     [matches]="matchesForSelectedGameweek"
+    (matchesUpdated)="onMatchesUpdated($event)"
     (close)="closeMatchesModal()">
   </app-show-gameweek-matches>
 </div>
@@ -41,9 +42,8 @@
       Supprimer sélectionnés
     </button>
     <button mat-icon-button (click)="addNew()" class="col-green" matTooltip="Ajouter un gameweek">
-  <mat-icon>add_circle_outline</mat-icon>
-</button>
-
+      <mat-icon>add_circle_outline</mat-icon>
+    </button>
   </div>
 
   <table class="match-table">
@@ -161,7 +161,7 @@
 
       <!-- No result row -->
       <tr *ngIf="dataSource.filteredData.length === 0">
-        <td colspan="8" class="text-center text-muted py-4">
+        <td colspan="10" class="text-center text-muted py-4">
           Aucune gameweek trouvée
         </td>
       </tr>
@@ -169,10 +169,10 @@
   </table>
 
   <!-- Paginator placed outside tbody -->
-<mat-paginator
-  [length]="dataSource.filteredData.length"
-  [pageSize]="10"
-  [pageSizeOptions]="[10, 19, 38, 300]"
-  showFirstLastButtons>
-</mat-paginator>
+  <mat-paginator
+    [length]="dataSource.filteredData.length"
+    [pageSize]="10"
+    [pageSizeOptions]="[10, 19, 38, 300]"
+    showFirstLastButtons>
+  </mat-paginator>
 </div>

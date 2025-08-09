@@ -1,6 +1,7 @@
 import { Component, Input, Output, EventEmitter, OnChanges, SimpleChanges } from '@angular/core';
 import { MatchWithIconsDTO } from '../../../match/match.service';
 import { Gameweek, GameweekService } from '../../gameweek.service';
+import { MatchService } from '../../../match/match.service';
 import { CommonModule } from '@angular/common';
 
 @Component({
@@ -8,7 +9,7 @@ import { CommonModule } from '@angular/common';
   templateUrl: './show-gameweek-matches.component.html',
   styleUrls: ['./show-gameweek-matches.component.scss'],
   standalone: true,
-  imports: [CommonModule, CommonModule]
+  imports: [CommonModule]
 })
 export class ShowGameweekMatchesComponent implements OnChanges {
   @Input() gameweek!: Gameweek;
@@ -16,15 +17,19 @@ export class ShowGameweekMatchesComponent implements OnChanges {
 
   private _matches: (MatchWithIconsDTO & { isTiebreaker?: boolean })[] = [];
 
-  // Nouvelles propriétés pour la sélection
+  // Properties for selection mode
   isSelectionMode = false;
   selectedMatches: Set<number> = new Set();
 
   @Output() close = new EventEmitter<void>();
+  @Output() matchesUpdated = new EventEmitter<{gameweek: Gameweek, matches: MatchWithIconsDTO[]}>();
 
   readonly baseUrl = 'http://localhost:9090/fantasy';
 
-  constructor(private gameweekService: GameweekService) {}
+  constructor(
+    private gameweekService: GameweekService,
+    private matchService: MatchService
+  ) {}
 
   ngOnChanges(changes: SimpleChanges): void {
     if (changes['matches'] || changes['gameweek']) {
@@ -46,7 +51,8 @@ export class ShowGameweekMatchesComponent implements OnChanges {
 
     this._matches = this.matches.map(m => ({
       ...m,
-      isTiebreaker: m.id != null && tiebreakerIds.includes(m.id)
+      // Only mark as tiebreaker if the match is active AND in the tiebreaker list
+      isTiebreaker: m.id != null && m.active && tiebreakerIds.includes(m.id)
     }));
   }
 
@@ -76,21 +82,132 @@ export class ShowGameweekMatchesComponent implements OnChanges {
       default: return 'À venir';
     }
   }
+toggleActive(match: MatchWithIconsDTO): void {
+  const newStatus = !match.active;
+  const wasThebreaker = this.isMatchTiebreaker(match.id!);
 
-  removeMatch(matchId: number): void {
+  this.matchService.setMatchActiveStatus(match.id!, newStatus).subscribe({
+    next: () => {
+      match.active = newStatus;
+      const matchInArray = this._matches.find(m => m.id === match.id);
+      if (matchInArray) matchInArray.active = newStatus;
+      const originalMatch = this.matches.find(m => m.id === match.id);
+      if (originalMatch) originalMatch.active = newStatus;
+
+      if (!newStatus && wasThebreaker) {
+        this.gameweekService.deleteTiebreakerMatches(this.gameweek.id!, [match.id!]).subscribe({
+          next: () => {
+            this.reloadGameweekAndMatches();
+          },
+          error: err => console.error('Erreur suppression tiebreaker:', err)
+        });
+      } else {
+        this.updateMatchesWithTiebreakers();
+        this.matchesUpdated.emit({gameweek: this.gameweek, matches: this.matches});
+      }
+    },
+    error: err => {
+      console.error('Erreur lors de la mise à jour du statut du match :', err);
+      alert('Erreur lors de la mise à jour du statut du match.');
+    }
+  });
+}
+removeMatch(matchId: number): void {
+  if (!this.gameweek?.id) return;
+  if (!confirm('Voulez-vous vraiment retirer ce match de cette gameweek ?')) return;
+
+  const wasThebreaker = this.isMatchTiebreaker(matchId);
+
+  this.gameweekService.deleteSelectedMatches(this.gameweek.id, [matchId]).subscribe({
+    next: () => {
+      // Rafraîchit la gameweek et ses matches avant d'appeler deleteTiebreakerMatches
+      this.gameweekService.getGameweekById(this.gameweek.id!).subscribe({
+        next: (updatedGameweek) => {
+          this.gameweek = updatedGameweek;
+          this.gameweekService.getMatchesWithIcons(this.gameweek.id!).subscribe({
+            next: (updatedMatches) => {
+              this.matches = updatedMatches;
+              this._matches = updatedMatches.map(m => ({ ...m, isTiebreaker: this.isMatchTiebreaker(m.id!) }));
+
+              if (wasThebreaker) {
+                this.gameweekService.deleteTiebreakerMatches(this.gameweek.id!, [matchId]).subscribe({
+                  next: () => {
+                    this.reloadGameweekAndMatches();
+                  },
+                  error: err => console.error('Erreur suppression tiebreaker:', err)
+                });
+              } else {
+                this.matchesUpdated.emit({gameweek: this.gameweek, matches: this.matches});
+              }
+            }
+          });
+        }
+      });
+    },
+    error: err => {
+      console.error('Erreur lors de la suppression du match :', err);
+      alert('Erreur lors de la suppression du match.');
+    }
+  });
+}
+
+
+  /**
+   * Helper method to check if a match is currently a tiebreaker
+   */
+  private isMatchTiebreaker(matchId: number): boolean {
+    let currentTiebreakerIds: number[] = [];
+
+    if (Array.isArray(this.gameweek?.tiebreakerMatchIds)) {
+      currentTiebreakerIds = this.gameweek.tiebreakerMatchIds as unknown as number[];
+    } else if (typeof this.gameweek?.tiebreakerMatchIds === 'string') {
+      currentTiebreakerIds = this.gameweek.tiebreakerMatchIds
+        .split(',')
+        .map(id => Number(id.trim()))
+        .filter(id => !isNaN(id));
+    }
+
+    return currentTiebreakerIds.includes(matchId);
+  }
+
+  /**
+   * Remove a specific match from tiebreakers and update the gameweek
+   */
+  private removeTiebreakerAndUpdate(matchId: number): void {
     if (!this.gameweek?.id) return;
 
-    if (!confirm('Voulez-vous vraiment retirer ce match de cette gameweek ?')) return;
+    let currentTiebreakerIds: number[] = [];
 
-    this.gameweekService.deleteSelectedMatches(this.gameweek.id, [matchId]).subscribe({
-      next: () => {
-        this._matches = this._matches.filter(m => m.id !== matchId);
-      },
-      error: err => {
-        console.error('Erreur lors de la suppression du match :', err);
-        alert('Erreur lors de la suppression du match.');
-      }
-    });
+    if (Array.isArray(this.gameweek?.tiebreakerMatchIds)) {
+      currentTiebreakerIds = this.gameweek.tiebreakerMatchIds as unknown as number[];
+    } else if (typeof this.gameweek?.tiebreakerMatchIds === 'string') {
+      currentTiebreakerIds = this.gameweek.tiebreakerMatchIds
+        .split(',')
+        .map(id => Number(id.trim()))
+        .filter(id => !isNaN(id));
+    }
+
+    // Remove the specific match from tiebreakers
+    const updatedTiebreakerIds = currentTiebreakerIds.filter(id => id !== matchId);
+
+    // Only update if there's a change
+    if (updatedTiebreakerIds.length !== currentTiebreakerIds.length) {
+      this.gameweekService.setTiebreakers(this.gameweek.id, updatedTiebreakerIds).subscribe({
+        next: () => {
+          // Update local gameweek data
+          this.gameweek.tiebreakerMatchIds = updatedTiebreakerIds.join(',');
+          this.updateMatchesWithTiebreakers();
+          
+          console.log(`Match ${matchId} removed from tiebreakers. ${updatedTiebreakerIds.length} tiebreakers remaining.`);
+          
+          // Emit updated matches to parent
+          this.matchesUpdated.emit({gameweek: this.gameweek, matches: this.matches});
+        },
+        error: err => {
+          console.error('Erreur lors de la mise à jour des tiebreakers :', err);
+        }
+      });
+    }
   }
 
   startTiebreakerSelection(): void {
@@ -105,6 +222,10 @@ export class ShowGameweekMatchesComponent implements OnChanges {
 
   toggleMatchSelection(matchId: number): void {
     if (!this.isSelectionMode) return;
+
+    // Only allow selection of active matches
+    const match = this._matches.find(m => m.id === matchId);
+    if (!match?.active) return;
 
     if (this.selectedMatches.has(matchId)) {
       this.selectedMatches.delete(matchId);
@@ -123,7 +244,9 @@ export class ShowGameweekMatchesComponent implements OnChanges {
     this.isSelectionMode = true;
     this.selectedMatches.clear();
 
-    const shuffled = [...this._matches].sort(() => Math.random() - 0.5);
+    // Only consider active matches for random selection
+    const activeMatches = this._matches.filter(m => m.active);
+    const shuffled = [...activeMatches].sort(() => Math.random() - 0.5);
     const selected = shuffled.slice(0, 3);
 
     selected.forEach(match => {
@@ -146,6 +269,18 @@ export class ShowGameweekMatchesComponent implements OnChanges {
 
     const selectedMatchIds = Array.from(this.selectedMatches);
 
+    // Verify all selected matches are still active
+    const inactiveSelected = selectedMatchIds.filter(id => {
+      const match = this._matches.find(m => m.id === id);
+      return !match?.active;
+    });
+
+    if (inactiveSelected.length > 0) {
+      alert('Certains matchs sélectionnés sont inactifs. Veuillez rafraîchir votre sélection.');
+      this.selectedMatches.clear();
+      return;
+    }
+
     if (!confirm(`Voulez-vous ajouter ${selectedMatchIds.length} match(es) comme tiebreaker(s) ?`)) {
       return;
     }
@@ -155,10 +290,34 @@ export class ShowGameweekMatchesComponent implements OnChanges {
         alert(`${selectedMatchIds.length} match(es) tiebreaker ajouté(s) avec succès.`);
         this.isSelectionMode = false;
         this.selectedMatches.clear();
+
+        // Reload fresh data to update UI automatically and emit to parent
+        this.reloadGameweekAndMatches();
       },
       error: error => {
         console.error('Erreur lors de l\'ajout des matches tiebreaker :', error);
         alert('Erreur lors de l\'ajout des matches tiebreaker.');
+      }
+    });
+  }
+
+  private reloadGameweekAndMatches(): void {
+    if (!this.gameweek?.id) return;
+
+    this.gameweekService.getGameweekById(this.gameweek.id).subscribe({
+      next: (updatedGameweek) => {
+        this.gameweek = updatedGameweek;
+        this.gameweekService.getMatchesWithIcons(this.gameweek.id!).subscribe({
+          next: (updatedMatches) => {
+            this.matches = updatedMatches;
+            // Emit both updated gameweek and matches to parent component
+            this.matchesUpdated.emit({ gameweek: updatedGameweek, matches: updatedMatches });
+            // This will trigger ngOnChanges and refresh UI
+          }
+        });
+      },
+      error: (err) => {
+        console.error('Erreur lors du rechargement de la gameweek :', err);
       }
     });
   }

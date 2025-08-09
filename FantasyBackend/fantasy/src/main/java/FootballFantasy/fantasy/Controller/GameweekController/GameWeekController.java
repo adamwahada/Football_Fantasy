@@ -237,5 +237,14 @@ public class GameWeekController {
         List<GameWeek> all = gameWeekRepository.findAll();
         return ResponseEntity.ok(all);
     }
+
+    @DeleteMapping("/gameweeks/{gameweekId}/tiebreakers")
+    public ResponseEntity<Void> removeTiebreakerMatches(
+            @PathVariable Long gameweekId,
+            @RequestBody List<Long> matchIdsToRemove) {
+        gameweekService.removeMatchesFromTiebreakers(gameweekId, matchIdsToRemove);
+        return ResponseEntity.noContent().build();
+    }
+
 }
 

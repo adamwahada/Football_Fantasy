@@ -312,22 +312,82 @@
   background: linear-gradient(135deg, #F57C00, #EF6C00);
   transform: translateY(-1px);
 }
-.tiebreaker {
-  background: linear-gradient(135deg, #d4af37, #f9d71c 30%, #b8860b 70%, #f5deb3);
-  border: 3px solid #ffd700;
-  border-radius: 12px;
-  color: #3b2f00; /* dark golden brown for text */
-  box-shadow:
-    0 0 10px 3px rgba(174, 156, 54, 0.7),
-    inset 0 0 15px 5px rgba(255, 223, 0, 0.5);
-  transition: transform 0.3s ease, box-shadow 0.3s ease;
+/* Add these styles to your existing SCSS file */
+
+.actions {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
 }
 
-.tiebreaker:hover {
-  transform: scale(1.05);
-  box-shadow:
-    0 0 20px 5px rgba(255, 215, 0, 0.9),
-    inset 0 0 25px 8px rgba(255, 223, 0, 0.7);
+.action-btn {
+  padding: 0.5rem;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  transition: all 0.2s ease;
+  
+  &.delete {
+    background-color: #ff4444;
+    color: white;
+    
+    &:hover {
+      background-color: #cc0000;
+      transform: scale(1.05);
+    }
+  }
+  
+  &.toggle-active {
+    color: white;
+    font-weight: bold;
+    
+    &.active-btn {
+      background-color: #28a745;
+      
+      &:hover {
+        background-color: #1e7e34;
+      }
+    }
+    
+    &.inactive-btn {
+      background-color: #6c757d;
+      
+      &:hover {
+        background-color: #545b62;
+      }
+    }
+  }
+}
+
+/* Enhanced inactive match styling */
+.match-card.inactive {
+  opacity: 0.6;
+  border-left: 4px solid #dc3545;
+  background-color: #f8f9fa;
+  
+  .team, .vs, .match-date, .score {
+    color: #6c757d;
+  }
+}
+
+/* Tiebreaker match styling */
+.match-card.tiebreaker {
+  border-left: 4px solid #ffc107;
+  background: linear-gradient(135deg, #fff3cd 0%, #ffffff 100%);
+  
+  &::before {
+    content: "⭐ TIEBREAKER";
+    position: absolute;
+    top: 0.5rem;
+    right: 0.5rem;
+    background: #ffc107;
+    color: #212529;
+    padding: 0.2rem 0.5rem;
+    border-radius: 3px;
+    font-size: 0.7rem;
+    font-weight: bold;
+  }
 }
 
 
