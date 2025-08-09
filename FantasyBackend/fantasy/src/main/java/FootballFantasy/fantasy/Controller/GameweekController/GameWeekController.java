@@ -89,6 +89,15 @@ public class GameWeekController {
             return ResponseEntity.internalServerError().build();
         }
     }
+    @GetMapping("/{id}")
+    public ResponseEntity<GameWeek> getGameweekById(@PathVariable Long id) {
+        try {
+            GameWeek gameWeek = gameWeekService.getGameweekById(id);
+            return ResponseEntity.ok(gameWeek);
+        } catch (Exception e) {
+            return ResponseEntity.notFound().build();
+        }
+    }
 
     @DeleteMapping("/{gameWeekId}/matches")
     public ResponseEntity<Void> deleteAllMatchesForGameWeek(@PathVariable Long gameWeekId) {

@@ -260,7 +260,7 @@ getUserRoles(): string[] {
             console.log('✅ Rôles après login :', roles);
           
             if (roles.includes('admin')) {
-              this.router.navigate(['admin/Allmatch']);
+              this.router.navigate(['admin/allgameweek']);
             } else {
               this.router.navigate(['/test']);
             }

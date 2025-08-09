@@ -24,7 +24,7 @@ export class SigninComponent implements OnInit {
 
       // Redirection selon les rôles
     if (userRoles.includes('ROLE_ADMIN')) {
-      this.router.navigate(['/admin/Allmatch']);
+      this.router.navigate(['/admin/allgameweek']);
     } else if (userRoles.includes('ROLE_USER')) {
       this.router.navigate(['/user-dashboard']);
       } else {

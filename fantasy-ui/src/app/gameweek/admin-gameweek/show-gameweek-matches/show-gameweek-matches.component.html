@@ -42,17 +42,17 @@
 
     <div class="cards-container">
       <div
-        *ngFor="let match of matches"
+        *ngFor="let match of matchesWithTiebreaker"
         class="match-card"
         [ngClass]="{
           'completed': match.finished,
           'inactive': match.active === false,
           'selectable': isSelectionMode,
-          'selected': isSelectionMode && isMatchSelected(match.id!)
+          'selected': isSelectionMode && isMatchSelected(match.id!),
+          'tiebreaker': match.isTiebreaker
         }"
         (click)="isSelectionMode ? toggleMatchSelection(match.id!) : null"
       >
-        
         <!-- Indicateur de sélection -->
         <div *ngIf="isSelectionMode" class="selection-indicator">
           <span class="checkbox" [ngClass]="{'checked': isMatchSelected(match.id!)}">
@@ -64,7 +64,7 @@
         <div class="actions" *ngIf="!isSelectionMode">
           <button (click)="removeMatch(match.id!)" class="action-btn delete">🗑 </button>
         </div>
-        
+
         <div class="team home">
           <img [src]="getFullIconUrl(match.homeTeamIcon)" alt="{{ match.homeTeam }}" class="team-icon" />
           {{ match.homeTeam }}
@@ -105,5 +105,6 @@
         </div>
       </div>
     </div>
+
   </div>
 </div>

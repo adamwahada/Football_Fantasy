@@ -1,1 +1,203 @@
-<p>edit-admin-gameweek works!</p>
+<div class="edit-gameweek-container">
+  <div class="header-section">
+    <h1 class="page-title">
+      <i class="icon-edit"></i>
+      Edit Gameweek
+    </h1>
+    <p class="page-subtitle">Update gameweek details for your fantasy football competition</p>
+  </div>
+
+  <div class="form-container">
+    <form [formGroup]="gameweekForm" (ngSubmit)="onSubmit()" class="gameweek-form">
+      
+      <!-- Success Message -->
+      <div *ngIf="successMessage" class="alert alert-success">
+        <i class="icon-check"></i>
+        {{ successMessage }}
+      </div>
+
+      <!-- Error Message -->
+      <div *ngIf="errorMessage" class="alert alert-error">
+        <i class="icon-error"></i>
+        {{ errorMessage }}
+      </div>
+
+      <!-- Form Validation Error -->
+      <div *ngIf="getFormError()" class="alert alert-error">
+        <i class="icon-error"></i>
+        {{ getFormError() }}
+      </div>
+
+      <!-- Loading State -->
+      <div *ngIf="isLoadingGameweek" class="loading-container">
+        <div class="loading-spinner"></div>
+        <p>Loading gameweek details...</p>
+      </div>
+
+      <div class="form-grid" *ngIf="!isLoadingGameweek">
+        <!-- Week Number -->
+        <div class="form-group">
+          <label for="weekNumber" class="form-label">
+            Week Number <span class="required">*</span>
+          </label>
+          <input
+            type="number"
+            id="weekNumber"
+            formControlName="weekNumber"
+            class="form-input"
+            [class.error]="getFieldError('weekNumber')"
+            placeholder="Enter week number (1-50)"
+            min="1"
+            max="50"
+          />
+          <div *ngIf="getFieldError('weekNumber')" class="error-message">
+            {{ getFieldError('weekNumber') }}
+          </div>
+        </div>
+
+        <!-- Status -->
+        <div class="form-group">
+          <label for="status" class="form-label">
+            Status <span class="required">*</span>
+          </label>
+          <select
+            id="status"
+            formControlName="status"
+            class="form-select"
+            [class.error]="getFieldError('status')"
+          >
+            <option value="" disabled>Select status</option>
+            <option *ngFor="let status of statuses" [value]="status.value">
+              {{ status.label }}
+            </option>
+          </select>
+          <div *ngIf="getFieldError('status')" class="error-message">
+            {{ getFieldError('status') }}
+          </div>
+        </div>
+
+        <!-- Competition -->
+        <div class="form-group full-width">
+          <label for="competition" class="form-label">
+            Competition <span class="required">*</span>
+          </label>
+          <select
+            id="competition"
+            formControlName="competition"
+            class="form-select"
+            [class.error]="getFieldError('competition')"
+          >
+            <option value="" disabled>Select competition</option>
+            <option *ngFor="let comp of competitions" [value]="comp.value">
+              {{ comp.label }}
+            </option>
+          </select>
+          <div *ngIf="getFieldError('competition')" class="error-message">
+            {{ getFieldError('competition') }}
+          </div>
+        </div>
+
+        <!-- Start Date -->
+        <div class="form-group">
+          <label for="startDate" class="form-label">
+            Start Date <span class="required">*</span>
+          </label>
+          <input
+            type="datetime-local"
+            id="startDate"
+            formControlName="startDate"
+            class="form-input"
+            [class.error]="getFieldError('startDate')"
+          />
+          <div *ngIf="getFieldError('startDate')" class="error-message">
+            {{ getFieldError('startDate') }}
+          </div>
+        </div>
+
+        <!-- End Date -->
+        <div class="form-group">
+          <label for="endDate" class="form-label">
+            End Date <span class="required">*</span>
+          </label>
+          <input
+            type="datetime-local"
+            id="endDate"
+            formControlName="endDate"
+            class="form-input"
+            [class.error]="getFieldError('endDate')"
+          />
+          <div *ngIf="getFieldError('endDate')" class="error-message">
+            {{ getFieldError('endDate') }}
+          </div>
+        </div>
+
+        <!-- Join Deadline -->
+        <div class="form-group">
+          <label for="joinDeadline" class="form-label">
+            Join Deadline <span class="required">*</span>
+          </label>
+          <input
+            type="datetime-local"
+            id="joinDeadline"
+            formControlName="joinDeadline"
+            class="form-input"
+            [class.error]="getFieldError('joinDeadline')"
+          />
+          <div *ngIf="getFieldError('joinDeadline')" class="error-message">
+            {{ getFieldError('joinDeadline') }}
+          </div>
+          <div class="input-help">
+            Join deadline should be before or equal to start date
+          </div>
+        </div>
+
+        <!-- Description -->
+        <div class="form-group full-width">
+          <label for="description" class="form-label">
+            Description
+          </label>
+          <textarea
+            id="description"
+            formControlName="description"
+            class="form-textarea"
+            placeholder="Optional description for this gameweek..."
+            rows="4"
+          ></textarea>
+        </div>
+      </div>
+
+      <!-- Form Actions -->
+      <div class="form-actions" *ngIf="!isLoadingGameweek">
+        <button
+          type="button"
+          (click)="onCancel()"
+          class="btn btn-secondary"
+          [disabled]="isLoading"
+        >
+          <i class="icon-arrow-left"></i>
+          Cancel
+        </button>
+        
+        <button
+          type="button"
+          (click)="onReset()"
+          class="btn btn-outline"
+          [disabled]="isLoading"
+        >
+          <i class="icon-refresh"></i>
+          Reset
+        </button>
+        
+        <button
+          type="submit"
+          class="btn btn-primary"
+          [disabled]="isLoading"
+        >
+          <span *ngIf="isLoading" class="loading-spinner"></span>
+          <i *ngIf="!isLoading" class="icon-save"></i>
+          {{ isLoading ? 'Updating...' : 'Update Gameweek' }}
+        </button>
+      </div>
+    </form>
+  </div>
+</div>

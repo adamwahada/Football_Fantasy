@@ -228,6 +228,10 @@ public class GameWeekService {
         gameWeekRepository.save(gameWeek);
         recalculateGameWeekDates(gameWeek);
     }
+    public GameWeek getGameweekById(Long id) {
+        return gameWeekRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Gameweek not found with id: " + id));
+    }
 
     @Transactional
     public void deleteSpecificMatchesFromGameWeek(Long gameWeekId, List<Long> matchIdsToRemove) {

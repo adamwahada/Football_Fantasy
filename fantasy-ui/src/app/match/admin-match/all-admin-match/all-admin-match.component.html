@@ -52,14 +52,14 @@
                 aria-label="Retirer de cette gameweek">
                 <mat-icon>link_off</mat-icon>
               </button>
-<button                 
-  mat-icon-button                 
-  class="btn-icon blue"                 
-  (click)="redirectToGameweekMatches(gameweek)"  
-  matTooltip="Voir les matchs de cette gameweek"                 
-  aria-label="Voir les matchs de cette gameweek">                 
-  <mat-icon>list_alt</mat-icon>               
-</button>
+              <button                 
+                mat-icon-button                 
+                class="btn-icon blue"                 
+                (click)="redirectToGameweekMatches(gameweek)"  
+                matTooltip="Voir les matchs de cette gameweek"                 
+                aria-label="Voir les matchs de cette gameweek">                 
+                <mat-icon>list_alt</mat-icon>               
+              </button>
             </div>
           </div>
         </div>
@@ -93,6 +93,7 @@
   <label>Date Range:
   <select [formControl]="filterControl">
     <option value="all">Tous</option>
+    <option value="today">Today</option>
     <option value="nextDay">Tomorrow</option>
     <option value="next3Days">3 days</option>
     <option value="nextWeek">7 days</option>
