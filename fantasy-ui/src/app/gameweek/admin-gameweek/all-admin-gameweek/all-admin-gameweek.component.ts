@@ -123,17 +123,24 @@ loadGameweeks(): Promise<void> {
     this.gameweekService.getAllGameweeks().subscribe((data: Gameweek[]) => {
       this.gameweeks = data;
       this.dataSource.data = data;
-      
+
       if (this.paginator) {
         this.dataSource.paginator = this.paginator;
       }
-      
+
       this.applyFilters();
+
+      // ✅ Load matches count for each gameweek
+      this.loadGameweekCounts(this.gameweeks).then(() => {
+        console.log('✅ Gameweek counts loaded');
+        resolve();
+      });
+
       console.log('✅ Gameweeks loaded:', data.length);
-      resolve(); // ✅ Résoudre la promesse ici
     });
   });
 }
+
 
 // Nouvelle méthode pour vérifier les query params
 private checkForModalToOpen(): void {
@@ -448,5 +455,62 @@ resetGameweek(gameweekId: number): void {
   });
 }
 
+getMatchesCount(gameweek: Gameweek): number {
+  return (gameweek as any).matchesCount || 0;
+}
+
+getTiebreakerCount(gameweek: Gameweek): number {
+  return (gameweek as any).tiebreakerCount || 0;
+}
+private loadGameweekCounts(gameweeks: Gameweek[]): Promise<void> {
+    return new Promise((resolve) => {
+      if (gameweeks.length === 0) {
+        resolve();
+        return;
+      }
+
+      let completed = 0;
+      const total = gameweeks.length;
+
+      gameweeks.forEach(gameweek => {
+        if (gameweek.id) {
+          // Charger le nombre de matchs
+          this.gameweekService.getMatchesByGameweek(gameweek.id).subscribe({
+            next: (matches) => {
+              // ✅ Attacher dynamiquement les propriétés
+              (gameweek as any).matchesCount = matches.length;
+              
+              // Calculer les tiebreakers à partir de tiebreakerMatchIds
+              if (gameweek.tiebreakerMatchIds) {
+                const tiebreakerIds = gameweek.tiebreakerMatchIds.split(',').filter(id => id.trim());
+                (gameweek as any).tiebreakerCount = tiebreakerIds.length;
+              } else {
+                (gameweek as any).tiebreakerCount = 0;
+              }
+              
+              completed++;
+              if (completed === total) {
+                resolve();
+              }
+            },
+            error: (error) => {
+              console.error(`Error loading matches count for gameweek ${gameweek.id}:`, error);
+              (gameweek as any).matchesCount = 0;
+              (gameweek as any).tiebreakerCount = 0;
+              completed++;
+              if (completed === total) {
+                resolve();
+              }
+            }
+          });
+        } else {
+          completed++;
+          if (completed === total) {
+            resolve();
+          }
+        }
+      });
+    });
+  }
 
 }

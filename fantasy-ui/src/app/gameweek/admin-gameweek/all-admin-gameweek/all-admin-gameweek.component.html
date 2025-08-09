@@ -62,6 +62,8 @@
         <th>Date de début</th>
         <th>Date de fin</th>
         <th>Time Left</th>
+        <th>Matchs</th>
+        <th>Tiebreakers</th>
         <th>Actions</th>
       </tr>
     </thead>
@@ -87,6 +89,22 @@
         <td>{{ gameweek.endDate | date: 'dd/MM/yyyy HH:mm' }}</td>
         <td class="deadline-timer" *ngIf="gameweek.joinDeadline">
           {{ getTimeLeft(gameweek.joinDeadline) }}
+        </td>
+        <td>
+          <span class="badge matches-count" 
+                [class.bg-success]="getMatchesCount(gameweek) > 0"
+                [class.bg-secondary]="getMatchesCount(gameweek) === 0"
+                [title]="getMatchesCount(gameweek) + ' match(s) dans cette gameweek'">
+            {{ getMatchesCount(gameweek) }}
+          </span>
+        </td>
+        <td>
+          <span class="badge tiebreaker-count"
+                [class.bg-warning]="getTiebreakerCount(gameweek) > 0"
+                [class.bg-light]="getTiebreakerCount(gameweek) === 0"
+                [title]="getTiebreakerCount(gameweek) + ' match(s) tiebreaker'">
+            {{ getTiebreakerCount(gameweek) }}
+          </span>
         </td>
         <td class="actions">
           <!-- Modifier -->

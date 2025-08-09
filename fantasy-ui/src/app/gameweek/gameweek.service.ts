@@ -24,8 +24,6 @@ export interface Gameweek {
   description?: string;
   tiebreakerMatchIds?: string;
   matches?: Match[];
-  matchesCount?: number;
-  tiebreakerCount?: number;
 }
 @Injectable({
   providedIn: 'root'
