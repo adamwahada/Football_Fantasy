@@ -4,7 +4,36 @@
       <h3>
         Matchs pour la semaine {{ gameweek.weekNumber }} ({{ formatCompetition(gameweek.competition) }})
       </h3>
-      <button (click)="close.emit()" class="btn-close">✖</button>
+      
+      <!-- Boutons conditionnels selon le mode -->
+      <div class="header-buttons">
+        <ng-container *ngIf="!isSelectionMode">
+          <!-- Boutons normaux -->
+          <button (click)="startTiebreakerSelection()" class="btn-select-tiebreaker" title="Sélectionner manuellement les TieBreakers">
+            Sélectionner TieBreakers
+          </button>
+          <button (click)="randomSelectThreeTiebreakers()" class="btn-random-tiebreaker" title="Sélection aléatoire de 3 TieBreakers">
+            Sélection aléatoire (3)
+          </button>
+        </ng-container>
+        
+        <ng-container *ngIf="isSelectionMode">
+          <!-- Boutons en mode sélection -->
+          <button (click)="confirmTiebreakerSelection()" class="btn-confirm-selection" title="Confirmer la sélection" [disabled]="selectedMatches.size === 0">
+            Confirmer ({{ selectedMatches.size }})
+          </button>
+          <button (click)="cancelSelection()" class="btn-cancel-selection" title="Annuler la sélection">
+            Annuler
+          </button>
+        </ng-container>
+        
+        <button (click)="close.emit()" class="btn-close">✖</button>
+      </div>
+    </div>
+
+    <!-- Message d'aide en mode sélection -->
+    <div *ngIf="isSelectionMode" class="selection-help">
+      <p>📌 Cliquez sur les matchs que vous souhaitez ajouter comme tiebreakers</p>
     </div>
 
     <div *ngIf="matches.length === 0" class="no-matches">
@@ -15,15 +44,27 @@
       <div
         *ngFor="let match of matches"
         class="match-card"
-        [ngClass]="{ 
+        [ngClass]="{
           'completed': match.finished,
-          'inactive': match.active === false
+          'inactive': match.active === false,
+          'selectable': isSelectionMode,
+          'selected': isSelectionMode && isMatchSelected(match.id!)
         }"
+        (click)="isSelectionMode ? toggleMatchSelection(match.id!) : null"
       >
-              <!-- Action Buttons -->
-        <div class="actions">
+        
+        <!-- Indicateur de sélection -->
+        <div *ngIf="isSelectionMode" class="selection-indicator">
+          <span class="checkbox" [ngClass]="{'checked': isMatchSelected(match.id!)}">
+            {{ isMatchSelected(match.id!) ? '✓' : '' }}
+          </span>
+        </div>
+
+        <!-- Action Buttons - cachés en mode sélection -->
+        <div class="actions" *ngIf="!isSelectionMode">
           <button (click)="removeMatch(match.id!)" class="action-btn delete">🗑 </button>
         </div>
+        
         <div class="team home">
           <img [src]="getFullIconUrl(match.homeTeamIcon)" alt="{{ match.homeTeam }}" class="team-icon" />
           {{ match.homeTeam }}
@@ -62,8 +103,6 @@
         >
           {{ getMatchStatus(match) }}
         </div>
-
-
       </div>
     </div>
   </div>
