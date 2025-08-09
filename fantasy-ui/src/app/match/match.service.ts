@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
+import { Gameweek } from '../gameweek/gameweek.service';
 
 export interface Match {
   id?: number;
@@ -14,8 +15,7 @@ export interface Match {
   description?: string;
   status: 'SCHEDULED' | 'LIVE' | 'COMPLETED' | 'CANCELED';
   active?: boolean;
-  gameweeks?: { id: number }[]; 
-}
+gameweeks?: Gameweek[]; }
 
 export interface MatchWithIconsDTO {
   id?: number;
@@ -33,7 +33,6 @@ export interface MatchWithIconsDTO {
   active?: boolean;
   gameweeks?: { id: number }[];
 }
-
 @Injectable({
   providedIn: 'root',
 })
@@ -88,4 +87,5 @@ export class MatchService {
       responseType: 'text',
     });
   }
+
 }

@@ -44,6 +44,10 @@ export class AllAdminMatchComponent implements OnInit, AfterViewInit {
   gameweekId?: number;
   filteredMatches: Match[] = [];
   filterControl = new FormControl('all');
+  selectedMatchForGameweeks: Match | null = null;
+  gameweeksForSelectedMatch: any[] = [];
+  loadingGameweeks = false;
+
 
   @ViewChild(MatPaginator) paginator!: MatPaginator;
 
@@ -79,7 +83,7 @@ export class AllAdminMatchComponent implements OnInit, AfterViewInit {
   }
 
   ngOnInit(): void {
-    this.loadMatches();
+    this.loadMatches(); 
     this.setupFilters();
 
     this.filterControl.valueChanges.subscribe(value => {
@@ -96,6 +100,7 @@ export class AllAdminMatchComponent implements OnInit, AfterViewInit {
       }
     });
   }
+
 
   ngAfterViewInit(): void {
     this.dataSource.paginator = this.paginator;
@@ -175,16 +180,13 @@ export class AllAdminMatchComponent implements OnInit, AfterViewInit {
     };
   }
 
-  loadMatches(): void {
-    this.matchService.getAllMatches().subscribe((data) => {
-      this.matches = data;
-      this.dataSource.data = data;
-      if (this.paginator) {
-        this.dataSource.paginator = this.paginator;
-      }
-      this.applyFilters();
-    });
-  }
+loadMatches(): void {
+  this.matchService.getAllMatches().subscribe(data => {
+    this.matches = data;
+    this.dataSource.data = data;
+    this.applyFilters();
+  });
+}
 
   applyFilters(): void {
     this.appliedFilters = {
@@ -478,5 +480,107 @@ addNew(): void {
   // Navigate to add match page
   this.router.navigate(['/admin/Addmatch']);
 }
+// Updated methods using GameweekService instead of MatchService
+
+showGameweeks(match: any): void {
+  this.selectedMatchForGameweeks = match;
+  this.loadGameweeksForMatch(match.id);
+}
+
+closeGameweeksModal(): void {
+  this.selectedMatchForGameweeks = null;
+  this.gameweeksForSelectedMatch = [];
+}
+
+
+loadGameweeksForMatch(matchId: number): void {
+  // Start loading
+  this.loadingGameweeks = true;
+  this.gameweeksForSelectedMatch = []; // Clear old data
+
+  this.gameweekService.getAllGameweeks().subscribe({
+    next: (gameweeks) => {
+      const gameweeksWithMatch: any[] = [];
+      let completedRequests = 0;
+
+      if (gameweeks.length === 0) {
+        this.gameweeksForSelectedMatch = [];
+        this.loadingGameweeks = false; // stop loading
+        return;
+      }
+
+      gameweeks.forEach(gameweek => {
+        if (gameweek.id) {
+          this.gameweekService.getMatchesByGameweek(gameweek.id).subscribe({
+            next: (matches) => {
+              completedRequests++;
+              if (matches.some(match => match.id === matchId)) {
+                gameweeksWithMatch.push(gameweek);
+              }
+
+              if (completedRequests === gameweeks.length) {
+                this.gameweeksForSelectedMatch = gameweeksWithMatch.sort((a, b) =>
+                  (a.weekNumber || 0) - (b.weekNumber || 0)
+                );
+                this.loadingGameweeks = false; // stop loading here
+              }
+            },
+            error: (error) => {
+              completedRequests++;
+              console.error(`Error loading matches for gameweek ${gameweek.id}:`, error);
+
+              if (completedRequests === gameweeks.length) {
+                this.gameweeksForSelectedMatch = gameweeksWithMatch.sort((a, b) =>
+                  (a.weekNumber || 0) - (b.weekNumber || 0)
+                );
+                this.loadingGameweeks = false; // stop loading here
+              }
+            }
+          });
+        }
+      });
+    },
+    error: (error) => {
+      console.error('Error loading gameweeks:', error);
+      this.gameweeksForSelectedMatch = [];
+      this.loadingGameweeks = false; // stop loading in case of failure
+    }
+  });
+}
+
+unlinkMatchFromGameweek(matchId: number, gameweekId: number): void {
+  if (confirm('Êtes-vous sûr de vouloir retirer ce match de cette gameweek ?')) {
+    // Use the deleteSelectedMatches method to remove this specific match
+    this.gameweekService.deleteSelectedMatches(gameweekId, [matchId]).subscribe({
+      next: () => {
+        // Remove the gameweek from the local array
+        this.gameweeksForSelectedMatch = this.gameweeksForSelectedMatch.filter(
+          gw => gw.id !== gameweekId
+        );
+        
+        // Update the match's gameweeks if it exists in the current matches list
+        const matchIndex = this.matches.findIndex(m => m.id === matchId);
+        if (matchIndex !== -1 && this.matches[matchIndex].gameweeks) {
+          this.matches[matchIndex].gameweeks = this.matches[matchIndex].gameweeks.filter(
+            (gw: any) => gw.id !== gameweekId
+          );
+        }
+        
+        console.log('Match retiré de la gameweek avec succès');
+      },
+      error: (error) => {
+        console.error('Error unlinking match from gameweek:', error);
+      }
+    });
+  }
+}
+redirectToGameweekMatches(gameweek: any) {
+  console.log('🚀 Redirecting with gameweek ID:', gameweek.id);
+  
+  this.router.navigate(['/admin/allgameweek'], {
+    queryParams: { openModal: gameweek.id }
+  });
+}
+
 
 }

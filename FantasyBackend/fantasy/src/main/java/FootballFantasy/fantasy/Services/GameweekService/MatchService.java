@@ -1,5 +1,6 @@
 package FootballFantasy.fantasy.Services.GameweekService;
 
+import FootballFantasy.fantasy.Dto.MatchSeedDTO;
 import FootballFantasy.fantasy.Entities.GameweekEntity.GameWeek;
 import FootballFantasy.fantasy.Entities.GameweekEntity.Match;
 import FootballFantasy.fantasy.Entities.GameweekEntity.MatchStatus;
@@ -14,6 +15,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Service
 public class MatchService {

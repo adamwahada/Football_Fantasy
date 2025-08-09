@@ -1,5 +1,83 @@
 <h3 class="subtitle">Liste des matchs</h3>
 
+<!-- Modal backdrop -->
+<div class="modal-backdrop" *ngIf="selectedMatchForGameweeks" (click)="closeGameweeksModal()"></div>
+
+<!-- Modal content -->
+<div class="modal" *ngIf="selectedMatchForGameweeks" role="dialog" aria-modal="true">
+  <div class="modal-content" style="max-width: 600px; margin: 5% auto; background: white; border-radius: 8px; padding: 2rem; position: relative;">
+    
+    <!-- Close button -->
+    <button 
+      class="modal-close" 
+      (click)="closeGameweeksModal()"
+      style="position: absolute; top: 1rem; right: 1rem; background: none; border: none; font-size: 1.5rem; cursor: pointer;"
+      aria-label="Fermer">
+      ×
+    </button>
+    
+    <!-- Title -->
+    <h4 style="margin-bottom: 1rem; color: #333;">
+      Gameweeks pour: {{ selectedMatchForGameweeks.homeTeam }} vs {{ selectedMatchForGameweeks.awayTeam }}
+    </h4>
+    
+    <!-- Loading state -->
+    <div *ngIf="loadingGameweeks" style="text-align:center; padding: 2rem; color: #666;">
+      <div style="font-size: 2rem; margin-bottom: 1rem;">⏳</div>
+      <div>Chargement des gameweeks...</div>
+    </div>
+
+    <!-- Gameweeks list -->
+    <div *ngIf="!loadingGameweeks && gameweeksForSelectedMatch && gameweeksForSelectedMatch.length > 0; else noGameweeksFound">
+      <div class="gameweeks-list" style="max-height: 400px; overflow-y: auto;">
+        <div 
+          *ngFor="let gameweek of gameweeksForSelectedMatch" 
+          class="gameweek-item"
+          style="padding: 1rem; margin-bottom: 0.5rem; border: 1px solid #e0e0e0; border-radius: 4px; background: #f9f9f9;">
+          
+          <div style="display: flex; justify-content: space-between; align-items: center;">
+            <div style="flex: 1;">
+              <strong>{{ gameweek.competition }} - {{ gameweek.weekNumber }}</strong>
+              <div style="font-size: 0.85em; color: #888; margin-top: 0.25rem;">
+                {{ gameweek.startDate | date: 'dd/MM/yyyy' }} - {{ gameweek.endDate | date: 'dd/MM/yyyy' }}
+              </div>
+            </div>
+            
+            <div style="display: flex; gap: 0.5rem;">
+              <button
+                mat-icon-button
+                class="btn-icon red"
+                (click)="unlinkMatchFromGameweek(selectedMatchForGameweeks.id!, gameweek.id!)"
+                matTooltip="Retirer de cette gameweek"
+                aria-label="Retirer de cette gameweek">
+                <mat-icon>link_off</mat-icon>
+              </button>
+<button                 
+  mat-icon-button                 
+  class="btn-icon blue"                 
+  (click)="redirectToGameweekMatches(gameweek)"  
+  matTooltip="Voir les matchs de cette gameweek"                 
+  aria-label="Voir les matchs de cette gameweek">                 
+  <mat-icon>list_alt</mat-icon>               
+</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Empty state -->
+    <ng-template #noGameweeksFound>
+      <div *ngIf="!loadingGameweeks" style="text-align: center; padding: 2rem; color: #666;">
+        <div style="font-size: 2rem; margin-bottom: 1rem;">📅</div>
+        <div>Ce match n'est associé à aucune gameweek</div>
+      </div>
+    </ng-template>
+    
+  </div>
+</div>
+
+
 <!-- Filtres -->
 <div class="filters" style="margin-bottom: 1rem; display: flex; gap: 1rem; align-items: center;">
   <label>
@@ -15,7 +93,6 @@
   <label>Date Range:
   <select [formControl]="filterControl">
     <option value="all">Tous</option>
-    <option value="today">Today</option>
     <option value="nextDay">Tomorrow</option>
     <option value="next3Days">3 days</option>
     <option value="nextWeek">7 days</option>
@@ -107,7 +184,7 @@
       >
         Lier les matchs sélectionnés à la Gameweek
       </button>
-      <button mat-icon-button (click)="addNew()" class="col-green" matTooltip="Ajouter un match">
+      <button mat-icon-button (click)="addNew()" class="col-green" title="Ajouter un match">
         <mat-icon>add_circle_outline</mat-icon>
       </button>
     </div>
@@ -166,7 +243,7 @@
             mat-icon-button
             class="btn-icon blue"
             [routerLink]="['/admin/match/Editmatch', match.id]"
-            matTooltip="Modifier"
+            title="Modifier"
             aria-label="Modifier">
             <mat-icon>edit</mat-icon>
           </button>
@@ -176,7 +253,7 @@
             mat-icon-button
             class="btn-icon red"
             (click)="deleteMatch(match.id!)"
-            matTooltip="Supprimer"
+            title="Supprimer"
             aria-label="Supprimer">
             <mat-icon>delete_outline</mat-icon>
           </button>
@@ -186,9 +263,19 @@
             mat-icon-button
             class="btn-icon gray"
             (click)="toggleActive(match)"
-            [matTooltip]="match.active ? 'Désactiver' : 'Activer'"
-            aria-label="Désactiver / Activer">
-            <mat-icon>{{ match.active ? 'notifications_active' : 'notifications_off' }}</mat-icon>
+            title="{{ match.active ? 'Désactiver' : 'Activer' }}"
+            aria-label="Activer / Désactiver">
+            <mat-icon>{{ match.active ? 'notifications_off' : 'notifications' }}</mat-icon>
+          </button>
+
+          <!-- Voir les gameweeks -->
+          <button
+            mat-icon-button
+            class="btn-icon green"
+            (click)="showGameweeks(match)"
+            matTooltip="Voir les gameweeks"
+            aria-label="Voir les gameweeks">
+            <mat-icon>view_list</mat-icon>
           </button>
 
           <!-- Réinitialiser -->
@@ -196,7 +283,7 @@
             mat-icon-button
             class="btn-icon orange"
             (click)="resetMatch(match)"
-            matTooltip="Réinitialiser"
+            title="Réinitialiser"
             aria-label="Réinitialiser">
             <mat-icon>autorenew</mat-icon>
           </button>
@@ -205,7 +292,7 @@
 
       <!-- No result row -->
       <tr *ngIf="dataSource.filteredData.length === 0">
-        <td colspan="8" class="text-center text-muted py-4">
+        <td colspan="9" class="text-center text-muted py-4">
           <div style="padding: 2rem; text-align: center; color: #666;">
             <div style="font-size: 3rem; margin-bottom: 1rem;">⚽</div>
             <div style="font-size: 1.1rem; font-weight: 500;">Aucun match trouvé</div>

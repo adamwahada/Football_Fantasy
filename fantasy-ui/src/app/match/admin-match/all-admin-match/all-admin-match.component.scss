@@ -225,3 +225,197 @@
 .btn-icon.orange {
   color: #f57c00; /* orange Material */
 }
+// Add this SCSS to your component's stylesheet
+
+// Modal styles
+.modal-backdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5);
+  z-index: 1000;
+  cursor: pointer;
+}
+
+.modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 1001;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+
+  .modal-content {
+    pointer-events: all;
+    max-width: 600px;
+    max-height: 80vh;
+    width: 90%;
+    margin: auto;
+    background: white;
+    border-radius: 8px;
+    padding: 2rem;
+    position: relative;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+    overflow-y: auto;
+
+    .modal-close {
+      position: absolute;
+      top: 1rem;
+      right: 1rem;
+      background: none;
+      border: none;
+      font-size: 1.5rem;
+      cursor: pointer;
+      color: #666;
+      width: 32px;
+      height: 32px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 50%;
+      transition: background-color 0.2s;
+
+      &:hover {
+        background-color: #f0f0f0;
+        color: #333;
+      }
+    }
+
+    h4 {
+      margin-bottom: 1rem;
+      color: #333;
+      padding-right: 2rem; // Space for close button
+    }
+  }
+}
+
+.gameweeks-list {
+  max-height: 400px;
+  overflow-y: auto;
+  padding-right: 8px;
+
+  &::-webkit-scrollbar {
+    width: 6px;
+  }
+
+  &::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 3px;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background: #c1c1c1;
+    border-radius: 3px;
+  }
+
+  &::-webkit-scrollbar-thumb:hover {
+    background: #a8a8a8;
+  }
+}
+
+.gameweek-item {
+  padding: 1rem;
+  margin-bottom: 0.5rem;
+  border: 1px solid #e0e0e0;
+  border-radius: 4px;
+  background: #f9f9f9;
+  transition: background-color 0.2s, border-color 0.2s;
+
+  &:hover {
+    background: #f0f0f0;
+    border-color: #d0d0d0;
+  }
+
+  &:last-child {
+    margin-bottom: 0;
+  }
+
+  .gameweek-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+
+    .gameweek-info {
+      flex: 1;
+
+      .gameweek-title {
+        font-weight: bold;
+        color: #333;
+        margin-bottom: 0.25rem;
+      }
+
+      .gameweek-details {
+        font-size: 0.9em;
+        color: #666;
+        margin-bottom: 0.25rem;
+      }
+
+      .gameweek-dates {
+        font-size: 0.85em;
+        color: #888;
+      }
+    }
+
+    .gameweek-actions {
+      display: flex;
+      gap: 0.5rem;
+    }
+  }
+}
+
+// Gameweek badges in the table
+.gameweek-badge {
+  background: #e3f2fd;
+  color: #1976d2;
+  padding: 2px 6px;
+  border-radius: 12px;
+  font-size: 0.8em;
+  margin-right: 4px;
+  display: inline-block;
+  white-space: nowrap;
+}
+
+// Empty state
+.no-gameweeks-state {
+  text-align: center;
+  padding: 2rem;
+  color: #666;
+
+  .empty-icon {
+    font-size: 2rem;
+    margin-bottom: 1rem;
+  }
+
+  .empty-message {
+    font-size: 1rem;
+    font-weight: 500;
+  }
+}
+
+// Button styles
+.btn-secondary {
+  background-color: #6c757d;
+  color: white;
+  border: none;
+  padding: 0.5rem 1rem;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  transition: background-color 0.2s;
+
+  &:hover {
+    background-color: #545b62;
+  }
+
+  &:disabled {
+    background-color: #ccc;
+    cursor: not-allowed;
+  }
+}
+

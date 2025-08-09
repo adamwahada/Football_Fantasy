@@ -23,6 +23,9 @@ export interface Gameweek {
   joinDeadline: string;
   description?: string;
   tiebreakerMatchIds?: string;
+  matches?: Match[];
+  matchesCount?: number;
+  tiebreakerCount?: number;
 }
 @Injectable({
   providedIn: 'root'
@@ -151,5 +154,13 @@ addMatchToGameweekFlexible(competition: string, weekNumber: number, match: Match
     .set('weekNumber', weekNumber.toString());
     
   return this.http.post<Match>(`${this.apiUrl}/matches`, match, { params });
+}
+getMatchesCount(gameweekId: number): Observable<number> {
+  return this.http.get<number>(`${this.apiUrl}/${gameweekId}/matches-count`);
+}
+
+// ✅ GET count of tiebreaker matches
+getTiebreakerCount(gameweekId: number): Observable<number> {
+  return this.http.get<number>(`${this.apiUrl}/${gameweekId}/tiebreaker-count`);
 }
 }

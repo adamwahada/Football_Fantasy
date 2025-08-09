@@ -1,6 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
-import { Router } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
@@ -65,7 +65,8 @@ export class AllAdminGameweekComponent implements OnInit, AfterViewInit {
     private gameweekService: GameweekService,
     private fb: FormBuilder,
     private router: Router,
-    private matchService: MatchService
+    private matchService: MatchService,
+    private route: ActivatedRoute
   ) {
     this.gameweekForm = this.fb.group({
       weekNumber: ['', [Validators.required, Validators.min(1), Validators.max(50)]],
@@ -81,10 +82,15 @@ export class AllAdminGameweekComponent implements OnInit, AfterViewInit {
     });
   }
 
-  ngOnInit(): void {
-    this.loadGameweeks();
-    this.setupFilters();
-  }
+ngOnInit(): void {
+  this.setupFilters();
+  
+  // Charger les gameweeks ET vérifier les query params après
+  this.loadGameweeks().then(() => {
+    this.checkForModalToOpen();
+  });
+}
+
 
   ngAfterViewInit(): void {
     this.dataSource.paginator = this.paginator;
@@ -112,15 +118,52 @@ export class AllAdminGameweekComponent implements OnInit, AfterViewInit {
     };
   }
 
-loadGameweeks(): void {
-  this.gameweekService.getAllGameweeks().subscribe((data: Gameweek[]) => {
-    this.gameweeks = data;
-    this.dataSource.data = data;
-    // Make sure paginator is connected after data is loaded
-    if (this.paginator) {
-      this.dataSource.paginator = this.paginator;
+loadGameweeks(): Promise<void> {
+  return new Promise((resolve) => {
+    this.gameweekService.getAllGameweeks().subscribe((data: Gameweek[]) => {
+      this.gameweeks = data;
+      this.dataSource.data = data;
+      
+      if (this.paginator) {
+        this.dataSource.paginator = this.paginator;
+      }
+      
+      this.applyFilters();
+      console.log('✅ Gameweeks loaded:', data.length);
+      resolve(); // ✅ Résoudre la promesse ici
+    });
+  });
+}
+
+// Nouvelle méthode pour vérifier les query params
+private checkForModalToOpen(): void {
+  this.route.queryParams.subscribe(params => {
+    const gameweekIdToOpen = params['openModal'];
+    if (gameweekIdToOpen) {
+      console.log('✅ Query param found - gameweek ID to open:', gameweekIdToOpen);
+      
+      // Trouver la gameweek par ID
+      const gameweekToOpen = this.gameweeks.find(gw => gw.id == gameweekIdToOpen);
+      if (gameweekToOpen) {
+        console.log('✅ Gameweek found:', gameweekToOpen);
+        
+        // Ouvrir le modal après un petit délai
+        setTimeout(() => {
+          this.showMatches(gameweekToOpen);
+        }, 200);
+        
+        // Nettoyer l'URL
+        this.router.navigate([], {
+          relativeTo: this.route,
+          queryParams: {},
+          replaceUrl: true
+        });
+      } else {
+        console.error('❌ Gameweek not found with ID:', gameweekIdToOpen);
+      }
+    } else {
+      console.log('🔍 No openModal query param found');
     }
-    this.applyFilters(); // Apply current filters
   });
 }
 getPagedData(): Gameweek[] {
