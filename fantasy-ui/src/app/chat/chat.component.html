@@ -1,274 +1,517 @@
 <div class="chat-container">
     <!-- Message d'erreur global -->
-    <div *ngIf="error" class="error-message" (click)="clearError()">
-        {{ error }} (Cliquer pour fermer)
+    <div *ngIf="error" class="error-banner" (click)="clearError()">
+        <mat-icon>warning</mat-icon>
+        <span>{{ error }}</span>
+        <mat-icon class="close-icon">close</mat-icon>
     </div>
 
-    <!-- Loading -->
-    <div *ngIf="loading" class="loading">
-        <mat-progress-spinner diameter="40"></mat-progress-spinner>
-        Chargement...
+    <!-- Loading overlay -->
+    <div *ngIf="loading" class="loading-overlay">
+        <div class="loading-content">
+            <mat-progress-spinner diameter="40" color="primary"></mat-progress-spinner>
+            <span>Chargement...</span>
+        </div>
     </div>
 
     <div class="chat-layout">
         <!-- SIDEBAR - Liste des chats -->
         <div class="sidebar">
-            <h3>Mes Chats</h3>
+            <div class="sidebar-header">
+                <div class="header-content">
+                    <h2>Messages</h2>
+                    <div class="header-actions">
+                        <button mat-icon-button (click)="loadUserChats()" [disabled]="loading"
+                                matTooltip="Actualiser" class="refresh-btn">
+                            <mat-icon>refresh</mat-icon>
+                        </button>
+                        <button mat-icon-button (click)="openNewChatModal()" matTooltip="Nouveau chat"
+                                class="new-chat-btn">
+                            <mat-icon>add_circle</mat-icon>
+                        </button>
+                    </div>
+                </div>
+            </div>
 
-            <!-- Bouton refresh -->
-            <button (click)="loadUserChats()" class="btn btn-small" [disabled]="loading">
-                🔄 Actualiser
-            </button>
-
-            <!-- Bouton debug temporaire -->
-            <button (click)="getCurrentUserId()" class="btn btn-small" style="background: orange; margin-top: 5px;">
-                🐛 Debug User ID ({{currentUserId || 'NULL'}})
-            </button>
+            <!-- Barre de recherche -->
+            <div class="search-bar">
+                <div class="search-input">
+                    <mat-icon class="search-icon">search</mat-icon>
+                    <input placeholder="Rechercher une conversation..."
+                           [(ngModel)]="searchQuery"
+                           (input)="onSearchInput()"
+                           class="search-field">
+                </div>
+            </div>
 
             <!-- Liste des chats -->
             <div class="chat-list">
-                <div *ngFor="let room of chatRooms"
+                <div *ngFor="let room of chatRooms; trackBy: trackRoom"
                      class="chat-item"
                      [class.active]="selectedRoom?.id === room.id"
                      (click)="selectRoom(room)">
+
                     <div class="chat-avatar">
-                        <div class="avatar-circle">
-                            {{ getInitials(room.name) }}
+                        <div class="avatar-circle" [class]="'avatar-' + (room.type === 'GROUP' ? 'group' : 'private')">
+                            <mat-icon *ngIf="room.type === 'GROUP'" class="group-icon">group</mat-icon>
+                            <span *ngIf="room.type !== 'GROUP'" class="avatar-text">{{ getInitials(room.name) }}</span>
+                        </div>
+                        <div *ngIf="room.unreadCount && room.unreadCount > 0" class="unread-badge">
+                            {{ room.unreadCount > 99 ? '99+' : room.unreadCount }}
                         </div>
                     </div>
+
                     <div class="chat-info">
-                        <strong>{{ room.name }}</strong>
-                        <div class="chat-meta">
-                            <small>{{ formatDate(room.lastActivity) }}</small>
-                            <span *ngIf="room.unreadCount && room.unreadCount > 0" class="unread-badge">
-                                {{ room.unreadCount }}
-                            </span>
+                        <div class="chat-header-info">
+                            <span class="chat-name">{{ room.name }}</span>
+                            <span class="chat-time">{{ formatRelativeTime(room.lastActivity) }}</span>
+                        </div>
+                        <div class="chat-preview">
+                            <span class="last-message">{{ getLastMessagePreview(room) }}</span>
+                            <div class="chat-indicators">
+                                <mat-icon *ngIf="room.type === 'GROUP'" class="group-indicator">group</mat-icon>
+                                <div *ngIf="room.unreadCount && room.unreadCount > 0" class="unread-dot"></div>
+                            </div>
                         </div>
                     </div>
                 </div>
 
                 <!-- Message si aucun chat -->
-                <div *ngIf="chatRooms.length === 0 && !loading" class="no-chats">
-                    Aucun chat disponible
-                </div>
-            </div>
-
-            <!-- CRÉATION DE CHATS -->
-            <div class="chat-creation">
-                <h4>Créer Chat Privé</h4>
-                <div class="form-group">
-                    <mat-form-field appearance="outline" class="full-width">
-                        <mat-label>ID utilisateur</mat-label>
-                        <input matInput [(ngModel)]="otherUserId" placeholder="Ex: 123">
-                    </mat-form-field>
-                    <button mat-raised-button color="primary"
-                            (click)="createPrivateChat()"
-                            [disabled]="!otherUserId.trim()">
-                        Créer Chat
-                    </button>
-                </div>
-
-                <h4>Créer Groupe</h4>
-                <div class="form-group">
-                    <mat-form-field appearance="outline" class="full-width">
-                        <mat-label>Nom du groupe</mat-label>
-                        <input matInput [(ngModel)]="groupName" placeholder="Mon groupe">
-                    </mat-form-field>
-                    <mat-form-field appearance="outline" class="full-width">
-                        <mat-label>Description</mat-label>
-                        <input matInput [(ngModel)]="groupDescription" placeholder="Description du groupe">
-                    </mat-form-field>
-                    <mat-form-field appearance="outline" class="full-width">
-                        <mat-label>IDs participants</mat-label>
-                        <input matInput [(ngModel)]="participantIds" placeholder="1,2,3">
-                    </mat-form-field>
-                    <button mat-raised-button color="accent"
-                            (click)="createGroup()"
-                            [disabled]="!groupName.trim()">
-                        Créer Groupe
-                    </button>
+                <div *ngIf="chatRooms.length === 0 && !loading" class="empty-state">
+                    <mat-icon class="empty-icon">chat_bubble_outline</mat-icon>
+                    <h3>Aucune conversation</h3>
+                    <p>Créez votre première conversation</p>
                 </div>
             </div>
         </div>
 
         <!-- CONTENU PRINCIPAL -->
         <div class="main-content">
-            <div *ngIf="!selectedRoom" class="no-selection">
-                <mat-icon style="font-size: 48px; width: 48px; height: 48px;">chat</mat-icon>
-                <h3>Sélectionnez un chat pour commencer</h3>
-                <p>Choisissez un chat dans la liste de gauche ou créez-en un nouveau.</p>
+            <!-- État vide - aucun chat sélectionné -->
+            <div *ngIf="!selectedRoom" class="welcome-screen">
+                <div class="welcome-content">
+                    <div class="welcome-icon">
+                        <mat-icon>chat</mat-icon>
+                    </div>
+                    <h2>Bienvenue dans votre messagerie</h2>
+                    <p>Sélectionnez une conversation pour commencer à discuter</p>
+                    <button mat-raised-button color="primary" (click)="openNewChatModal()" class="start-chat-btn">
+                        <mat-icon>add</mat-icon>
+                        Démarrer une conversation
+                    </button>
+                </div>
             </div>
 
-            <div *ngIf="selectedRoom" class="chat-content">
+            <!-- Interface de chat -->
+            <div *ngIf="selectedRoom" class="chat-interface">
                 <!-- HEADER DU CHAT -->
                 <div class="chat-header">
-                    <div class="chat-title">
-                        <div class="chat-avatar">
-                            <div class="avatar-circle">
-                                {{ getInitials(selectedRoom.name) }}
+                    <div class="chat-info-header">
+                        <div class="chat-avatar-header">
+                            <div class="avatar-circle large" [class]="'avatar-' + (selectedRoom.type === 'GROUP' ? 'group' : 'private')">
+                                <mat-icon *ngIf="selectedRoom.type === 'GROUP'">group</mat-icon>
+                                <span *ngIf="selectedRoom.type !== 'GROUP'">{{ getInitials(selectedRoom.name) }}</span>
                             </div>
+                            <div class="status-indicator" *ngIf="selectedRoom.type !== 'GROUP'"></div>
                         </div>
-                        <div>
-                            <h2>{{ selectedRoom.name }}</h2>
-                            <div class="chat-meta">
-                                <span class="chat-type-badge">{{ selectedRoom.type }}</span>
-                                <span *ngIf="participants.length > 0" class="participant-count">
-                                    {{ participants.length }} participant(s)
+
+                        <div class="header-text-info">
+                            <h3 class="chat-title">{{ selectedRoom.name }}</h3>
+                            <div class="chat-status">
+                                <span class="participant-count" *ngIf="selectedRoom.type === 'GROUP'">
+                                    {{ participants.length }} participants
+                                </span>
+                                <span class="online-status" *ngIf="selectedRoom.type === 'PRIVATE'">
+                                    En ligne
                                 </span>
                             </div>
                         </div>
                     </div>
-                    <div class="chat-actions">
-                        <button *ngIf="selectedRoom.type === 'GROUP'"
-                                mat-button
-                                (click)="addParticipant()"
-                                [disabled]="!isGroupAdmin()">
-                            <mat-icon>person_add</mat-icon>
-                            Ajouter
+
+                    <div class="header-actions">
+                        <button mat-icon-button matTooltip="Rechercher">
+                            <mat-icon>search</mat-icon>
                         </button>
-                        <button *ngIf="selectedRoom.type === 'GROUP'"
-                                mat-button color="warn"
-                                (click)="leaveGroup()">
-                            <mat-icon>exit_to_app</mat-icon>
-                            Quitter
+                        <button *ngIf="selectedRoom.type === 'GROUP' && isGroupAdmin()"
+                                mat-icon-button (click)="addParticipant()" matTooltip="Ajouter un participant">
+                            <mat-icon>person_add</mat-icon>
+                        </button>
+                        <button mat-icon-button [matMenuTriggerFor]="chatMenu" matTooltip="Plus d'options">
+                            <mat-icon>more_vert</mat-icon>
                         </button>
                     </div>
                 </div>
 
-                <!-- MESSAGES -->
-                <div class="messages-container">
-                    <div class="message-list" #messageContainer>
-                        <!-- Message si aucun message -->
-                        <div *ngIf="messages.length === 0" class="no-messages">
-                            <mat-icon>chat_bubble_outline</mat-icon>
-                            <p>Aucun message dans cette conversation</p>
-                            <p>Soyez le premier à envoyer un message !</p>
+                <!-- ZONE DES MESSAGES -->
+                <div class="messages-container" #messageContainer (scroll)="onScroll($event)">
+                    <!-- Indicateur de frappe -->
+                    <div *ngIf="isSomeoneTyping()" class="typing-indicator">
+                        <div class="typing-content">
+                            <div class="typing-avatar">
+                                <div class="avatar-circle mini">
+                                    <mat-icon>person</mat-icon>
+                                </div>
+                            </div>
+                            <div class="typing-bubble">
+                                <span class="typing-text">{{ getTypingUserNames() }}</span>
+                                <div class="typing-dots">
+                                    <div class="dot"></div>
+                                    <div class="dot"></div>
+                                    <div class="dot"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Messages -->
+                    <div class="messages-list">
+                        <div *ngIf="messages.length === 0 && !loading" class="no-messages">
+                            <div class="no-messages-icon">
+                                <mat-icon>chat_bubble_outline</mat-icon>
+                            </div>
+                            <h4>Aucun message</h4>
+                            <p>Soyez le premier à envoyer un message dans cette conversation</p>
                         </div>
 
-                        <!-- Messages -->
+                        <!-- Messages avec alignement selon l'expéditeur -->
                         <div *ngFor="let message of messages; trackBy: trackMessage"
-                             class="message-item"
+                             class="message-wrapper"
                              [class.own-message]="message.senderId === currentUserId"
                              [class.other-message]="message.senderId !== currentUserId">
 
-                            <!-- Avatar de l'expéditeur pour les messages reçus -->
-                            <div *ngIf="message.senderId !== currentUserId" class="message-avatar">
-                                <div class="avatar-circle small">
-                                    {{ getInitials(message.senderName) }}
+                            <!-- Message des autres (à gauche) -->
+                            <div *ngIf="message.senderId !== currentUserId" class="message-item received">
+                                <!-- Avatar de l'expéditeur -->
+                                <div class="message-avatar">
+                                    <div class="avatar-circle mini">
+                                        <span>{{ getInitials(getSenderName(message.senderId)) }}</span>
+                                    </div>
+                                </div>
+
+                                <!-- Contenu du message -->
+                                <div class="message-content">
+                                    <!-- Contexte de réponse si présent -->
+                                    <div *ngIf="message.replyToId" class="reply-context">
+                                        <div class="reply-bar"></div>
+                                        <div class="reply-info">
+                                            <span class="reply-sender">{{ getRepliedMessageSender(message.replyToId) }}</span>
+                                            <span class="reply-message">{{ getRepliedMessageContent(message.replyToId) }}</span>
+                                        </div>
+                                    </div>
+
+                                    <!-- Bulle de message -->
+                                    <div class="message-bubble received-bubble"
+                                         [class.deleted-message]="isMessageDeleted(message)">
+                                        <div class="message-header" *ngIf="selectedRoom?.type === 'GROUP'">
+                                            <span class="sender-name">{{ getSenderName(message.senderId) }}</span>
+                                        </div>
+
+                                        <div class="message-text" *ngIf="!isMessageDeleted(message)">
+                                            {{ message.content }}
+                                        </div>
+                                        <div class="message-text deleted-text" *ngIf="isMessageDeleted(message)">
+                                            Ce message a été supprimé
+                                        </div>
+
+                                        <div class="message-meta">
+                                            <span class="message-time">{{ formatDate(message.timestamp) }}</span>
+                                            <span *ngIf="message.isEdited" class="edited-indicator">(modifié)</span>
+                                        </div>
+                                    </div>
+
+                                    <!-- Actions pour messages des autres (limitées) -->
+                                    <div class="message-actions" *ngIf="!isMessageDeleted(message)">
+                                        <button mat-icon-button
+                                                class="action-btn reply-btn"
+                                                (click)="replyToMessage(message)"
+                                                matTooltip="Répondre">
+                                            <mat-icon>reply</mat-icon>
+                                        </button>
+                                    </div>
                                 </div>
                             </div>
 
-                            <div class="message-content">
-                                <!-- Indicateur de réponse (si replyToId existe) -->
-                                <div *ngIf="message.replyToId" class="reply-indicator">
-                                    <div class="reply-sender">Réponse à {{ getRepliedMessageSender(message.replyToId) }}</div>
-                                    <div class="reply-content">{{ getRepliedMessageContent(message.replyToId) }}</div>
-                                </div>
-
-                                <div class="message-bubble">
-                                    <div class="message-header">
-                                        <span class="sender-name">{{ message.senderName }}</span>
-                                        <span class="message-time">{{ formatDate(message.timestamp) }}</span>
+                            <!-- Mes messages (à droite) -->
+                            <div *ngIf="message.senderId === currentUserId" class="message-item sent">
+                                <!-- Contenu du message -->
+                                <div class="message-content">
+                                    <!-- Actions pour mes messages -->
+                                    <div class="message-actions" *ngIf="!isMessageDeleted(message)">
+                                        <button mat-icon-button
+                                                class="action-btn reply-btn"
+                                                (click)="replyToMessage(message)"
+                                                matTooltip="Répondre">
+                                            <mat-icon>reply</mat-icon>
+                                        </button>
+                                        <button mat-icon-button
+                                                class="action-btn edit-btn"
+                                                (click)="openEditModal(message)"
+                                                matTooltip="Modifier">
+                                            <mat-icon>edit</mat-icon>
+                                        </button>
+                                        <button mat-icon-button
+                                                class="action-btn delete-btn"
+                                                (click)="openDeleteConfirmModal(message.id)"
+                                                matTooltip="Supprimer">
+                                            <mat-icon>delete</mat-icon>
+                                        </button>
                                     </div>
-                                    <div class="message-text">{{ message.content }}</div>
-                                    <div class="message-footer">
-                                        <span *ngIf="message.isEdited" class="edited-indicator">
-                                            <mat-icon>edit</mat-icon> modifié
-                                        </span>
-                                        <span *ngIf="message.status" class="message-status">
-                                            <mat-icon [class]="'status-' + message.status.toLowerCase()">
+
+                                    <!-- Contexte de réponse si présent -->
+                                    <div *ngIf="message.replyToId" class="reply-context">
+                                        <div class="reply-bar"></div>
+                                        <div class="reply-info">
+                                            <span class="reply-sender">{{ getRepliedMessageSender(message.replyToId) }}</span>
+                                            <span class="reply-message">{{ getRepliedMessageContent(message.replyToId) }}</span>
+                                        </div>
+                                    </div>
+
+                                    <!-- Bulle de message -->
+                                    <div class="message-bubble sent-bubble"
+                                         [class.deleted-message]="isMessageDeleted(message)">
+                                        <div class="message-text" *ngIf="!isMessageDeleted(message)">
+                                            {{ message.content }}
+                                        </div>
+                                        <div class="message-text deleted-text" *ngIf="isMessageDeleted(message)">
+                                            Vous avez supprimé ce message
+                                        </div>
+
+                                        <div class="message-meta">
+                                            <span class="message-time">{{ formatDate(message.timestamp) }}</span>
+                                            <span *ngIf="message.isEdited" class="edited-indicator">(modifié)</span>
+                                            <mat-icon class="message-status"
+                                                      [class]="'status-' + (message.status || 'sent')"
+                                                      *ngIf="!isMessageDeleted(message)">
                                                 {{ getStatusIcon(message.status) }}
                                             </mat-icon>
-                                        </span>
+                                        </div>
                                     </div>
                                 </div>
-                            </div>
 
-                            <!-- Avatar de l'expéditeur pour les messages envoyés -->
-                            <div *ngIf="message.senderId === currentUserId" class="message-avatar">
-                                <div class="avatar-circle small">
-                                    {{ getInitials(message.senderName) }}
-                                </div>
-                            </div>
-
-                            <!-- Menu d'actions -->
-                            <div class="message-actions">
-                                <button mat-icon-button
-                                        class="message-actions-btn"
-                                        (click)="toggleMessageMenu(message, $event)">
-                                    <mat-icon>more_vert</mat-icon>
-                                </button>
-
-                                <!-- Menu contextuel corrigé -->
-                                <div class="message-context-menu" *ngIf="showMenuFor === message.id">
-                                    <button (click)="replyToMessage(message)">
-                                        <mat-icon>reply</mat-icon>
-                                        <span>Répondre</span>
-                                    </button>
-
-                                    <!-- Debug info - À supprimer après test -->
-                                    <div style="font-size: 10px; color: #999; padding: 5px;"
-                                         *ngIf="showMenuFor === message.id">
-                                        Debug: currentUserId={{currentUserId}}, senderId={{message.senderId}},
-                                        canEdit={{canEditMessage(message)}}
+                                <!-- Avatar du destinataire (moi) -->
+                                <div class="message-avatar">
+                                    <div class="avatar-circle mini own">
+                                        <span>{{ getInitials('Vous') }}</span>
                                     </div>
-
-                                    <button *ngIf="canEditMessage(message)"
-                                            (click)="editMessage(message.id, message.content)">
-                                        <mat-icon>edit</mat-icon>
-                                        <span>Modifier</span>
-                                    </button>
-
-                                    <button *ngIf="canEditMessage(message)"
-                                            (click)="deleteMessage(message.id)">
-                                        <mat-icon>delete</mat-icon>
-                                        <span>Supprimer</span>
-                                    </button>
-
-                                    <button (click)="copyMessage(message.content)">
-                                        <mat-icon>content_copy</mat-icon>
-                                        <span>Copier</span>
-                                    </button>
                                 </div>
                             </div>
                         </div>
                     </div>
+                </div>
 
-                    <!-- Zone d'envoi de message -->
-                    <div class="message-input-container">
-                        <!-- Aperçu de la réponse -->
-                        <div *ngIf="replyingTo" class="reply-preview">
-                            <span>Réponse à {{ replyingTo.senderName }}:</span>
-                            <span>{{ replyingTo.content }}</span>
-                            <button mat-icon-button (click)="cancelReply()">
-                                <mat-icon>close</mat-icon>
+                <!-- ZONE DE SAISIE -->
+                <div class="message-input-area">
+                    <!-- Aperçu de la réponse -->
+                    <div *ngIf="replyingTo" class="reply-preview">
+                        <div class="reply-content">
+                            <div class="reply-indicator"></div>
+                            <div class="reply-details">
+                                <span class="replying-to-label">Réponse à {{ getSenderName(replyingTo.senderId) }}</span>
+                                <span class="replying-to-message">{{ replyingTo.content }}</span>
+                            </div>
+                        </div>
+                        <button mat-icon-button (click)="cancelReply()" class="cancel-reply-btn">
+                            <mat-icon>close</mat-icon>
+                        </button>
+                    </div>
+
+                    <!-- Zone de saisie principale -->
+                    <div class="input-area">
+                        <div class="input-container">
+                            <button mat-icon-button class="attach-btn" matTooltip="Joindre un fichier">
+                                <mat-icon>attach_file</mat-icon>
+                            </button>
+
+                            <div class="text-input-wrapper">
+                                <textarea placeholder="Tapez votre message..."
+                                          [(ngModel)]="newMessage"
+                                          (keydown)="onKeyDown($event)"
+                                          (input)="onTyping()"
+                                          [disabled]="sendingMessage"
+                                          class="message-input"
+                                          cdkTextareaAutosize
+                                          cdkAutosizeMinRows="1"
+                                          cdkAutosizeMaxRows="4"
+                                          #messageTextarea></textarea>
+                            </div>
+
+                            <button class="send-btn"
+                                    [disabled]="!newMessage.trim() || sendingMessage"
+                                    (click)="sendMessage()"
+                                    mat-icon-button>
+                                <mat-icon *ngIf="!sendingMessage">send</mat-icon>
+                                <mat-progress-spinner *ngIf="sendingMessage" diameter="20"></mat-progress-spinner>
                             </button>
                         </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 
-                        <mat-form-field appearance="outline" class="message-input-field">
-                            <mat-label>Tapez votre message...</mat-label>
-                            <textarea matInput
-                                      [(ngModel)]="newMessage"
-                                      (keydown)="onKeyDown($event)"
-                                      [disabled]="sendingMessage"
-                                      placeholder="Votre message..."
-                                      cdkTextareaAutosize
-                                      cdkAutosizeMinRows="1"
-                                      cdkAutosizeMaxRows="4"></textarea>
-                        </mat-form-field>
+    <!-- Menu du chat -->
+    <mat-menu #chatMenu="matMenu">
+        <button mat-menu-item (click)="refreshCurrentRoom()">
+            <mat-icon>refresh</mat-icon>
+            <span>Actualiser</span>
+        </button>
+        <button mat-menu-item *ngIf="selectedRoom?.type === 'GROUP'" (click)="addParticipant()">
+            <mat-icon>person_add</mat-icon>
+            <span>Ajouter un participant</span>
+        </button>
+        <button mat-menu-item *ngIf="selectedRoom?.type === 'GROUP'" (click)="copyInviteLink()">
+            <mat-icon>link</mat-icon>
+            <span>Copier le lien d'invitation</span>
+        </button>
+        <button mat-menu-item *ngIf="selectedRoom?.type === 'GROUP'" (click)="leaveGroup()" class="danger-item">
+            <mat-icon>exit_to_app</mat-icon>
+            <span>Quitter le groupe</span>
+        </button>
+    </mat-menu>
 
-                        <button mat-fab color="primary"
-                                (click)="sendMessage()"
-                                [disabled]="!newMessage.trim() || sendingMessage"
-                                class="send-button"
-                                matTooltip="Envoyer le message (Enter)">
-                            <mat-icon *ngIf="!sendingMessage">send</mat-icon>
-                            <mat-progress-spinner *ngIf="sendingMessage"
-                                                  diameter="24"
-                                                  color="accent"></mat-progress-spinner>
+    <!-- Modal pour créer un nouveau chat -->
+    <div class="modal-overlay" *ngIf="showNewChatModal" (click)="closeNewChatModal()">
+        <div class="new-chat-modal" (click)="$event.stopPropagation()">
+            <div class="modal-header">
+                <h3>Nouvelle conversation</h3>
+                <button mat-icon-button (click)="closeNewChatModal()">
+                    <mat-icon>close</mat-icon>
+                </button>
+            </div>
+
+            <div class="modal-content">
+                <div class="chat-type-selector">
+                    <button class="type-option"
+                            [class.active]="newChatType === 'private'"
+                            (click)="newChatType = 'private'">
+                        <mat-icon>person</mat-icon>
+                        <span>Chat privé</span>
+                    </button>
+                    <button class="type-option"
+                            [class.active]="newChatType === 'group'"
+                            (click)="newChatType = 'group'">
+                        <mat-icon>group</mat-icon>
+                        <span>Groupe</span>
+                    </button>
+                </div>
+
+                <!-- Formulaire chat privé -->
+                <div *ngIf="newChatType === 'private'" class="chat-form">
+                    <mat-form-field appearance="outline" class="full-width">
+                        <mat-label>ID de l'utilisateur</mat-label>
+                        <input matInput [(ngModel)]="otherUserId" placeholder="Entrez l'ID utilisateur" type="number">
+                        <mat-icon matSuffix>person</mat-icon>
+                    </mat-form-field>
+                    <button mat-raised-button color="primary"
+                            (click)="createPrivateChat(); closeNewChatModal()"
+                            [disabled]="!otherUserId.trim() || loading"
+                            class="create-btn">
+                        <mat-icon>add</mat-icon>
+                        Créer le chat
+                    </button>
+                </div>
+
+                <!-- Formulaire groupe -->
+                <div *ngIf="newChatType === 'group'" class="chat-form">
+                    <mat-form-field appearance="outline" class="full-width">
+                        <mat-label>Nom du groupe</mat-label>
+                        <input matInput [(ngModel)]="groupName" placeholder="Nom du groupe">
+                        <mat-icon matSuffix>group</mat-icon>
+                    </mat-form-field>
+
+                    <mat-form-field appearance="outline" class="full-width">
+                        <mat-label>Description (optionnelle)</mat-label>
+                        <input matInput [(ngModel)]="groupDescription" placeholder="Description du groupe">
+                        <mat-icon matSuffix>description</mat-icon>
+                    </mat-form-field>
+
+                    <mat-form-field appearance="outline" class="full-width">
+                        <mat-label>IDs des participants</mat-label>
+                        <input matInput [(ngModel)]="participantIds" placeholder="1, 2, 3, ...">
+                        <mat-hint>Séparez les IDs par des virgules</mat-hint>
+                        <mat-icon matSuffix>people</mat-icon>
+                    </mat-form-field>
+
+                    <button mat-raised-button color="primary"
+                            (click)="createGroup(); closeNewChatModal()"
+                            [disabled]="!groupName.trim() || loading"
+                            class="create-btn">
+                        <mat-icon>group_add</mat-icon>
+                        Créer le groupe
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de modification de message -->
+    <div class="modal-overlay" *ngIf="showEditModal" (click)="closeEditModal()">
+        <div class="edit-modal" (click)="$event.stopPropagation()">
+            <div class="modal-header">
+                <h3>Modifier le message</h3>
+                <button mat-icon-button (click)="closeEditModal()">
+                    <mat-icon>close</mat-icon>
+                </button>
+            </div>
+
+            <div class="modal-content">
+                <div class="edit-form">
+                    <div class="message-edit-area">
+                        <textarea [(ngModel)]="editedMessageContent"
+                                  placeholder="Modifiez votre message..."
+                                  rows="4"
+                                  #editTextarea></textarea>
+                    </div>
+
+                    <div class="form-actions">
+                        <button class="cancel-btn" (click)="closeEditModal()">
+                            Annuler
+                        </button>
+                        <button class="save-btn"
+                                (click)="saveEditedMessage()"
+                                [disabled]="!editedMessageContent?.trim() || editedMessageContent === messageToEdit?.content">
+                            <mat-icon>save</mat-icon>
+                            Enregistrer
                         </button>
                     </div>
                 </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de confirmation de suppression -->
+    <div class="modal-overlay" *ngIf="showDeleteConfirmModal">
+        <div class="confirmation-modal">
+            <div class="modal-icon danger">
+                <mat-icon>warning</mat-icon>
+            </div>
+            <h3>Supprimer le message</h3>
+            <p>Êtes-vous sûr de vouloir supprimer ce message ? Cette action ne peut pas être annulée.</p>
+
+            <div class="modal-actions">
+                <button class="cancel-btn" (click)="closeDeleteConfirmModal()">
+                    Annuler
+                </button>
+                <button class="confirm-btn" (click)="confirmDeleteMessage()">
+                    <mat-icon>delete</mat-icon>
+                    Supprimer
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Notifications Toast -->
+    <div class="toast-container">
+        <div *ngFor="let toast of toasts"
+             class="toast"
+             [class]="toast.type"
+             [@slideIn]>
+            <div class="toast-content">
+                <mat-icon class="toast-icon">{{ toast.icon }}</mat-icon>
+                <span class="toast-message">{{ toast.message }}</span>
+                <button class="toast-close" (click)="removeToast(toast)">
+                    <mat-icon>close</mat-icon>
+                </button>
             </div>
         </div>
     </div>
