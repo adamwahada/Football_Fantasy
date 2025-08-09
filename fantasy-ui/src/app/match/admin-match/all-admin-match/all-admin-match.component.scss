@@ -198,3 +198,30 @@
 .btn-secondary:hover {
   background-color: #5a6268;
 }
+.btn-icon {
+  font-size: 24px;
+  margin: 0 2px;
+  padding: 2px;
+  transition: background-color 0.3s ease;
+  border-radius: 50%;
+
+  &:hover {
+    background-color: rgba(0,0,0,0.1);
+  }
+}
+
+.btn-icon.blue {
+  color: #1976d2; /* bleu Material */
+}
+
+.btn-icon.red {
+  color: #d32f2f; /* rouge Material */
+}
+
+.btn-icon.green {
+  color: #388e3c; /* vert Material */
+}
+
+.btn-icon.orange {
+  color: #f57c00; /* orange Material */
+}

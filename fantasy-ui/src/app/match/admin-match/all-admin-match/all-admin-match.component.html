@@ -15,6 +15,7 @@
   <label>Date Range:
   <select [formControl]="filterControl">
     <option value="all">Tous</option>
+    <option value="today">Today</option>
     <option value="nextDay">Tomorrow</option>
     <option value="next3Days">3 days</option>
     <option value="nextWeek">7 days</option>
@@ -106,12 +107,8 @@
       >
         Lier les matchs sélectionnés à la Gameweek
       </button>
-      <button
-        class="btn-add"
-        [routerLink]="['/admin/Addmatch']"
-        title="Ajouter un match"
-      >
-        +
+      <button mat-icon-button (click)="addNew()" class="col-green" matTooltip="Ajouter un match">
+        <mat-icon>add_circle_outline</mat-icon>
       </button>
     </div>
   </div>
@@ -164,21 +161,44 @@
           </span>
         </td>
         <td class="actions">
+          <!-- Modifier -->
           <button
-            [routerLink]="['/admin/match/Editmatch', match.id]"
-            title="Modifier"
+            mat-icon-button
             class="btn-icon blue"
-          >
-            ✏️
+            [routerLink]="['/admin/match/Editmatch', match.id]"
+            matTooltip="Modifier"
+            aria-label="Modifier">
+            <mat-icon>edit</mat-icon>
           </button>
-          <button (click)="deleteMatch(match.id!)" title="Supprimer" class="btn-icon red">
-            🗑️
+
+          <!-- Supprimer -->
+          <button
+            mat-icon-button
+            class="btn-icon red"
+            (click)="deleteMatch(match.id!)"
+            matTooltip="Supprimer"
+            aria-label="Supprimer">
+            <mat-icon>delete_outline</mat-icon>
           </button>
-          <button (click)="toggleActive(match)" title="Activer / Désactiver" class="btn-icon gray">
-            {{ match.active ? '🔔' : '🔕' }}
+
+          <!-- Activer / Désactiver -->
+          <button
+            mat-icon-button
+            class="btn-icon gray"
+            (click)="toggleActive(match)"
+            [matTooltip]="match.active ? 'Désactiver' : 'Activer'"
+            aria-label="Désactiver / Activer">
+            <mat-icon>{{ match.active ? 'notifications_active' : 'notifications_off' }}</mat-icon>
           </button>
-          <button (click)="resetMatch(match)" title="Réinitialiser" class="btn-icon orange">
-            ♻️
+
+          <!-- Réinitialiser -->
+          <button
+            mat-icon-button
+            class="btn-icon orange"
+            (click)="resetMatch(match)"
+            matTooltip="Réinitialiser"
+            aria-label="Réinitialiser">
+            <mat-icon>autorenew</mat-icon>
           </button>
         </td>
       </tr>

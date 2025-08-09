@@ -10,7 +10,11 @@ import { MatPaginator, MatPaginatorModule } from '@angular/material/paginator';
 import { MatTableDataSource } from '@angular/material/table';
 import { ActivatedRoute } from '@angular/router';
 import { FormControl } from '@angular/forms';
+import { MatIconModule } from '@angular/material/icon';
+import { MatButtonModule } from '@angular/material/button';
+import { MatCheckboxModule } from '@angular/material/checkbox';
 import { GameweekService } from '../../../gameweek/gameweek.service';
+import { MatTooltipModule } from '@angular/material/tooltip';
 
 interface MatchFilter {
   status?: string;
@@ -25,6 +29,8 @@ interface MatchFilter {
   styleUrls: ['./all-admin-match.component.scss'],
   standalone: true,
   imports: [CommonModule, ReactiveFormsModule, FormsModule,
+    MatIconModule, MatButtonModule, MatCheckboxModule, MatPaginatorModule,MatTooltipModule,
+
      RouterLink, MatPaginatorModule,],
 })
 export class AllAdminMatchComponent implements OnInit, AfterViewInit {
@@ -126,6 +132,15 @@ export class AllAdminMatchComponent implements OnInit, AfterViewInit {
           matchDate.setHours(0, 0, 0, 0); // Start of match day
 
           switch (filters.dateRange) {
+            case 'today':
+              const today = new Date(now);
+              today.setHours(0, 0, 0, 0); // début de la journée
+
+              const tomorrowStart = new Date(today);
+              tomorrowStart.setDate(tomorrowStart.getDate() + 1); // début de demain
+
+              matchesDateRange = matchDate >= today && matchDate < tomorrowStart;
+              break;
             case 'nextDay':
               const tomorrow = new Date(now);
               tomorrow.setDate(tomorrow.getDate() + 1);
@@ -441,6 +456,7 @@ export class AllAdminMatchComponent implements OnInit, AfterViewInit {
       }
     });
   }
+  
   removeFilter(filterName: 'statusFilter' | 'dateFilter' | 'matchStatusFilter' | 'dateRange'): void {
   switch (filterName) {
     case 'statusFilter':
@@ -457,6 +473,10 @@ export class AllAdminMatchComponent implements OnInit, AfterViewInit {
       break;
   }
   this.applyFilters();
+}
+addNew(): void {
+  // Navigate to add match page
+  this.router.navigate(['/admin/Addmatch']);
 }
 
 }
