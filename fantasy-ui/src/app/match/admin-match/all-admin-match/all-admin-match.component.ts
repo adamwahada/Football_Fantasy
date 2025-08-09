@@ -550,9 +550,14 @@ loadGameweeksForMatch(matchId: number): void {
 
 unlinkMatchFromGameweek(matchId: number, gameweekId: number): void {
   if (confirm('Êtes-vous sûr de vouloir retirer ce match de cette gameweek ?')) {
+    // Check if it's a tiebreaker BEFORE unlinking
+    const wasTiebreaker = this.isMatchTiebreakerInGameweek(matchId, gameweekId);
+    
     // Use the deleteSelectedMatches method to remove this specific match
     this.gameweekService.deleteSelectedMatches(gameweekId, [matchId]).subscribe({
       next: () => {
+        console.log(`Match ${matchId} unlinked from gameweek ${gameweekId}. Was tiebreaker: ${wasTiebreaker}`);
+        
         // Remove the gameweek from the local array
         this.gameweeksForSelectedMatch = this.gameweeksForSelectedMatch.filter(
           gw => gw.id !== gameweekId
@@ -566,6 +571,19 @@ unlinkMatchFromGameweek(matchId: number, gameweekId: number): void {
           );
         }
         
+        // If the unlinked match was a tiebreaker, remove it from tiebreakers
+        if (wasTiebreaker) {
+          console.log(`Removing match ${matchId} from tiebreakers after unlinking`);
+          this.gameweekService.deleteTiebreakerMatches(gameweekId, [matchId]).subscribe({
+            next: () => {
+              console.log(`Tiebreaker ${matchId} successfully removed after unlinking`);
+            },
+            error: err => {
+              console.error('Erreur lors de la suppression du tiebreaker après unlinking :', err);
+            }
+          });
+        }
+        
         console.log('Match retiré de la gameweek avec succès');
       },
       error: (error) => {
@@ -573,6 +591,24 @@ unlinkMatchFromGameweek(matchId: number, gameweekId: number): void {
       }
     });
   }
+}
+
+// Helper method to check if a match is a tiebreaker in a specific gameweek
+private isMatchTiebreakerInGameweek(matchId: number, gameweekId: number): boolean {
+  const gameweek = this.gameweeksForSelectedMatch?.find(gw => gw.id === gameweekId);
+  if (!gameweek) return false;
+
+  let tiebreakerIds: number[] = [];
+  if (Array.isArray(gameweek.tiebreakerMatchIds)) {
+    tiebreakerIds = gameweek.tiebreakerMatchIds as unknown as number[];
+  } else if (typeof gameweek.tiebreakerMatchIds === 'string') {
+    tiebreakerIds = gameweek.tiebreakerMatchIds
+      .split(',')
+      .map((id: string) => Number(id.trim()))
+      .filter((id: number) => !isNaN(id));
+  }
+
+  return tiebreakerIds.includes(matchId);
 }
 redirectToGameweekMatches(gameweek: any) {
   console.log('🚀 Redirecting with gameweek ID:', gameweek.id);

@@ -82,75 +82,67 @@ export class ShowGameweekMatchesComponent implements OnChanges {
       default: return 'À venir';
     }
   }
-toggleActive(match: MatchWithIconsDTO): void {
-  const newStatus = !match.active;
-  const wasThebreaker = this.isMatchTiebreaker(match.id!);
 
-  this.matchService.setMatchActiveStatus(match.id!, newStatus).subscribe({
-    next: () => {
-      match.active = newStatus;
-      const matchInArray = this._matches.find(m => m.id === match.id);
-      if (matchInArray) matchInArray.active = newStatus;
-      const originalMatch = this.matches.find(m => m.id === match.id);
-      if (originalMatch) originalMatch.active = newStatus;
+  removeMatch(matchId: number): void {
+    if (!this.gameweek?.id) return;
 
-      if (!newStatus && wasThebreaker) {
-        this.gameweekService.deleteTiebreakerMatches(this.gameweek.id!, [match.id!]).subscribe({
-          next: () => {
-            this.reloadGameweekAndMatches();
-          },
-          error: err => console.error('Erreur suppression tiebreaker:', err)
-        });
-      } else {
-        this.updateMatchesWithTiebreakers();
-        this.matchesUpdated.emit({gameweek: this.gameweek, matches: this.matches});
-      }
-    },
-    error: err => {
-      console.error('Erreur lors de la mise à jour du statut du match :', err);
-      alert('Erreur lors de la mise à jour du statut du match.');
-    }
-  });
-}
-removeMatch(matchId: number): void {
-  if (!this.gameweek?.id) return;
-  if (!confirm('Voulez-vous vraiment retirer ce match de cette gameweek ?')) return;
+    if (!confirm('Voulez-vous vraiment retirer ce match de cette gameweek ?')) return;
 
-  const wasThebreaker = this.isMatchTiebreaker(matchId);
+    const wasThebreaker = this.isMatchTiebreaker(matchId);
 
-  this.gameweekService.deleteSelectedMatches(this.gameweek.id, [matchId]).subscribe({
-    next: () => {
-      // Rafraîchit la gameweek et ses matches avant d'appeler deleteTiebreakerMatches
-      this.gameweekService.getGameweekById(this.gameweek.id!).subscribe({
-        next: (updatedGameweek) => {
-          this.gameweek = updatedGameweek;
-          this.gameweekService.getMatchesWithIcons(this.gameweek.id!).subscribe({
-            next: (updatedMatches) => {
-              this.matches = updatedMatches;
-              this._matches = updatedMatches.map(m => ({ ...m, isTiebreaker: this.isMatchTiebreaker(m.id!) }));
-
-              if (wasThebreaker) {
-                this.gameweekService.deleteTiebreakerMatches(this.gameweek.id!, [matchId]).subscribe({
-                  next: () => {
-                    this.reloadGameweekAndMatches();
-                  },
-                  error: err => console.error('Erreur suppression tiebreaker:', err)
-                });
-              } else {
-                this.matchesUpdated.emit({gameweek: this.gameweek, matches: this.matches});
-              }
-            }
-          });
+    this.gameweekService.deleteSelectedMatches(this.gameweek.id, [matchId]).subscribe({
+      next: () => {
+        this._matches = this._matches.filter(m => m.id !== matchId);
+        this.matches = this.matches.filter(m => m.id !== matchId);
+        
+        // If removed match was a tiebreaker, update tiebreakers
+        if (wasThebreaker) {
+          this.removeTiebreakerAndUpdate(matchId);
+        } else {
+          // Emit updated matches to parent
+          this.matchesUpdated.emit({gameweek: this.gameweek, matches: this.matches});
         }
-      });
-    },
-    error: err => {
-      console.error('Erreur lors de la suppression du match :', err);
-      alert('Erreur lors de la suppression du match.');
-    }
-  });
-}
+      },
+      error: err => {
+        console.error('Erreur lors de la suppression du match :', err);
+        alert('Erreur lors de la suppression du match.');
+      }
+    });
+  }
 
+  toggleActive(match: MatchWithIconsDTO): void {
+    const newStatus = !match.active;
+    const wasThebreaker = this.isMatchTiebreaker(match.id!);
+    
+    this.matchService.setMatchActiveStatus(match.id!, newStatus).subscribe({
+      next: () => {
+        // Update the match in both arrays
+        match.active = newStatus;
+        const matchInArray = this._matches.find(m => m.id === match.id);
+        if (matchInArray) {
+          matchInArray.active = newStatus;
+        }
+        const originalMatch = this.matches.find(m => m.id === match.id);
+        if (originalMatch) {
+          originalMatch.active = newStatus;
+        }
+
+        // If deactivating a tiebreaker match, immediately update tiebreakers
+        if (!newStatus && wasThebreaker) {
+          this.removeTiebreakerAndUpdate(match.id!);
+        } else {
+          // Just refresh the tiebreaker status display
+          this.updateMatchesWithTiebreakers();
+          // Emit updated matches to parent
+          this.matchesUpdated.emit({gameweek: this.gameweek, matches: this.matches});
+        }
+      },
+      error: err => {
+        console.error('Erreur lors de la mise à jour du statut du match :', err);
+        alert('Erreur lors de la mise à jour du statut du match.');
+      }
+    });
+  }
 
   /**
    * Helper method to check if a match is currently a tiebreaker
@@ -171,43 +163,24 @@ removeMatch(matchId: number): void {
   }
 
   /**
-   * Remove a specific match from tiebreakers and update the gameweek
+   * Remove a specific match from tiebreakers using the new backend endpoint
    */
   private removeTiebreakerAndUpdate(matchId: number): void {
     if (!this.gameweek?.id) return;
 
-    let currentTiebreakerIds: number[] = [];
-
-    if (Array.isArray(this.gameweek?.tiebreakerMatchIds)) {
-      currentTiebreakerIds = this.gameweek.tiebreakerMatchIds as unknown as number[];
-    } else if (typeof this.gameweek?.tiebreakerMatchIds === 'string') {
-      currentTiebreakerIds = this.gameweek.tiebreakerMatchIds
-        .split(',')
-        .map(id => Number(id.trim()))
-        .filter(id => !isNaN(id));
-    }
-
-    // Remove the specific match from tiebreakers
-    const updatedTiebreakerIds = currentTiebreakerIds.filter(id => id !== matchId);
-
-    // Only update if there's a change
-    if (updatedTiebreakerIds.length !== currentTiebreakerIds.length) {
-      this.gameweekService.setTiebreakers(this.gameweek.id, updatedTiebreakerIds).subscribe({
-        next: () => {
-          // Update local gameweek data
-          this.gameweek.tiebreakerMatchIds = updatedTiebreakerIds.join(',');
-          this.updateMatchesWithTiebreakers();
-          
-          console.log(`Match ${matchId} removed from tiebreakers. ${updatedTiebreakerIds.length} tiebreakers remaining.`);
-          
-          // Emit updated matches to parent
-          this.matchesUpdated.emit({gameweek: this.gameweek, matches: this.matches});
-        },
-        error: err => {
-          console.error('Erreur lors de la mise à jour des tiebreakers :', err);
-        }
-      });
-    }
+    // Use the new backend endpoint to remove the match from tiebreakers
+    this.gameweekService.deleteTiebreakerMatches(this.gameweek.id, [matchId]).subscribe({
+      next: () => {
+        console.log(`Match ${matchId} removed from tiebreakers successfully.`);
+        
+        // Reload fresh data to get updated tiebreaker list from backend
+        this.reloadGameweekAndMatches();
+      },
+      error: err => {
+        console.error('Erreur lors de la suppression du tiebreaker :', err);
+        alert('Erreur lors de la suppression du tiebreaker.');
+      }
+    });
   }
 
   startTiebreakerSelection(): void {
