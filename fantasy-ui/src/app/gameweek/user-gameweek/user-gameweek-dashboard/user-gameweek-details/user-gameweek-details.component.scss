@@ -1,18 +1,40 @@
+// Modern Glassmorphism Modal Styles for Betting Application
+
 body.modal-open {
   position: fixed;
-  overflow: hidden;
   width: 100%;
   height: 100%;
 }
 
 .modal-backdrop {
   position: fixed;
-  top: 0; 
-  left: 0; 
-  right: 0; 
+  top: 0;
+  left: 0;
+  right: 0;
   bottom: 0;
-  background-color: rgba(0, 0, 0, 0.6);
-  z-index: 1000;
+  background: rgba(0, 0, 0, 0.4);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  z-index: 20000 !important;
+  opacity: 0;
+  animation: fadeIn 0.3s ease-out forwards;
+}
+
+@keyframes fadeIn {
+  to { 
+    opacity: 1; 
+  }
+}
+
+@keyframes slideUp {
+  from { 
+    opacity: 0;
+    transform: translate(-50%, -40%) scale(0.95);
+  }
+  to { 
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+  }
 }
 
 .modal {
@@ -20,94 +42,386 @@ body.modal-open {
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  background-color: #fff;
-  border-radius: 10px;
-  padding: 2rem;
-  max-width: 600px;
-  width: 90%;
-  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
-  z-index: 1001;
-
-  max-height: 80vh;
+  
+  // Glassmorphism effect
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(25px);
+  -webkit-backdrop-filter: blur(25px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  box-shadow: 
+    0 32px 64px rgba(0, 0, 0, 0.12),
+    0 0 0 1px rgba(255, 255, 255, 0.05),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  
+  border-radius: 24px;
+  padding: 2.5rem;
+  max-width: 700px;
+  width: 95%;
+  max-height: 85vh;
   overflow-y: auto;
   overflow-x: hidden;
-  box-sizing: border-box;
+  z-index: 20001 !important;
+  
+  animation: slideUp 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+  
+  // Custom scrollbar styling
+  scrollbar-width: thin;
+  scrollbar-color: rgba(0, 0, 0, 0.2) transparent;
 
-  /* Thin scroll indicator */
   &::-webkit-scrollbar {
-    width: 4px;
+    width: 6px;
   }
+
   &::-webkit-scrollbar-track {
     background: transparent;
   }
+
   &::-webkit-scrollbar-thumb {
-    background-color: rgba(0, 0, 0, 0.3);
-    border-radius: 2px;
+    background: linear-gradient(180deg, rgba(0, 0, 0, 0.2), rgba(0, 0, 0, 0.1));
+    border-radius: 3px;
   }
+
   &::-webkit-scrollbar-thumb:hover {
-    background-color: rgba(0, 0, 0, 0.5);
+    background: linear-gradient(180deg, rgba(0, 0, 0, 0.3), rgba(0, 0, 0, 0.2));
   }
 
-  /* Remove ▲ ▼ buttons completely */
-  &::-webkit-scrollbar-button:single-button {
-    display: none;
-    width: 0;
-    height: 0;
+  // Mobile responsive
+  @media (max-width: 768px) {
+    width: 90%;
+    padding: 2rem 1.5rem;
+    max-height: 90vh;
+    border-radius: 20px;
+  }
+}
+
+.modal-header {
+  display: flex;
+  align-items: center;
+  margin-bottom: 2rem;
+  padding-right: 3rem; // Space for close button
+
+  .league-icon {
+    width: 48px;
+    height: 48px;
+    margin-right: 1rem;
+    border-radius: 12px;
+    object-fit: contain;
+    background: rgba(255, 255, 255, 0.8);
+    padding: 8px;
+    border: 1px solid rgba(0, 0, 0, 0.05);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+
+    @media (max-width: 768px) {
+      width: 40px;
+      height: 40px;
+      padding: 6px;
+    }
   }
 
-  scrollbar-width: thin;
-  scrollbar-color: rgba(0,0,0,0.3) transparent;
-}
+  h2 {
+    margin: 0;
+    font-weight: 700;
+    font-size: 1.75rem;
+    background: linear-gradient(135deg, #1e293b, #475569);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    letter-spacing: -0.025em;
 
-.modal h2 {
-  margin-top: 0;
-  margin-bottom: 1rem;
-  font-weight: 700;
-  font-size: 1.5rem;
-  color: #222;
-}
-
-.error {
-  color: #d33;
-  margin-bottom: 1rem;
-}
-
-.loading {
-  font-style: italic;
-  margin-bottom: 1rem;
-}
-
-ul {
-  list-style: none;
-  padding-left: 0;
-  margin: 0;
-}
-
-ul li {
-  border-bottom: 1px solid #ddd;
-  padding: 0.75rem 0;
-  font-size: 1rem;
-  color: #333;
-}
-
-ul li p {
-  margin-top: 0.5rem;
-  color: #555;
+    @media (max-width: 768px) {
+      font-size: 1.5rem;
+    }
+  }
 }
 
 .close-icon {
   position: absolute;
-  top: 1rem;
-  right: 1rem;
-  font-size: 1.5rem;
+  top: 1.5rem;
+  right: 1.5rem;
+  background: rgba(255, 255, 255, 0.9);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  border-radius: 12px;
+  width: 44px;
+  height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   cursor: pointer;
-  background: transparent;
-  border: none;
-  line-height: 1;
-  padding: 0;
-  transition: color 0.3s ease;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  color: #64748b;
+  z-index: 10;
+
+  &:hover {
+    background: rgba(239, 68, 68, 0.9);
+    color: white;
+    transform: rotate(90deg);
+    border-color: rgba(239, 68, 68, 0.2);
+    box-shadow: 0 8px 25px rgba(239, 68, 68, 0.25);
+  }
+
+  svg {
+    width: 20px;
+    height: 20px;
+    stroke-width: 2.5;
+  }
+
+  @media (max-width: 768px) {
+    top: 1rem;
+    right: 1rem;
+    width: 40px;
+    height: 40px;
+
+    svg {
+      width: 18px;
+      height: 18px;
+    }
+  }
 }
 
-.close-icon:hover {
-  color: #d33;
+.modal-content {
+  .loading {
+    text-align: center;
+    padding: 3rem 2rem;
+    color: #64748b;
+    font-size: 1.1rem;
+    
+    &::after {
+      content: '';
+      display: inline-block;
+      width: 20px;
+      height: 20px;
+      margin-left: 10px;
+      border: 2px solid #e2e8f0;
+      border-top: 2px solid #3b82f6;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+    }
+  }
+
+  .error {
+    background: rgba(239, 68, 68, 0.1);
+    border: 1px solid rgba(239, 68, 68, 0.2);
+    color: #dc2626;
+    padding: 1rem 1.5rem;
+    border-radius: 12px;
+    margin-bottom: 1.5rem;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+
+    &::before {
+      content: '⚠️';
+      margin-right: 8px;
+      font-size: 1.2rem;
+    }
+  }
 }
+
+@keyframes spin {
+  to { 
+    transform: rotate(360deg); 
+  }
+}
+
+.gameweek-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+  gap: 1rem;
+  padding: 1rem 0;
+
+  @media (max-width: 768px) {
+    grid-template-columns: repeat(auto-fill, minmax(70px, 1fr));
+    gap: 0.75rem;
+  }
+
+  @media (max-width: 480px) {
+    grid-template-columns: repeat(4, 1fr);
+    gap: 0.5rem;
+  }
+}
+
+.gameweek-card {
+  background: rgba(255, 255, 255, 0.8);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: 16px;
+  padding: 1.25rem 0.75rem;
+  font-size: 1.2rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  user-select: none;
+  text-align: center;
+  color: #1e293b;
+  position: relative;
+  min-height: 60px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  // Subtle gradient overlay
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0));
+    pointer-events: none;
+    transition: opacity 0.3s ease;
+  }
+
+  &:hover,
+  &:focus {
+    background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+    color: white;
+    border-color: rgba(59, 130, 246, 0.3);
+    box-shadow: 
+      0 12px 40px rgba(59, 130, 246, 0.25),
+      0 0 0 1px rgba(59, 130, 246, 0.1),
+      inset 0 1px 0 rgba(255, 255, 255, 0.2);
+    transform: translateY(-2px) scale(1.02);
+    outline: none;
+
+    &::before {
+      opacity: 0;
+    }
+  }
+
+  &:active {
+    transform: translateY(-1px) scale(1.01);
+  }
+
+  // Betting-themed accent for special weeks
+  &.featured {
+    background: linear-gradient(135deg, #f59e0b, #d97706);
+    color: white;
+    border-color: rgba(245, 158, 11, 0.3);
+
+    &::after {
+      content: '🔥';
+      position: absolute;
+      top: 4px;
+      right: 4px;
+      font-size: 0.75rem;
+    }
+
+    &:hover {
+      background: linear-gradient(135deg, #d97706, #b45309);
+      box-shadow: 
+        0 12px 40px rgba(245, 158, 11, 0.3),
+        0 0 0 1px rgba(245, 158, 11, 0.1);
+    }
+  }
+
+  @media (max-width: 768px) {
+    padding: 1rem 0.5rem;
+    font-size: 1.1rem;
+    min-height: 55px;
+    border-radius: 14px;
+  }
+
+  @media (max-width: 480px) {
+    padding: 0.875rem 0.375rem;
+    font-size: 1rem;
+    min-height: 50px;
+    border-radius: 12px;
+  }
+}
+
+// Dark theme support
+@media (prefers-color-scheme: dark) {
+  .modal {
+    background: rgba(15, 23, 42, 0.95);
+    border-color: rgba(255, 255, 255, 0.1);
+  }
+
+  .modal-header h2 {
+    background: linear-gradient(135deg, #f1f5f9, #cbd5e1);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .close-icon {
+    background: rgba(30, 41, 59, 0.9);
+    color: #94a3b8;
+    border-color: rgba(255, 255, 255, 0.1);
+
+    &:hover {
+      background: rgba(239, 68, 68, 0.9);
+      color: white;
+    }
+  }
+
+  .gameweek-card {
+    background: rgba(30, 41, 59, 0.8);
+    color: #f1f5f9;
+    border-color: rgba(255, 255, 255, 0.1);
+
+    &:hover,
+    &:focus {
+      background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+      color: white;
+    }
+  }
+
+  .error {
+    background: rgba(239, 68, 68, 0.15);
+    border-color: rgba(239, 68, 68, 0.3);
+    color: #fca5a5;
+  }
+}
+
+// Accessibility improvements
+@media (prefers-reduced-motion: reduce) {
+  .modal {
+    animation: none;
+  }
+  
+  .modal-backdrop {
+    animation: none;
+  }
+  
+  .gameweek-card {
+    transition: none;
+    
+    &:hover,
+    &:focus {
+      transform: none;
+    }
+  }
+  
+  .close-icon {
+    &:hover {
+      transform: none;
+    }
+  }
+}
+
+// High contrast mode
+@media (prefers-contrast: high) {
+  .modal {
+    border: 2px solid #000;
+    background: rgba(255, 255, 255, 1);
+  }
+  
+  .gameweek-card {
+    border: 2px solid #000;
+    background: #fff;
+    
+    &:hover,
+    &:focus {
+      background: #000;
+      color: #fff;
+    }
+  }
+}
+.gameweek-card.finished {
+  background: linear-gradient(135deg, #4ade80, #16a34a); /* Green shades */
+  color: white;
+  border-color: rgba(22, 163, 74, 0.5);
+}
+

@@ -625,6 +625,10 @@ public class GameWeekService {
         LocalDateTime now = LocalDateTime.now();
         return gameWeekRepository.findByCompetitionAndJoinDeadlineAfter(competition, now);
     }
+    public List<GameWeek> getAllByCompetition(LeagueTheme competition) {
+        return gameWeekRepository.findByCompetition(competition);
+    }
+
 
     public void setTiebreakersForGameWeek(Long gameweekId, List<Long> matchIds) {
         if (matchIds.size() != 3) {

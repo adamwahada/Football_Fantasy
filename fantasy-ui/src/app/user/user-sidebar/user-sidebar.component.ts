@@ -8,7 +8,26 @@ import { KeycloakService } from '../../keycloak.service';
   selector: 'app-user-sidebar',
   standalone: true,
   imports: [RouterModule, CommonModule],
-  templateUrl: './user-sidebar.component.html',
+  template: `
+    <nav class="user-sidebar" [class.collapsed]="sidebarCollapsed">
+      <ul>
+        <li *ngFor="let route of routes; let i = index">
+          <div class="menu-parent" (click)="toggle(i)" [class.active]="openIndex === i">
+            <span *ngIf="route.icon" class="material-icons">{{route.icon}}</span>
+            <span>{{ route.title }}</span>
+            <span *ngIf="route.submenu?.length" class="arrow">
+              {{ openIndex === i ? 'expand_less' : 'expand_more' }}
+            </span>
+          </div>
+          <ul *ngIf="route.submenu?.length && openIndex === i" class="submenu">
+            <li *ngFor="let sub of route.submenu">
+              <a [routerLink]="sub.path" routerLinkActive="active">{{ sub.title }}</a>
+            </li>
+          </ul>
+        </li>
+      </ul>
+    </nav>
+  `,
   styleUrls: ['./user-sidebar.component.scss']
 })
 export class UserSidebarComponent implements OnInit {
@@ -27,6 +46,10 @@ export class UserSidebarComponent implements OnInit {
   }
 
   toggle(index: number) {
+    if (this.sidebarCollapsed) {
+      // Don't allow submenu toggle when sidebar is collapsed
+      return;
+    }
     this.openIndex = this.openIndex === index ? null : index;
   }
 

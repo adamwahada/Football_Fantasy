@@ -1,0 +1,42 @@
+<!-- Fixed User Layout Template -->
+<div class="user-layout">
+  <!-- Fantasy Football Header -->
+  <header class="fantasy-header">
+    <div class="header-content">
+      <div class="header-left">
+        <h1>Fantasy Football</h1>
+        <p>Select your league to start your fantasy journey</p>
+      </div>
+      
+      <!-- Auth section -->
+      <div class="auth-section">
+        <div *ngIf="!isLoggedIn()">
+          <button class="auth-button login" (click)="login()">Login</button>
+        </div>
+        
+        <div *ngIf="isLoggedIn()">
+          <span class="welcome-message">Welcome!</span>
+          <button class="auth-button logout" (click)="logout()">Logout</button>
+        </div>
+      </div>
+    </div>
+  </header>
+  
+  <!-- Layout Body -->
+  <div class="layout-body">
+    <button 
+      class="sidebar-toggle" 
+      [class.collapsed]="sidebarCollapsed"
+      (click)="toggleSidebar()">
+      {{ sidebarCollapsed ? '☰' : '◀' }}
+    </button>
+    
+    <!-- Sidebar -->
+    <app-user-sidebar [sidebarCollapsed]="sidebarCollapsed"></app-user-sidebar>
+    
+    <!-- Main Content -->
+    <main class="user-content" [class.collapsed]="sidebarCollapsed">
+      <router-outlet></router-outlet>
+    </main>
+  </div>
+</div>

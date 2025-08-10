@@ -1,37 +1,390 @@
+// Variables for fantasy theme
+$primary-color: #0dfd86;
+$secondary-color: #00b4d8;
+$background-dark: #000000;
+$text-primary: #ffffff;
+$text-secondary: #b0b0b0;
+$button-primary: linear-gradient(135deg, #0dfd86, #00b4d8);
+$button-logout: linear-gradient(135deg, #ff4444, #ff6b6b);
+
+// Main layout container with fantasy background
 .user-layout {
   display: flex;
-  height: 100vh;
+  flex-direction: column;
+  min-height: 100vh;
+  background: $background-dark;
+  color: $text-primary;
+  font-family: 'Segoe UI', system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+
+  // Fantasy background effects
+  &::before {
+    content: '';
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: 
+      radial-gradient(circle at 20% 80%, rgba($primary-color, 0.08) 0%, transparent 50%),
+      radial-gradient(circle at 80% 20%, rgba($secondary-color, 0.08) 0%, transparent 50%);
+    pointer-events: none;
+    z-index: 0;
+  }
 }
 
+// Fantasy Header - Static positioning to avoid modal conflicts
+.fantasy-header {
+  position: relative;
+  z-index: 10;
+  background: rgba($background-dark, 0.95);
+  backdrop-filter: blur(10px);
+  border-bottom: 1px solid rgba($primary-color, 0.2);
+  padding: 1rem 0;
+
+  .header-content {
+    text-align: center;
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 2rem;
+
+    h1 {
+      font-size: 2.5rem;
+      font-weight: 800;
+      margin-bottom: 0.5rem;
+      background: linear-gradient(135deg, $primary-color 0%, $secondary-color 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      text-shadow: 0 0 30px rgba($primary-color, 0.3);
+
+      @media (max-width: 768px) {
+        font-size: 1.8rem;
+      }
+    }
+
+    p {
+      font-size: 1.1rem;
+      color: $text-secondary;
+      font-weight: 300;
+      margin-bottom: 1rem;
+
+      @media (max-width: 768px) {
+        font-size: 1rem;
+      }
+    }
+
+    .auth-section {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 1rem;
+      margin-top: 1rem;
+
+      .welcome-message {
+        font-size: 1rem;
+        color: $text-primary;
+        font-weight: 500;
+      }
+
+      .auth-button {
+        background: $button-primary;
+        border: none;
+        color: white;
+        padding: 8px 24px;
+        font-size: 0.9rem;
+        font-weight: 600;
+        border-radius: 6px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        box-shadow: 0 3px 12px rgba($primary-color, 0.3);
+
+        &:hover {
+          transform: translateY(-2px);
+          box-shadow: 0 5px 15px rgba($primary-color, 0.4);
+        }
+
+        &.logout {
+          background: $button-logout;
+          box-shadow: 0 3px 12px rgba(#ff4444, 0.3);
+
+          &:hover {
+            box-shadow: 0 5px 15px rgba(#ff4444, 0.4);
+          }
+        }
+      }
+    }
+  }
+}
+
+// Layout body container
+.layout-body {
+  display: flex;
+  flex: 1;
+  position: relative;
+}
+
+// Sidebar styles - integrated with your existing design
+.user-sidebar {
+  width: 230px;
+  min-height: 100vh;
+  background: #000000;
+  color: #a5d6a7;
+  padding-top: 2rem;
+  padding-bottom: 2rem;
+  position: fixed;
+  top: 0;
+  left: 0;
+  box-shadow: 2px 0 12px rgba(0, 100, 0, 0.6);
+  transition: width 0.3s ease, transform 0.3s ease;
+  overflow-x: hidden;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  z-index: 1050;
+
+  ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+  }
+
+  li {
+    margin-bottom: 0.5rem;
+  }
+
+  .menu-parent {
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    padding: 0.75rem 1rem;
+    font-weight: 600;
+    border-radius: 0.375rem;
+    background: transparent;
+    transition: background 0.3s, color 0.3s;
+    user-select: none;
+
+    &:hover,
+    &.active {
+      background: #2e7d32;
+      color: #e0f2f1;
+    }
+
+    .material-icons {
+      margin-right: 1rem;
+      font-size: 1.6rem;
+      min-width: 24px;
+      text-align: center;
+      color: inherit;
+      transition: color 0.3s;
+    }
+
+    .arrow {
+      font-family: 'Material Icons';
+      font-size: 1.4rem;
+      margin-left: auto;
+      color: #81c784;
+      transition: transform 0.3s;
+    }
+  }
+
+  .submenu {
+    padding-left: 2.5rem;
+    margin-top: 0.3rem;
+    background: rgba(#000000, 0.8);
+    border-radius: 0.375rem;
+    box-shadow: 0 2px 8px rgba(0, 100, 0, 0.2);
+
+    li {
+      margin-bottom: 0;
+    }
+
+    a {
+      display: block;
+      padding: 0.75rem 1rem;
+      color: #81c784;
+      text-decoration: none;
+      border-radius: 0.375rem;
+      font-weight: 500;
+      transition: all 0.3s ease;
+      position: relative;
+
+      &:hover {
+        background: rgba($primary-color, 0.15);
+        color: $primary-color;
+        transform: translateX(4px);
+        box-shadow: 0 2px 8px rgba($primary-color, 0.2);
+      }
+
+      &.active {
+        background: rgba($primary-color, 0.2);
+        color: $primary-color;
+        font-weight: 600;
+        
+        &::before {
+          content: '';
+          position: absolute;
+          left: 0;
+          top: 50%;
+          transform: translateY(-50%);
+          width: 3px;
+          height: 20px;
+          background: $primary-color;
+          border-radius: 2px;
+        }
+      }
+
+      // Add a subtle hover indicator
+      &::after {
+        content: '';
+        position: absolute;
+        right: 1rem;
+        top: 50%;
+        transform: translateY(-50%) translateX(10px);
+        width: 0;
+        height: 0;
+        border-left: 4px solid transparent;
+        border-right: 4px solid transparent;
+        border-top: 4px solid currentColor;
+        opacity: 0;
+        transition: all 0.3s ease;
+        transform: translateY(-50%) translateX(10px) rotate(-90deg);
+      }
+
+      &:hover::after {
+        opacity: 0.6;
+        transform: translateY(-50%) translateX(0) rotate(-90deg);
+      }
+    }
+  }
+
+  &.collapsed {
+    width: 70px;
+
+    .menu-parent {
+      justify-content: center;
+
+      .material-icons {
+        margin-right: 0;
+      }
+
+      span:not(.material-icons):not(.arrow) {
+        display: none;
+      }
+
+      .arrow {
+        display: none;
+      }
+    }
+
+    .submenu {
+      display: none;
+    }
+  }
+}
+
+// Content area
 .user-content {
   flex: 1;
   margin-left: 230px;
   padding: 2rem;
-  transition: margin-left 0.3s ease;
   overflow-y: auto;
+  transition: margin-left 0.3s ease;
+  position: relative;
+  z-index: 1;
+
+  &.collapsed {
+    margin-left: 70px;
+  }
 }
 
-.user-content.collapsed {
-  margin-left: 70px;
-}
-
+// Sidebar toggle button - properly positioned
 .sidebar-toggle {
   position: fixed;
   top: 1rem;
   left: 1rem;
-  z-index: 1500;
-  background: #2e7d32;
-  color: #e0f2f1;
+  z-index: 1100;
+  background: rgba($primary-color, 0.9);
+  color: white;
   border: none;
-  border-radius: 50%;
-  width: 3rem;
-  height: 3rem;
-  font-size: 1.8rem;
+  border-radius: 8px;
+  padding: 0.5rem 1rem;
   cursor: pointer;
-  box-shadow: 0 2px 6px rgba(46,125,50,0.6);
-  transition: background-color 0.3s ease;
+  font-size: 1.25rem;
+  transition: all 0.3s ease;
+  backdrop-filter: blur(10px);
+  box-shadow: 0 2px 8px rgba($primary-color, 0.3);
+
+  &:hover {
+    background: rgba($primary-color, 1);
+    transform: scale(1.05);
+    box-shadow: 0 4px 12px rgba($primary-color, 0.4);
+  }
+
+  // Ensure visibility when sidebar is collapsed
+  .collapsed & {
+    background: rgba($secondary-color, 0.9);
+    
+    &:hover {
+      background: rgba($secondary-color, 1);
+    }
+  }
 }
 
-.sidebar-toggle:hover {
-  background: #4caf50;
+// Modal support styles
+:host ::ng-deep {
+  .modal-backdrop {
+    z-index: 9999 !important;
+  }
+  
+  .modal {
+    z-index: 10000 !important;
+  }
+}
+
+// Responsive design
+@media (max-width: 768px) {
+  .fantasy-header {
+    .header-content {
+      padding: 0 1rem;
+      
+      h1 {
+        font-size: 1.8rem;
+      }
+      
+      p {
+        font-size: 0.95rem;
+      }
+      
+      .auth-section {
+        flex-direction: column;
+        gap: 0.5rem;
+        
+        .auth-button {
+          padding: 6px 20px;
+          font-size: 0.85rem;
+        }
+      }
+    }
+  }
+
+  .user-sidebar {
+    transform: translateX(-100%);
+    transition: transform 0.3s ease;
+    
+    &:not(.collapsed) {
+      transform: translateX(0);
+    }
+  }
+
+  .user-content {
+    margin-left: 0;
+    padding: 1rem;
+    
+    &.collapsed {
+      margin-left: 0;
+    }
+  }
+
+  .sidebar-toggle {
+    z-index: 1200; // Higher on mobile to ensure visibility
+  }
 }

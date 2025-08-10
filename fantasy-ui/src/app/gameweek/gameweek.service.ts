@@ -122,6 +122,11 @@ export class GameweekService {
       .set('weekNumber', weekNumber);
     return this.http.get<Match[]>(`${this.apiUrl}/matches-by-competition`, { params });
   }
+  // ✅ Get all gameweeks by competition
+  getAllGameweeksByCompetition(competition: string): Observable<Gameweek[]> {
+  const params = new HttpParams().set('competition', competition);
+  return this.http.get<Gameweek[]>(`${this.apiUrl}/all`, { params });
+}
 
   // ✅ Get upcoming gameweeks
   getUpcomingGameweeks(competition: string): Observable<Gameweek[]> {

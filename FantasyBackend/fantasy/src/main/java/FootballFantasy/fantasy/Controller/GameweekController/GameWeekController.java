@@ -213,6 +213,13 @@ public class GameWeekController {
                 .description(match.getDescription())
                 .build();
     }
+    @GetMapping("/all")
+    public ResponseEntity<List<GameWeek>> getAllGameweeksByCompetition(
+            @RequestParam LeagueTheme competition) {
+        List<GameWeek> allGameweeks = gameWeekService.getAllByCompetition(competition);
+        return ResponseEntity.ok(allGameweeks);
+    }
+
 
     @PostMapping("/{id}/tiebreakers")
     public ResponseEntity<Void> setTiebreakers(@PathVariable Long id, @RequestBody List<Long> matchIds) {

@@ -1,15 +1,3 @@
-<div style="text-align:center; margin-top: 2rem;">
-  <h1>Football Fantasy App</h1>
-
-  <div *ngIf="!auth.isLoggedIn()">
-    <button (click)="auth.login()">Login</button>
-    <!-- Si tu n'as pas de méthode auth.register(), enlève ce bouton -->
-  </div>
-
-  <div *ngIf="auth.isLoggedIn()">
-    <p>Welcome!</p>
-    <button (click)="auth.logout()">Logout</button>
-  </div>
-
+<div class="app-root">
   <router-outlet></router-outlet>
 </div>
