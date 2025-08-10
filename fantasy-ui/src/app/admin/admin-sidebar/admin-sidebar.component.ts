@@ -2,7 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { RouterModule } from '@angular/router';
 import routesData from '../../../assets/data/routes.json';
 import { CommonModule } from '@angular/common';
-
+import { KeycloakService } from '../../keycloak.service';
 @Component({
   selector: 'app-admin-sidebar',
   standalone: true,
@@ -33,13 +33,29 @@ import { CommonModule } from '@angular/common';
 })
 export class AdminSidebarComponent implements OnInit {
   routes: any[] = [];
+  allRoutes: any[] = (routesData as any).routes;
   openIndex: number | null = null;
+  userRoles: string[] = [];
+
+  constructor(private keycloakService: KeycloakService) {}
 
   ngOnInit() {
-    this.routes = (routesData as any).routes;
+    this.userRoles = this.keycloakService.getUserRoles().map(r => r.replace('ROLE_', ''));
+    this.routes = this.filterRoutesForRoles(this.allRoutes, this.userRoles);
   }
 
   toggle(index: number) {
     this.openIndex = this.openIndex === index ? null : index;
+  }
+
+  filterRoutesForRoles(routes: any[], userRoles: string[]): any[] {
+    return routes
+      .filter(route => route.role.some((role: string) => userRoles.includes(role)))
+      .map(route => {
+        if (route.submenu && route.submenu.length) {
+          route.submenu = this.filterRoutesForRoles(route.submenu, userRoles);
+        }
+        return route;
+      });
   }
 }

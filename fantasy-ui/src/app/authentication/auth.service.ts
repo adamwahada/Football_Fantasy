@@ -262,7 +262,7 @@ getUserRoles(): string[] {
             if (roles.includes('admin')) {
               this.router.navigate(['admin/allgameweek']);
             } else {
-              this.router.navigate(['/test']);
+              this.router.navigate(['user/user-gameweek-list']);
             }
           }, 100);
         } else {

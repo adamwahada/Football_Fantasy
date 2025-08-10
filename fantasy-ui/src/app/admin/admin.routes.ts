@@ -24,7 +24,9 @@ export const adminRoutes: Routes = [
       { path: 'AddGameweek', component :AddAdminGameweekComponent},
       { path: 'allgameweek', component: AllAdminGameweekComponent },
       { path: 'gameweek/Editgameweek/:id', component: EditAdminGameweekComponent },
+
       { path: '', redirectTo: 'referral', pathMatch: 'full' },
+
     ]
   }
 ];

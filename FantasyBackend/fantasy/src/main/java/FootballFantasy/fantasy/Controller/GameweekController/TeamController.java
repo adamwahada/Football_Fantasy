@@ -23,4 +23,14 @@ public class TeamController {
     public String getTeamIcon(@PathVariable String teamName) {
         return teamIconService.getTeamIcon(teamName);
     }
+
+    @GetMapping("/leagues/icons")
+    public Map<String, String> getAllLeagueIcons() {
+        return teamIconService.getAllLeagues();
+    }
+
+    @GetMapping("/leagues/{leagueName}/icon")
+    public String getLeagueIcon(@PathVariable String leagueName) {
+        return teamIconService.getLeagueIcon(leagueName);
+    }
 }

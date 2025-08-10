@@ -1,0 +1,75 @@
+/* Full page background */
+body, html {
+  margin: 0;
+  padding: 0;
+  background: linear-gradient(135deg, #0a0a0a 0%, #121212 100%);
+  min-height: 100vh;
+  color: #eee;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+/* Container for all content except navbar */
+.gameweek-list-container {
+  min-height: 100vh; /* full height */
+  background: transparent; /* no color here, inherited from body */
+  padding-top: 80px; /* space for navbar */
+  display: flex;
+  justify-content: center;
+  align-items: flex-start; /* start from top */
+  padding-bottom: 2rem;
+}
+
+/* Content wrapper - centered with max width */
+.content-wrapper {
+  max-width: 1200px;
+  width: 100%;
+  padding: 0 1.5rem;
+}
+
+/* Cards grid */
+.cards-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem 1.5rem;
+  justify-content: flex-start;
+}
+
+/* Individual card style */
+.gameweek-card {
+  flex: 1 1 180px;
+  max-width: 220px;
+  background: rgba(30, 30, 30, 0.85); /* semi-transparent dark */
+  border-radius: 0.5rem;
+  padding: 0.75rem 1rem;
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  border: 2px solid transparent;
+  box-shadow: 0 0 10px rgba(13, 253, 134, 0.4); /* subtle green glow */
+  transition: border-color 0.3s ease, background-color 0.3s ease;
+  user-select: none;
+}
+
+.gameweek-card:hover,
+.gameweek-card:focus-visible {
+  border-color: #0dfd86;
+  background-color: rgba(41, 41, 41, 0.95);
+  outline: none;
+}
+
+.league-icon {
+  width: 36px;
+  height: 36px;
+  object-fit: contain;
+  margin-right: 0.75rem;
+  filter: drop-shadow(0 0 3px rgba(13, 253, 134, 0.9));
+  flex-shrink: 0;
+}
+
+.league-name {
+  font-weight: 700;
+  font-size: 1rem;
+  color: #ffffff;
+  white-space: normal;
+  word-break: break-word;
+}

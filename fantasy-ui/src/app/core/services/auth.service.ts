@@ -55,7 +55,7 @@ export class AuthService {
     if (roles.includes('ROLE_ADMIN')) {
       this.router.navigate(['/admin/allgameweek']);
       } else if (roles.includes('ROLE_USER')) {
-      this.router.navigate(['/user-dashboard']);
+      this.router.navigate(['/user/user-gameweek-list']);
     } else {
       this.router.navigate(['/unauthorized']);
     }

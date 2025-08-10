@@ -10,6 +10,8 @@ export const authRoutes: Routes = [
   { path: 'register', component: RegistrationComponent },
   { path: 'unauthorized', component: UnauthorizedComponent },
   {path: 'email-verification', component: EmailVerificationComponent},
-  {path: 'test', component: TestComponent}
+  
+  {path: 'test', component: TestComponent},
+
 
 ];

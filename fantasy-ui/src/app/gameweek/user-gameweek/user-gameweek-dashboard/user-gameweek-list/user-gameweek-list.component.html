@@ -1,0 +1,20 @@
+<div class="gameweek-list-container">
+  <div class="content-wrapper">
+    <div *ngIf="loading" class="loading">Loading gameweeks...</div>
+    <div *ngIf="error" class="error">{{ error }}</div>
+
+    <div *ngIf="!loading && !error" class="cards-grid">
+      <button
+        *ngFor="let league of leagues"
+        class="gameweek-card"
+        tabindex="0"
+        [attr.aria-label]="'View details for ' + league.label"
+        type="button"
+        (click)="onLeagueClick(league.value)"
+      >
+        <img [src]="league.iconUrl" [alt]="league.label + ' icon'" class="league-icon" />
+        <span class="league-name">{{ league.label }}</span>
+      </button>
+    </div>
+  </div>
+</div>

@@ -7,53 +7,45 @@
       "icon": "sports_soccer",
       "class": "menu-toggle",
       "groupTitle": false,
-      "role": ["Admin"],
+      "role": ["ADMIN"],
       "submenu": [
         {
           "path": "/admin/Allmatch",
           "title": "Tous les matchs",
-          "iconType": "",
-          "icon": "",
           "class": "ml-menu",
-          "role": ["Admin"],
+          "role": ["ADMIN"],
           "submenu": []
         },
         {
           "path": "/admin/Addmatch",
           "title": "Ajouter un match",
-          "iconType": "",
-          "icon": "",
           "class": "ml-menu",
-          "role": ["Admin"],
+          "role": ["ADMIN"],
           "submenu": []
         }
       ]
     },
-        {
+    {
       "path": "",
       "title": "Gameweeks",
       "iconType": "material-icons-outlined",
       "icon": "sports_soccer",
       "class": "menu-toggle",
       "groupTitle": false,
-      "role": ["Admin"],
+      "role": ["ADMIN"],
       "submenu": [
         {
           "path": "/admin/allgameweek",
           "title": "Tous les Gameweeks",
-          "iconType": "",
-          "icon": "",
           "class": "ml-menu",
-          "role": ["Admin"],
+          "role": ["ADMIN"],
           "submenu": []
         },
         {
           "path": "/admin/AddGameweek",
           "title": "Ajouter un Gameweek",
-          "iconType": "",
-          "icon": "",
           "class": "ml-menu",
-          "role": ["Admin"],
+          "role": ["ADMIN"],
           "submenu": []
         }
       ]
@@ -65,19 +57,34 @@
       "icon": "card_giftcard",
       "class": "menu-toggle",
       "groupTitle": false,
-      "role": ["Admin"],
+      "role": ["ADMIN"],
       "submenu": [
         {
           "path": "/admin/referral",
           "title": "Code de parrainage",
-          "iconType": "",
-          "icon": "",
           "class": "ml-menu",
-          "role": ["Admin"],
+          "role": ["ADMIN"],
+          "submenu": []
+        }
+      ]
+    },
+    {
+      "path": "",
+      "title": "User Menu",
+      "iconType": "material-icons-outlined",
+      "icon": "person",
+      "class": "menu-toggle",
+      "groupTitle": false,
+      "role": ["USER", "ADMIN"],
+      "submenu": [
+        {
+          "path": "/user/user-gameweek-list",
+          "title": "Mes Gameweeks",
+          "class": "ml-menu",
+          "role": ["USER", "ADMIN"],
           "submenu": []
         }
       ]
     }
-
   ]
 }

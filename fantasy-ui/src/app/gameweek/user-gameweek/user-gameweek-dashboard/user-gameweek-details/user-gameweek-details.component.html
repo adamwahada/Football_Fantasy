@@ -1,0 +1,37 @@
+<div class="modal-backdrop" (click)="closeModal()"></div>
+
+<div class="modal">
+<button class="close-icon" aria-label="Close modal" (click)="closeModal()">
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    width="30"
+    height="30"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    stroke-width="3"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+    aria-hidden="true"
+  >
+    <line x1="18" y1="6" x2="6" y2="18" />
+    <line x1="6" y1="6" x2="18" y2="18" />
+  </svg>
+</button>
+  <h2> {{ formatCompetitionName(competition) }}</h2>
+
+  <div *ngIf="loading">Chargement...</div>
+  <div *ngIf="error" class="error">{{ error }}</div>
+
+  <ul *ngIf="!loading && !error">
+    <li *ngFor="let gw of gameweeks">
+      <strong>Semaine {{ gw.weekNumber }}</strong> - Statut: {{ gw.status }}
+      <br />
+      Du {{ gw.startDate | date }} au {{ gw.endDate | date }}
+      <br />
+      Date limite inscription : {{ gw.joinDeadline | date }}
+      <p *ngIf="gw.description">{{ gw.description }}</p>
+    </li>
+  </ul>
+
+</div>

@@ -34,6 +34,7 @@ export class TeamService {
     }));
   }
 
+
 getDefaultIconPath(teamName: string): string {
   return '/assets/images/teams/default.png';
 }
@@ -78,4 +79,26 @@ private convertToFullUrl(relativePath: string): string {
     if (czechFirstLeagueTeams.includes(teamName)) return 'Czech First League';
     return 'Other';
   }
+
+getAllLeagueIcons(): Observable<{[key: string]: string}> {
+  return this.http.get<{[key: string]: string}>(`${this.apiUrl}/leagues/icons`);
+}
+
+// Fetch icon for a specific league
+getLeagueIcon(leagueName: string): Observable<string> {
+  return this.http.get<string>(`${this.apiUrl}/leagues/${encodeURIComponent(leagueName)}/icon`);
+}
+
+
+  getLeagueIconUrl(relativePath: string): string {
+  if (!relativePath || relativePath.includes('default.png')) {
+    return `${this.baseUrl}/assets/images/leagues/default.png`;
+  }
+
+  if (relativePath.startsWith('http')) {
+    return relativePath;
+  }
+
+  return `${this.baseUrl}${relativePath}`;
+}
 }

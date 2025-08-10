@@ -30,8 +30,6 @@ public class TeamIconService {
         leagueIcons.put("Eredivisie", "/assets/images/leagues/eredivisie.png");
         leagueIcons.put("Primeira Liga", "/assets/images/leagues/primeira-liga.png");
         leagueIcons.put("Belgian Pro League", "/assets/images/leagues/belgian-pro-league.png");
-        leagueIcons.put("Super Lig", "/assets/images/leagues/super-lig.png");
-        leagueIcons.put("Czech First League", "/assets/images/leagues/czech-first-league.png");
         leagueIcons.put("Champions League", "/assets/images/leagues/champions-league.png");
         leagueIcons.put("Europa League", "/assets/images/leagues/europa-league.png");
     }
