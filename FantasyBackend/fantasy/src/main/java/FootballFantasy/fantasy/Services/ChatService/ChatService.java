@@ -14,7 +14,12 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
@@ -477,4 +482,62 @@ public class ChatService {
         boolean exists = chatParticipantRepository.existsByChatRoomIdAndUserIdAndIsActiveTrue(chatRoom.getId(), userId);
         System.out.println("User is participant: " + exists);
     }
+
+    public ChatMessageDTO sendFileMessage(String roomId, MultipartFile file, Long senderId) {
+        ChatRoom chatRoom = chatRoomRepository.findByRoomId(roomId)
+                .orElseThrow(() -> new RuntimeException("Chat room not found"));
+
+        UserEntity sender = userRepository.findById(senderId)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        if (!chatParticipantRepository.existsByRoomIdAndUserIdAndIsActiveTrue(roomId, senderId)) {
+            throw new RuntimeException("User is not a participant of this chat");
+        }
+
+        try {
+            // 📂 Sauvegarder le fichier (ici en local, mais tu peux utiliser S3, etc.)
+            String uploadDir = "uploads/chat/";
+            String fileName = UUID.randomUUID() + "_" + file.getOriginalFilename();
+            Path filePath = Paths.get(uploadDir + fileName);
+            Files.createDirectories(filePath.getParent());
+            Files.write(filePath, file.getBytes());
+
+            // 📌 Créer un message de type FILE ou IMAGE
+            ChatMessage message = ChatMessage.builder()
+                    .content(fileName) // tu peux stocker juste le nom ou l’URL complète
+                    .type(file.getContentType().startsWith("image") ? MessageType.IMAGE : MessageType.FILE)
+                    .sender(sender)
+                    .chatRoom(chatRoom)
+                    .isDeleted(false)
+                    .isEdited(false)
+                    .build();
+
+            message = chatMessageRepository.save(message);
+
+            chatRoom.updateLastActivity();
+            chatRoomRepository.save(chatRoom);
+
+            // 📌 Statuts pour tous les participants
+            List<ChatParticipant> participants = chatParticipantRepository.findByChatRoomIdAndIsActiveTrue(chatRoom.getId());
+            for (ChatParticipant participant : participants) {
+                MessageStatusType status = participant.getUser().getId().equals(senderId) ?
+                        MessageStatusType.READ : MessageStatusType.SENT;
+
+                messageStatusRepository.save(MessageStatus.builder()
+                        .message(message)
+                        .user(participant.getUser())
+                        .status(status)
+                        .build());
+            }
+
+            return convertToMessageDTO(message, senderId);
+
+        } catch (IOException e) {
+            throw new RuntimeException("File upload failed", e);
+        }
+    }
+
+
+
+
 }

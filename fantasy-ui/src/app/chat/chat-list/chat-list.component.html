@@ -1,0 +1,32 @@
+<div class="chat-list">
+    <div class="header">
+        <h2>Discussions</h2>
+        <button mat-raised-button color="primary" (click)="fetchChats()">⟳</button>
+    </div>
+
+    <div class="search-bar">
+        <input type="text" placeholder="Rechercher une discussion..." />
+    </div>
+
+    <div class="rooms" *ngIf="!loading">
+        <div
+                *ngFor="let room of chats"
+                [class.selected]="selectedRoomId === room.roomId"
+                (click)="selectRoom(room)"
+                class="chat-room-item"
+        >
+            <div class="avatar">
+                <img *ngIf="room.avatar" [src]="room.avatar" alt="Avatar" />
+                <div *ngIf="!room.avatar" class="avatar-fallback">{{ room.name[0] }}</div>
+            </div>
+            <div class="room-info">
+                <div class="room-title">{{ room.name }}</div>
+                <div class="room-last">{{ room.lastActivity }}</div>
+            </div>
+            <span *ngIf="room.unreadCount > 0" class="unread">{{ room.unreadCount }}</span>
+        </div>
+    </div>
+    <div *ngIf="loading" class="loading-spinner">
+        <span>Chargement...</span>
+    </div>
+</div>

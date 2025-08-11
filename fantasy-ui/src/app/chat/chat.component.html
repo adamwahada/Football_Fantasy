@@ -146,153 +146,190 @@
                 <div class="messages-container" #messageContainer (scroll)="onScroll($event)">
                     <!-- Indicateur de frappe -->
                     <div *ngIf="isSomeoneTyping()" class="typing-indicator">
-                        <div class="typing-content">
-                            <div class="typing-avatar">
-                                <div class="avatar-circle mini">
-                                    <mat-icon>person</mat-icon>
-                                </div>
-                            </div>
-                            <div class="typing-bubble">
-                                <span class="typing-text">{{ getTypingUserNames() }}</span>
-                                <div class="typing-dots">
-                                    <div class="dot"></div>
-                                    <div class="dot"></div>
-                                    <div class="dot"></div>
-                                </div>
-                            </div>
+                        <span>{{ getTypingUserNames() }}</span>
+                        <div class="typing-dots">
+                            <div class="dot"></div>
+                            <div class="dot"></div>
+                            <div class="dot"></div>
                         </div>
                     </div>
 
                     <!-- Messages -->
-                    <div class="messages-list">
-                        <div *ngIf="messages.length === 0 && !loading" class="no-messages">
-                            <div class="no-messages-icon">
-                                <mat-icon>chat_bubble_outline</mat-icon>
-                            </div>
-                            <h4>Aucun message</h4>
-                            <p>Soyez le premier à envoyer un message dans cette conversation</p>
-                        </div>
+                    <div class="messages-wrapper">
+                        <div class="messages-list">
+                            <!-- Messages -->
+                            <div *ngFor="let message of messages; let i = index; trackBy: trackMessage"
+                                 class="message-wrapper"
+                                 [class.sent]="isSentByCurrentUser(message)"
+                                 [class.received]="!isSentByCurrentUser(message)"
+                                 [class.same-sender]="i > 0 && messages[i-1].senderId === message.senderId"
+                                 (mouseenter)="setMessageShowState(message.id, true)"
+                                 (mouseleave)="setMessageShowState(message.id, false)">
 
-                        <!-- Messages avec alignement selon l'expéditeur -->
-                        <div *ngFor="let message of messages; trackBy: trackMessage"
-                             class="message-wrapper"
-                             [class.own-message]="message.senderId === currentUserId"
-                             [class.other-message]="message.senderId !== currentUserId">
-
-                            <!-- Message des autres (à gauche) -->
-                            <div *ngIf="message.senderId !== currentUserId" class="message-item received">
-                                <!-- Avatar de l'expéditeur -->
-                                <div class="message-avatar">
-                                    <div class="avatar-circle mini">
-                                        <span>{{ getInitials(getSenderName(message.senderId)) }}</span>
-                                    </div>
-                                </div>
-
-                                <!-- Contenu du message -->
-                                <div class="message-content">
-                                    <!-- Contexte de réponse si présent -->
-                                    <div *ngIf="message.replyToId" class="reply-context">
-                                        <div class="reply-bar"></div>
-                                        <div class="reply-info">
-                                            <span class="reply-sender">{{ getRepliedMessageSender(message.replyToId) }}</span>
-                                            <span class="reply-message">{{ getRepliedMessageContent(message.replyToId) }}</span>
+                                <!-- Message reçu (aligné à gauche) -->
+                                <div *ngIf="!isSentByCurrentUser(message)" class="message-container received-message">
+                                    <!-- Avatar -->
+                                    <div class="message-avatar"
+                                         [style.visibility]="shouldShowAvatar(i) ? 'visible' : 'hidden'">
+                                        <div class="avatar-circle mini">
+                                            {{ getInitials(message.senderName || 'U') }}
                                         </div>
                                     </div>
 
-                                    <!-- Bulle de message -->
-                                    <div class="message-bubble received-bubble"
-                                         [class.deleted-message]="isMessageDeleted(message)">
-                                        <div class="message-header" *ngIf="selectedRoom?.type === 'GROUP'">
-                                            <span class="sender-name">{{ getSenderName(message.senderId) }}</span>
+                                    <!-- Contenu du message -->
+                                    <div class="message-content">
+                                        <!-- Nom de l'expéditeur pour les groupes -->
+                                        <div *ngIf="selectedRoom?.type === 'GROUP' && shouldShowSenderName(i)"
+                                             class="sender-name">
+                                            {{ message.senderName }}
                                         </div>
 
-                                        <div class="message-text" *ngIf="!isMessageDeleted(message)">
-                                            {{ message.content }}
-                                        </div>
-                                        <div class="message-text deleted-text" *ngIf="isMessageDeleted(message)">
-                                            Ce message a été supprimé
-                                        </div>
+                                        <!-- Bulle du message -->
+                                        <div class="message-bubble received-bubble">
+                                            <!-- Contenu texte -->
+                                            <div *ngIf="message.content && message.type === 'TEXT'" class="message-text">
+                                                {{ message.content }}
+                                            </div>
 
-                                        <div class="message-meta">
-                                            <span class="message-time">{{ formatDate(message.timestamp) }}</span>
-                                            <span *ngIf="message.isEdited" class="edited-indicator">(modifié)</span>
-                                        </div>
-                                    </div>
+                                            <!-- Contenu fichier -->
+                                            <div *ngIf="message.type === 'FILE'" class="message-file">
+                                                <!-- Image -->
+                                                <div *ngIf="isImageFile(getMessageFileName(message))" class="image-message">
+                                                    <img [src]="getFileUrl(getMessageFileName(message))"
+                                                         [alt]="getOriginalFileName(getMessageFileName(message))"
+                                                         (click)="openImagePreview(getMessageFileName(message))"
+                                                         (error)="onImageError($event)"
+                                                         class="message-image">
+                                                </div>
 
-                                    <!-- Actions pour messages des autres (limitées) -->
-                                    <div class="message-actions" *ngIf="!isMessageDeleted(message)">
-                                        <button mat-icon-button
-                                                class="action-btn reply-btn"
-                                                (click)="replyToMessage(message)"
-                                                matTooltip="Répondre">
-                                            <mat-icon>reply</mat-icon>
-                                        </button>
-                                    </div>
-                                </div>
-                            </div>
+                                                <!-- Autre fichier -->
+                                                <div *ngIf="!isImageFile(getMessageFileName(message))" class="file-attachment">
+                                                    <div class="file-info">
+                                                        <mat-icon class="file-icon">{{ getFileIcon(getMessageFileName(message)) }}</mat-icon>
+                                                        <div class="file-details">
+                                                            <span class="file-name">{{ getOriginalFileName(getMessageFileName(message)) }}</span>
+                                                            <span class="file-size">{{ getFileSize(getMessageFileName(message)) }}</span>
+                                                        </div>
+                                                    </div>
+                                                    <button mat-icon-button (click)="downloadFile(getMessageFileName(message))">
+                                                        <mat-icon>download</mat-icon>
+                                                    </button>
+                                                </div>
+                                            </div>
 
-                            <!-- Mes messages (à droite) -->
-                            <div *ngIf="message.senderId === currentUserId" class="message-item sent">
-                                <!-- Contenu du message -->
-                                <div class="message-content">
-                                    <!-- Actions pour mes messages -->
-                                    <div class="message-actions" *ngIf="!isMessageDeleted(message)">
-                                        <button mat-icon-button
-                                                class="action-btn reply-btn"
-                                                (click)="replyToMessage(message)"
-                                                matTooltip="Répondre">
-                                            <mat-icon>reply</mat-icon>
-                                        </button>
-                                        <button mat-icon-button
-                                                class="action-btn edit-btn"
-                                                (click)="openEditModal(message)"
-                                                matTooltip="Modifier">
-                                            <mat-icon>edit</mat-icon>
-                                        </button>
-                                        <button mat-icon-button
-                                                class="action-btn delete-btn"
-                                                (click)="openDeleteConfirmModal(message.id)"
-                                                matTooltip="Supprimer">
-                                            <mat-icon>delete</mat-icon>
-                                        </button>
-                                    </div>
-
-                                    <!-- Contexte de réponse si présent -->
-                                    <div *ngIf="message.replyToId" class="reply-context">
-                                        <div class="reply-bar"></div>
-                                        <div class="reply-info">
-                                            <span class="reply-sender">{{ getRepliedMessageSender(message.replyToId) }}</span>
-                                            <span class="reply-message">{{ getRepliedMessageContent(message.replyToId) }}</span>
-                                        </div>
-                                    </div>
-
-                                    <!-- Bulle de message -->
-                                    <div class="message-bubble sent-bubble"
-                                         [class.deleted-message]="isMessageDeleted(message)">
-                                        <div class="message-text" *ngIf="!isMessageDeleted(message)">
-                                            {{ message.content }}
-                                        </div>
-                                        <div class="message-text deleted-text" *ngIf="isMessageDeleted(message)">
-                                            Vous avez supprimé ce message
+                                            <!-- Métadonnées -->
+                                            <div class="message-meta">
+                                                <span class="message-time">{{ formatDate(message.timestamp) }}</span>
+                                                <span *ngIf="message.isEdited" class="edited-indicator">modifié</span>
+                                            </div>
                                         </div>
 
-                                        <div class="message-meta">
-                                            <span class="message-time">{{ formatDate(message.timestamp) }}</span>
-                                            <span *ngIf="message.isEdited" class="edited-indicator">(modifié)</span>
-                                            <mat-icon class="message-status"
-                                                      [class]="'status-' + (message.status || 'sent')"
-                                                      *ngIf="!isMessageDeleted(message)">
-                                                {{ getStatusIcon(message.status) }}
-                                            </mat-icon>
+                                        <!-- Actions du message -->
+                                        <div class="message-actions"
+                                             [class.show]="getMessageShowState(message.id) || showMenuFor === message.id">
+                                            <button mat-icon-button
+                                                    class="action-btn"
+                                                    (click)="toggleMessageMenu(message, $event)">
+                                                <mat-icon>more_vert</mat-icon>
+                                            </button>
                                         </div>
                                     </div>
                                 </div>
 
-                                <!-- Avatar du destinataire (moi) -->
-                                <div class="message-avatar">
-                                    <div class="avatar-circle mini own">
-                                        <span>{{ getInitials('Vous') }}</span>
+                                <!-- Message envoyé (aligné à droite) -->
+                                <div *ngIf="isSentByCurrentUser(message)" class="message-container sent-message">
+                                    <!-- Contenu du message -->
+                                    <div class="message-content">
+                                        <!-- Bulle du message -->
+                                        <div class="message-bubble sent-bubble">
+                                            <!-- Contenu texte -->
+                                            <div *ngIf="message.content && message.type === 'TEXT'" class="message-text">
+                                                {{ message.content }}
+                                            </div>
+
+                                            <!-- Contenu fichier -->
+                                            <div *ngIf="message.type === 'FILE'" class="message-file">
+                                                <!-- Image -->
+                                                <div *ngIf="isImageFile(getMessageFileName(message))" class="image-message">
+                                                    <img [src]="getFileUrl(getMessageFileName(message))"
+                                                         [alt]="getOriginalFileName(getMessageFileName(message))"
+                                                         (click)="openImagePreview(getMessageFileName(message))"
+                                                         (error)="onImageError($event)"
+                                                         class="message-image">
+                                                </div>
+
+                                                <!-- Autre fichier -->
+                                                <div *ngIf="!isImageFile(getMessageFileName(message))" class="file-attachment">
+                                                    <div class="file-info">
+                                                        <mat-icon class="file-icon">{{ getFileIcon(getMessageFileName(message)) }}</mat-icon>
+                                                        <div class="file-details">
+                                                            <span class="file-name">{{ getOriginalFileName(getMessageFileName(message)) }}</span>
+                                                            <span class="file-size">{{ getFileSize(getMessageFileName(message)) }}</span>
+                                                        </div>
+                                                    </div>
+                                                    <button mat-icon-button (click)="downloadFile(getMessageFileName(message))">
+                                                        <mat-icon>download</mat-icon>
+                                                    </button>
+                                                </div>
+                                            </div>
+
+                                            <!-- Métadonnées -->
+                                            <div class="message-meta">
+                                                <span class="message-time">{{ formatDate(message.timestamp) }}</span>
+                                                <span *ngIf="message.isEdited" class="edited-indicator">modifié</span>
+                                                <mat-icon class="status-icon">{{ getMessageStatusIcon(message) }}</mat-icon>
+                                            </div>
+                                        </div>
+
+                                        <!-- Actions du message -->
+                                        <div class="message-actions"
+                                             [class.show]="getMessageShowState(message.id) || showMenuFor === message.id">
+                                            <button mat-icon-button
+                                                    class="action-btn"
+                                                    (click)="toggleMessageMenu(message, $event)">
+                                                <mat-icon>more_vert</mat-icon>
+                                            </button>
+                                        </div>
                                     </div>
+
+                                    <!-- Avatar -->
+                                    <div class="message-avatar"
+                                         [style.visibility]="shouldShowAvatar(i) ? 'visible' : 'hidden'">
+                                        <div class="avatar-circle mini own">
+                                            {{ getInitials(message.senderName || 'Moi') }}
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Menu contextuel -->
+                                <div *ngIf="showMenuFor === message.id"
+                                     class="message-menu"
+                                     [class.sent-menu]="isSentByCurrentUser(message)"
+                                     [class.received-menu]="!isSentByCurrentUser(message)">
+
+                                    <button class="menu-option" (click)="replyToMessage(message)">
+                                        <mat-icon>reply</mat-icon>
+                                        <span>Répondre</span>
+                                    </button>
+
+                                    <button class="menu-option" (click)="copyMessage(message.content)">
+                                        <mat-icon>content_copy</mat-icon>
+                                        <span>Copier</span>
+                                    </button>
+
+                                    <button *ngIf="canEditMessage(message)"
+                                            class="menu-option"
+                                            (click)="openEditModal(message)">
+                                        <mat-icon>edit</mat-icon>
+                                        <span>Modifier</span>
+                                    </button>
+
+                                    <button *ngIf="canEditMessage(message)"
+                                            class="menu-option danger"
+                                            (click)="openDeleteConfirmModal(message.id)">
+                                        <mat-icon>delete</mat-icon>
+                                        <span>Supprimer</span>
+                                    </button>
                                 </div>
                             </div>
                         </div>
@@ -306,7 +343,7 @@
                         <div class="reply-content">
                             <div class="reply-indicator"></div>
                             <div class="reply-details">
-                                <span class="replying-to-label">Réponse à {{ getSenderName(replyingTo.senderId) }}</span>
+                                <span class="replying-to-label">Réponse à {{ replyingTo.senderName }}</span>
                                 <span class="replying-to-message">{{ replyingTo.content }}</span>
                             </div>
                         </div>
@@ -318,9 +355,31 @@
                     <!-- Zone de saisie principale -->
                     <div class="input-area">
                         <div class="input-container">
-                            <button mat-icon-button class="attach-btn" matTooltip="Joindre un fichier">
+                            <!-- Bouton d'attachement avec menu -->
+                            <button mat-icon-button class="attach-btn" [matMenuTriggerFor]="attachMenu"
+                                    matTooltip="Joindre un fichier">
                                 <mat-icon>attach_file</mat-icon>
                             </button>
+
+                            <!-- Menu d'attachement -->
+                            <mat-menu #attachMenu="matMenu" class="attach-menu">
+                                <button mat-menu-item (click)="fileInput.click()">
+                                    <mat-icon>insert_drive_file</mat-icon>
+                                    <span>Document</span>
+                                </button>
+                                <button mat-menu-item (click)="imageInput.click()">
+                                    <mat-icon>image</mat-icon>
+                                    <span>Image</span>
+                                </button>
+                            </mat-menu>
+
+                            <!-- Inputs cachés pour les fichiers -->
+                            <input #fileInput type="file" style="display: none"
+                                   (change)="onFileSelected($event)"
+                                   accept=".pdf,.doc,.docx,.txt,.xlsx,.xls,.ppt,.pptx">
+                            <input #imageInput type="file" style="display: none"
+                                   (change)="onFileSelected($event)"
+                                   accept="image/*">
 
                             <div class="text-input-wrapper">
                                 <textarea placeholder="Tapez votre message..."
@@ -336,11 +395,27 @@
                             </div>
 
                             <button class="send-btn"
-                                    [disabled]="!newMessage.trim() || sendingMessage"
+                                    [disabled]="(!newMessage.trim() && !selectedFile) || sendingMessage"
                                     (click)="sendMessage()"
                                     mat-icon-button>
                                 <mat-icon *ngIf="!sendingMessage">send</mat-icon>
                                 <mat-progress-spinner *ngIf="sendingMessage" diameter="20"></mat-progress-spinner>
+                            </button>
+                        </div>
+
+                        <!-- Prévisualisation de fichier sélectionné -->
+                        <div *ngIf="selectedFile" class="file-preview">
+                            <div class="file-preview-info">
+                                <mat-icon class="file-preview-icon">{{ getFileIcon(selectedFile.name) }}</mat-icon>
+                                <div class="file-preview-details">
+                                    <span class="file-preview-name">{{ selectedFile.name }}</span>
+                                    <span class="file-preview-size">{{ formatFileSize(selectedFile.size) }}</span>
+                                </div>
+                            </div>
+                            <button mat-icon-button class="remove-file-btn"
+                                    (click)="removeSelectedFile()"
+                                    matTooltip="Retirer le fichier">
+                                <mat-icon>close</mat-icon>
                             </button>
                         </div>
                     </div>
@@ -444,7 +519,7 @@
         </div>
     </div>
 
-    <!-- Modal de modification de message -->
+    <!-- Modal d'édition de message -->
     <div class="modal-overlay" *ngIf="showEditModal" (click)="closeEditModal()">
         <div class="edit-modal" (click)="$event.stopPropagation()">
             <div class="modal-header">
@@ -458,8 +533,7 @@
                 <div class="edit-form">
                     <div class="message-edit-area">
                         <textarea [(ngModel)]="editedMessageContent"
-                                  placeholder="Modifiez votre message..."
-                                  rows="4"
+                                  placeholder="Modifier votre message..."
                                   #editTextarea></textarea>
                     </div>
 
@@ -469,8 +543,7 @@
                         </button>
                         <button class="save-btn"
                                 (click)="saveEditedMessage()"
-                                [disabled]="!editedMessageContent?.trim() || editedMessageContent === messageToEdit?.content">
-                            <mat-icon>save</mat-icon>
+                                [disabled]="!editedMessageContent.trim()">
                             Enregistrer
                         </button>
                     </div>
@@ -480,39 +553,49 @@
     </div>
 
     <!-- Modal de confirmation de suppression -->
-    <div class="modal-overlay" *ngIf="showDeleteConfirmModal">
-        <div class="confirmation-modal">
+    <div class="confirmation-overlay" *ngIf="showDeleteConfirmModal" (click)="closeDeleteConfirmModal()">
+        <div class="confirmation-modal" (click)="$event.stopPropagation()">
             <div class="modal-icon danger">
-                <mat-icon>warning</mat-icon>
+                <mat-icon>delete_forever</mat-icon>
             </div>
+
             <h3>Supprimer le message</h3>
-            <p>Êtes-vous sûr de vouloir supprimer ce message ? Cette action ne peut pas être annulée.</p>
+            <p>Êtes-vous sûr de vouloir supprimer ce message ? Cette action est irréversible.</p>
 
             <div class="modal-actions">
                 <button class="cancel-btn" (click)="closeDeleteConfirmModal()">
                     Annuler
                 </button>
                 <button class="confirm-btn" (click)="confirmDeleteMessage()">
-                    <mat-icon>delete</mat-icon>
                     Supprimer
                 </button>
             </div>
         </div>
     </div>
 
-    <!-- Notifications Toast -->
-    <div class="toast-container">
-        <div *ngFor="let toast of toasts"
-             class="toast"
-             [class]="toast.type"
-             [@slideIn]>
-            <div class="toast-content">
-                <mat-icon class="toast-icon">{{ toast.icon }}</mat-icon>
-                <span class="toast-message">{{ toast.message }}</span>
-                <button class="toast-close" (click)="removeToast(toast)">
+    <!-- Modal de prévisualisation d'image -->
+    <div class="modal-overlay" *ngIf="showImagePreview" (click)="closeImagePreview()">
+        <div class="image-preview-modal" (click)="$event.stopPropagation()">
+            <div class="image-preview-header">
+                <h3>Aperçu de l'image</h3>
+                <button mat-icon-button (click)="closeImagePreview()">
                     <mat-icon>close</mat-icon>
+                </button>
+            </div>
+
+            <div class="image-preview-content">
+                <img [src]="previewImageUrl" [alt]="previewImageName" class="preview-image">
+            </div>
+
+            <div class="image-preview-actions">
+                <button mat-raised-button (click)="downloadFile(previewImageName)">
+                    <mat-icon>download</mat-icon>
+                    Télécharger
                 </button>
             </div>
         </div>
     </div>
+
+    <!-- Overlay pour fermer les menus -->
+    <div class="menu-overlay" *ngIf="showMenuFor" (click)="showMenuFor = null"></div>
 </div>

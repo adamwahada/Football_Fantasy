@@ -1,18 +1,22 @@
-// Version simplifiée de l'AuthService - à utiliser si l'API ne fonctionne pas encore
+// AuthService corrigé - Prioriser l'ID réel de la base de données
 
 import { Injectable } from '@angular/core';
 import { KeycloakService } from '../../keycloak.service';
 import { Router } from '@angular/router';
 import { JwtHelperService } from '@auth0/angular-jwt';
+import { HttpClient } from "@angular/common/http";
+import { environment } from "../../../environments/environment";
 
 @Injectable({ providedIn: 'root' })
 export class AuthService {
   private jwtHelper = new JwtHelperService();
   private cachedUserId: number | null = null;
+  private realUserIdCache: number | null = null; // Cache séparé pour l'ID réel
 
   constructor(
       public keycloakService: KeycloakService,
-      private router: Router
+      private router: Router,
+      private http: HttpClient
   ) {}
 
   isLoggedIn(): boolean {
@@ -37,7 +41,9 @@ export class AuthService {
 
   logout(): void {
     this.cachedUserId = null;
+    this.realUserIdCache = null; // Nettoyer aussi le cache de l'ID réel
     localStorage.removeItem('cachedUserId');
+    localStorage.removeItem('realUserId'); // Nouveau cache pour l'ID réel
     localStorage.removeItem('tempUserId');
     this.keycloakService.logout();
   }
@@ -67,34 +73,31 @@ export class AuthService {
     }
   }
 
-  // MÉTHODE SIMPLIFIÉE - Sans appel API
+  // MÉTHODE PRINCIPALE - Utilise toujours l'ID réel de la base de données
   async getUserId(): Promise<number> {
-    try {
-      console.log('🔍 AuthService.getUserId() called');
+    return await this.getRealUserId();
+  }
 
-      // 1. Vérifier le cache
-      if (this.cachedUserId && this.cachedUserId > 0) {
-        console.log('✅ Using cached user ID:', this.cachedUserId);
-        return this.cachedUserId;
+  // MÉTHODE POUR RÉCUPÉRER L'ID RÉEL DE LA BASE DE DONNÉES
+  async getRealUserId(): Promise<number> {
+    try {
+      console.log('🔍 AuthService.getRealUserId() called');
+
+      // 1. Vérifier le cache en mémoire
+      if (this.realUserIdCache && this.realUserIdCache > 0) {
+        console.log('✅ Using cached real user ID:', this.realUserIdCache);
+        return this.realUserIdCache;
       }
 
       // 2. Vérifier localStorage
-      const tempId = localStorage.getItem('tempUserId');
-      if (tempId && Number(tempId) > 0) {
-        this.cachedUserId = Number(tempId);
-        console.log('✅ Using temp user ID from localStorage:', this.cachedUserId);
-        return this.cachedUserId;
+      const cachedRealId = localStorage.getItem('realUserId');
+      if (cachedRealId && Number(cachedRealId) > 0) {
+        this.realUserIdCache = Number(cachedRealId);
+        console.log('✅ Using cached real user ID from localStorage:', this.realUserIdCache);
+        return this.realUserIdCache;
       }
 
-      const cachedId = localStorage.getItem('cachedUserId');
-      if (cachedId && Number(cachedId) > 0) {
-        this.cachedUserId = Number(cachedId);
-        console.log('✅ Using cached user ID from localStorage:', this.cachedUserId);
-        return this.cachedUserId;
-      }
-
-      // 3. Essayer de récupérer depuis le token Keycloak
-      console.log('🔄 Trying to get ID from token...');
+      // 3. Appel API pour récupérer l'ID réel
       const token = await this.getToken();
       if (!token) {
         console.error('❌ No token available');
@@ -102,9 +105,60 @@ export class AuthService {
       }
 
       const decoded = this.jwtHelper.decodeToken(token);
-      console.log('🔓 Decoded token:', decoded);
+      const keycloakUuid = decoded.sub;
 
-      // 4. Essayer différentes propriétés du token
+      if (!keycloakUuid) {
+        console.error('❌ No UUID found in token');
+        return 0;
+      }
+
+      console.log('🔄 Calling API to get real user ID for UUID:', keycloakUuid);
+
+      const response = await this.http.get<number>(
+          `${environment.apiUrl}/api/chat/user-id/${keycloakUuid}`
+      ).toPromise();
+
+      if (response && response > 0) {
+        this.realUserIdCache = response;
+        localStorage.setItem('realUserId', response.toString());
+        console.log('✅ Got real user ID from API:', this.realUserIdCache);
+        return this.realUserIdCache;
+      }
+
+      console.error('❌ Invalid response from API:', response);
+      return 0;
+
+    } catch (error) {
+      console.error('❌ Error in getRealUserId:', error);
+
+      // Fallback vers l'ID temporaire si l'API ne fonctionne pas
+      const tempId = localStorage.getItem('tempUserId');
+      if (tempId && Number(tempId) > 0) {
+        console.log('⚠️ Using temp user ID as fallback:', Number(tempId));
+        return Number(tempId);
+      }
+
+      return 0;
+    }
+  }
+
+  // MÉTHODE DE FALLBACK - Génère un ID basé sur l'UUID (à utiliser seulement si l'API ne fonctionne pas)
+  async getFallbackUserId(): Promise<number> {
+    try {
+      console.log('🔄 Using fallback method for user ID');
+
+      // Vérifier le cache
+      if (this.cachedUserId && this.cachedUserId > 0) {
+        return this.cachedUserId;
+      }
+
+      // Récupérer depuis le token
+      const token = await this.getToken();
+      if (!token) return 0;
+
+      const decoded = this.jwtHelper.decodeToken(token);
+
+      // Essayer les propriétés numériques du token en premier
       const possibleIds = [
         decoded.userId,
         decoded.id,
@@ -117,27 +171,22 @@ export class AuthService {
         if (id && Number(id) > 0) {
           this.cachedUserId = Number(id);
           localStorage.setItem('cachedUserId', this.cachedUserId.toString());
-          console.log('✅ Found numeric ID in token:', this.cachedUserId);
           return this.cachedUserId;
         }
       }
 
-      // 5. Si aucun ID numérique trouvé, créer un ID temporaire basé sur l'UUID
+      // Créer un ID basé sur l'UUID en dernier recours
       const uuid = decoded.sub || decoded.preferred_username;
       if (uuid) {
-        // Créer un hash simple mais consistant de l'UUID
-        const simpleId = this.createConsistentId(uuid);
-        this.cachedUserId = simpleId;
-        localStorage.setItem('cachedUserId', simpleId.toString());
-        console.log('🔄 Created consistent ID from UUID:', simpleId, 'from', uuid);
-        return simpleId;
+        const fallbackId = this.createConsistentId(uuid);
+        this.cachedUserId = fallbackId;
+        localStorage.setItem('cachedUserId', fallbackId.toString());
+        return fallbackId;
       }
 
-      console.error('❌ No usable identifier found in token');
       return 0;
-
     } catch (error) {
-      console.error('❌ Error in getUserId:', error);
+      console.error('Error in getFallbackUserId:', error);
       return 0;
     }
   }
@@ -148,55 +197,37 @@ export class AuthService {
     for (let i = 0; i < str.length; i++) {
       const char = str.charCodeAt(i);
       hash = ((hash << 5) - hash) + char;
-      hash = hash & hash; // Convert to 32-bit integer
+      hash = hash & hash;
     }
-    // S'assurer que c'est un nombre positif entre 1 et 999999
     return Math.abs(hash) % 999999 + 1;
   }
 
-  getUserIdSync(): number {
-    if (this.cachedUserId && this.cachedUserId > 0) {
-      return this.cachedUserId;
+  // Version synchrone (utilise le cache)
+  async getUserIdSync(): Promise<number> {
+    // Prioriser le cache de l'ID réel
+    if (this.realUserIdCache && this.realUserIdCache > 0) {
+      return this.realUserIdCache;
     }
 
-    const tempId = localStorage.getItem('tempUserId');
-    if (tempId && Number(tempId) > 0) {
-      this.cachedUserId = Number(tempId);
-      return this.cachedUserId;
+    // Vérifier localStorage pour l'ID réel
+    const cachedRealId = localStorage.getItem('realUserId');
+    if (cachedRealId && Number(cachedRealId) > 0) {
+      this.realUserIdCache = Number(cachedRealId);
+      return this.realUserIdCache;
     }
 
-    const cachedId = localStorage.getItem('cachedUserId');
-    if (cachedId && Number(cachedId) > 0) {
-      this.cachedUserId = Number(cachedId);
-      return this.cachedUserId;
-    }
-
-    // Essayer de récupérer sync depuis le token
-    try {
-      const token = this.getTokenSync();
-      if (token) {
-        const decoded = this.jwtHelper.decodeToken(token);
-        const uuid = decoded.sub || decoded.preferred_username;
-        if (uuid) {
-          const simpleId = this.createConsistentId(uuid);
-          this.cachedUserId = simpleId;
-          localStorage.setItem('cachedUserId', simpleId.toString());
-          return simpleId;
-        }
-      }
-    } catch (error) {
-      console.error('Error in sync token processing:', error);
-    }
-
-    return 0;
+    // Sinon, essayer de récupérer l'ID réel
+    return await this.getRealUserId();
   }
 
   // Méthode pour forcer le refresh de l'ID utilisateur
   async refreshUserId(): Promise<number> {
     console.log('🔄 Forcing user ID refresh...');
     this.cachedUserId = null;
+    this.realUserIdCache = null;
     localStorage.removeItem('cachedUserId');
-    return await this.getUserId();
+    localStorage.removeItem('realUserId');
+    return await this.getRealUserId();
   }
 
   isAuthenticated(): boolean {
@@ -246,7 +277,9 @@ export class AuthService {
   async debugUserInfo(): Promise<void> {
     console.log('🐛 === AUTH SERVICE DEBUG ===');
     console.log('Is logged in:', this.isLoggedIn());
-    console.log('Cached User ID:', this.cachedUserId);
+    console.log('Real User ID Cache:', this.realUserIdCache);
+    console.log('Fallback User ID Cache:', this.cachedUserId);
+    console.log('LocalStorage realUserId:', localStorage.getItem('realUserId'));
     console.log('LocalStorage cachedUserId:', localStorage.getItem('cachedUserId'));
     console.log('LocalStorage tempUserId:', localStorage.getItem('tempUserId'));
 
@@ -267,15 +300,21 @@ export class AuthService {
       }
     }
 
-    const finalUserId = await this.getUserId();
-    console.log('Final User ID:', finalUserId);
+    const realUserId = await this.getRealUserId();
+    console.log('Real User ID from API:', realUserId);
+
+    const fallbackUserId = await this.getFallbackUserId();
+    console.log('Fallback User ID:', fallbackUserId);
+
     console.log('🐛 === END AUTH DEBUG ===');
   }
 
   // Méthode pour définir manuellement un ID utilisateur (pour les tests)
   setTempUserId(userId: number): void {
+    this.realUserIdCache = userId;
     this.cachedUserId = userId;
     localStorage.setItem('tempUserId', userId.toString());
+    localStorage.setItem('realUserId', userId.toString());
     console.log('🆘 Temporary user ID set to:', userId);
   }
 }

@@ -93,4 +93,11 @@ export class ChatService {
   updateGroupInfo(roomId: string, updateData: CreateGroupDTO): Observable<ChatRoomDTO> {
     return this.http.put<ChatRoomDTO>(`${this.baseUrl}/rooms/${roomId}`, updateData);
   }
+  uploadFile(roomId: string, file: File, senderId: number): Observable<any> {
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('senderId', senderId.toString());
+
+    return this.http.post(`${this.baseUrl}/rooms/${roomId}/files`, formData);
+  }
 }

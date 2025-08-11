@@ -39,7 +39,7 @@ $tablet: 1024px;
 }
 
 @mixin card-shadow {
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
 }
 
 @mixin scrollbar {
@@ -508,6 +508,7 @@ $tablet: 1024px;
           height: 42px;
           font-size: 16px;
           border-radius: 50%;
+          @include flex-center;
 
           &.avatar-private {
             background: linear-gradient(135deg, $primary-light, $primary-color);
@@ -576,147 +577,135 @@ $tablet: 1024px;
 .messages-container {
   flex: 1;
   overflow-y: auto;
-  background-image:
-          radial-gradient(circle at 25% 25%, rgba(0, 168, 132, 0.05) 0%, transparent 50%),
-          radial-gradient(circle at 75% 75%, rgba(37, 211, 102, 0.05) 0%, transparent 50%);
+  padding: 16px;
   @include scrollbar;
   position: relative;
-}
-
-// ===== MESSAGES LIST =====
-.messages-list {
   display: flex;
   flex-direction: column;
-  gap: 8px;
-  padding: 16px 20px;
+}
+
+.messages-wrapper {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
   min-height: 100%;
 }
 
-// ===== NO MESSAGES STATE =====
-.no-messages {
-  @include flex-center;
-  flex-direction: column;
-  padding: 60px 20px;
-  text-align: center;
-  color: $text-muted;
-  flex: 1;
-
-  .no-messages-icon {
-    margin-bottom: 16px;
-
-    mat-icon {
-      font-size: 48px;
-      opacity: 0.6;
-    }
-  }
-
-  h4 {
-    font-size: 18px;
-    margin-bottom: 8px;
-    color: $text-secondary;
-  }
-
-  p {
-    font-size: 14px;
-    margin: 0;
-  }
-}
-
-// ===== MESSAGE WRAPPERS - ALIGNEMENT PRINCIPAL =====
-.message-wrapper {
-  width: 100%;
+.messages-list {
   display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 16px 0;
+}
+
+// ===== TYPING INDICATOR =====
+.typing-indicator {
+  padding: 8px 16px;
   margin-bottom: 8px;
+  color: $text-muted;
+  font-size: 13px;
+  font-style: italic;
 
-  // Messages des autres - alignés à gauche
-  &.other-message {
-    justify-content: flex-start;
+  .typing-dots {
+    display: inline-flex;
+    margin-left: 8px;
 
-    .message-item {
-      max-width: 75%;
-    }
-  }
+    .dot {
+      width: 4px;
+      height: 4px;
+      background: $text-muted;
+      border-radius: 50%;
+      margin: 0 1px;
+      animation: typing 1.4s infinite;
 
-  // Mes messages - alignés à droite
-  &.own-message {
-    justify-content: flex-end;
-
-    .message-item {
-      max-width: 75%;
+      &:nth-child(2) { animation-delay: 0.2s; }
+      &:nth-child(3) { animation-delay: 0.4s; }
     }
   }
 }
 
-// ===== MESSAGE ITEMS =====
-.message-item {
+@keyframes typing {
+  0%, 60%, 100% {
+    transform: translateY(0);
+  }
+  30% {
+    transform: translateY(-10px);
+  }
+}
+
+// ===== MESSAGE WRAPPER =====
+.message-wrapper {
+  display: flex;
+  width: 100%;
+  margin-bottom: 8px;
+  animation: messageSlideIn 0.3s ease;
+
+  // Messages envoyés - alignés à droite
+  &.sent {
+    justify-content: flex-end;
+  }
+
+  // Messages reçus - alignés à gauche
+  &.received {
+    justify-content: flex-start;
+  }
+
+  // Messages groupés du même expéditeur - espacement réduit
+  &.same-sender {
+    margin-bottom: 2px;
+
+    .message-bubble {
+      margin-top: 2px;
+    }
+  }
+}
+
+@keyframes messageSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+// ===== MESSAGE CONTAINER =====
+.message-container {
   display: flex;
   align-items: flex-end;
-  gap: 8px;
+  max-width: 70%;
   position: relative;
 
-  // Messages reçus (à gauche)
-  &.received {
-    flex-direction: row;
-
-    .message-avatar {
-      order: 1;
-    }
-
-    .message-content {
-      order: 2;
-    }
-
-    .message-actions {
-      order: 3;
-      opacity: 0;
-      @include transition;
-    }
-
-    &:hover .message-actions {
-      opacity: 1;
-    }
+  &.sent-message {
+    flex-direction: row-reverse;
+    margin-left: auto;
   }
 
-  // Messages envoyés (à droite)
-  &.sent {
-    flex-direction: row-reverse;
-
-    .message-avatar {
-      order: 1;
-    }
-
-    .message-content {
-      order: 2;
-    }
-
-    .message-actions {
-      order: 3;
-      opacity: 0;
-      @include transition;
-    }
-
-    &:hover .message-actions {
-      opacity: 1;
-    }
+  &.received-message {
+    flex-direction: row;
+    margin-right: auto;
   }
 }
 
 // ===== MESSAGE AVATARS =====
 .message-avatar {
   flex-shrink: 0;
-  margin-bottom: 4px;
+  margin: 0 8px;
+  align-self: flex-end;
 
   .avatar-circle {
     &.mini {
-      width: 32px;
-      height: 32px;
+      width: 28px;
+      height: 28px;
       border-radius: 50%;
-      font-size: 12px;
+      font-size: 11px;
       font-weight: 600;
       @include flex-center;
       text-transform: uppercase;
-      overflow: hidden;
-      @include transition;
+      @include card-shadow;
 
       &:not(.own) {
         background: linear-gradient(135deg, $primary-light, $primary-color);
@@ -727,235 +716,224 @@ $tablet: 1024px;
         background: linear-gradient(135deg, #667781, #54656f);
         color: white;
       }
-
-      &:hover {
-        transform: scale(1.1);
-      }
-
-      span {
-        font-weight: 700;
-        letter-spacing: 0.5px;
-      }
     }
   }
 }
 
 // ===== MESSAGE CONTENT =====
 .message-content {
+  position: relative;
   display: flex;
   flex-direction: column;
-  flex: 1;
   max-width: 100%;
+  flex: 1;
 }
 
-// ===== REPLY CONTEXT =====
-.reply-context {
-  display: flex;
-  align-items: flex-start;
-  gap: 8px;
-  margin-bottom: 6px;
-  padding-left: 8px;
-
-  .reply-bar {
-    width: 3px;
-    background: $primary-color;
-    border-radius: 2px;
-    flex-shrink: 0;
-    min-height: 40px;
-  }
-
-  .reply-info {
-    background: rgba(255, 255, 255, 0.1);
-    padding: 8px 12px;
-    border-radius: 8px;
-    flex: 1;
-    max-width: 250px;
-    backdrop-filter: blur(4px);
-
-    .reply-sender {
-      font-size: 12px;
-      font-weight: 600;
-      color: $primary-light;
-      display: block;
-      margin-bottom: 2px;
-    }
-
-    .reply-message {
-      font-size: 13px;
-      color: $text-secondary;
-      display: block;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
-    }
-  }
+// ===== SENDER NAME =====
+.sender-name {
+  font-size: 12px;
+  font-weight: 500;
+  color: $primary-light;
+  margin-bottom: 4px;
+  padding-left: 12px;
 }
 
 // ===== MESSAGE BUBBLES =====
 .message-bubble {
-  padding: 10px 14px 8px 14px;
+  padding: 8px 12px;
   border-radius: 18px;
   word-wrap: break-word;
   position: relative;
   @include transition;
-  @include card-shadow;
   max-width: 100%;
-  min-width: 80px;
-  margin: 2px 0;
-  backdrop-filter: blur(8px);
+  min-width: 60px;
+  @include card-shadow;
 
-  // Messages reçus
-  &.received-bubble {
-    background: $message-bg-received;
-    color: $text-primary;
-    border-bottom-left-radius: 4px;
-
-    &:hover {
-      background: lighten($message-bg-received, 5%);
-      transform: translateY(-1px);
-    }
-
-    // Queue du message reçu
-    &::before {
-      content: '';
-      position: absolute;
-      bottom: 0;
-      left: -8px;
-      width: 0;
-      height: 0;
-      border: 8px solid transparent;
-      border-right-color: $message-bg-received;
-      border-bottom-color: $message-bg-received;
-      border-left: none;
-      border-top: none;
-    }
-  }
-
-  // Messages envoyés
   &.sent-bubble {
     background: $message-bg-sent;
     color: white;
     border-bottom-right-radius: 4px;
 
-    &:hover {
-      background: lighten($message-bg-sent, 5%);
-      transform: translateY(-1px);
-    }
-
-    // Queue du message envoyé
-    &::before {
-      content: '';
-      position: absolute;
-      bottom: 0;
-      right: -8px;
-      width: 0;
-      height: 0;
-      border: 8px solid transparent;
-      border-left-color: $message-bg-sent;
-      border-bottom-color: $message-bg-sent;
-      border-right: none;
-      border-top: none;
+    .message-meta .message-time {
+      color: rgba(255, 255, 255, 0.7);
     }
   }
 
-  // Messages supprimés
-  &.deleted-message {
-    background: $deleted-message-bg !important;
-    color: $text-muted !important;
-    border: 1px dashed rgba(255, 255, 255, 0.2);
-    font-style: italic;
+  &.received-bubble {
+    background: $message-bg-received;
+    color: $text-primary;
+    border-bottom-left-radius: 4px;
 
-    &::before {
-      border-left-color: $deleted-message-bg !important;
-      border-right-color: $deleted-message-bg !important;
-      border-bottom-color: $deleted-message-bg !important;
+    .message-meta .message-time {
+      color: $text-muted;
+    }
+  }
+
+  &:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+  }
+
+  // Messages groupés - ajustement des bordures
+  .message-wrapper.same-sender & {
+    &.sent-bubble {
+      border-top-right-radius: 18px;
     }
 
-    .deleted-text {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      opacity: 0.7;
+    &.received-bubble {
+      border-top-left-radius: 18px;
+    }
+  }
+}
 
-      &::before {
-        content: '🗑️';
-        font-size: 16px;
-        opacity: 0.6;
+// ===== MESSAGE TEXT =====
+.message-text {
+  font-size: 14px;
+  line-height: 1.4;
+  margin-bottom: 4px;
+  word-break: break-word;
+  white-space: pre-wrap;
+}
+
+// ===== MESSAGE FILES =====
+.message-file {
+  .image-message {
+    max-width: 100%;
+
+    .message-image {
+      max-width: 300px;
+      max-height: 300px;
+      width: 100%;
+      height: auto;
+      border-radius: 12px;
+      cursor: pointer;
+      @include transition;
+      object-fit: cover;
+
+      &:hover {
+        transform: scale(1.02);
+        opacity: 0.9;
       }
     }
   }
 
-  .message-header {
-    margin-bottom: 4px;
-
-    .sender-name {
-      font-size: 13px;
-      font-weight: 600;
-      color: $primary-light;
-    }
-  }
-
-  .message-text {
-    font-size: 14px;
-    line-height: 1.4;
-    margin-bottom: 4px;
-    word-break: break-word;
-    white-space: pre-wrap;
-  }
-
-  .message-meta {
+  .file-attachment {
     display: flex;
     align-items: center;
-    justify-content: flex-end;
-    margin-top: 4px;
-    font-size: 11px;
-    color: rgba(255, 255, 255, 0.6);
-    gap: 4px;
+    justify-content: space-between;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 12px;
+    padding: 12px;
+    margin: 4px 0;
+    @include transition;
 
-    .message-time {
-      font-variant-numeric: tabular-nums;
+    &:hover {
+      background: rgba(255, 255, 255, 0.15);
     }
 
-    .edited-indicator {
-      font-style: italic;
-      opacity: 0.8;
-      font-size: 10px;
-    }
+    .file-info {
+      display: flex;
+      align-items: center;
+      flex: 1;
 
-    .message-status {
-      font-size: 12px;
-
-      &.status-sent {
-        color: $text-muted;
-      }
-
-      &.status-delivered {
-        color: $text-secondary;
-      }
-
-      &.status-read {
+      .file-icon {
+        font-size: 24px;
+        margin-right: 12px;
         color: $primary-light;
       }
+
+      .file-details {
+        display: flex;
+        flex-direction: column;
+
+        .file-name {
+          font-size: 14px;
+          font-weight: 500;
+          margin-bottom: 2px;
+          max-width: 200px;
+          overflow: hidden;
+          text-overflow: ellipsis;
+          white-space: nowrap;
+        }
+
+        .file-size {
+          font-size: 12px;
+          color: $text-muted;
+        }
+      }
+    }
+
+    button {
+      background: rgba(255, 255, 255, 0.1) !important;
+      color: $text-primary !important;
+
+      &:hover {
+        background: rgba(255, 255, 255, 0.2) !important;
+      }
+    }
+  }
+}
+
+// ===== MESSAGE META =====
+.message-meta {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 4px;
+  margin-top: 4px;
+  font-size: 11px;
+
+  .message-time {
+    font-variant-numeric: tabular-nums;
+  }
+
+  .edited-indicator {
+    font-style: italic;
+    opacity: 0.8;
+    font-size: 10px;
+  }
+
+  .status-icon {
+    font-size: 14px;
+    margin-left: 4px;
+
+    .sent-bubble & {
+      color: rgba(255, 255, 255, 0.7);
     }
   }
 }
 
 // ===== MESSAGE ACTIONS =====
 .message-actions {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  margin-left: 8px;
-  margin-right: 8px;
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  opacity: 0;
+  @include transition;
+  z-index: 100;
+
+  // Position pour messages reçus
+  .message-container.received-message & {
+    right: -50px;
+  }
+
+  // Position pour messages envoyés
+  .message-container.sent-message & {
+    left: -50px;
+  }
+
+  &.show {
+    opacity: 1;
+  }
 
   .action-btn {
-    width: 32px !important;
-    height: 32px !important;
     background: rgba(0, 0, 0, 0.7) !important;
     color: white !important;
+    width: 36px !important;
+    height: 36px !important;
     border-radius: 50% !important;
     backdrop-filter: blur(4px);
-    @include transition;
+    @include card-shadow;
 
     &:hover {
       background: rgba(0, 0, 0, 0.9) !important;
@@ -963,109 +941,138 @@ $tablet: 1024px;
     }
 
     mat-icon {
-      font-size: 16px !important;
-    }
-
-    &.reply-btn:hover {
-      background: rgba(0, 168, 132, 0.8) !important;
-    }
-
-    &.edit-btn:hover {
-      background: rgba(255, 171, 0, 0.8) !important;
-    }
-
-    &.delete-btn:hover {
-      background: rgba(241, 92, 109, 0.8) !important;
+      font-size: 18px !important;
     }
   }
 }
 
-// ===== TYPING INDICATOR =====
-.typing-indicator {
-  padding: 12px 20px;
+// Hover effect pour afficher les actions
+.message-wrapper:hover {
+  .message-actions {
+    opacity: 1;
+  }
+}
 
-  .typing-content {
+// ===== MESSAGE MENU =====
+.message-menu {
+  position: absolute;
+  background: $sidebar-bg;
+  border-radius: 12px;
+  padding: 8px 0;
+  @include card-shadow;
+  z-index: 1001;
+  min-width: 200px;
+  border: 1px solid $border-color;
+  top: calc(100% + 8px);
+  opacity: 1 !important;
+  display: block !important;
+  visibility: visible !important;
+
+  &.sent-menu {
+    right: 0;
+  }
+
+  &.received-menu {
+    left: 0;
+  }
+
+  .menu-option {
     display: flex;
-    align-items: flex-end;
-    gap: 8px;
-    max-width: 75%;
+    align-items: center;
+    gap: 12px;
+    width: 100%;
+    padding: 12px 16px;
+    background: none;
+    border: none;
+    color: $text-primary;
+    cursor: pointer;
+    @include transition;
+    font-size: 14px;
+    text-align: left;
 
-    .typing-avatar {
-      flex-shrink: 0;
-      margin-bottom: 4px;
+    &:hover {
+      background: $hover-color;
+    }
 
-      .avatar-circle.mini {
-        width: 32px;
-        height: 32px;
-        border-radius: 50%;
-        @include flex-center;
-        background: linear-gradient(135deg, $primary-light, $primary-color);
-        color: white;
+    &.danger {
+      color: $error-color;
 
-        mat-icon {
-          font-size: 16px;
-        }
+      &:hover {
+        background: rgba(241, 92, 109, 0.1);
+      }
+
+      mat-icon {
+        color: $error-color;
       }
     }
 
-    .typing-bubble {
-      background: $message-bg-received;
-      border-radius: 18px 18px 18px 4px;
-      padding: 10px 14px;
-      @include card-shadow;
-      position: relative;
-      backdrop-filter: blur(8px);
+    mat-icon {
+      font-size: 18px;
+      width: 18px;
+      height: 18px;
+      color: $text-secondary;
+    }
 
-      &::before {
-        content: '';
-        position: absolute;
-        bottom: 0;
-        left: -8px;
-        width: 0;
-        height: 0;
-        border: 8px solid transparent;
-        border-right-color: $message-bg-received;
-        border-bottom-color: $message-bg-received;
-        border-left: none;
-        border-top: none;
+    span {
+      flex: 1;
+      font-weight: 400;
+    }
+  }
+}
+
+// ===== REPLY PREVIEW =====
+.reply-preview {
+  background: $hover-color;
+  border-left: 4px solid $primary-color;
+  padding: 12px 16px;
+  margin-bottom: 8px;
+  border-radius: 0 8px 8px 0;
+  @include flex-between;
+
+  .reply-content {
+    flex: 1;
+
+    .reply-indicator {
+      width: 4px;
+      height: 100%;
+      background: $primary-color;
+      position: absolute;
+      left: 0;
+      top: 0;
+    }
+
+    .reply-details {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+
+      .replying-to-label {
+        font-size: 12px;
+        color: $primary-light;
+        font-weight: 500;
       }
 
-      .typing-text {
+      .replying-to-message {
         font-size: 13px;
         color: $text-secondary;
-        font-style: italic;
-        margin-bottom: 4px;
-        display: block;
-      }
-
-      .typing-dots {
-        display: flex;
-        gap: 3px;
-        align-items: center;
-
-        .dot {
-          width: 6px;
-          height: 6px;
-          background: $primary-light;
-          border-radius: 50%;
-          animation: typingDots 1.4s infinite;
-
-          &:nth-child(2) { animation-delay: 0.2s; }
-          &:nth-child(3) { animation-delay: 0.4s; }
-        }
+        max-width: 300px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
       }
     }
   }
-}
 
-@keyframes typingDots {
-  0%, 60%, 100% {
-    transform: scale(1);
-    opacity: 0.5;
-  }
-  30% {
-    transform: scale(1.2);
-    opacity: 1;
+  .cancel-reply-btn {
+    background: transparent !important;
+    color: $text-muted !important;
+    width: 32px !important;
+    height: 32px !important;
+
+    &:hover {
+      color: $text-primary !important;
+      background: rgba(255, 255, 255, 0.1) !important;
+    }
   }
 }
 
@@ -1076,69 +1083,11 @@ $tablet: 1024px;
   padding: 16px 20px;
 }
 
-// ===== REPLY PREVIEW =====
-.reply-preview {
-  @include flex-between;
-  background: rgba(0, 168, 132, 0.1);
-  border-left: 3px solid $primary-color;
-  padding: 12px 16px;
-  margin-bottom: 12px;
-  border-radius: 8px;
-  backdrop-filter: blur(4px);
-
-  .reply-content {
-    flex: 1;
-    display: flex;
-    align-items: center;
-    gap: 12px;
-
-    .reply-indicator {
-      width: 3px;
-      height: 20px;
-      background: $primary-color;
-      border-radius: 2px;
-    }
-
-    .reply-details {
-      flex: 1;
-
-      .replying-to-label {
-        font-size: 13px;
-        font-weight: 600;
-        color: $primary-light;
-        display: block;
-        margin-bottom: 2px;
-      }
-
-      .replying-to-message {
-        font-size: 14px;
-        color: $text-secondary;
-        display: block;
-        overflow: hidden;
-        text-overflow: ellipsis;
-        white-space: nowrap;
-        max-width: 300px;
-      }
-    }
-  }
-
-  .cancel-reply-btn {
-    background: rgba(255, 255, 255, 0.1) !important;
-    color: $text-primary !important;
-    width: 32px !important;
-    height: 32px !important;
-
-    &:hover {
-      background: rgba(255, 255, 255, 0.2) !important;
-    }
-  }
-}
-
 // ===== INPUT AREA =====
 .input-area {
   .input-container {
     display: flex;
-    align-items: center;
+    align-items: flex-end;
     gap: 8px;
     background: $hover-color;
     border-radius: 25px;
@@ -1191,7 +1140,6 @@ $tablet: 1024px;
         max-height: 120px;
         min-height: 36px;
         margin: 0;
-        vertical-align: middle;
 
         &::placeholder {
           color: $text-muted;
@@ -1233,264 +1181,287 @@ $tablet: 1024px;
       }
     }
   }
+
+  // ===== FILE PREVIEW =====
+  .file-preview {
+    background: $hover-color;
+    border-radius: 12px;
+    padding: 12px 16px;
+    margin-top: 8px;
+    @include flex-between;
+    border: 1px solid $border-color;
+
+    .file-preview-info {
+      display: flex;
+      align-items: center;
+      flex: 1;
+
+      .file-preview-icon {
+        font-size: 24px;
+        margin-right: 12px;
+        color: $primary-light;
+      }
+
+      .file-preview-details {
+        display: flex;
+        flex-direction: column;
+
+        .file-preview-name {
+          font-size: 14px;
+          font-weight: 500;
+          margin-bottom: 2px;
+          color: $text-primary;
+          max-width: 250px;
+          overflow: hidden;
+          text-overflow: ellipsis;
+          white-space: nowrap;
+        }
+
+        .file-preview-size {
+          font-size: 12px;
+          color: $text-muted;
+        }
+      }
+    }
+
+    .remove-file-btn {
+      background: rgba(255, 255, 255, 0.1) !important;
+      color: $text-muted !important;
+      width: 32px !important;
+      height: 32px !important;
+
+      &:hover {
+        color: $error-color !important;
+        background: rgba(241, 92, 109, 0.1) !important;
+      }
+    }
+  }
 }
 
 // ===== MODALS =====
-.modal-overlay {
+
+// Modal overlay
+.modal-overlay, .confirmation-overlay {
   position: fixed;
   top: 0;
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(0, 0, 0, 0.8);
+  background: rgba(0, 0, 0, 0.7);
   @include flex-center;
-  z-index: 1000;
-  backdrop-filter: blur(6px);
-  animation: fadeIn 0.3s ease;
+  z-index: 2000;
+  backdrop-filter: blur(4px);
 }
 
-@keyframes fadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
-}
-
-// ===== NEW CHAT MODAL =====
+// New chat modal
 .new-chat-modal {
   background: $sidebar-bg;
   border-radius: 16px;
   width: 90%;
-  max-width: 480px;
+  max-width: 500px;
   max-height: 80vh;
-  overflow: hidden;
+  overflow: auto;
   @include card-shadow;
-  animation: slideUp 0.3s ease;
-}
 
-@keyframes slideUp {
-  from {
-    opacity: 0;
-    transform: translateY(20px) scale(0.95);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0) scale(1);
-  }
-}
+  .modal-header {
+    @include flex-between;
+    padding: 20px;
+    border-bottom: 1px solid $border-color;
 
-.modal-header {
-  @include flex-between;
-  padding: 20px 24px;
-  border-bottom: 1px solid $border-color;
-  background: linear-gradient(135deg, $sidebar-bg, #1a252d);
-
-  h3 {
-    margin: 0;
-    font-size: 18px;
-    font-weight: 600;
-    color: $text-primary;
-  }
-
-  button {
-    background: rgba(255, 255, 255, 0.1) !important;
-    color: $text-primary !important;
-  }
-}
-
-.modal-content {
-  padding: 24px;
-}
-
-// ===== CHAT TYPE SELECTOR =====
-.chat-type-selector {
-  display: flex;
-  gap: 12px;
-  margin-bottom: 24px;
-
-  .type-option {
-    flex: 1;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 8px;
-    padding: 16px;
-    background: $hover-color;
-    border: 2px solid transparent;
-    border-radius: 12px;
-    color: $text-secondary;
-    cursor: pointer;
-    @include transition;
-    font-weight: 500;
-
-    &:hover {
-      background: lighten($hover-color, 5%);
-      transform: translateY(-2px);
+    h3 {
+      margin: 0;
+      color: $text-primary;
+      font-size: 18px;
+      font-weight: 600;
     }
 
-    &.active {
-      background: rgba(0, 168, 132, 0.2);
-      border-color: $primary-color;
-      color: $primary-light;
+    button {
+      background: transparent !important;
+      color: $text-muted !important;
 
-      mat-icon {
-        color: $primary-light;
+      &:hover {
+        color: $text-primary !important;
+        background: rgba(255, 255, 255, 0.1) !important;
       }
     }
-
-    mat-icon {
-      font-size: 24px;
-    }
-  }
-}
-
-// ===== CHAT FORM =====
-.chat-form {
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
-
-  .full-width {
-    width: 100%;
   }
 
-  mat-form-field {
-    ::ng-deep {
-      .mat-form-field-outline {
-        color: $border-color;
-      }
+  .modal-content {
+    padding: 20px;
 
-      .mat-form-field-outline-thick {
-        color: $primary-color;
-      }
+    .chat-type-selector {
+      display: flex;
+      gap: 12px;
+      margin-bottom: 24px;
 
-      .mat-form-field-label {
-        color: $text-secondary;
-      }
-
-      .mat-form-field-label.mat-focused {
-        color: $primary-color;
-      }
-
-      input, textarea {
+      .type-option {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 8px;
+        padding: 16px;
+        background: $hover-color;
+        border: 2px solid transparent;
+        border-radius: 12px;
+        cursor: pointer;
+        @include transition;
         color: $text-primary;
+
+        &:hover {
+          background: lighten($hover-color, 3%);
+        }
+
+        &.active {
+          border-color: $primary-color;
+          background: rgba(0, 168, 132, 0.1);
+          color: $primary-light;
+        }
+
+        mat-icon {
+          font-size: 28px;
+        }
+
+        span {
+          font-size: 14px;
+          font-weight: 500;
+        }
+      }
+    }
+
+    .chat-form {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+
+      .full-width {
+        width: 100%;
       }
 
-      .mat-hint {
-        color: $text-muted;
+      .create-btn {
+        background: linear-gradient(135deg, $primary-color, $primary-light) !important;
+        color: white !important;
+        padding: 12px 24px !important;
+        border-radius: 8px !important;
+        font-weight: 500;
+        @include transition;
+
+        &:hover:not(:disabled) {
+          transform: translateY(-2px);
+          @include card-shadow;
+        }
+
+        &:disabled {
+          opacity: 0.6;
+          cursor: not-allowed;
+        }
+
+        mat-icon {
+          margin-right: 8px;
+        }
       }
-    }
-  }
-
-  .create-btn {
-    background: linear-gradient(135deg, $primary-color, $primary-light);
-    color: white;
-    padding: 12px 24px;
-    border-radius: 24px;
-    font-weight: 500;
-    font-size: 14px;
-    @include transition;
-
-    &:hover:not(:disabled) {
-      transform: translateY(-2px);
-      @include card-shadow;
-    }
-
-    &:disabled {
-      background: $text-muted;
-      opacity: 0.5;
-    }
-
-    mat-icon {
-      margin-right: 8px;
     }
   }
 }
 
-// ===== EDIT MODAL =====
+// Edit modal
 .edit-modal {
   background: $sidebar-bg;
   border-radius: 16px;
   width: 90%;
   max-width: 500px;
   @include card-shadow;
-  animation: slideUp 0.3s ease;
 
-  .edit-form {
-    .message-edit-area {
-      background: $hover-color;
-      border: 1px solid $border-color;
-      border-radius: 12px;
-      padding: 12px;
-      margin-bottom: 16px;
-      @include transition;
+  .modal-header {
+    @include flex-between;
+    padding: 20px;
+    border-bottom: 1px solid $border-color;
 
-      &:focus-within {
-        border-color: $primary-color;
-        background: lighten($hover-color, 3%);
-      }
-
-      textarea {
-        width: 100%;
-        background: transparent;
-        border: none;
-        outline: none;
-        color: $text-primary;
-        font-size: 14px;
-        font-family: inherit;
-        resize: vertical;
-        min-height: 80px;
-        max-height: 200px;
-        line-height: 1.4;
-
-        &::placeholder {
-          color: $text-muted;
-        }
-      }
+    h3 {
+      margin: 0;
+      color: $text-primary;
+      font-size: 18px;
+      font-weight: 600;
     }
 
-    .form-actions {
-      display: flex;
-      gap: 12px;
-      justify-content: flex-end;
+    button {
+      background: transparent !important;
+      color: $text-muted !important;
 
-      button {
-        padding: 10px 20px;
-        border-radius: 8px;
-        font-weight: 500;
-        font-size: 14px;
-        @include transition;
-        border: none;
-        cursor: pointer;
-        display: flex;
-        align-items: center;
-        gap: 6px;
+      &:hover {
+        color: $text-primary !important;
+      }
+    }
+  }
 
-        &.cancel-btn {
+  .modal-content {
+    padding: 20px;
+
+    .edit-form {
+      .message-edit-area {
+        margin-bottom: 20px;
+
+        textarea {
+          width: 100%;
+          min-height: 120px;
           background: $hover-color;
+          border: 1px solid $border-color;
+          border-radius: 8px;
+          padding: 12px;
           color: $text-primary;
+          font-size: 14px;
+          font-family: inherit;
+          resize: vertical;
+          @include transition;
+
+          &:focus {
+            outline: none;
+            border-color: $primary-color;
+            box-shadow: 0 0 0 2px rgba(0, 168, 132, 0.2);
+          }
+
+          &::placeholder {
+            color: $text-muted;
+          }
+        }
+      }
+
+      .form-actions {
+        display: flex;
+        gap: 12px;
+        justify-content: flex-end;
+
+        .cancel-btn {
+          background: transparent;
+          border: 1px solid $border-color;
+          color: $text-muted;
+          padding: 8px 16px;
+          border-radius: 6px;
+          cursor: pointer;
+          @include transition;
 
           &:hover {
-            background: lighten($hover-color, 5%);
+            background: $hover-color;
+            color: $text-primary;
           }
         }
 
-        &.save-btn {
+        .save-btn {
           background: $primary-color;
+          border: none;
           color: white;
+          padding: 8px 16px;
+          border-radius: 6px;
+          cursor: pointer;
+          @include transition;
 
-          &:hover {
+          &:hover:not(:disabled) {
             background: $primary-light;
-            transform: translateY(-1px);
           }
 
           &:disabled {
-            background: $text-muted;
-            opacity: 0.5;
+            opacity: 0.6;
             cursor: not-allowed;
-            transform: none;
-          }
-
-          mat-icon {
-            font-size: 16px;
           }
         }
       }
@@ -1498,22 +1469,21 @@ $tablet: 1024px;
   }
 }
 
-// ===== CONFIRMATION MODAL =====
+// Confirmation modal
 .confirmation-modal {
   background: $sidebar-bg;
   border-radius: 16px;
   padding: 24px;
-  width: 90%;
-  max-width: 400px;
-  @include card-shadow;
-  animation: modalPop 0.3s ease;
   text-align: center;
+  max-width: 400px;
+  width: 90%;
+  @include card-shadow;
 
   .modal-icon {
-    @include flex-center;
-    width: 60px;
-    height: 60px;
+    width: 64px;
+    height: 64px;
     border-radius: 50%;
+    @include flex-center;
     margin: 0 auto 16px;
 
     &.danger {
@@ -1521,28 +1491,23 @@ $tablet: 1024px;
       color: $error-color;
     }
 
-    &.warning {
-      background: rgba(255, 171, 0, 0.2);
-      color: $warning-color;
-    }
-
     mat-icon {
-      font-size: 24px;
+      font-size: 32px;
     }
   }
 
   h3 {
-    margin: 0 0 8px 0;
-    font-size: 18px;
-    font-weight: 600;
+    margin: 0 0 12px 0;
     color: $text-primary;
+    font-size: 20px;
+    font-weight: 600;
   }
 
   p {
     margin: 0 0 24px 0;
-    font-size: 14px;
     color: $text-secondary;
-    line-height: 1.4;
+    font-size: 14px;
+    line-height: 1.5;
   }
 
   .modal-actions {
@@ -1550,182 +1515,111 @@ $tablet: 1024px;
     gap: 12px;
     justify-content: center;
 
-    button {
-      padding: 10px 20px;
-      border-radius: 8px;
-      font-weight: 500;
-      font-size: 14px;
-      @include transition;
-      border: none;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      gap: 6px;
-
-      &.cancel-btn {
-        background: $hover-color;
-        color: $text-primary;
-
-        &:hover {
-          background: lighten($hover-color, 5%);
-        }
-      }
-
-      &.confirm-btn {
-        background: $error-color;
-        color: white;
-
-        &:hover {
-          background: darken($error-color, 10%);
-          transform: translateY(-1px);
-        }
-
-        mat-icon {
-          font-size: 16px;
-        }
-      }
-
-      &.primary-btn {
-        background: $primary-color;
-        color: white;
-
-        &:hover {
-          background: $primary-light;
-          transform: translateY(-1px);
-        }
-      }
-    }
-  }
-}
-
-@keyframes modalPop {
-  from {
-    opacity: 0;
-    transform: scale(0.9) translateY(-20px);
-  }
-  to {
-    opacity: 1;
-    transform: scale(1) translateY(0);
-  }
-}
-
-// ===== TOAST NOTIFICATIONS =====
-.toast-container {
-  position: fixed;
-  top: 20px;
-  right: 20px;
-  z-index: 1002;
-  pointer-events: none;
-  max-width: 400px;
-}
-
-.toast {
-  background: $sidebar-bg;
-  border: 1px solid $border-color;
-  border-radius: 12px;
-  padding: 12px 16px;
-  margin-bottom: 8px;
-  @include card-shadow;
-  @include transition;
-  pointer-events: auto;
-  animation: toastSlideIn 0.3s ease;
-  backdrop-filter: blur(10px);
-
-  &.success {
-    border-left: 4px solid $success-color;
-
-    .toast-icon {
-      color: $success-color;
-    }
-  }
-
-  &.error {
-    border-left: 4px solid $error-color;
-
-    .toast-icon {
-      color: $error-color;
-    }
-  }
-
-  &.warning {
-    border-left: 4px solid $warning-color;
-
-    .toast-icon {
-      color: $warning-color;
-    }
-  }
-
-  &.info {
-    border-left: 4px solid $primary-color;
-
-    .toast-icon {
-      color: $primary-color;
-    }
-  }
-
-  .toast-content {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-
-    .toast-icon {
-      font-size: 18px;
-      flex-shrink: 0;
-    }
-
-    .toast-message {
-      flex: 1;
-      font-size: 14px;
-      color: $text-primary;
-      line-height: 1.3;
-    }
-
-    .toast-close {
-      background: none;
-      border: none;
+    .cancel-btn {
+      background: transparent;
+      border: 1px solid $border-color;
       color: $text-muted;
+      padding: 10px 20px;
+      border-radius: 6px;
       cursor: pointer;
-      padding: 4px;
-      border-radius: 4px;
       @include transition;
-      flex-shrink: 0;
 
       &:hover {
+        background: $hover-color;
         color: $text-primary;
-        background: rgba(255, 255, 255, 0.1);
+      }
+    }
+
+    .confirm-btn {
+      background: $error-color;
+      border: none;
+      color: white;
+      padding: 10px 20px;
+      border-radius: 6px;
+      cursor: pointer;
+      @include transition;
+
+      &:hover {
+        background: darken($error-color, 10%);
+      }
+    }
+  }
+}
+
+// Image preview modal
+.image-preview-modal {
+  background: $sidebar-bg;
+  border-radius: 16px;
+  width: 90%;
+  max-width: 800px;
+  max-height: 90vh;
+  overflow: hidden;
+  @include card-shadow;
+
+  .image-preview-header {
+    @include flex-between;
+    padding: 16px 20px;
+    border-bottom: 1px solid $border-color;
+
+    h3 {
+      margin: 0;
+      color: $text-primary;
+      font-size: 16px;
+      font-weight: 600;
+    }
+
+    button {
+      background: transparent !important;
+      color: $text-muted !important;
+
+      &:hover {
+        color: $text-primary !important;
+      }
+    }
+  }
+
+  .image-preview-content {
+    padding: 20px;
+    text-align: center;
+
+    .preview-image {
+      max-width: 100%;
+      max-height: 60vh;
+      border-radius: 8px;
+      @include card-shadow;
+    }
+  }
+
+  .image-preview-actions {
+    padding: 16px 20px;
+    border-top: 1px solid $border-color;
+    text-align: center;
+
+    button {
+      background: $primary-color !important;
+      color: white !important;
+      padding: 8px 16px !important;
+
+      &:hover {
+        background: $primary-light !important;
       }
 
       mat-icon {
-        font-size: 16px;
+        margin-right: 8px;
       }
     }
   }
 }
 
-@keyframes toastSlideIn {
-  from {
-    opacity: 0;
-    transform: translateX(100%);
-  }
-  to {
-    opacity: 1;
-    transform: translateX(0);
-  }
-}
-
-.toast.fade-out {
-  animation: toastFadeOut 0.3s ease forwards;
-}
-
-@keyframes toastFadeOut {
-  from {
-    opacity: 1;
-    transform: translateX(0) scale(1);
-  }
-  to {
-    opacity: 0;
-    transform: translateX(100%) scale(0.95);
-  }
+// Menu overlay
+.menu-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 999;
+  background: transparent;
 }
 
 // ===== RESPONSIVE DESIGN =====
@@ -1745,121 +1639,101 @@ $tablet: 1024px;
     height: 60%;
   }
 
-  .message-item {
-    max-width: 90%;
+  .message-container {
+    max-width: 85%;
   }
 
   .message-actions {
+    .message-container.received-message & {
+      right: -40px;
+    }
+
+    .message-container.sent-message & {
+      left: -40px;
+    }
+
     .action-btn {
-      width: 28px !important;
-      height: 28px !important;
+      width: 32px !important;
+      height: 32px !important;
 
       mat-icon {
-        font-size: 14px !important;
+        font-size: 16px !important;
       }
     }
   }
 
-  .messages-list {
-    padding: 12px 16px;
-  }
+  .message-menu {
+    min-width: 180px;
+    font-size: 13px;
 
-  .chat-header {
-    padding: 12px 16px;
-  }
+    .menu-option {
+      padding: 10px 12px;
+      font-size: 13px;
 
-  .message-input-area {
-    padding: 12px 16px;
-  }
-
-  .reply-context .reply-info {
-    max-width: 200px;
+      mat-icon {
+        font-size: 16px;
+        width: 16px;
+        height: 16px;
+      }
+    }
   }
 
   .new-chat-modal,
-  .confirmation-modal,
   .edit-modal {
     width: 95%;
     margin: 20px;
   }
 
-  .toast-container {
-    top: 10px;
-    right: 10px;
-    left: 10px;
-    max-width: none;
-  }
-
-  .toast {
-    margin-bottom: 4px;
+  .image-preview-modal {
+    width: 95%;
+    height: 90vh;
   }
 }
 
 @media (max-width: 480px) {
-  .sidebar-header {
-    padding: 16px;
-
-    .header-content h2 {
-      font-size: 18px;
-    }
-  }
-
-  .chat-item {
-    padding: 10px 16px;
-
-    .chat-avatar .avatar-circle {
-      width: 44px;
-      height: 44px;
-      font-size: 16px;
-    }
+  .message-container {
+    max-width: 90%;
   }
 
   .message-bubble {
-    padding: 8px 12px;
+    padding: 6px 10px;
     font-size: 13px;
   }
 
-  .input-area .input-container {
-    gap: 6px;
-    padding: 6px;
+  .message-menu {
+    min-width: 160px;
 
-    .send-btn, .attach-btn {
-      width: 36px !important;
-      height: 36px !important;
-    }
-
-    .text-input-wrapper .message-input {
-      padding: 6px 10px;
-      min-height: 32px;
-    }
-  }
-
-  .message-actions {
-    .action-btn {
-      width: 26px !important;
-      height: 26px !important;
+    .menu-option {
+      padding: 8px 10px;
+      font-size: 12px;
 
       mat-icon {
-        font-size: 12px !important;
+        font-size: 14px;
+        width: 14px;
+        height: 14px;
       }
     }
   }
 
-  .typing-indicator {
-    padding: 8px 16px;
+  .file-attachment {
+    padding: 8px;
 
-    .typing-content .typing-avatar .avatar-circle.mini {
-      width: 28px;
-      height: 28px;
+    .file-details .file-name {
+      max-width: 150px;
     }
   }
 }
 
-// ===== ANIMATIONS AVANCÉES =====
-@keyframes messageSlideIn {
+// ===== ANIMATIONS =====
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes slideUp {
   from {
     opacity: 0;
-    transform: translateY(10px) scale(0.95);
+    transform: translateY(20px) scale(0.95);
   }
   to {
     opacity: 1;
@@ -1867,68 +1741,26 @@ $tablet: 1024px;
   }
 }
 
-.message-wrapper {
-  animation: messageSlideIn 0.3s ease;
-}
-
-// Animation pour message supprimé
-@keyframes messageDeleteFade {
+@keyframes slideInFromRight {
   from {
-    opacity: 1;
-    transform: scale(1);
+    opacity: 0;
+    transform: translateX(20px);
   }
   to {
-    opacity: 0.7;
-    transform: scale(0.98);
+    opacity: 1;
+    transform: translateX(0);
   }
 }
 
-.message-bubble.deleted-message {
-  animation: messageDeleteFade 0.3s ease;
-}
-
-// Animation pour nouveau message
-@keyframes newMessagePulse {
-  0% { box-shadow: 0 0 0 0 rgba(0, 168, 132, 0.4); }
-  70% { box-shadow: 0 0 0 10px rgba(0, 168, 132, 0); }
-  100% { box-shadow: 0 0 0 0 rgba(0, 168, 132, 0); }
-}
-
-.message-bubble.new-message {
-  animation: newMessagePulse 0.6s ease;
-}
-
-// ===== ACCESSIBILITY =====
-@media (prefers-reduced-motion: reduce) {
-  * {
-    animation-duration: 0.01ms !important;
-    animation-iteration-count: 1 !important;
-    transition-duration: 0.01ms !important;
+@keyframes slideInFromLeft {
+  from {
+    opacity: 0;
+    transform: translateX(-20px);
   }
-}
-
-// ===== DARK THEME ADJUSTMENTS =====
-@media (prefers-color-scheme: dark) {
-  .chat-container {
-    color-scheme: dark;
+  to {
+    opacity: 1;
+    transform: translateX(0);
   }
-}
-
-// ===== SCROLLBAR CUSTOM STYLING =====
-.messages-container, .chat-list {
-  scrollbar-width: thin;
-  scrollbar-color: rgba(255, 255, 255, 0.2) transparent;
-}
-
-// ===== FOCUS STYLES =====
-button:focus-visible {
-  outline: 2px solid $primary-color;
-  outline-offset: 2px;
-}
-
-input:focus-visible, textarea:focus-visible {
-  outline: 2px solid $primary-color;
-  outline-offset: 1px;
 }
 
 // ===== UTILITY CLASSES =====
@@ -1937,98 +1769,29 @@ input:focus-visible, textarea:focus-visible {
 .flex-center { @include flex-center; }
 .flex-between { @include flex-between; }
 
-// ===== AMÉLIORATIONS SUPPLÉMENTAIRES =====
+// Animation classes
+.message-wrapper.sent {
+  animation: slideInFromRight 0.3s ease;
+}
 
-// Style pour les messages groupés (même expéditeur)
-.message-wrapper + .message-wrapper {
-  &.same-sender {
-    margin-top: -2px;
+.message-wrapper.received {
+  animation: slideInFromLeft 0.3s ease;
+}
 
-    .message-avatar {
-      visibility: hidden;
-    }
+// Focus states
+.message-input:focus,
+.search-field:focus {
+  outline: none !important;
+}
 
-    .message-bubble {
-      &.received-bubble {
-        border-top-left-radius: 18px;
-      }
+// Custom scrollbar for messages
+.messages-container {
+  @include scrollbar;
+}
 
-      &.sent-bubble {
-        border-top-right-radius: 18px;
-      }
-    }
+// Highlight effects
+.message-bubble:hover {
+  .message-actions {
+    opacity: 1;
   }
-}
-
-// Style pour les liens dans les messages
-.message-text {
-  a {
-    color: $primary-light;
-    text-decoration: none;
-    border-bottom: 1px dotted $primary-light;
-
-    &:hover {
-      border-bottom-style: solid;
-    }
-  }
-}
-
-// Animation d'envoi de message
-.message-bubble.sending {
-  opacity: 0.7;
-  transform: scale(0.98);
-  @include transition(all, 0.2s, ease);
-}
-
-// Style pour les mentions dans les messages
-.message-text .mention {
-  background: rgba(0, 168, 132, 0.2);
-  color: $primary-light;
-  padding: 2px 4px;
-  border-radius: 4px;
-  font-weight: 500;
-}
-
-// Amélioration du style des timestamps
-.message-meta .message-time {
-  font-variant-numeric: tabular-nums;
-}
-
-// ===== DANGER ITEMS =====
-.danger-item {
-  color: $error-color !important;
-
-  mat-icon {
-    color: $error-color !important;
-  }
-
-  &:hover {
-    background: rgba(241, 92, 109, 0.1) !important;
-  }
-}
-
-// ===== LOADING STATES =====
-.loading-message {
-  opacity: 0.6;
-  pointer-events: none;
-
-  .message-bubble {
-    background: rgba(255, 255, 255, 0.1) !important;
-
-    &::after {
-      content: '';
-      position: absolute;
-      top: 0;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
-      animation: shimmer 1.5s infinite;
-    }
-  }
-}
-
-@keyframes shimmer {
-  0% { transform: translateX(-100%); }
-  100% { transform: translateX(100%); }
 }

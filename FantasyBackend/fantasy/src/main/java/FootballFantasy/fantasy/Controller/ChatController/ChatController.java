@@ -17,6 +17,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 import java.util.Map;
@@ -258,4 +259,23 @@ public class ChatController {
         chatService.debugParticipation(roomId, userId);
         return ResponseEntity.ok("Check console logs");
     }
+
+    @PostMapping("/rooms/{roomId}/files")
+    public ChatMessageDTO uploadFile(
+            @PathVariable String roomId,
+            @RequestParam("file") MultipartFile file,
+            Authentication authentication
+    ) {
+        Long userId = extractUserIdFromAuth(authentication); // exactement comme dans debugParticipation
+        return chatService.sendFileMessage(roomId, file, userId);
+    }
+
+    // Ajoutez dans ChatController.java
+    @Operation(summary = "Get user ID from Keycloak ID")
+    @GetMapping("/user-id/{keycloakId}")
+    public ResponseEntity<Long> getUserIdFromKeycloakId(@PathVariable String keycloakId) {
+        Long userId = chatService.getUserIdByKeycloakId(keycloakId);
+        return ResponseEntity.ok(userId);
+    }
+
 }

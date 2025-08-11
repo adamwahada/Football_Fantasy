@@ -1,0 +1,113 @@
+<div class="chat-room" *ngIf="room">
+    <div class="room-header">
+        <div class="avatar">
+            <img *ngIf="room?.avatar" [src]="room?.avatar" />
+            <div *ngIf="!room?.avatar" class="avatar-fallback">{{ room?.name?.[0] || '?' }}</div>
+        </div>
+        <div class="room-title">
+            <h3>{{ room?.name }}</h3>
+            <span *ngIf="room?.type === 'GROUP'">Groupe</span>
+            <span *ngIf="room?.description">{{ room?.description }}</span>
+        </div>
+        <div class="participants">
+            <span *ngFor="let p of participants">{{ p.fullName }}</span>
+        </div>
+    </div>
+
+    <div class="messages-container" #messagesContainer>
+        <ng-container *ngFor="let msg of messages">
+            <div class="message-row"
+                 [ngClass]="{'mine': isMine(msg), 'other': !isMine(msg)}"
+                 (click)="closeActionsMenu()">
+                <div class="bubble"
+                     (mouseenter)="actionsMenuOpened = msg.id"
+                     (mouseleave)="actionsMenuOpened = null">
+                    <!-- Menu actions (apparait au hover ou clic sur 3points) -->
+                    <div class="msg-actions" *ngIf="actionsMenuOpened === msg.id">
+                        <button *ngIf="isMine(msg)" (click)="startEditMessage(msg); $event.stopPropagation()" title="Modifier">
+                            ✏️ Modifier
+                        </button>
+                        <button *ngIf="isMine(msg)" (click)="deleteMessage(msg); $event.stopPropagation()" title="Supprimer">
+                            🗑️ Supprimer
+                        </button>
+                        <button (click)="replyToMessage(msg); $event.stopPropagation()" title="Répondre">
+                            ↩️ Répondre
+                        </button>
+                    </div>
+                    <!-- 3 points toujours visibles au hover (menu rapide) -->
+                    <span class="actions-trigger" (click)="openActionsMenu(msg.id, $event)">&#x22EE;</span>
+
+                    <div class="meta">
+                        <span *ngIf="room?.type === 'GROUP' && !isMine(msg)" class="sender">
+                            {{ msg.senderName }}
+                        </span>
+                        <span class="time">{{ msg.timestamp | date:'shortTime' }}</span>
+                        <span *ngIf="msg.isEdited" class="edited">(modifié)</span>
+                    </div>
+
+                    <!-- === DEBUG TEMPORAIRE === -->
+                    <div style="font-size:10px; color:#999;">
+                        senderId: {{ msg.senderId }} | currentUserId: {{ currentUserId }} | isMine: {{ isMine(msg) }}
+                    </div>
+                    <!-- ======================= -->
+
+                    <!-- Modification inline -->
+                    <form *ngIf="editingMsgId === msg.id" (ngSubmit)="confirmEditMessage(msg)" class="edit-form">
+                        <input [(ngModel)]="editedContent" name="editContent{{msg.id}}" required autocomplete="off" (keydown.escape)="cancelEditMessage()" />
+                        <button type="submit" title="Valider">✔️</button>
+                        <button type="button" (click)="cancelEditMessage()" title="Annuler">❌</button>
+                    </form>
+
+                    <!-- Contenu du message (texte ou fichier) -->
+                    <div *ngIf="msg.type === 'TEXT' && editingMsgId !== msg.id" class="content">{{ msg.content }}</div>
+
+                    <!-- Affichage des fichiers/images -->
+                    <div *ngIf="msg.type === 'FILE' && editingMsgId !== msg.id" class="file-container">
+                        <img *ngIf="isImage(msg.content)" [src]="getFileUrl(msg)" class="file-preview">
+                        <div *ngIf="!isImage(msg.content)" class="file-download">
+                            <svg><!-- icône de fichier --></svg>
+                            <span>Télécharger le fichier</span>
+                        </div>
+                    </div>
+
+                    <div *ngIf="msg.replyToId" class="reply-ref">
+                        ↩ réponse à {{ getReplyContent(msg.replyToId) }}
+                    </div>
+                </div>
+            </div>
+        </ng-container>
+    </div>
+
+    <div class="reply-bar" *ngIf="replyToMsg">
+        <span>Réponse à <b>{{ replyToMsg?.senderName }}</b>: "{{ replyToMsg?.content }}..."</span>
+        <button (click)="cancelReply()">Annuler</button>
+    </div>
+
+    <div class="input-area">
+        <div class="input-bar">
+            <input
+                    type="text"
+                    placeholder="Votre message..."
+                    [(ngModel)]="messageContent"
+                    (keyup.enter)="sendMessage()"
+            />
+            <label class="file-upload">
+                <input type="file" (change)="onFileSelected($event)" />
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                    <polyline points="17 8 12 3 7 8"></polyline>
+                    <line x1="12" y1="3" x2="12" y2="15"></line>
+                </svg>
+            </label>
+            <button (click)="sendMessage()" [disabled]="(!messageContent.trim() && !fileToSend)">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <line x1="22" y1="2" x2="11" y2="13"></line>
+                    <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+                </svg>
+            </button>
+        </div>
+    </div>
+</div>
+<div *ngIf="!room" class="empty-state">
+    <h2>Sélectionnez une discussion</h2>
+</div>
