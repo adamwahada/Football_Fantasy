@@ -1,54 +1,79 @@
-<div class="modal-backdrop" (click)="closeModal()"></div>
+<div class="modal-backdrop" (click)="onBackdropClick($event)">
+  <div class="modal" (click)="onModalContentClick($event)">
+    <!-- Close Button -->
+    <button class="close-icon" aria-label="Close modal" (click)="closeModal()">
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        width="20"
+        height="20"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2.5"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        aria-hidden="true"
+      >
+        <line x1="18" y1="6" x2="6" y2="18" />
+        <line x1="6" y1="6" x2="18" y2="18" />
+      </svg>
+    </button>
 
-<div class="modal">
-  <button class="close-icon" aria-label="Close modal" (click)="closeModal()">
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-      width="20"
-      height="20"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      stroke-width="2.5"
-      stroke-linecap="round"
-      stroke-linejoin="round"
-      aria-hidden="true"
-    >
-      <line x1="18" y1="6" x2="6" y2="18" />
-      <line x1="6" y1="6" x2="18" y2="18" />
-    </svg>
-  </button>
+    <!-- Modal Header -->
+    <div class="modal-header">
+      <img 
+        *ngIf="getLeagueIconUrl(competition)"
+        [src]="getLeagueIconUrl(competition)" 
+        [alt]="formatCompetitionName(competition) + ' logo'"
+        class="league-icon"
+        (error)="handleImageError($event)"
+      />
+      <h2>{{ formatCompetitionName(competition) }}</h2>
+    </div>
 
-  <div class="modal-header">
-    <img 
-      *ngIf="getLeagueIconUrl(competition)"
-      [src]="getLeagueIconUrl(competition)" 
-      [alt]="formatCompetitionName(competition) + ' logo'"
-      class="league-icon"
-      (error)="handleImageError($event)"
-    />
-    <h2>{{ formatCompetitionName(competition) }}</h2>
-  </div>
+    <!-- Modal Content -->
+    <div class="modal-content">
+      <!-- Loading State -->
+      <div *ngIf="loading" class="loading">
+        Loading gameweeks...
+      </div>
+      
+      <!-- Error State -->
+      <div *ngIf="error" class="error">
+        {{ error }}
+      </div>
 
-  <div class="modal-content">
-    <div *ngIf="loading" class="loading">Loading gameweeks...</div>
-    
-    <div *ngIf="error" class="error">{{ error }}</div>
-
-    <div class="gameweek-cards" *ngIf="!loading && !error">
-<button
-  *ngFor="let gw of gameweeks; let i = index"
-  class="gameweek-card"
-  [class.featured]="isCurrentGameweek(gw.weekNumber)"
-  [class.upcoming]="getGameweekStatus(gw) === 'UPCOMING'"
-  [class.ongoing]="getGameweekStatus(gw) === 'ONGOING'"
-  [class.finished]="getGameweekStatus(gw) === 'FINISHED'"
-  (click)="openGameweekMatches(gw.weekNumber)"
-  [attr.aria-label]="'Open matches for gameweek ' + gw.weekNumber"
->
-  GW{{ gw.weekNumber }}
-</button>
-
+      <!-- Gameweek Cards -->
+      <div class="gameweek-cards" *ngIf="!loading && !error">
+        <button
+          *ngFor="let gw of gameweeks; let i = index"
+          class="gameweek-card"
+          [class.featured]="isCurrentGameweek(gw.weekNumber)"
+          [class.next-upcoming]="isNextUpcomingGameweek(gw)"
+          [class.ongoing]="getGameweekStatus(gw) === 'ONGOING'"
+          [class.finished]="getGameweekStatus(gw) === 'FINISHED'"
+          [class.upcoming]="getGameweekStatus(gw) === 'UPCOMING' && !isNextUpcomingGameweek(gw)"
+          (click)="openGameweekMatches(gw.weekNumber)"
+          [attr.aria-label]="'Open matches for gameweek ' + gw.weekNumber"
+        >
+          <!-- Status Icon -->
+          <div class="status-icon">
+            <span *ngIf="isNextUpcomingGameweek(gw)" class="fire-icon">🔥</span>
+            <span *ngIf="getGameweekStatus(gw) === 'ONGOING'" class="play-icon">▶️</span>
+            <span *ngIf="getGameweekStatus(gw) === 'FINISHED'" class="check-icon">✅</span>
+            <span *ngIf="isCurrentGameweek(gw.weekNumber)" class="star-icon">⭐</span>
+            <span *ngIf="getGameweekStatus(gw) === 'UPCOMING' && !isNextUpcomingGameweek(gw)" class="calendar-icon">📅</span>
+          </div>
+          
+          <!-- Gameweek Number -->
+          <div class="gw-number">GW{{ gw.weekNumber }}</div>
+          
+          <!-- Status Text -->
+          <div class="status-text">
+            {{ getGameweekDisplayStatus(gw) }}
+          </div>
+        </button>
+      </div>
     </div>
   </div>
 </div>

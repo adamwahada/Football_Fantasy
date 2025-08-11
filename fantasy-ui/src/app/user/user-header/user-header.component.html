@@ -1,0 +1,20 @@
+<div class="user-header">
+  <div class="header-content">
+    <!-- Application Name -->
+    <div class="app-title">
+      <h1>Fantasy Football</h1>
+    </div>
+    
+    <!-- Logout Button -->
+    <div class="header-actions">
+      <button 
+        class="logout-btn" 
+        (click)="logout()"
+        title="Logout"
+        *ngIf="isLoggedIn()">
+        <span class="logout-icon">🚪</span>
+        <span class="logout-text">Logout</span>
+      </button>
+    </div>
+  </div>
+</div>

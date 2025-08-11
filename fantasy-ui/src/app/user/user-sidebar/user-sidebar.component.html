@@ -1,4 +1,7 @@
 <nav class="user-sidebar" [class.collapsed]="sidebarCollapsed">
+  <!-- Fantasy Football Header - Always visible at top of sidebar -->
+
+
   <ul>
     <li *ngFor="let route of routes; let i = index">
       <div class="menu-parent" (click)="toggle(i)">

@@ -1,7 +1,7 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { TeamService } from '../../../../match/team.service';
 import { CommonModule } from '@angular/common';
-import { Router } from '@angular/router';
+import { Router, ActivatedRoute } from '@angular/router';
 import { Subject, takeUntil, finalize } from 'rxjs';
 
 interface League {
@@ -51,7 +51,8 @@ export class UserGameweekListComponent implements OnInit, OnDestroy {
 
   constructor(
     private teamService: TeamService,
-    private router: Router
+    private router: Router,
+    private route: ActivatedRoute
   ) {}
 
   ngOnInit(): void {
@@ -108,8 +109,14 @@ export class UserGameweekListComponent implements OnInit, OnDestroy {
       return;
     }
 
+    console.log('🔍 onLeagueClick called with:', competitionCode);
+    console.log('🔍 Current route:', this.router.url);
+    
     try {
-      this.router.navigate(['user/user-gameweek-list', competitionCode]);
+      // Navigate to gameweek details using relative navigation
+      const targetRoute = [competitionCode];
+      console.log('🔍 Navigating to:', targetRoute);
+      this.router.navigate(targetRoute, { relativeTo: this.route });
     } catch (error) {
       console.error('Navigation failed:', error);
     }

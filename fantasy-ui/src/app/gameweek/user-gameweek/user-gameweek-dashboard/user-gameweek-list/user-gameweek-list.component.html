@@ -36,5 +36,117 @@
         </div>
       </button>
     </div>
+    <div *ngIf="!loading && !error" class="leagues-grid">
+      <button
+        *ngFor="let league of leagues; trackBy: trackByLeague"
+        class="league-card"
+        tabindex="0"
+        [attr.aria-label]="'View details for ' + league.label"
+        type="button"
+        (click)="onLeagueClick(league.value)"
+      >
+        <div class="league-icon-container">
+          <img 
+            [src]="league.iconUrl" 
+            [alt]="league.label + ' icon'" 
+            class="league-icon"
+            (error)="onImageError($event)"
+          />
+        </div>
+        <div class="league-info">
+          <span class="league-name">{{ league.label }}</span>
+          <span class="league-subtitle">{{ getLeagueSubtitle(league.value) }}</span>
+        </div>
+        <div class="league-arrow">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+            <path d="M9 18L15 12L9 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </div>
+      </button>
+    </div>
+    <div *ngIf="!loading && !error" class="leagues-grid">
+      <button
+        *ngFor="let league of leagues; trackBy: trackByLeague"
+        class="league-card"
+        tabindex="0"
+        [attr.aria-label]="'View details for ' + league.label"
+        type="button"
+        (click)="onLeagueClick(league.value)"
+      >
+        <div class="league-icon-container">
+          <img 
+            [src]="league.iconUrl" 
+            [alt]="league.label + ' icon'" 
+            class="league-icon"
+            (error)="onImageError($event)"
+          />
+        </div>
+        <div class="league-info">
+          <span class="league-name">{{ league.label }}</span>
+          <span class="league-subtitle">{{ getLeagueSubtitle(league.value) }}</span>
+        </div>
+        <div class="league-arrow">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+            <path d="M9 18L15 12L9 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </div>
+      </button>
+    </div>
+    <div *ngIf="!loading && !error" class="leagues-grid">
+      <button
+        *ngFor="let league of leagues; trackBy: trackByLeague"
+        class="league-card"
+        tabindex="0"
+        [attr.aria-label]="'View details for ' + league.label"
+        type="button"
+        (click)="onLeagueClick(league.value)"
+      >
+        <div class="league-icon-container">
+          <img 
+            [src]="league.iconUrl" 
+            [alt]="league.label + ' icon'" 
+            class="league-icon"
+            (error)="onImageError($event)"
+          />
+        </div>
+        <div class="league-info">
+          <span class="league-name">{{ league.label }}</span>
+          <span class="league-subtitle">{{ getLeagueSubtitle(league.value) }}</span>
+        </div>
+        <div class="league-arrow">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+            <path d="M9 18L15 12L9 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </div>
+      </button>
+    </div>
+    <div *ngIf="!loading && !error" class="leagues-grid">
+      <button
+        *ngFor="let league of leagues; trackBy: trackByLeague"
+        class="league-card"
+        tabindex="0"
+        [attr.aria-label]="'View details for ' + league.label"
+        type="button"
+        (click)="onLeagueClick(league.value)"
+      >
+        <div class="league-icon-container">
+          <img 
+            [src]="league.iconUrl" 
+            [alt]="league.label + ' icon'" 
+            class="league-icon"
+            (error)="onImageError($event)"
+          />
+        </div>
+        <div class="league-info">
+          <span class="league-name">{{ league.label }}</span>
+          <span class="league-subtitle">{{ getLeagueSubtitle(league.value) }}</span>
+        </div>
+        <div class="league-arrow">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+            <path d="M9 18L15 12L9 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </div>
+      </button>
+    </div>
   </div>
 </div>

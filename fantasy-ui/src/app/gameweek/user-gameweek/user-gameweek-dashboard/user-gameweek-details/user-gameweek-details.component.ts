@@ -1,11 +1,9 @@
 import { Component, OnInit, OnDestroy, HostListener } from '@angular/core';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { GameweekService, Gameweek } from '../../../gameweek.service';
 import { TeamService } from '../../../../match/team.service';
 import { CommonModule } from '@angular/common';
-import { Router } from '@angular/router';
-import { Subject } from 'rxjs';
-import { takeUntil } from 'rxjs/operators';
+import { Subject, takeUntil } from 'rxjs';
 
 export type LeagueTheme =
   | 'PREMIER_LEAGUE'
@@ -40,6 +38,7 @@ export class UserGameweekDetailsComponent implements OnInit, OnDestroy {
   currentGameweek: number | null = null;
   
   private destroy$ = new Subject<void>();
+  // Remove the modalClassAdded tracking as we'll handle this differently
 
   // League configuration mapping
   private leagueConfigs: Record<LeagueTheme, LeagueConfig> = {
@@ -98,50 +97,59 @@ export class UserGameweekDetailsComponent implements OnInit, OnDestroy {
   ) {}
 
   ngOnInit(): void {
-    // Load league icons first
-    this.loadLeagueIcons();
-    
-    // Add modal-open class to body when component initializes (since this is a modal component)
-    document.body.classList.add('modal-open');
-    
-    // Subscribe to route changes
-    this.route.paramMap
+    // Get competition from route params
+    this.route.params
       .pipe(takeUntil(this.destroy$))
       .subscribe(params => {
-        this.competition = params.get('competition') || '';
-        if (this.competition) {
-          this.loadGameweeks(this.competition);
-        }
+        this.competition = params['competition'];
+        this.loadLeagueIcons();
+        this.loadGameweeks(this.competition);
+        this.determineCurrentGameweek();
       });
+
+    // Add escape key listener
+    document.addEventListener('keydown', this.onEscapeKey.bind(this));
+    
+    // Prevent body scrolling when modal is open
+    document.body.style.overflow = 'hidden';
   }
 
   ngOnDestroy(): void {
-    // Remove modal-open class when component is destroyed
-    document.body.classList.remove('modal-open');
-    
     this.destroy$.next();
     this.destroy$.complete();
+    
+    // Clean up event listeners
+    document.removeEventListener('keydown', this.onEscapeKey.bind(this));
+    
+    // Restore body scrolling when modal is closed
+    document.body.style.overflow = '';
   }
+
+  // Modal class management removed - no longer needed
 
   /**
    * Handle escape key to close modal
    */
-  @HostListener('document:keydown.escape', ['$event'])
+  @HostListener('document:keydown.escape')
   onEscapeKey(event: KeyboardEvent): void {
-    this.closeModal();
+    if (event.key === 'Escape') {
+      this.closeModal();
+    }
   }
 
   /**
    * Prevent modal content clicks from closing the modal
    */
   onModalContentClick(event: Event): void {
+    // Prevent clicks inside modal from bubbling up
     event.stopPropagation();
   }
 
   /**
-   * Handle backdrop click - only close if clicking directly on backdrop
+   * Handle backdrop click to close modal
    */
   onBackdropClick(event: Event): void {
+    // Only close if clicking the backdrop itself
     if (event.target === event.currentTarget) {
       this.closeModal();
     }
@@ -294,6 +302,44 @@ export class UserGameweekDetailsComponent implements OnInit, OnDestroy {
   }
 
   /**
+   * Check if this is the next upcoming gameweek (only the immediate next one)
+   */
+  isNextUpcomingGameweek(gameweek: Gameweek): boolean {
+    if (this.getGameweekStatus(gameweek) !== 'UPCOMING') {
+      return false;
+    }
+    
+    // Find the next upcoming gameweek by sorting and getting the first one
+    const upcomingGameweeks = this.gameweeks
+      .filter(gw => this.getGameweekStatus(gw) === 'UPCOMING')
+      .sort((a, b) => a.weekNumber - b.weekNumber);
+    
+    if (upcomingGameweeks.length === 0) {
+      return false;
+    }
+    
+    // Return true only for the first upcoming gameweek
+    return gameweek.weekNumber === upcomingGameweeks[0].weekNumber;
+  }
+
+  /**
+   * Get the display status for a gameweek
+   */
+  getGameweekDisplayStatus(gameweek: Gameweek): string {
+    if (this.isCurrentGameweek(gameweek.weekNumber)) {
+      return 'Current';
+    } else if (this.getGameweekStatus(gameweek) === 'ONGOING') {
+      return 'Live';
+    } else if (this.getGameweekStatus(gameweek) === 'FINISHED') {
+      return 'Done';
+    } else if (this.isNextUpcomingGameweek(gameweek)) {
+      return 'Next';
+    } else {
+      return 'Upcoming';
+    }
+  }
+
+  /**
    * Get formatted date range for gameweek
    */
   getGameweekDateRange(gameweek: Gameweek): string {
@@ -315,9 +361,7 @@ export class UserGameweekDetailsComponent implements OnInit, OnDestroy {
    * Close modal and navigate back
    */
   closeModal(): void {
-    // Remove modal-open class before navigating
-    document.body.classList.remove('modal-open');
-    this.router.navigate(['user/user-gameweek-list']);
+    this.router.navigate(['../'], { relativeTo: this.route });
   }
 
   /**
@@ -327,9 +371,7 @@ export class UserGameweekDetailsComponent implements OnInit, OnDestroy {
     // Add loading state to clicked gameweek
     const gameweek = this.gameweeks.find(gw => gw.weekNumber === weekNumber);
     if (gameweek) {
-      // Remove modal-open class before navigating
-      document.body.classList.remove('modal-open');
-      this.router.navigate(['user/gameweek-matches', this.competition, weekNumber]);
+      this.router.navigate(['../gameweek-matches', this.competition, weekNumber], { relativeTo: this.route });
     }
   }
 

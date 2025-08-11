@@ -70,16 +70,16 @@
     },
     {
       "path": "",
-      "title": "User Menu",
+      "title": "Competitions",
       "iconType": "material-icons-outlined",
-      "icon": "person",
+      "icon": "sports_soccer",
       "class": "menu-toggle",
       "groupTitle": false,
       "role": ["USER", "ADMIN"],
       "submenu": [
         {
           "path": "/user/user-gameweek-list",
-          "title": "Mes Gameweeks",
+          "title": "Gameweeks",
           "class": "ml-menu",
           "role": ["USER", "ADMIN"],
           "submenu": []
