@@ -14,6 +14,7 @@ $transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 .gameweek-list-container {
   min-height: calc(100vh - 200px); // Adjust based on header height
   position: relative;
+  padding-top: 48px;
   
   &::before {
     content: '';

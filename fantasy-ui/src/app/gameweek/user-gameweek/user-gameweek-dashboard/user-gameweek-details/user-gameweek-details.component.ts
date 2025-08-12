@@ -9,7 +9,7 @@ export type LeagueTheme =
   | 'PREMIER_LEAGUE'
   | 'SERIE_A'
   | 'CHAMPIONS_LEAGUE'
-  | 'EUROPE_LEAGUE'
+  | 'EUROPA_LEAGUE'
   | 'BUNDESLIGA'
   | 'LA_LIGA'
   | 'LIGUE_ONE'
@@ -72,7 +72,7 @@ export class UserGameweekDetailsComponent implements OnInit, OnDestroy {
       iconKey: 'Champions League',
       theme: 'champions-league'
     },
-    'EUROPE_LEAGUE': { 
+    'EUROPA_LEAGUE': { 
       displayName: 'Europa League', 
       iconKey: 'Europa League',
       theme: 'europa-league'
@@ -288,10 +288,13 @@ export class UserGameweekDetailsComponent implements OnInit, OnDestroy {
    * Get gameweek status for display
    */
   getGameweekStatus(gameweek: Gameweek): 'ONGOING' | 'FINISHED' | 'UPCOMING' | 'CANCELLED' {
+    // If backend marks as FINISHED, always treat as finished
+    if (gameweek.status && gameweek.status.toUpperCase() === 'FINISHED') {
+      return 'FINISHED';
+    }
     const now = new Date();
     const startDate = new Date(gameweek.startDate);
     const endDate = new Date(gameweek.endDate);
-
     if (now >= startDate && now <= endDate) {
       return 'ONGOING';
     } else if (now > endDate) {
@@ -330,7 +333,10 @@ export class UserGameweekDetailsComponent implements OnInit, OnDestroy {
       return 'Current';
     } else if (this.getGameweekStatus(gameweek) === 'ONGOING') {
       return 'Live';
-    } else if (this.getGameweekStatus(gameweek) === 'FINISHED') {
+    } else if (
+      this.getGameweekStatus(gameweek) === 'FINISHED' ||
+      (gameweek.status && gameweek.status.toUpperCase() === 'FINISHED')
+    ) {
       return 'Done';
     } else if (this.isNextUpcomingGameweek(gameweek)) {
       return 'Next';
@@ -371,8 +377,7 @@ export class UserGameweekDetailsComponent implements OnInit, OnDestroy {
     // Add loading state to clicked gameweek
     const gameweek = this.gameweeks.find(gw => gw.weekNumber === weekNumber);
     if (gameweek) {
-      this.router.navigate(['../gameweek-matches', this.competition, weekNumber], { relativeTo: this.route });
-    }
+      this.router.navigate(['../', this.competition, weekNumber], { relativeTo: this.route });    }
   }
 
   /**
