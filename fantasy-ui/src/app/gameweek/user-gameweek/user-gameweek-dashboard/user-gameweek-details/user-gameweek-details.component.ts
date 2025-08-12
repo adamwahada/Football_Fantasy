@@ -36,7 +36,9 @@ export class UserGameweekDetailsComponent implements OnInit, OnDestroy {
   error = '';
   leagueIcons: { [key: string]: string } = {};
   currentGameweek: number | null = null;
-  
+  hoveredGameweekNumber: number | null = null;
+
+
   private destroy$ = new Subject<void>();
   // Remove the modalClassAdded tracking as we'll handle this differently
 
@@ -303,6 +305,10 @@ export class UserGameweekDetailsComponent implements OnInit, OnDestroy {
       return 'UPCOMING';
     }
   }
+  isLockedGameweek(weekNumber: number): boolean {
+  if (this.currentGameweek === null) return false;
+  return weekNumber > this.currentGameweek + 2;
+}
 
   /**
    * Check if this is the next upcoming gameweek (only the immediate next one)
@@ -431,4 +437,38 @@ export class UserGameweekDetailsComponent implements OnInit, OnDestroy {
   getUpcomingCount(): number {
     return this.gameweeks.filter(gw => this.isUpcomingGameweek(gw)).length;
   }
+  getHoursUntilDeadline(gameweek: Gameweek): number | null {
+  const now = new Date();
+  const endDate = new Date(gameweek.endDate);
+  const diffMs = endDate.getTime() - now.getTime();
+
+  if (diffMs > 0) {
+    return Math.floor(diffMs / (1000 * 60 * 60)); // convert ms to full hours left
+  }
+  return null; // deadline passed
+}
+showDeadlineMessage(gameweek: Gameweek): void {
+  if (this.isNextUpcomingGameweek(gameweek)) {
+    this.hoveredGameweekNumber = gameweek.weekNumber;
+  } else {
+    this.hoveredGameweekNumber = null;
+  }
+}
+
+hideDeadlineMessage(): void {
+  this.hoveredGameweekNumber = null;
+}
+
+getDeadlineMessage(gameweek: Gameweek): string | null {
+  if (this.hoveredGameweekNumber === gameweek.weekNumber) {
+    const hoursLeft = this.getHoursUntilDeadline(gameweek);
+    if (hoursLeft !== null) {
+      return `Deadline in ${hoursLeft} hour${hoursLeft !== 1 ? 's' : ''}`;
+    } else {
+      return 'Deadline has passed';
+    }
+  }
+  return null;
+}
+
 }

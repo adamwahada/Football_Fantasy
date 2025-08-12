@@ -3,71 +3,83 @@
     <div class="min-h-screen bg-gradient-to-b from-green-900/95 via-gray-900 to-black p-7 pt-20 text-green-50">
       <div class="max-w-6xl mx-auto">
         
-        <!-- Header -->
-        <header class="relative flex items-center gap-4 mb-5 pt-6">
-          <!-- Centered Title + Subtitle -->
-          <div class="absolute left-1/2 top-0 transform -translate-x-1/2 text-center">
-            <h1 class="text-xl font-semibold tracking-wide m-0">
-              Gameweek - {{ selectedCompetition }} (Week {{ selectedWeekNumber }})
+        <header class="flex justify-between items-center mb-5 pt-6">
+        <!-- Left side: icon + league name + gameweek inline -->
+        <div class="flex items-center gap-3 flex-1">
+            <img *ngIf="leagueIconUrl" [src]="leagueIconUrl" [alt]="leagueDisplayName" class="h-8 w-8 object-contain" />
+            <h1 class="league-title">
+            {{ leagueDisplayName }} - {{ selectedWeekNumber }}
             </h1>
-            <p class="text-sm text-white/30 mt-1 mb-0">
-              Click on teams to predict winners or draw. Tiebreak matches require exact score predictions.
-            </p>
-          </div>
-
-          <!-- Buttons on the right -->
-          <div class="ml-auto flex gap-2">
-            <button
-              onclick="cancelPredictions()"
-              class="bg-transparent border border-red-500/30 px-3 py-2 rounded-lg text-red-400 hover:text-red-300 hover:border-red-500/50 transition-colors">
-              Cancel
-            </button>
-            <button
-              (click)="resetPredictions()"
-              class="bg-transparent border border-white/6 px-3 py-2 rounded-lg text-white/30 hover:text-white/50 transition-colors">
-              Reset
-            </button>
-            <button
-              (click)="submitPredictions()"
-              class="bg-gradient-to-r from-green-500/12 to-green-500/6 border border-green-500/30 px-3 py-2 rounded-lg text-green-400 hover:text-green-300 transition-colors">
-              Submit Picks
-            </button>
-          </div>
+        </div>
         </header>
+
+        <!-- Subtitle and deadline below -->
+        <div class="text-center mt-1 mb-0">
+                    <p *ngIf="deadlineCountdown" class="text-xs text-yellow-300 mt-1 mb-0">
+            Deadline: <span>{{ deadlineCountdown }}</span>
+        </p>
+        <p class="text-sm text-white/30">
+            Click on teams to predict winners or draw. Tiebreak matches require exact score predictions.
+        </p>
+
+        </div>
 
         <!-- Matches Grid -->
         <main>
           <section>
-            <article *ngFor="let match of matches" class="match-card">
+            <article *ngFor="let match of matches" class="match-card" [class.tiebreaker]="match.isTiebreak">
               <!-- Tiebreak badge -->
-              <span *ngIf="match.isTiebreak" class="tiebreak-badge">Tie-break</span>
-
-              <!-- Home Team -->
-              <div class="team home"
-                   [class.selected]="match.pick === '1'"
-                   (click)="selectPick(match, '1')">
-                <img *ngIf="match.homeIconUrl" [src]="match.homeIconUrl" [alt]="match.homeTeam" class="team-icon" />
-                <span class="team-name">{{ match.homeTeam }}</span>
+              <div *ngIf="match.isTiebreak" class="tiebreak-badge">
+                Tie-break
               </div>
 
-              <!-- Pick Buttons -->
-              <div class="pick-buttons">
-                <button class="pick-btn draw-btn" [class.selected]="match.pick === 'X'" (click)="selectPick(match, 'X')">X</button>
+              <!-- Main match content with three columns -->
+              <div class="match-content">
+                <!-- Home Team -->
+                <div class="team home" 
+                     [class.selected]="match.pick === '1'"
+                     (click)="selectPick(match, '1')">
+                  <img *ngIf="match.homeIconUrl" 
+                       [src]="match.homeIconUrl" 
+                       [alt]="match.homeTeam" 
+                       class="team-icon" />
+                  <span class="team-name">{{ match.homeTeam }}</span>
+                </div>
+
+                <!-- Draw Button -->
+                <div class="pick-buttons">
+                  <button class="pick-btn draw-btn" 
+                          [class.selected]="match.pick === 'X'" 
+                          (click)="selectPick(match, 'X')">
+                    X
+                  </button>
+                </div>
+
+                <!-- Away Team -->
+                <div class="team away" 
+                     [class.selected]="match.pick === '2'"
+                     (click)="selectPick(match, '2')">
+                  <img *ngIf="match.awayIconUrl" 
+                       [src]="match.awayIconUrl" 
+                       [alt]="match.awayTeam" 
+                       class="team-icon" />
+                  <span class="team-name">{{ match.awayTeam }}</span>
+                </div>
               </div>
 
-              <!-- Away Team -->
-              <div class="team away"
-                   [class.selected]="match.pick === '2'"
-                   (click)="selectPick(match, '2')">
-                <img *ngIf="match.awayIconUrl" [src]="match.awayIconUrl" [alt]="match.awayTeam" class="team-icon" />
-                <span class="team-name">{{ match.awayTeam }}</span>
-              </div>
-
-              <!-- Tiebreaker Controls -->
-              <div *ngIf="match.isTiebreak" class="tiebreak-controls" style="margin-left:1.5rem;display:flex;align-items:center;gap:0.5rem;">
-                <input type="number" min="0" [(ngModel)]="match.scoreHome" class="score-input" placeholder="0" />
+              <!-- Tiebreaker Controls at Bottom -->
+              <div *ngIf="match.isTiebreak" class="tiebreak-controls">
+                <input type="number" 
+                       min="0" 
+                       [(ngModel)]="match.scoreHome" 
+                       class="score-input" 
+                       placeholder="0" />
                 <span class="vs">-</span>
-                <input type="number" min="0" [(ngModel)]="match.scoreAway" class="score-input" placeholder="0" />
+                <input type="number" 
+                       min="0" 
+                       [(ngModel)]="match.scoreAway" 
+                       class="score-input" 
+                       placeholder="0" />
               </div>
             </article>
           </section>
@@ -75,8 +87,21 @@
 
         <!-- Footer -->
         <footer class="flex justify-between items-center mt-5 text-white/30 text-sm">
-          <div>Matches: <strong class="text-white">{{ matches.length }}</strong></div>
-          <div>{{ tiebreakCount }} Tie-breaks</div>
+            <div class="submit-btn-container">
+                <button
+                (click)="submitPredictions()"
+                class="action-btn submit-btn">
+                Confirm
+                </button>
+                <button
+                (click)="cancelPredictions()"
+                class="action-btn cancel-btn">
+                Cancel
+                </button>
+                <button (click)="resetPredictions()" class="action-btn reset-btn">
+                    Reset
+                </button>
+            </div>
         </footer>
 
       </div>

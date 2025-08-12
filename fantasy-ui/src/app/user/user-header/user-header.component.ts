@@ -1,6 +1,7 @@
 import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { AuthService } from '../../core/services/auth.service';
+import { Router } from '@angular/router';
 
 @Component({
   selector: 'app-user-header',
@@ -10,7 +11,7 @@ import { AuthService } from '../../core/services/auth.service';
   styleUrls: ['./user-header.component.scss']
 })
 export class UserHeaderComponent {
-  constructor(private authService: AuthService) {}
+  constructor(private authService: AuthService, private router: Router) {}
 
   logout() {
     this.authService.logout();
@@ -18,5 +19,9 @@ export class UserHeaderComponent {
 
   isLoggedIn(): boolean {
     return this.authService.isLoggedIn();
+  }
+
+  navigateToGameweekList() {
+    this.router.navigate(['/user/user-gameweek-list']);
   }
 }

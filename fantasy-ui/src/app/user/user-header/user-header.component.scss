@@ -31,15 +31,52 @@
     font-size: 2rem;
     font-weight: 800;
     margin: 0;
+    padding: 0.15em 0.5em 0.15em 0.1em; /* less left padding */
     background: linear-gradient(135deg, #0dfd86 0%, #00b4d8 100%);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
+    /* Remove background-color and box-shadow for text-only effect */
     text-shadow: 0 0 30px rgba(13, 253, 134, 0.5);
     letter-spacing: -0.02em;
-    
-    /* Glow effect */
     filter: drop-shadow(0 0 20px rgba(13, 253, 134, 0.3));
+    transition:
+      text-shadow 0.18s cubic-bezier(0.4,0,0.2,1),
+      filter 0.18s cubic-bezier(0.4,0,0.2,1),
+      transform 0.18s cubic-bezier(0.4,0,0.2,1);
+    cursor: pointer;
+    position: relative;
+    left: -0.5rem; /* move slightly to the left */
+  }
+
+  h1:hover, h1:focus {
+    /* Only enhance text shadow and filter, no box-shadow or background */
+    text-shadow:
+      0 4px 32px #0dfd86cc,
+      0 2px 0 #00b4d8,
+      0 0 40px #0dfd8680;
+    filter: brightness(1.09) saturate(1.22);
+    transform: translateY(-2px) scale(1.03);
+  }
+
+  .app-title-btn {
+    background: none;
+    border: none;
+    padding: 0;
+    margin: 0;
+    cursor: pointer;
+    display: inline-block;
+    outline: none;
+  }
+  .app-title-btn:focus h1,
+  .app-title-btn:hover h1 {
+    /* Keep hover/focus effect on h1 */
+    text-shadow:
+      0 4px 32px #0dfd86cc,
+      0 2px 0 #00b4d8,
+      0 0 40px #0dfd8680;
+    filter: brightness(1.09) saturate(1.22);
+    transform: translateY(-2px) scale(1.03);
   }
 }
 

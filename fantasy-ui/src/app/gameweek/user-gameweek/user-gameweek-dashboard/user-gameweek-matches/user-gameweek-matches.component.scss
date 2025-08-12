@@ -1,28 +1,56 @@
 .gameweek-list-container {
   width: 100%;
-  max-width: 1200px; /* or whatever max width fits your design */
+  max-width: 1200px;
   margin: 0 auto;
   padding: 0 0.75rem; 
   padding-top: 25px; 
 }
 
 .content-wrapper {
-  padding: 2rem 0; /* vertical spacing */
+  padding: 2rem 0;
 }
-.match-card {
+header {
   display: flex;
+  justify-content: center; /* centers children horizontally */
+  align-items: center;     /* centers children vertically */
+  margin-bottom: 1.25rem;  /* mb-5 = 20px approx */
+  padding-top: 1.5rem;     /* pt-6 = 24px approx */
+}
+
+/* The child div with icon + name */
+header > div {
+  display: flex;
+  align-items: center;     /* vertical alignment for icon and text */
+  gap: 0.75rem;            /* same as gap-3 = 12px */
+}
+.league-title {
+  font-size: 3rem;
+  font-weight: 700;
+  margin: 0;
+  display: inline-flex;
   align-items: center;
-  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+
+.match-card {
   background: linear-gradient(135deg, rgba(13,253,134,0.10) 0%, rgba(0,180,216,0.08) 100%);
   border-radius: 18px;
   box-shadow: 0 4px 24px rgba(0,0,0,0.18), 0 1.5px 0 rgba(13,253,134,0.08);
   border: 1.5px solid rgba(13,253,134,0.13);
-  padding: 1.2rem 1.5rem;
+  padding: 1.5rem;
   margin-bottom: 1.2rem;
   transition: box-shadow 0.2s, border 0.2s, transform 0.18s;
   position: relative;
-  min-height: 90px;
+  min-height: 110px; /* Increased height for tiebreaker matches */
   overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.match-card.tiebreaker {
+  min-height: 140px; /* Extra height for tiebreaker matches */
 }
 
 .match-card:hover {
@@ -31,26 +59,39 @@
   transform: translateY(-2px) scale(1.01);
 }
 
+/* Main content area with three columns - X button smaller */
+.match-content {
+  display: grid;
+  grid-template-columns: 1fr 80px 1fr; /* Home team, X button (smaller), Away team */
+  gap: 0.75rem; /* Increased gap for better separation */
+  align-items: center; // ensures all grid items (including .team) are vertically centered
+  width: 100%;
+  padding: 0 0.5rem; /* Add horizontal padding to prevent overflow */
+}
+
 .team {
   display: flex;
-  align-items: center;
+  align-items: center; // ensures content inside .team is vertically centered
+  justify-content: center;
   gap: 0.7rem;
-  min-width: 0;
-  padding: 0.8rem 1rem;
+  padding: 0.8rem 0.6rem; /* Reduced horizontal padding */
   border-radius: 12px;
   cursor: pointer;
   transition: all 0.2s;
   border: 2px solid transparent;
+  background: transparent; /* Transparent by default */
+  min-height: 60px;
+  width: 100%; /* Full width of grid column */
+  overflow: hidden; /* Prevent content overflow */
+  box-sizing: border-box; /* Include borders in width calculation */
 }
 
 .team.home {
-  flex-direction: row;
-  justify-content: flex-start;
+  justify-content: center; /* Center content */
 }
 
 .team.away {
-  flex-direction: row-reverse;
-  justify-content: flex-end;
+  justify-content: center; /* Center content */
 }
 
 .team:hover {
@@ -70,9 +111,10 @@
   height: 44px;
   border-radius: 12px;
   object-fit: contain;
-  box-shadow: 0 2px 8px rgba(13,253,134,0.10);
+  box-shadow: 0 2px 8px rgba(25, 202, 113, 0.1);
   border: 1.5px solid rgba(13,253,134,0.10);
   transition: box-shadow 0.2s;
+  flex-shrink: 0; /* Prevent icon from shrinking */
 }
 
 .team-name {
@@ -80,55 +122,36 @@
   font-weight: 600;
   color: #fff;
   text-shadow: 0 1px 2px rgba(0,0,0,0.13);
+  text-align: center;
+  overflow: hidden;
+  text-overflow: ellipsis;
   white-space: nowrap;
 }
 
-.vs {
-  font-size: 1.2rem;
-  font-weight: 700;
-  color: #0dfd86;
-  margin: 0 1.2rem;
-  letter-spacing: 0.04em;
-  text-shadow: 0 1px 2px rgba(0,0,0,0.10);
-}
-
-// Tiebreak badge
-.tiebreak-badge {
-  position: absolute;
-  top: 12px;
-  left: 50%;
-  transform: translateX(-50%);
-  background: linear-gradient(90deg, #ffd600 0%, #ff9800 100%);
-  color: #222;
-  font-size: 0.85rem;
-  font-weight: 700;
-  padding: 0.3rem 1rem;
-  border-radius: 12px;
-  box-shadow: 0 4px 12px rgba(255, 214, 0, 0.2);
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-  user-select: none;
-  z-index: 10;
-}
-
-// Pick buttons (now just for X/Draw)
+/* Draw button styling */
 .pick-buttons {
   display: flex;
+  justify-content: center;
   align-items: center;
-  gap: 0.5rem;
-}
+margin-top: 1.2rem; }
 
 .pick-btn {
-  background: #232323;
+  background: rgba(255, 255, 255, 0.05);
   color: #b0b0b0;
-  border: 1.5px solid transparent;
-  border-radius: 10px;
-  padding: 0.5rem 1.1rem;
-  font-size: 1.1rem;
-  font-weight: 600;
+  border: 2px solid transparent;
+  border-radius: 12px;
+  padding: 0.8rem 1rem; /* Reduced padding to fit better */
+  font-size: 1.4rem;
+  font-weight: 700;
   cursor: pointer;
-  transition: background 0.18s, color 0.18s, border 0.18s, box-shadow 0.18s;
+  transition: all 0.18s;
   box-shadow: 0 1px 4px rgba(13,253,134,0.07);
+  min-height: 60px;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box; /* Include borders in width calculation */
 }
 
 .pick-btn.selected {
@@ -137,78 +160,212 @@
   border-color: #0dfd86;
   box-shadow: 0 4px 15px rgba(13, 253, 134, 0.25);
 }
+
+.pick-btn:hover:not(.selected) {
+  background: rgba(13, 253, 134, 0.08);
+  color: #0dfd86;
+  border-color: #00b4d8;
+}
+
+/* Tiebreak badge */
+.tiebreak-badge {
+  position: absolute;
+  top: 5px;
+  left: 7%;
+  transform: translateX(-50%);
+  background: linear-gradient(90deg, #ffd600 0%, #ff9800 100%);
+  color: #222;
+  font-size: 0.85rem;
+  font-weight: 700;
+  padding: 0.3rem 1rem;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(255, 214, 0, 0.2);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  user-select: none;
+  z-index: 10;
+}
+
+/* Tiebreaker controls at bottom */
+.tiebreak-controls {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  margin-top: auto; /* Push to bottom of flex container */
+  padding-top: 1rem;
+  border-top: 1px solid rgba(13, 253, 134, 0.1);
+}
+
+.score-input {
+  width: 50px;
+  padding: 0.5rem;
+  border-radius: 8px;
+  border: 1.5px solid #0dfd86;
+  background: #191919;
+  color: #fff;
+  font-size: 1rem;
+  font-weight: 600;
+  text-align: center;
+  outline: none;
+  line-height: 1.2rem; /* ensures text is vertically centered */
+  overflow: hidden; /* avoid scrollbars */
+  box-sizing: border-box; /* includes padding in height */
+  transition: border 0.18s, box-shadow 0.18s;
+  /* Hide number input spinners and scrollbars for all browsers */
+  /* Chrome, Safari, Edge, Opera */
+  &::-webkit-outer-spin-button,
+  &::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+  }
+
+}
+
+
+.score-input:focus {
+  border-color: #ffd600;
+  box-shadow: 0 0 0 2px rgba(255, 214, 0, 0.2);
+}
+
+.vs {
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: #0dfd86;
+  letter-spacing: 0.04em;
+  text-shadow: 0 1px 2px rgba(0,0,0,0.10);
+}
+
+/* Interactive elements */
 .team, .pick-btn {
   cursor: pointer;
   user-select: none;
   transition: all 0.25s ease;
 }
 
-.pick-btn:hover:not(.selected) {
-  background: #232323;
-  color: #0dfd86;
-  border-color: #00b4d8;
-}
-
-// Score input for tiebreaks
-.score-input {
-  width: 38px;
-  padding: 0.3rem 0.2rem;
+/* Action button styles */
+.action-btn {
+  min-width: 90px;
+  padding: 0.55rem 1.2rem;
   border-radius: 8px;
-  border: 1.5px solid #0dfd86;
-  background: #191919;
-  color: #fff;
   font-size: 1rem;
-  text-align: center;
-  margin: 0 0.2rem;
+  font-weight: 600;
+  border: 2px solid transparent;
+  background: rgba(255,255,255,0.04);
+  color: #e0e0e0;
+  transition: 
+    background 0.18s,
+    color 0.18s,
+    border 0.18s,
+    box-shadow 0.18s;
+  box-shadow: 0 1px 4px rgba(13,253,134,0.07);
+  cursor: pointer;
   outline: none;
-  transition: border 0.18s, box-shadow 0.18s;
+  &:hover, &:focus {
+    box-shadow: 0 2px 8px rgba(13,253,134,0.13);
+  }
 }
 
-.score-input:focus {
-  border-color: #ffd600;
-  box-shadow: 0 0 0 2px #ffd60033;
+.cancel-btn {
+  border-color: #ff4d4f33;
+  color: #ff4d4f;
+  background: rgba(255,77,79,0.07);
+  &:hover, &:focus {
+    background: #ff4d4f22;
+    color: #fff;
+    border-color: #ff4d4f99;
+  }
+  margin-left: 1rem;
+    margin-right: 1rem;
+
 }
 
-// Responsive
+.reset-btn {
+  border-color: #b0b0b033;
+  color: #b0b0b0;
+  background: rgba(255,255,255,0.03);
+  &:hover, &:focus {
+    background: #b0b0b022;
+    color: #fff;
+    border-color: #b0b0b099;
+  }
+}
+.submit-btn-container {
+  display: flex;
+  justify-content: center;
+  margin-top: 1rem; /* optional spacing from above */
+}
+
+.submit-btn {
+  border-color: #0dfd8633;
+  
+  color: #0dfd86;
+  background: linear-gradient(90deg, #0dfd861a 0%, #00b4d81a 100%);
+  &:hover, &:focus {
+    background: linear-gradient(90deg, #0dfd86 0%, #00b4d8 100%);
+    color: #181818;
+    border-color: #0dfd86;
+  }
+}
+
+/* Responsive design */
 @media (max-width: 768px) {
   .match-card {
-    padding: 1rem 0.8rem;
+    padding: 1rem;
+    min-height: 120px;
+  }
+
+  .match-card.tiebreaker {
+    min-height: 160px;
+    padding: 1.8rem;
   }
 
   .match-content {
-    flex-direction: column;
-    gap: 1rem;
+    grid-template-columns: 1fr 60px 1fr;
+    gap: 0.4rem; /* Reduced gap for mobile */
+    padding: 0 0.25rem;
   }
 
   .team {
-    width: 100%;
-    justify-content: center !important;
-    flex-direction: row !important;
-    min-width: auto;
+    padding: 0.6rem 0.4rem; /* Further reduced for mobile */
+    min-height: 50px;
   }
 
-  .draw-option {
-    margin: 0;
-    width: 100%;
+  .pick-btn {
+    padding: 0.8rem 1rem;
+    font-size: 1.2rem;
+    min-height: 50px;
   }
 
-  .team-name {
-    font-size: 1rem;
-  }
-
-  .tiebreak-controls {
-    margin-top: 0.5rem;
-    padding-top: 0.5rem;
-  }
-}
-
-@media (max-width: 480px) {
   .team-name {
     font-size: 0.95rem;
   }
-  
+
   .team-icon {
     width: 36px;
     height: 36px;
   }
+}
+
+@media (max-width: 480px) {
+  .match-content {
+    grid-template-columns: 1fr 50px 1fr;
+    gap: 0.3rem; /* Minimal gap for smallest screens */
+    padding: 0 0.2rem;
+  }
+
+  .team-name {
+    font-size: 0.9rem;
+  }
+
+  .pick-btn {
+    font-size: 1rem;
+    padding: 0.6rem 0.8rem;
+  }
+
+  .team-icon {
+    width: 32px;
+    height: 32px;
+  }
+
 }
