@@ -3,11 +3,13 @@ import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, ParamMap } from '@angular/router';
-import { Subject, forkJoin } from 'rxjs';
+import { Subject, forkJoin, combineLatest, of } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
 import { GameweekService, Gameweek } from '../../../gameweek.service';
 import { MatchWithIconsDTO } from '../../../../match/match.service';
 import { TeamService, TeamIcon } from '../../../../match/team.service';
+import { SessionParticipationData, PredictionPayload, UserGameweekParticipationModalComponent } from '../user-gameweek-participation-modal/user-gameweek-participation-modal.component';
+import { SessionParticipationService } from '../../../session-participation.service';
 import { Router } from '@angular/router';
 
 type PickOption = '1' | 'X' | '2' | null;
@@ -31,8 +33,8 @@ interface LeagueConfig {
 
 interface UIMatch extends MatchWithIconsDTO {
   pick?: PickOption;
-  scoreHome?: number | null;
-  scoreAway?: number | null;
+  scoreHome: number | null; 
+  scoreAway: number | null;
   isTiebreak?: boolean;
   homeIconUrl?: string;  
   awayIconUrl?: string; 
@@ -41,14 +43,22 @@ interface UIMatch extends MatchWithIconsDTO {
 @Component({
   selector: 'app-user-gameweek-matches',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, UserGameweekParticipationModalComponent],
   templateUrl: './user-gameweek-matches.component.html',
   styleUrls: ['./user-gameweek-matches.component.scss']
 })
 export class UserGameweekMatchesComponent implements OnInit, OnDestroy {
   // route params displayed in the header/template
-  selectedCompetition = '';
+  selectedCompetition!: LeagueTheme;
   selectedWeekNumber = 0;
+
+  //prediction data
+  showParticipationModal = false;
+  preparedPredictions: PredictionPayload[] = [];
+  isSubmitting = false;
+  message = '';
+  messageType: 'success' | 'error' = 'success';
+  showMessage = false;
 
   // UI data
   matches: UIMatch[] = [];
@@ -121,72 +131,38 @@ export class UserGameweekMatchesComponent implements OnInit, OnDestroy {
     private route: ActivatedRoute,
     private gameweekService: GameweekService,
     private teamService: TeamService,
-    private router: Router
+    private router: Router,
+    private sessionParticipationService: SessionParticipationService
   ) {}
 
   ngOnInit(): void {
-    // Load all league icons first (like in details)
-    this.teamService.getAllLeagueIcons().subscribe({
-      next: (icons) => {
-        this.leagueIcons = icons;
-        // Now load all team icons for matches
-        this.teamService.getAllTeamIcons().subscribe({
-          next: (teamIcons) => {
-            this.teamIconsMap = teamIcons;
-            this.teamsWithIcons = this.teamService.getTeamsWithIcons(Object.keys(teamIcons), teamIcons);
-            // Now load the matches
-            this.route.paramMap
-              .pipe(takeUntil(this.destroy$))
-              .subscribe((params: ParamMap) => {
-                this.selectedCompetition = params.get('competition') || '';
-                this.selectedWeekNumber = Number(params.get('weekNumber')) || 0;
-                if (this.selectedCompetition && this.selectedWeekNumber > 0) {
-                  this.loadGameweekData();
-                } else {
-                  this.error = 'Invalid gameweek parameters.';
-                  this.matches = [];
-                }
-              });
-          },
-          error: () => {
-            // fallback: still load matches, but icons will be missing
-            this.route.paramMap
-              .pipe(takeUntil(this.destroy$))
-              .subscribe((params: ParamMap) => {
-                this.selectedCompetition = params.get('competition') || '';
-                this.selectedWeekNumber = Number(params.get('weekNumber')) || 0;
-                if (this.selectedCompetition && this.selectedWeekNumber > 0) {
-                  this.loadGameweekData();
-                } else {
-                  this.error = 'Invalid gameweek parameters.';
-                  this.matches = [];
-                }
-              });
+    // Load all league and team icons in parallel, then handle route params
+    const leagueIcons$ = this.teamService.getAllLeagueIcons();
+    const teamIcons$ = this.teamService.getAllTeamIcons();
+
+    combineLatest([leagueIcons$, teamIcons$, this.route.paramMap])
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: ([leagueIcons, teamIcons, params]) => {
+          this.leagueIcons = leagueIcons || {};
+          this.teamIconsMap = teamIcons || {};
+          this.teamsWithIcons = this.teamService.getTeamsWithIcons(Object.keys(this.teamIconsMap), this.teamIconsMap);
+
+          this.selectedCompetition = (params.get('competition') as LeagueTheme) || '' as LeagueTheme;
+          this.selectedWeekNumber = Number(params.get('weekNumber')) || 0;
+
+          if (this.selectedCompetition && this.selectedWeekNumber > 0) {
+            this.loadGameweekData();
+          } else {
+            this.error = 'Invalid gameweek parameters.';
+            this.matches = [];
           }
-        });
-      },
-      error: () => {
-        // fallback: still load matches, but league icons will be missing
-        this.teamService.getAllTeamIcons().subscribe({
-          next: (teamIcons) => {
-            this.teamIconsMap = teamIcons;
-            this.teamsWithIcons = this.teamService.getTeamsWithIcons(Object.keys(teamIcons), teamIcons);
-            this.route.paramMap
-              .pipe(takeUntil(this.destroy$))
-              .subscribe((params: ParamMap) => {
-                this.selectedCompetition = params.get('competition') || '';
-                this.selectedWeekNumber = Number(params.get('weekNumber')) || 0;
-                if (this.selectedCompetition && this.selectedWeekNumber > 0) {
-                  this.loadGameweekData();
-                } else {
-                  this.error = 'Invalid gameweek parameters.';
-                  this.matches = [];
-                }
-              });
-          }
-        });
-      }
-    });
+        },
+        error: () => {
+          this.error = 'Failed to load icons or route parameters.';
+          this.matches = [];
+        }
+      });
   }
 
   private loadGameweekData(): void {
@@ -337,37 +313,45 @@ export class UserGameweekMatchesComponent implements OnInit, OnDestroy {
   }
 
   // basic client-side validations then emit or POST payload
-  submitPredictions(): void {
-    const missingPicks = this.matches.filter(m => !m.pick);
-    if (missingPicks.length > 0) {
-      const ids = missingPicks.map(m => (m as any).id ?? '?').join(', ');
-      alert(`Veuillez choisir 1/X/2 pour tous les matches. Manquants: ${ids}`);
-      return;
-    }
+submitPredictions(): void {
+  // Validate picks
+  const missingPicks = this.matches.filter(m => !m.pick);
+  if (missingPicks.length > 0) {
+    const ids = missingPicks.map(m => (m as any).id ?? '?').join(', ');
+    this.showErrorMessage(`Veuillez choisir 1/X/2 pour tous les matches. Manquants: ${ids}`);
+    return;
+  }
 
-    const invalidTiebreaks = this.matches
-      .filter(m => m.isTiebreak)
-      .filter(m => m.scoreHome === null || m.scoreAway === null);
+  const invalidTiebreaks = this.matches
+    .filter(m => m.isTiebreak)
+    .filter(m => m.scoreHome === null || m.scoreAway === null);
 
-    if (invalidTiebreaks.length > 0) {
-      alert('Veuillez renseigner les scores pour les tie-breaks.');
-      return;
-    }
+  if (invalidTiebreaks.length > 0) {
+    this.showErrorMessage('Veuillez renseigner les scores pour les tie-breaks.');
+    return;
+  }
 
-    // Prepare payload (adjust shape to your backend contract)
-    const payload = this.matches.map(m => ({
-      matchId: (m as any).id,
-      pick: m.pick,
-      scoreHome: m.isTiebreak ? m.scoreHome : null,
-      scoreAway: m.isTiebreak ? m.scoreAway : null
+  // Ensure selectedCompetition is a valid LeagueTheme
+  if (!this.selectedCompetition || typeof this.selectedCompetition !== 'string' || !(this.selectedCompetition in this.leagueConfigs)) {
+    this.showErrorMessage('Competition is not valid. Please reload the page.');
+    return;
+  }
+
+  // Prepare predictions payload
+  this.preparedPredictions = this.matches
+    .filter(m => m && typeof (m as any).id !== 'undefined' && !isNaN(Number((m as any).id)))
+    .map(m => ({
+      matchId: Number((m as any).id),
+      pick: m.pick || '',
+      scoreHome: m.isTiebreak ? (m.scoreHome ?? null) : null,
+      scoreAway: m.isTiebreak ? (m.scoreAway ?? null) : null
     }));
 
-    console.log('Submitting picks payload:', payload);
-    alert('Choix soumis — voir console pour les détails (F12).');
+  console.log('Prepared predictions:', this.preparedPredictions);
 
-    // TODO: call your backend endpoint to save the predictions if you have one:
-    // this.myPredictionService.submitPredictions(payload).subscribe(...)
-  }
+  // Show modal for session participation
+  this.showParticipationModal = true;
+}
 
   ngOnDestroy(): void {
     this.destroy$.next();
@@ -385,5 +369,64 @@ export class UserGameweekMatchesComponent implements OnInit, OnDestroy {
     // Navigate back to the gameweek list
     this.router.navigate(['../user-gameweek-list'], { relativeTo: this.route });
   }
+
+onParticipationSubmitted(event: {
+  sessionData: SessionParticipationData;
+  predictions: PredictionPayload[];
+}): void {
+  this.isSubmitting = true;
+
+  this.sessionParticipationService.joinCompetition(
+    event.sessionData.gameweekId,
+    event.sessionData.competition,
+    event.sessionData.sessionType,
+    event.sessionData.buyInAmount,
+    event.sessionData.isPrivate,
+    event.sessionData.accessKey
+  ).subscribe({
+    next: (result) => {
+      this.showSuccessMessage('Prédictions soumises avec succès! Vous avez rejoint la compétition.');
+      this.showParticipationModal = false;
+      this.isSubmitting = false;
+    },
+    error: (error) => {
+      this.isSubmitting = false;
+      this.showErrorMessage(this.getErrorMessage(error));
+    }
+  });
+}
+
+private getErrorMessage(error: any): string {
+  if (!error) return 'Erreur lors de la soumission. Veuillez réessayer.';
+  if (error.status === 409) {
+    return 'Vous participez déjà à cette session ou la session est pleine.';
+  }
+  if (error.status === 400) {
+    return 'Paramètres invalides. Vérifiez vos données.';
+  }
+  if (error.error && typeof error.error === 'string') {
+    return error.error;
+  }
+  return 'Erreur lors de la soumission. Veuillez réessayer.';
+}
+
+
+onModalClosed(): void {
+  this.showParticipationModal = false;
+}
+
+private showSuccessMessage(msg: string): void {
+  this.message = msg;
+  this.messageType = 'success';
+  this.showMessage = true;
+  setTimeout(() => this.showMessage = false, 5000);
+}
+
+private showErrorMessage(msg: string): void {
+  this.message = msg;
+  this.messageType = 'error';
+  this.showMessage = true;
+  setTimeout(() => this.showMessage = false, 5000);
+}
 
 }

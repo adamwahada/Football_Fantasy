@@ -439,8 +439,8 @@ export class UserGameweekDetailsComponent implements OnInit, OnDestroy {
   }
   getHoursUntilDeadline(gameweek: Gameweek): number | null {
   const now = new Date();
-  const endDate = new Date(gameweek.endDate);
-  const diffMs = endDate.getTime() - now.getTime();
+  const deadline = new Date(gameweek.joinDeadline); // Use joinDeadline instead of endDate
+  const diffMs = deadline.getTime() - now.getTime();
 
   if (diffMs > 0) {
     return Math.floor(diffMs / (1000 * 60 * 60)); // convert ms to full hours left
