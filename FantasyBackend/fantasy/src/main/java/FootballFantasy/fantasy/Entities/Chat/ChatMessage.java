@@ -43,19 +43,27 @@ public class ChatMessage {
     private LocalDateTime timestamp;
 
     private LocalDateTime editedAt;
+
     @Column(name = "is_deleted", nullable = false)
+    @Builder.Default
     private Boolean isDeleted = false;
 
-
     @Column(name = "is_edited", nullable = false)
+    @Builder.Default
     private Boolean isEdited = false;
 
+    // Métadonnées pour les fichiers - MODIFIÉES POUR CLOUDINARY
+    private String fileName; // Nom original du fichier
+    private String fileUrl;  // URL Cloudinary (remplace l'ancien stockage local)
+    private Long fileSize;   // Taille du fichier
+    private String mimeType; // Type MIME
 
-    // Métadonnées pour les fichiers
-    private String fileName;
-    private String fileUrl;
-    private Long fileSize;
-    private String mimeType;
+    // NOUVEAUX CHAMPS POUR CLOUDINARY
+    @Column(name = "cloudinary_public_id")
+    private String cloudinaryPublicId; // ID public Cloudinary pour faciliter la suppression
+
+    @Column(name = "cloudinary_secure_url")
+    private String cloudinarySecureUrl; // URL sécurisée HTTPS de Cloudinary
 
     @JsonIgnore
     @OneToMany(mappedBy = "message", cascade = CascadeType.ALL, orphanRemoval = true)

@@ -28,9 +28,10 @@ public class ChatMessageDTO {
     private ChatMessageDTO replyToMessage;
     private MessageStatusType status;
 
-    // Pour les fichiers
-    private String fileName;
-    private String fileUrl;
-    private Long fileSize;
+    private String fileName;              // Nom original du fichier
+    private String fileUrl;               // URL Cloudinary (HTTP/HTTPS)
+    private String cloudinarySecureUrl;   // URL HTTPS sécurisée Cloudinary
+    private String cloudinaryPublicId;    // ID public pour suppression
+    private Long fileSize;                // Taille du fichier en bytes
     private String mimeType;
 }

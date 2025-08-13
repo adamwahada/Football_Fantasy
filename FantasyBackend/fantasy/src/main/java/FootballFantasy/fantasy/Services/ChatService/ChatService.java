@@ -8,8 +8,10 @@ import FootballFantasy.fantasy.Repositories.ChatRepository.ChatParticipantReposi
 import FootballFantasy.fantasy.Repositories.ChatRepository.ChatRoomRepository;
 import FootballFantasy.fantasy.Repositories.ChatRepository.MessageStatusRepository;
 import FootballFantasy.fantasy.Repositories.UserRepository.UserRepository;
+import FootballFantasy.fantasy.Services.Cloudinary.CloudinaryFileService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -17,9 +19,6 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
@@ -37,6 +36,9 @@ public class ChatService {
     private final ChatParticipantRepository chatParticipantRepository;
     private final MessageStatusRepository messageStatusRepository;
     private final UserRepository userRepository;
+
+    @Autowired
+    private CloudinaryFileService cloudinaryFileService;
 
     // Créer ou récupérer un chat privé
     public ChatRoomDTO getOrCreatePrivateChat(Long userId1, Long userId2) {
@@ -78,6 +80,7 @@ public class ChatService {
 
         return convertToDTO(chatRoom, userId1);
     }
+
     public ChatRoomDTO createOrGetPrivateChat(Long currentUserId, Long otherUserId) {
         // Chercher d'abord un chat privé existant
         Optional<ChatRoom> existingRoom = chatRoomRepository.findPrivateChatRoom(currentUserId, otherUserId, ChatRoomType.PRIVATE);
@@ -137,7 +140,6 @@ public class ChatService {
         UserEntity sender = userRepository.findById(senderId)
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
-        // CORRIGÉ - Utiliser le roomId UUID au lieu de l'ID numérique
         if (!chatParticipantRepository.existsByRoomIdAndUserIdAndIsActiveTrue(messageDto.getRoomId(), senderId)) {
             throw new RuntimeException("User is not a participant of this chat");
         }
@@ -179,13 +181,99 @@ public class ChatService {
         return convertToMessageDTO(message, senderId);
     }
 
+    // ✅ MÉTHODE PRINCIPALE POUR L'UPLOAD DE FICHIERS AVEC CLOUDINARY
+    public ChatMessageDTO sendFileMessage(String roomId, MultipartFile file, Long senderId) {
+        // Validations initiales
+        ChatRoom chatRoom = chatRoomRepository.findByRoomId(roomId)
+                .orElseThrow(() -> new RuntimeException("Chat room not found"));
+
+        UserEntity sender = userRepository.findById(senderId)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        if (!chatParticipantRepository.existsByRoomIdAndUserIdAndIsActiveTrue(roomId, senderId)) {
+            throw new RuntimeException("User is not a participant of this chat");
+        }
+
+        try {
+            // 📂 Upload du fichier vers Cloudinary
+            String secureUrl;
+            MessageType messageType;
+
+            // Déterminer le type de message basé sur le MIME type
+            String contentType = file.getContentType();
+            if (contentType != null) {
+                if (contentType.startsWith("image")) {
+                    secureUrl = cloudinaryFileService.uploadImage(file, "chat/images");
+                    messageType = MessageType.IMAGE;
+                } else if (contentType.startsWith("video")) {
+                    secureUrl = cloudinaryFileService.uploadFile(file, "chat/videos");
+                    messageType = MessageType.VIDEO;
+                } else if (contentType.startsWith("audio")) {
+                    secureUrl = cloudinaryFileService.uploadFile(file, "chat/audio");
+                    messageType = MessageType.AUDIO;
+                } else {
+                    secureUrl = cloudinaryFileService.uploadFile(file, "chat/files");
+                    messageType = MessageType.FILE;
+                }
+            } else {
+                secureUrl = cloudinaryFileService.uploadFile(file, "chat/files");
+                messageType = MessageType.FILE;
+            }
+
+            // Extraire l'ID public pour le stockage
+            String publicId = cloudinaryFileService.extractPublicId(secureUrl);
+
+            // 📌 Créer le message avec les informations Cloudinary
+            ChatMessage message = ChatMessage.builder()
+                    .content(file.getOriginalFilename()) // Nom du fichier comme contenu
+                    .type(messageType)
+                    .sender(sender)
+                    .chatRoom(chatRoom)
+                    .fileName(file.getOriginalFilename())
+                    .fileUrl(secureUrl) // URL HTTP standard
+                    .cloudinarySecureUrl(secureUrl) // URL HTTPS sécurisée
+                    .cloudinaryPublicId(publicId) // ID public pour la suppression
+                    .fileSize(file.getSize())
+                    .mimeType(file.getContentType())
+                    .isDeleted(false)
+                    .isEdited(false)
+                    .build();
+
+            message = chatMessageRepository.save(message);
+
+            // 📌 Mettre à jour l'activité de la room
+            chatRoom.updateLastActivity();
+            chatRoomRepository.save(chatRoom);
+
+            // 📌 Gérer les statuts des messages
+            List<ChatParticipant> participants = chatParticipantRepository
+                    .findByChatRoomIdAndIsActiveTrue(chatRoom.getId());
+
+            for (ChatParticipant participant : participants) {
+                MessageStatusType status = participant.getUser().getId().equals(senderId) ?
+                        MessageStatusType.READ : MessageStatusType.SENT;
+
+                messageStatusRepository.save(MessageStatus.builder()
+                        .message(message)
+                        .user(participant.getUser())
+                        .status(status)
+                        .build());
+            }
+
+            return convertToMessageDTO(message, senderId);
+
+        } catch (IOException e) {
+            throw new RuntimeException("File upload to Cloudinary failed: " + e.getMessage(), e);
+        } catch (Exception e) {
+            throw new RuntimeException("Error processing file message: " + e.getMessage(), e);
+        }
+    }
+
     // Récupérer les messages d'une room
-    // CORRECTION 3: Dans getRoomMessages(), même problème de vérification
     public Page<ChatMessageDTO> getRoomMessages(String roomId, Long userId, Pageable pageable) {
         ChatRoom chatRoom = chatRoomRepository.findByRoomId(roomId)
                 .orElseThrow(() -> new RuntimeException("Chat room not found"));
 
-        // CORRIGÉ - Utiliser roomId UUID
         if (!chatParticipantRepository.existsByRoomIdAndUserIdAndIsActiveTrue(roomId, userId)) {
             throw new RuntimeException("User is not a participant of this chat");
         }
@@ -195,6 +283,7 @@ public class ChatService {
 
         return messages.map(message -> convertToMessageDTO(message, userId));
     }
+
     // Récupérer les chats de l'utilisateur
     public List<ChatRoomDTO> getUserChats(Long userId) {
         List<ChatRoom> chatRooms = chatRoomRepository.findUserChatRooms(userId);
@@ -214,64 +303,6 @@ public class ChatService {
         }
     }
 
-    // Méthodes de conversion privées
-    private ChatRoomDTO convertToDTO(ChatRoom chatRoom, Long currentUserId) {
-        List<ChatParticipant> participants = chatParticipantRepository.findByChatRoomIdAndIsActiveTrue(chatRoom.getId());
-        Long unreadCount = chatMessageRepository.countUnreadMessages(chatRoom.getId(), currentUserId);
-
-        return ChatRoomDTO.builder()
-                .id(chatRoom.getId())
-                .roomId(chatRoom.getRoomId())
-                .type(chatRoom.getType())
-                .name(chatRoom.getType() == ChatRoomType.GROUP ? chatRoom.getName() : getPrivateChatName(participants, currentUserId))
-                .description(chatRoom.getDescription())
-                .avatar(chatRoom.getAvatar())
-                .lastActivity(chatRoom.getLastActivity())
-                .participants(participants.stream().map(this::convertToParticipantDTO).collect(Collectors.toList()))
-                .unreadCount(unreadCount)
-                .build();
-    }
-
-    private String getPrivateChatName(List<ChatParticipant> participants, Long currentUserId) {
-        return participants.stream()
-                .filter(p -> !p.getUser().getId().equals(currentUserId))
-                .findFirst()
-                .map(p -> p.getUser().getFirstName() + " " + p.getUser().getLastName())
-                .orElse("Unknown");
-    }
-
-    private ChatMessageDTO convertToMessageDTO(ChatMessage message, Long currentUserId) {
-        MessageStatus userStatus = messageStatusRepository.findByMessageIdAndUserId(message.getId(), currentUserId)
-                .orElse(null);
-
-        return ChatMessageDTO.builder()
-                .id(message.getId())
-                .content(message.getContent())
-                .type(message.getType())
-                .senderId(message.getSender().getId())
-                .senderName(message.getSender().getFirstName() + " " + message.getSender().getLastName())
-                .timestamp(message.getTimestamp())
-                .isEdited(message.getIsEdited())
-                .replyToId(message.getReplyTo() != null ? message.getReplyTo().getId() : null)
-                .status(userStatus != null ? userStatus.getStatus() : null)
-                .build();
-    }
-
-    private ChatParticipantDTO convertToParticipantDTO(ChatParticipant participant) {
-        return ChatParticipantDTO.builder()
-                .id(participant.getId())
-                .userId(participant.getUser().getId())
-                .username(participant.getUser().getUsername())
-                .fullName(participant.getUser().getFirstName() + " " + participant.getUser().getLastName())
-                .role(participant.getRole())
-                .joinedAt(participant.getJoinedAt())
-                .lastSeenAt(participant.getLastSeenAt())
-                .isActive(participant.getIsActive())
-                .build();
-    }
-
-
-
     public Long getUserIdByKeycloakId(String keycloakId) {
         UserEntity user = userRepository.findByKeycloakId(keycloakId)
                 .orElseThrow(() -> new RuntimeException("User not found"));
@@ -282,7 +313,6 @@ public class ChatService {
         ChatRoom chatRoom = chatRoomRepository.findByRoomId(roomId)
                 .orElseThrow(() -> new RuntimeException("Chat room not found"));
 
-        // CORRIGÉ - Utiliser roomId UUID
         if (!chatParticipantRepository.existsByRoomIdAndUserIdAndIsActiveTrue(roomId, userId)) {
             throw new RuntimeException("User is not a participant of this chat");
         }
@@ -294,7 +324,6 @@ public class ChatService {
                 .map(message -> convertToMessageDTO(message, userId))
                 .collect(Collectors.toList());
     }
-
 
     public ChatMessageDTO editMessage(Long messageId, String newContent, Long userId) {
         ChatMessage message = chatMessageRepository.findById(messageId)
@@ -308,7 +337,6 @@ public class ChatService {
             throw new RuntimeException("Cannot edit deleted message");
         }
 
-        // AJOUTÉ - Validation du contenu
         if (newContent == null || newContent.trim().isEmpty()) {
             throw new RuntimeException("Message content cannot be empty");
         }
@@ -320,19 +348,40 @@ public class ChatService {
         message = chatMessageRepository.save(message);
         return convertToMessageDTO(message, userId);
     }
-    public void deleteMessage(Long messageId, Long userId) {
+
+    // ✅ MÉTHODE POUR SUPPRIMER UN MESSAGE AVEC FICHIER (VERSION CLOUDINARY)
+    // ✅ MÉTHODE POUR SUPPRIMER UN MESSAGE AVEC FICHIER (VERSION CLOUDINARY CORRIGÉE)
+    public void deleteMessageWithFile(Long messageId, Long userId) {
         ChatMessage message = chatMessageRepository.findById(messageId)
                 .orElseThrow(() -> new RuntimeException("Message not found"));
 
+        // Vérifier que l'utilisateur peut supprimer ce message
         if (!message.getSender().getId().equals(userId)) {
-            throw new RuntimeException("Only sender can delete the message");
+            throw new RuntimeException("You can only delete your own messages");
         }
 
+        // Si c'est un fichier, supprimer de Cloudinary avec le bon resource_type
+        if (message.getType() != MessageType.TEXT && message.getCloudinaryPublicId() != null) {
+            boolean deleted = false;
+
+            // Déterminer le resource_type basé sur le type de message
+            if (message.getType() == MessageType.IMAGE) {
+                deleted = cloudinaryFileService.deleteFile(message.getCloudinaryPublicId(), "image");
+            } else {
+                // Pour VIDEO, AUDIO, FILE -> utiliser "raw"
+                deleted = cloudinaryFileService.deleteFile(message.getCloudinaryPublicId(), "raw");
+            }
+
+            if (!deleted) {
+                log.warn("Failed to delete file from Cloudinary: {}", message.getCloudinaryPublicId());
+            }
+        }
+
+        // Marquer le message comme supprimé
         message.setIsDeleted(true);
         message.setContent("[Message deleted]");
         chatMessageRepository.save(message);
     }
-
     public void addParticipants(String roomId, List<Long> userIds, Long adminId) {
         ChatRoom chatRoom = chatRoomRepository.findByRoomId(roomId)
                 .orElseThrow(() -> new RuntimeException("Chat room not found"));
@@ -341,7 +390,6 @@ public class ChatService {
             throw new RuntimeException("Can only add participants to groups");
         }
 
-        // CORRIGÉ - Vérifier que l'utilisateur est admin avec roomId UUID
         ChatParticipant adminParticipant = chatParticipantRepository
                 .findByRoomIdAndUserId(roomId, adminId)
                 .orElseThrow(() -> new RuntimeException("User is not a participant"));
@@ -372,7 +420,6 @@ public class ChatService {
             throw new RuntimeException("Can only remove participants from groups");
         }
 
-        // CORRIGÉ - Vérifier que l'utilisateur est admin avec roomId UUID
         ChatParticipant adminParticipant = chatParticipantRepository
                 .findByRoomIdAndUserId(roomId, adminId)
                 .orElseThrow(() -> new RuntimeException("User is not a participant"));
@@ -413,7 +460,6 @@ public class ChatService {
             throw new RuntimeException("Can only update group information");
         }
 
-        // CORRIGÉ - Vérifier que l'utilisateur est admin avec roomId UUID
         ChatParticipant participant = chatParticipantRepository
                 .findByRoomIdAndUserId(roomId, userId)
                 .orElseThrow(() -> new RuntimeException("User is not a participant"));
@@ -442,11 +488,6 @@ public class ChatService {
         chatParticipantRepository.save(participant);
     }
 
-
-
-
-
-
     public boolean isUserParticipant(String roomId, Long userId) {
         return chatParticipantRepository.existsByRoomIdAndUserIdAndIsActiveTrue(roomId, userId);
     }
@@ -460,9 +501,6 @@ public class ChatService {
                 .map(this::convertToParticipantDTO)
                 .collect(Collectors.toList());
     }
-
-
-
 
     public void debugParticipation(String roomId, Long userId) {
         ChatRoom chatRoom = chatRoomRepository.findByRoomId(roomId)
@@ -483,61 +521,67 @@ public class ChatService {
         System.out.println("User is participant: " + exists);
     }
 
-    public ChatMessageDTO sendFileMessage(String roomId, MultipartFile file, Long senderId) {
-        ChatRoom chatRoom = chatRoomRepository.findByRoomId(roomId)
-                .orElseThrow(() -> new RuntimeException("Chat room not found"));
+    // ✅ MÉTHODES DE CONVERSION MISES À JOUR AVEC LES CHAMPS FICHIERS
+    private ChatRoomDTO convertToDTO(ChatRoom chatRoom, Long currentUserId) {
+        List<ChatParticipant> participants = chatParticipantRepository.findByChatRoomIdAndIsActiveTrue(chatRoom.getId());
+        Long unreadCount = chatMessageRepository.countUnreadMessages(chatRoom.getId(), currentUserId);
 
-        UserEntity sender = userRepository.findById(senderId)
-                .orElseThrow(() -> new RuntimeException("User not found"));
-
-        if (!chatParticipantRepository.existsByRoomIdAndUserIdAndIsActiveTrue(roomId, senderId)) {
-            throw new RuntimeException("User is not a participant of this chat");
-        }
-
-        try {
-            // 📂 Sauvegarder le fichier (ici en local, mais tu peux utiliser S3, etc.)
-            String uploadDir = "uploads/chat/";
-            String fileName = UUID.randomUUID() + "_" + file.getOriginalFilename();
-            Path filePath = Paths.get(uploadDir + fileName);
-            Files.createDirectories(filePath.getParent());
-            Files.write(filePath, file.getBytes());
-
-            // 📌 Créer un message de type FILE ou IMAGE
-            ChatMessage message = ChatMessage.builder()
-                    .content(fileName) // tu peux stocker juste le nom ou l’URL complète
-                    .type(file.getContentType().startsWith("image") ? MessageType.IMAGE : MessageType.FILE)
-                    .sender(sender)
-                    .chatRoom(chatRoom)
-                    .isDeleted(false)
-                    .isEdited(false)
-                    .build();
-
-            message = chatMessageRepository.save(message);
-
-            chatRoom.updateLastActivity();
-            chatRoomRepository.save(chatRoom);
-
-            // 📌 Statuts pour tous les participants
-            List<ChatParticipant> participants = chatParticipantRepository.findByChatRoomIdAndIsActiveTrue(chatRoom.getId());
-            for (ChatParticipant participant : participants) {
-                MessageStatusType status = participant.getUser().getId().equals(senderId) ?
-                        MessageStatusType.READ : MessageStatusType.SENT;
-
-                messageStatusRepository.save(MessageStatus.builder()
-                        .message(message)
-                        .user(participant.getUser())
-                        .status(status)
-                        .build());
-            }
-
-            return convertToMessageDTO(message, senderId);
-
-        } catch (IOException e) {
-            throw new RuntimeException("File upload failed", e);
-        }
+        return ChatRoomDTO.builder()
+                .id(chatRoom.getId())
+                .roomId(chatRoom.getRoomId())
+                .type(chatRoom.getType())
+                .name(chatRoom.getType() == ChatRoomType.GROUP ? chatRoom.getName() : getPrivateChatName(participants, currentUserId))
+                .description(chatRoom.getDescription())
+                .avatar(chatRoom.getAvatar())
+                .lastActivity(chatRoom.getLastActivity())
+                .participants(participants.stream().map(this::convertToParticipantDTO).collect(Collectors.toList()))
+                .unreadCount(unreadCount)
+                .build();
     }
 
+    private String getPrivateChatName(List<ChatParticipant> participants, Long currentUserId) {
+        return participants.stream()
+                .filter(p -> !p.getUser().getId().equals(currentUserId))
+                .findFirst()
+                .map(p -> p.getUser().getFirstName() + " " + p.getUser().getLastName())
+                .orElse("Unknown");
+    }
 
+    // ✅ MÉTHODE DE CONVERSION MESSAGE MISE À JOUR AVEC LES CHAMPS FICHIERS
+    private ChatMessageDTO convertToMessageDTO(ChatMessage message, Long currentUserId) {
+        MessageStatus userStatus = messageStatusRepository.findByMessageIdAndUserId(message.getId(), currentUserId)
+                .orElse(null);
 
+        return ChatMessageDTO.builder()
+                .id(message.getId())
+                .content(message.getContent())
+                .type(message.getType())
+                .senderId(message.getSender().getId())
+                .senderName(message.getSender().getFirstName() + " " + message.getSender().getLastName())
+                .timestamp(message.getTimestamp())
+                .isEdited(message.getIsEdited())
+                .replyToId(message.getReplyTo() != null ? message.getReplyTo().getId() : null)
+                .status(userStatus != null ? userStatus.getStatus() : null)
+                // ✅ AJOUT DES CHAMPS FICHIERS CLOUDINARY
+                .fileName(message.getFileName())
+                .fileUrl(message.getFileUrl())
+                .fileSize(message.getFileSize())
+                .mimeType(message.getMimeType())
+                .cloudinaryPublicId(message.getCloudinaryPublicId())
+                .cloudinarySecureUrl(message.getCloudinarySecureUrl())
+                .build();
+    }
 
+    private ChatParticipantDTO convertToParticipantDTO(ChatParticipant participant) {
+        return ChatParticipantDTO.builder()
+                .id(participant.getId())
+                .userId(participant.getUser().getId())
+                .username(participant.getUser().getUsername())
+                .fullName(participant.getUser().getFirstName() + " " + participant.getUser().getLastName())
+                .role(participant.getRole())
+                .joinedAt(participant.getJoinedAt())
+                .lastSeenAt(participant.getLastSeenAt())
+                .isActive(participant.getIsActive())
+                .build();
+    }
 }
