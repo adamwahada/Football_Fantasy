@@ -2,28 +2,18 @@
   <div class="modal" (click)="onModalContentClick($event)">
     <!-- Close Button -->
     <button class="close-icon" aria-label="Close modal" (click)="closeModal()">
-      <svg
-        xmlns="http://www.w3.org/2000/svg"
-        width="20"
-        height="20"
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        stroke-width="2.5"
-        stroke-linecap="round"
-        stroke-linejoin="round"
-        aria-hidden="true"
-      >
-        <line x1="18" y1="6" x2="6" y2="18" />
-        <line x1="6" y1="6" x2="18" y2="18" />
+      <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
+           stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <line x1="18" y1="6" x2="6" y2="18"/>
+        <line x1="6" y1="6" x2="18" y2="18"/>
       </svg>
     </button>
 
     <!-- Modal Header -->
     <div class="modal-header">
-      <img 
+      <img
         *ngIf="getLeagueIconUrl(competition)"
-        [src]="getLeagueIconUrl(competition)" 
+        [src]="getLeagueIconUrl(competition)"
         [alt]="formatCompetitionName(competition) + ' logo'"
         class="league-icon"
         (error)="handleImageError($event)"
@@ -31,69 +21,57 @@
       <h2>{{ formatCompetitionName(competition) }}</h2>
     </div>
 
-          <!-- Error State -->
-      <div *ngIf="error" class="error">
-        {{ error }}
-        <button class="retry-button" (click)="retryLoading()">
-          Try Again
-        </button>
-      </div>
+    <!-- Error State -->
+    <div *ngIf="error" class="error">
+      {{ error }}
+      <button class="retry-button" (click)="retryLoading()">Try Again</button>
+    </div>
 
     <!-- Modal Content -->
     <div class="modal-content">
       <!-- Loading State -->
-      <div *ngIf="loading" class="loading">
-        Loading gameweeks...
+      <div *ngIf="loading" class="loading">Loading gameweeks...</div>
+
+      <div class="gameweek-cards" *ngIf="!loading && !error">
+        <button
+          *ngFor="let gw of gameweeks; let i = index"
+          class="gameweek-card"
+          [class.featured]="isCurrentGameweek(gw.weekNumber)"
+          [class.next-upcoming]="isNextUpcomingGameweek(gw)"
+          [class.ongoing]="getGameweekStatus(gw) === 'ONGOING'"
+          [class.finished]="getGameweekStatus(gw) === 'FINISHED'"
+          [class.upcoming]="getGameweekStatus(gw) === 'UPCOMING' && !isNextUpcomingGameweek(gw)"
+          [disabled]="isLockedGameweek(gw.weekNumber)"
+          (click)="!isLockedGameweek(gw.weekNumber) && openGameweekMatches(gw.weekNumber)"
+          [attr.aria-label]="'Open matches for gameweek ' + gw.weekNumber + (isLockedGameweek(gw.weekNumber) ? ', locked' : '')"
+          (mouseenter)="showDeadlineMessage(gw)"
+          (mouseleave)="hideDeadlineMessage()"
+          (focus)="showDeadlineMessage(gw)"
+          (blur)="hideDeadlineMessage()"
+        >
+          <!-- Status Icon -->
+          <div class="status-icon">
+            <span *ngIf="isLockedGameweek(gw.weekNumber)" class="lock-icon" title="Locked 🔒">🔒</span>
+            <span *ngIf="!isLockedGameweek(gw.weekNumber) && isNextUpcomingGameweek(gw)" class="fire-icon">🔥</span>
+            <span *ngIf="!isLockedGameweek(gw.weekNumber) && getGameweekStatus(gw) === 'ONGOING'" class="play-icon">▶️</span>
+            <span *ngIf="!isLockedGameweek(gw.weekNumber) && getGameweekStatus(gw) === 'FINISHED'" class="check-icon">✅</span>
+            <span *ngIf="!isLockedGameweek(gw.weekNumber) && getGameweekStatus(gw) === 'UPCOMING' && !isNextUpcomingGameweek(gw)" class="calendar-icon">📅</span>
+          </div>
+
+          <!-- Gameweek Number -->
+          <div class="gw-number">GW{{ gw.weekNumber }}</div>
+
+          <!-- Status Text -->
+          <div class="status-text">
+            {{ isLockedGameweek(gw.weekNumber) ? 'Locked' : getGameweekDisplayStatus(gw) }}
+          </div>
+
+          <!-- Deadline Tooltip inside the button -->
+          <div class="deadline-tooltip">
+            {{ getDeadlineMessage(gw) }}
+          </div>
+        </button>
       </div>
-      
-
-<div class="gameweek-cards" *ngIf="!loading && !error">
-  <button
-    *ngFor="let gw of gameweeks; let i = index"
-    class="gameweek-card"
-    [class.featured]="isCurrentGameweek(gw.weekNumber)"
-    [class.next-upcoming]="isNextUpcomingGameweek(gw)"
-    [class.ongoing]="getGameweekStatus(gw) === 'ONGOING'"
-    [class.finished]="getGameweekStatus(gw) === 'FINISHED'"
-    [class.upcoming]="getGameweekStatus(gw) === 'UPCOMING' && !isNextUpcomingGameweek(gw)"
-    [disabled]="isLockedGameweek(gw.weekNumber)"
-    (click)="!isLockedGameweek(gw.weekNumber) && openGameweekMatches(gw.weekNumber)"
-    [attr.aria-label]="'Open matches for gameweek ' + gw.weekNumber + (isLockedGameweek(gw.weekNumber) ? ', locked' : '')"
-    (mouseenter)="showDeadlineMessage(gw)"
-    (mouseleave)="hideDeadlineMessage()"
-    (focus)="showDeadlineMessage(gw)"
-    (blur)="hideDeadlineMessage()"
-  >
-    <!-- Status Icon -->
-    <div class="status-icon">
-      <span *ngIf="isLockedGameweek(gw.weekNumber)" class="lock-icon" title="Locked 🔒">🔒</span>
-      <span *ngIf="!isLockedGameweek(gw.weekNumber) && isNextUpcomingGameweek(gw)" class="fire-icon">🔥</span>
-      <span *ngIf="!isLockedGameweek(gw.weekNumber) && getGameweekStatus(gw) === 'ONGOING'" class="play-icon">▶️</span>
-      <span *ngIf="!isLockedGameweek(gw.weekNumber) && getGameweekStatus(gw) === 'FINISHED'" class="check-icon">✅</span>
-      <span *ngIf="!isLockedGameweek(gw.weekNumber) && getGameweekStatus(gw) === 'UPCOMING' && !isNextUpcomingGameweek(gw)" class="calendar-icon">📅</span>
-    </div>
-    
-    <!-- Gameweek Number -->
-    <div class="gw-number">GW{{ gw.weekNumber }}</div>
-    
-    <!-- Status Text -->
-    <div class="status-text">
-      {{ isLockedGameweek(gw.weekNumber) ? 'Locked' : getGameweekDisplayStatus(gw) }}
-    </div>
-
-    <!-- Move deadline message here inside the button -->
-            <div 
-              class="deadline-tooltip" 
-              *ngIf="getDeadlineMessage(gw)"
-            >
-              <div class="tooltip-content">
-                {{ getDeadlineMessage(gw) }}
-              </div>
-            </div>
-
-  </button>
-</div>
-
     </div>
   </div>
 </div>

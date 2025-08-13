@@ -1,6 +1,7 @@
 package FootballFantasy.fantasy.Dto;
 
 import FootballFantasy.fantasy.Entities.GameweekEntity.PredictionResult;
+import com.fasterxml.jackson.annotation.JsonInclude;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
@@ -17,11 +18,12 @@ public class PredictionDTO {
     @NotNull(message = "Predicted result is required")
     private PredictionResult predictedResult; // HOME_WIN, AWAY_WIN, DRAW
 
-    // Optional score predictions (required only for tiebreaker matches)
     @Min(value = 0, message = "Home score must be non-negative")
+    @JsonInclude(JsonInclude.Include.NON_NULL)
     private Integer predictedHomeScore;
 
-    @Min(value = 0, message = "Away score must be non-negative")
+    @Min(value = 0, message = "Home score must be non-negative")
+    @JsonInclude(JsonInclude.Include.NON_NULL)
     private Integer predictedAwayScore;
 
     // Helper methods for validation

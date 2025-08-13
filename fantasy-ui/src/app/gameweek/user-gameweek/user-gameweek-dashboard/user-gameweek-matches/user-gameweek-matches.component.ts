@@ -11,8 +11,9 @@ import { TeamService, TeamIcon } from '../../../../match/team.service';
 import { SessionParticipationData, PredictionPayload, UserGameweekParticipationModalComponent } from '../user-gameweek-participation-modal/user-gameweek-participation-modal.component';
 import { SessionParticipationService } from '../../../session-participation.service';
 import { Router } from '@angular/router';
+import { PredictionService, PredictionDTO, GameweekPredictionSubmissionDTO } from '../../../prediction.service';
 
-type PickOption = '1' | 'X' | '2' | null;
+type PickOption = 'HOME_WIN' | 'DRAW' | 'AWAY_WIN' | null;
 
 export type LeagueTheme =
   | 'PREMIER_LEAGUE'
@@ -39,6 +40,10 @@ interface UIMatch extends MatchWithIconsDTO {
   homeIconUrl?: string;  
   awayIconUrl?: string; 
 }
+
+// Use consistent number values (no decimals in the constant)
+export const PRECONFIGURED_BUY_IN_AMOUNTS = [10, 20, 50, 100] as const;
+export type BuyInAmount = typeof PRECONFIGURED_BUY_IN_AMOUNTS[number];
 
 @Component({
   selector: 'app-user-gameweek-matches',
@@ -132,7 +137,8 @@ export class UserGameweekMatchesComponent implements OnInit, OnDestroy {
     private gameweekService: GameweekService,
     private teamService: TeamService,
     private router: Router,
-    private sessionParticipationService: SessionParticipationService
+    private sessionParticipationService: SessionParticipationService,
+    private predictionService: PredictionService 
   ) {}
 
   ngOnInit(): void {
@@ -165,6 +171,9 @@ export class UserGameweekMatchesComponent implements OnInit, OnDestroy {
       });
   }
 
+  // When you load the gameweek, store its ID:
+  private currentGameweekId: number | null = null;
+
   private loadGameweekData(): void {
     this.loading = true;
     this.error = null;
@@ -180,6 +189,9 @@ export class UserGameweekMatchesComponent implements OnInit, OnDestroy {
             this.loading = false;
             return;
           }
+          this.currentGameweekId = gw.id; // <-- Store the real ID
+          console.log('[GAMEWEEK] Loaded gameweek:', gw); // <-- Add this log
+          console.log('[GAMEWEEK] Loaded gameweekId:', gw.id, 'for weekNumber:', gw.weekNumber, 'competition:', gw.competition); // <-- Add this log
           // Set deadline and start countdown
           this.deadline = gw.joinDeadline ? new Date(gw.joinDeadline) : null;
           this.updateDeadlineCountdown();
@@ -313,45 +325,45 @@ export class UserGameweekMatchesComponent implements OnInit, OnDestroy {
   }
 
   // basic client-side validations then emit or POST payload
-submitPredictions(): void {
-  // Validate picks
-  const missingPicks = this.matches.filter(m => !m.pick);
-  if (missingPicks.length > 0) {
-    const ids = missingPicks.map(m => (m as any).id ?? '?').join(', ');
-    this.showErrorMessage(`Veuillez choisir 1/X/2 pour tous les matches. Manquants: ${ids}`);
-    return;
+  submitPredictions(): void {
+    // Validate picks
+    const missingPicks = this.matches.filter(m => !m.pick);
+    if (missingPicks.length > 0) {
+      const ids = missingPicks.map(m => (m as any).id ?? '?').join(', ');
+      this.showErrorMessage(`Veuillez choisir 1/X/2 pour tous les matches. Manquants: ${ids}`);
+      return;
+    }
+
+    const invalidTiebreaks = this.matches
+      .filter(m => m.isTiebreak)
+      .filter(m => m.scoreHome === null || m.scoreAway === null);
+
+    if (invalidTiebreaks.length > 0) {
+      this.showErrorMessage('Veuillez renseigner les scores pour les tie-breaks.');
+      return;
+    }
+
+    // Ensure selectedCompetition is a valid LeagueTheme
+    if (!this.selectedCompetition || typeof this.selectedCompetition !== 'string' || !(this.selectedCompetition in this.leagueConfigs)) {
+      this.showErrorMessage('Competition is not valid. Please reload the page.');
+      return;
+    }
+
+    // Prepare predictions payload
+    this.preparedPredictions = this.matches
+      .filter(m => m && typeof (m as any).id !== 'undefined' && !isNaN(Number((m as any).id)))
+      .map(m => ({
+        matchId: Number((m as any).id),
+        pick: m.pick || '',
+        scoreHome: m.isTiebreak ? (m.scoreHome ?? null) : null,
+        scoreAway: m.isTiebreak ? (m.scoreAway ?? null) : null
+      }));
+
+    console.log('Prepared predictions:', this.preparedPredictions);
+
+    // Show modal for session participation
+    this.showParticipationModal = true;
   }
-
-  const invalidTiebreaks = this.matches
-    .filter(m => m.isTiebreak)
-    .filter(m => m.scoreHome === null || m.scoreAway === null);
-
-  if (invalidTiebreaks.length > 0) {
-    this.showErrorMessage('Veuillez renseigner les scores pour les tie-breaks.');
-    return;
-  }
-
-  // Ensure selectedCompetition is a valid LeagueTheme
-  if (!this.selectedCompetition || typeof this.selectedCompetition !== 'string' || !(this.selectedCompetition in this.leagueConfigs)) {
-    this.showErrorMessage('Competition is not valid. Please reload the page.');
-    return;
-  }
-
-  // Prepare predictions payload
-  this.preparedPredictions = this.matches
-    .filter(m => m && typeof (m as any).id !== 'undefined' && !isNaN(Number((m as any).id)))
-    .map(m => ({
-      matchId: Number((m as any).id),
-      pick: m.pick || '',
-      scoreHome: m.isTiebreak ? (m.scoreHome ?? null) : null,
-      scoreAway: m.isTiebreak ? (m.scoreAway ?? null) : null
-    }));
-
-  console.log('Prepared predictions:', this.preparedPredictions);
-
-  // Show modal for session participation
-  this.showParticipationModal = true;
-}
 
   ngOnDestroy(): void {
     this.destroy$.next();
@@ -369,64 +381,134 @@ submitPredictions(): void {
     // Navigate back to the gameweek list
     this.router.navigate(['../user-gameweek-list'], { relativeTo: this.route });
   }
-
 onParticipationSubmitted(event: {
   sessionData: SessionParticipationData;
   predictions: PredictionPayload[];
 }): void {
-  this.isSubmitting = true;
+  console.log('[PARENT] Received participation event:', event);
 
-  this.sessionParticipationService.joinCompetition(
-    event.sessionData.gameweekId,
-    event.sessionData.competition,
-    event.sessionData.sessionType,
-    event.sessionData.buyInAmount,
-    event.sessionData.isPrivate,
-    event.sessionData.accessKey
+  this.isSubmitting = true;
+  const { sessionData, predictions } = event;
+
+  // Use the real Gameweek ID loaded from backend, not the one from sessionData
+  const gameweekIdToSend = this.currentGameweekId ?? sessionData.gameweekId;
+  console.log('[PARENT] Using gameweekId for submission:', gameweekIdToSend);
+
+  // Ensure buyInAmount is a clean number
+  const cleanBuyInAmount = Number(sessionData.buyInAmount);
+  
+  // Validate essential data
+  if (!sessionData.gameweekId || !sessionData.competition || !sessionData.sessionType) {
+    console.error('[PARENT] Missing essential session data');
+    this.showErrorMessage('Données de session manquantes. Veuillez réessayer.');
+    this.isSubmitting = false;
+    return;
+  }
+
+  if (isNaN(cleanBuyInAmount) || cleanBuyInAmount < 0) {
+    console.error('[PARENT] Invalid buyInAmount:', sessionData.buyInAmount);
+    this.showErrorMessage('Montant de mise invalide. Veuillez sélectionner un montant valide.');
+    this.isSubmitting = false;
+    return;
+  }
+
+  // Convert predictions to the required DTO format
+  const predictionDTOs: PredictionDTO[] = predictions.map(p => ({
+    matchId: p.matchId,
+    predictedResult: this.mapPickToResult(p.pick),
+    predictedHomeScore: p.scoreHome,
+    predictedAwayScore: p.scoreAway
+  }));
+
+  // ✅ CREATE CLEAN REQUEST BODY (no session fields)
+  const submissionDTO: GameweekPredictionSubmissionDTO = {
+    userId: this.getCurrentUserId(),
+    gameweekId: gameweekIdToSend, // <-- always use the backend ID
+    competition: sessionData.competition,
+    predictions: predictionDTOs
+  };
+
+  console.log('[PARENT] Final submission DTO:', submissionDTO);
+  console.log('[PARENT] Session params - sessionType:', sessionData.sessionType, 'buyInAmount:', Number(sessionData.buyInAmount));
+
+  // ✅ PASS SESSION DATA AS SEPARATE PARAMETERS
+  this.predictionService.submitPredictionsAndJoinSession(
+    submissionDTO,              // Clean request body
+    sessionData.sessionType,    // Query param
+    Number(sessionData.buyInAmount), // Query param
+    sessionData.isPrivate,     // Query param
+    sessionData.accessKey      // Query param (optional)
   ).subscribe({
     next: (result) => {
-      this.showSuccessMessage('Prédictions soumises avec succès! Vous avez rejoint la compétition.');
+      console.log('[PARENT] Submission successful:', result);
+      this.showSuccessMessage('Prédictions soumises avec succès!');
       this.showParticipationModal = false;
       this.isSubmitting = false;
     },
     error: (error) => {
+      console.error('[PARENT] Submission error:', error);
       this.isSubmitting = false;
       this.showErrorMessage(this.getErrorMessage(error));
     }
   });
 }
 
-private getErrorMessage(error: any): string {
-  if (!error) return 'Erreur lors de la soumission. Veuillez réessayer.';
-  if (error.status === 409) {
-    return 'Vous participez déjà à cette session ou la session est pleine.';
+  // Helper to map pick to backend result
+  private mapPickToResult(pick: string | null): 'HOME_WIN' | 'DRAW' | 'AWAY_WIN' {
+    if (pick === 'HOME_WIN' || pick === '1') return 'HOME_WIN';
+    if (pick === 'AWAY_WIN' || pick === '2') return 'AWAY_WIN';
+    return 'DRAW'; // Default to DRAW for 'X' or null
   }
-  if (error.status === 400) {
-    return 'Paramètres invalides. Vérifiez vos données.';
+
+  // Implement this to get the logged-in user's ID
+  private getCurrentUserId(): number {
+    // TODO: Replace with actual user service implementation
+    // Example: return this.authService.getCurrentUser()?.id || 1;
+    return 1; // placeholder
   }
-  if (error.error && typeof error.error === 'string') {
-    return error.error;
+
+  private getErrorMessage(error: any): string {
+    if (!error) return 'Erreur lors de la soumission. Veuillez réessayer.';
+    
+    if (error.status === 409) {
+      return 'Vous participez déjà à cette session ou la session est pleine.';
+    }
+    
+    if (error.status === 400) {
+      return 'Paramètres invalides. Vérifiez vos données.';
+    }
+    
+    if (error.status === 500) {
+      return 'Erreur serveur. Veuillez réessayer plus tard.';
+    }
+    
+    if (error.error && typeof error.error === 'string') {
+      return error.error;
+    }
+    
+    if (error.message) {
+      return error.message;
+    }
+    
+    return 'Erreur lors de la soumission. Veuillez réessayer.';
   }
-  return 'Erreur lors de la soumission. Veuillez réessayer.';
-}
 
+  onModalClosed(): void {
+    console.log('[PARENT] Modal closed');
+    this.showParticipationModal = false;
+  }
 
-onModalClosed(): void {
-  this.showParticipationModal = false;
-}
+  private showSuccessMessage(msg: string): void {
+    this.message = msg;
+    this.messageType = 'success';
+    this.showMessage = true;
+    setTimeout(() => this.showMessage = false, 5000);
+  }
 
-private showSuccessMessage(msg: string): void {
-  this.message = msg;
-  this.messageType = 'success';
-  this.showMessage = true;
-  setTimeout(() => this.showMessage = false, 5000);
-}
-
-private showErrorMessage(msg: string): void {
-  this.message = msg;
-  this.messageType = 'error';
-  this.showMessage = true;
-  setTimeout(() => this.showMessage = false, 5000);
-}
-
+  private showErrorMessage(msg: string): void {
+    this.message = msg;
+    this.messageType = 'error';
+    this.showMessage = true;
+    setTimeout(() => this.showMessage = false, 5000);
+  }
 }

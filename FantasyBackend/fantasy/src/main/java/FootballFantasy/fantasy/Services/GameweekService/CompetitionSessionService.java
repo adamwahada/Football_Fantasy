@@ -43,9 +43,6 @@ public class CompetitionSessionService {
     // Platform fee percentage (10%)
     private static final BigDecimal PLATFORM_FEE_PERCENTAGE = new BigDecimal("0.10");
 
-    /**
-     * 🔒Join a session with locking (for actual session creation/joining)
-     */
     @Transactional
     public CompetitionSession joinOrCreateSession(Long gameweekId,
                                                   SessionType sessionType,
@@ -57,11 +54,9 @@ public class CompetitionSessionService {
                 .orElseThrow(() -> new RuntimeException("GameWeek not found"));
 
         SessionTemplate template = sessionTemplateRepository
-                .findByCompetitionAndSessionTypeAndIsActiveTrue(competition, sessionType)
-                .stream()
-                .filter(t -> t.getBuyInAmount().equals(buyInAmount) && t.getIsPrivate().equals(isPrivate))
-                .findFirst()
-                .orElseThrow(() -> new RuntimeException("No active template for that competition/type/amount"));
+                .findActiveTemplateByCompetitionTypeAmountAndPrivacy(
+                        competition, sessionType, buyInAmount, isPrivate)
+                .orElseThrow(() -> new RuntimeException("No active template for that competition/type/amount/private"));
 
         CompetitionSession session;
 
@@ -85,6 +80,7 @@ public class CompetitionSessionService {
 
         return session;
     }
+
 
     /**
      * 🏗️ Create actual session (saved to DB)

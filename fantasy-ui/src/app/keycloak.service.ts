@@ -44,14 +44,9 @@ export class KeycloakService {
           enableLogging: true,
         });
         this.isInitialized = true;
-        console.log('=== Keycloak Initialization ===');
-        console.log('Authenticated:', authenticated);
-        console.log('Token:', this.keycloak.token ? 'Present' : 'Missing');
-        console.log('Token Parsed:', this.keycloak.tokenParsed);
-        console.log('Roles:', await this.getUserRoles());
+
         return authenticated;
       } catch (error) {
-        console.error('Keycloak initialization failed:', error);
         this.isInitialized = false;
         this.initPromise = null;
         return false;
@@ -63,24 +58,18 @@ export class KeycloakService {
 
   async getValidToken(): Promise<string> {
     if (!this.isInitialized) {
-      console.error('Keycloak not initialized');
-      throw new Error('Keycloak not initialized');
     }
     
     try {
-      console.log('=== Getting Valid Token ===');
-      console.log('Current token:', this.keycloak.token ? 'Present' : 'Missing');
+
       
       const updated = await this.keycloak.updateToken(30);
-      console.log('Token updated:', updated);
       
       const token = this.keycloak.token || '';
-      console.log('Token length:', token.length);
-      console.log('Token preview:', token.substring(0, 50) + '...');
+
       
       return token;
     } catch (error) {
-      console.error('Token refresh failed:', error);
       this.keycloak.login();
       throw error;
     }
@@ -115,8 +104,7 @@ export class KeycloakService {
     
     // Ne logger que si le statut a changé
     if (this.cachedLoginStatus !== this.keycloak.authenticated) {
-      console.log('=== Login Status Changed ===');
-      console.log('Is logged in:', this.cachedLoginStatus);
+
     }
     
     return this.cachedLoginStatus;
@@ -124,23 +112,18 @@ export class KeycloakService {
 
   // FIX: Simplified role checking using tokenParsed directly
   getUserRoles(): string[] {
-    console.log('=== Getting User Roles ===');
     
     if (!this.keycloak.tokenParsed) {
-      console.log('No token parsed available');
       return [];
     }
 
     const realmAccess = this.keycloak.tokenParsed['realm_access'];
-    console.log('Realm Access:', realmAccess);
     
     if (!realmAccess || !realmAccess['roles']) {
-      console.log('No roles found in token');
       return [];
     }
 
     const roles = realmAccess['roles'];
-    console.log('Raw roles from token:', roles);
     
     // Format roles to match backend expectations
     const formattedRoles = roles.map((role: string) => {
@@ -148,16 +131,12 @@ export class KeycloakService {
       return roleName.startsWith('ROLE_') ? roleName : `ROLE_${roleName}`;
     });
     
-    console.log('Formatted roles:', formattedRoles);
     return formattedRoles;
   }
 
   hasRole(role: string): boolean {
-    console.log('=== Checking Role ===');
-    console.log('Role to check:', role);
     
     const roles = this.getUserRoles();
-    console.log('Available roles:', roles);
     
     // Check role with and without ROLE_ prefix
     const roleToCheck = role.toUpperCase();
@@ -167,7 +146,6 @@ export class KeycloakService {
       r === roleToCheck.replace('ROLE_', '')
     );
     
-    console.log('Has role:', hasRole);
     return hasRole;
   }
 
@@ -179,7 +157,6 @@ export class KeycloakService {
     return this.hasRole('user');
   }
   logout(): void {
-    console.log('=== Logging out ===');
     this.keycloak.logout({
       redirectUri: window.location.origin // Redirect to home page after logout
     });
@@ -188,10 +165,8 @@ export class KeycloakService {
   private clearRoleCache(): void {
     // Clear any cached user data
     this.cachedRoles = null;
-    console.log('User data cleared');
   }
   register(): void {
-    console.log('=== Redirecting to registration ===');
     window.location.href = '/register';
   }
   private startTokenRefreshLoop(): void {
@@ -199,10 +174,8 @@ export class KeycloakService {
     try {
       const refreshed = await this.keycloak.updateToken(30); // rafraîchir si < 30s
       if (refreshed) {
-        console.log('✅ Token auto-refresh réussi');
       }
     } catch (error) {
-      console.error('❌ Échec du token refresh automatique, déconnexion...', error);
       this.logout();
     }
   }, 60000); // toutes les 60 secondes

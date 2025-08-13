@@ -44,6 +44,7 @@ public class SecurityConfig {
                                 "/api/session-templates/**",
                                 "/api/competition-sessions/**",
                                 "/api/seed/**",
+                                "/api/session-participation/**",
                                 "/api/predictions/**",
                                 "/assets/**",
                                 "/static/**",

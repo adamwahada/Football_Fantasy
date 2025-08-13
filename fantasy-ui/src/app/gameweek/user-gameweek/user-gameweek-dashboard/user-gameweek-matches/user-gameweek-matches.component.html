@@ -37,8 +37,8 @@
               <div class="match-content">
                 <!-- Home Team -->
                 <div class="team home" 
-                     [class.selected]="match.pick === '1'"
-                     (click)="selectPick(match, '1')">
+                     [class.selected]="match.pick === 'HOME_WIN'"
+                     (click)="selectPick(match, 'HOME_WIN')">
                   <img *ngIf="match.homeIconUrl" 
                        [src]="match.homeIconUrl" 
                        [alt]="match.homeTeam" 
@@ -49,16 +49,16 @@
                 <!-- Draw Button -->
                 <div class="pick-buttons">
                   <button class="pick-btn draw-btn" 
-                          [class.selected]="match.pick === 'X'" 
-                          (click)="selectPick(match, 'X')">
+                          [class.selected]="match.pick === 'DRAW'" 
+                          (click)="selectPick(match, 'DRAW')">
                     X
                   </button>
                 </div>
 
                 <!-- Away Team -->
                 <div class="team away" 
-                     [class.selected]="match.pick === '2'"
-                     (click)="selectPick(match, '2')">
+                     [class.selected]="match.pick === 'AWAY_WIN'"
+                     (click)="selectPick(match, 'AWAY_WIN')">
                   <img *ngIf="match.awayIconUrl" 
                        [src]="match.awayIconUrl" 
                        [alt]="match.awayTeam" 
