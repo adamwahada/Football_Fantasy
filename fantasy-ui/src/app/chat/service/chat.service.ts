@@ -100,4 +100,5 @@ export class ChatService {
 
     return this.http.post(`${this.baseUrl}/rooms/${roomId}/files`, formData);
   }
+
 }
