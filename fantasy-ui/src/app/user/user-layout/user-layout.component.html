@@ -5,18 +5,14 @@
   
   <!-- Layout Body -->
   <div class="layout-body">
-    <button 
-      class="sidebar-toggle" 
-      [class.collapsed]="sidebarCollapsed"
-      (click)="toggleSidebar()">
-      {{ sidebarCollapsed ? '☰' : '◀' }}
-    </button>
-    
-    <!-- Sidebar -->
-    <app-user-sidebar [sidebarCollapsed]="sidebarCollapsed"></app-user-sidebar>
-    
+    <!-- Sidebar Toggle Buttons -->
+  <button class="sidebar-toggle" *ngIf="!sidebarCollapsed && !sidebarHidden" (click)="cycleSidebarState()">◀</button>
+  <button class="sidebar-toggle" *ngIf="sidebarCollapsed && !sidebarHidden" (click)="cycleSidebarState()">×</button>
+  <button class="sidebar-toggle hide-btn" *ngIf="sidebarHidden" (click)="cycleSidebarState()">☰</button>
+    <!-- Sidebar: show only if not hidden -->
+  <app-user-sidebar [sidebarCollapsed]="sidebarCollapsed" *ngIf="!sidebarHidden"></app-user-sidebar>
     <!-- Main Content -->
-    <main class="user-content" [class.collapsed]="sidebarCollapsed">
+    <main class="user-content" [class.collapsed]="sidebarCollapsed" [class.fullscreen]="sidebarHidden">
       <router-outlet></router-outlet>
     </main>
   </div>

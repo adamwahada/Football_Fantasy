@@ -13,6 +13,8 @@ import { KeycloakService } from '../../keycloak.service';
 })
 export class UserSidebarComponent implements OnInit {
   @Input() sidebarCollapsed = false;
+  @Input() sidebarHidden = false;
+  hoveredIndex: number | null = null;
 
   routes: any[] = [];
   allRoutes: any[] = (routesData as any).routes;  

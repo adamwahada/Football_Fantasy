@@ -14,11 +14,23 @@ import { AuthService } from '../../core/services/auth.service';
 })
 export class UserLayoutComponent {
   sidebarCollapsed = false;
+  sidebarHidden = false;
 
   constructor(private authService: AuthService) {}
 
-  toggleSidebar() {
-    this.sidebarCollapsed = !this.sidebarCollapsed;
+  cycleSidebarState() {
+    if (!this.sidebarCollapsed && !this.sidebarHidden) {
+      // Full sidebar → Collapsed
+      this.sidebarCollapsed = true;
+    } else if (this.sidebarCollapsed && !this.sidebarHidden) {
+      // Collapsed → Hidden
+      this.sidebarCollapsed = false;
+      this.sidebarHidden = true;
+    } else if (this.sidebarHidden) {
+      // Hidden → Full
+      this.sidebarHidden = false;
+      this.sidebarCollapsed = false;
+    }
   }
 
   isLoggedIn(): boolean {

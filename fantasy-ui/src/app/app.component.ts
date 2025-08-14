@@ -30,15 +30,6 @@ export class AppComponent {
     });
   }
 
-  ngOnInit() {
-    if (this.auth.isLoggedIn()) {
-      this.auth.loadCurrentUser().subscribe({
-        next: user => console.log('User profile loaded:', user),
-        error: err => console.error('Failed to load user profile:', err)
-      });
-    }
-  }
-
   login() {
     this.auth.login();
   }
@@ -49,5 +40,12 @@ export class AppComponent {
 
   register(): void {
     // Implémente l'inscription ici
+  }
+  ngOnInit() {
+    if (this.auth.isLoggedIn()) {
+      this.auth.loadCurrentUser().subscribe(user => {
+        console.log('User loaded:', user);
+      });
+    }
   }
 }
