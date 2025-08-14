@@ -39,6 +39,8 @@ public class SecurityConfig {
                                 "/swagger-resources/**",
                                 "/webjars/**",
                                 "/configuration/**",
+                                "/api/users/**",
+                                "/api/user/**",
                                 "/api/matches/**",
                                 "/api/gameweeks/**",
                                 "/api/session-templates/**",

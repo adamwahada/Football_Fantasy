@@ -1,4 +1,4 @@
-// src/app/keycloak.service.ts - FIXED VERSION
+// src/app/keycloak.service.ts
 import { Injectable } from '@angular/core';
 import Keycloak from 'keycloak-js';
 
@@ -6,12 +6,12 @@ import Keycloak from 'keycloak-js';
   providedIn: 'root'
 })
 export class KeycloakService {
-  private keycloak: Keycloak;
+  public keycloak: Keycloak;
   private isInitialized = false;
   private initPromise: Promise<boolean> | null = null;
   private cachedRoles: string[] | null = null;
   private lastLoginCheck: number = 0;
-  private readonly LOGIN_CHECK_INTERVAL = 5000; // 5 secondes
+  private readonly LOGIN_CHECK_INTERVAL = 5000;
   private cachedLoginStatus: boolean | null = null;
 
   constructor() {
@@ -22,21 +22,18 @@ export class KeycloakService {
     });
 
     this.init();
+    this.startTokenRefreshLoop();
   }
 
+  /**
+   * Initialize Keycloak
+   */
   async init(): Promise<boolean> {
-    if (this.initPromise) {
-      return this.initPromise;
-    }
+    if (this.initPromise) return this.initPromise;
 
     this.initPromise = (async () => {
       try {
-        // Skip SSO check if we're on the registration page
-        if (window.location.pathname === '/register') {
-          this.isInitialized = true;
-          return false;
-        }
-
+        // Always initialize Keycloak, even for "register" flow
         const authenticated = await this.keycloak.init({ 
           onLoad: 'check-sso', 
           checkLoginIframe: false,
@@ -44,9 +41,9 @@ export class KeycloakService {
           enableLogging: true,
         });
         this.isInitialized = true;
-
         return authenticated;
       } catch (error) {
+        console.error('Keycloak init failed:', error);
         this.isInitialized = false;
         this.initPromise = null;
         return false;
@@ -56,128 +53,110 @@ export class KeycloakService {
     return this.initPromise;
   }
 
+  /**
+   * Login via Keycloak (automatic user creation on backend)
+   */
+  async login(redirectUri?: string): Promise<void> {
+    if (!this.isInitialized) await this.init();
+
+    await this.keycloak.login({
+      redirectUri: redirectUri ? window.location.origin + redirectUri : window.location.origin
+    });
+  }
+
+  /**
+   * Logout
+   */
+  logout(): void {
+    this.keycloak.logout({
+      redirectUri: window.location.origin
+    });
+    this.clearRoleCache();
+  }
+
+  /**
+   * Get a valid token
+   */
   async getValidToken(): Promise<string> {
-    if (!this.isInitialized) {
-    }
-    
+    if (!this.isInitialized) await this.init();
     try {
-
-      
-      const updated = await this.keycloak.updateToken(30);
-      
-      const token = this.keycloak.token || '';
-
-      
-      return token;
+      await this.keycloak.updateToken(30);
+      return this.keycloak.token || '';
     } catch (error) {
-      this.keycloak.login();
+      console.error('Token refresh failed, forcing login:', error);
+      await this.login();
       throw error;
     }
   }
 
+  // ===== USER INFO METHODS =====
 
-  async login(redirectUri?: string): Promise<void> {
-    await this.keycloak.login({
-      redirectUri: redirectUri ? window.location.origin + redirectUri : window.location.origin
-    });
+  getKeycloakId(): string | null {
+    return this.keycloak.tokenParsed?.sub || null;
+  }
+
+  getEmail(): string | null {
+    return this.keycloak.tokenParsed?.['email'] || null;
   }
 
   getUsername(): string {
     return this.keycloak.tokenParsed?.['preferred_username'] || '';
   }
 
+  getFirstName(): string | null {
+    return this.keycloak.tokenParsed?.['given_name'] || null;
+  }
+
+  getLastName(): string | null {
+    return this.keycloak.tokenParsed?.['family_name'] || null;
+  }
+
+  getUserProfile(): any {
+    return this.keycloak.tokenParsed || null;
+  }
+
+  isTokenExpired(): boolean {
+    return this.keycloak.isTokenExpired();
+  }
+
   isLoggedIn(): boolean {
     const now = Date.now();
-    
-    // Si on est sur la page d'inscription, ne pas vérifier le statut
-    if (window.location.pathname === '/register') {
-      return false;
-    }
-
-    // Utiliser le cache si disponible et pas expiré
     if (this.cachedLoginStatus !== null && now - this.lastLoginCheck < this.LOGIN_CHECK_INTERVAL) {
       return this.cachedLoginStatus;
     }
 
     this.lastLoginCheck = now;
     this.cachedLoginStatus = this.keycloak.authenticated || false;
-    
-    // Ne logger que si le statut a changé
-    if (this.cachedLoginStatus !== this.keycloak.authenticated) {
-
-    }
-    
     return this.cachedLoginStatus;
   }
 
-  // FIX: Simplified role checking using tokenParsed directly
+  // ===== ROLE METHODS =====
   getUserRoles(): string[] {
-    
-    if (!this.keycloak.tokenParsed) {
-      return [];
-    }
-
-    const realmAccess = this.keycloak.tokenParsed['realm_access'];
-    
-    if (!realmAccess || !realmAccess['roles']) {
-      return [];
-    }
-
-    const roles = realmAccess['roles'];
-    
-    // Format roles to match backend expectations
-    const formattedRoles = roles.map((role: string) => {
-      const roleName = role.toUpperCase();
-      return roleName.startsWith('ROLE_') ? roleName : `ROLE_${roleName}`;
-    });
-    
-    return formattedRoles;
+    const roles = this.keycloak.tokenParsed?.['realm_access']?.['roles'] || [];
+    return roles.map((r: string) => r.startsWith('ROLE_') ? r : `ROLE_${r.toUpperCase()}`);
   }
 
   hasRole(role: string): boolean {
-    
-    const roles = this.getUserRoles();
-    
-    // Check role with and without ROLE_ prefix
     const roleToCheck = role.toUpperCase();
-    const hasRole = roles.some((r: string) => 
-      r === roleToCheck || 
-      r === `ROLE_${roleToCheck}` || 
-      r === roleToCheck.replace('ROLE_', '')
+    return this.getUserRoles().some(r =>
+      r === roleToCheck || r === `ROLE_${roleToCheck}` || r === roleToCheck.replace('ROLE_', '')
     );
-    
-    return hasRole;
   }
 
-  isAdmin(): boolean {
-    return this.hasRole('admin');
-  }
+  isAdmin(): boolean { return this.hasRole('admin'); }
+  isUser(): boolean { return this.hasRole('user'); }
 
-  isUser(): boolean {
-    return this.hasRole('user');
-  }
-  logout(): void {
-    this.keycloak.logout({
-      redirectUri: window.location.origin // Redirect to home page after logout
-    });
-    this.clearRoleCache(); // Clear any cached data
-  }
-  private clearRoleCache(): void {
-    // Clear any cached user data
-    this.cachedRoles = null;
-  }
-  register(): void {
-    window.location.href = '/register';
-  }
+  // ===== PRIVATE HELPERS =====
+  private clearRoleCache(): void { this.cachedRoles = null; }
+
   private startTokenRefreshLoop(): void {
-  setInterval(async () => {
-    try {
-      const refreshed = await this.keycloak.updateToken(30); // rafraîchir si < 30s
-      if (refreshed) {
+    setInterval(async () => {
+      if (!this.isInitialized) return;
+      try {
+        await this.keycloak.updateToken(30);
+      } catch {
+        this.logout();
       }
-    } catch (error) {
-      this.logout();
-    }
-  }, 60000); // toutes les 60 secondes
+    }, 60000); // every 60s
   }
 }

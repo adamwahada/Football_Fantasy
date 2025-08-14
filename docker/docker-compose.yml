@@ -13,26 +13,29 @@ services:
     restart: unless-stopped
 
   keycloak:
-    image: quay.io/keycloak/keycloak:24.0.1
-    container_name: keycloak_server
-    command: ["start-dev"]
-    env_file:
-      - keycloak.env
-    ports:
-      - "8180:8080"
-    volumes:
-      - ./keycloak_imports:/opt/keycloak/data/import
-      - ./keycloak_exports:/opt/keycloak/data/export     
-      - ./keycloak_providers:/opt/keycloak/providers
-      - ../mytheme:/opt/keycloak/themes/mytheme
-    expose:
-      - "8080"
-    depends_on:
-      - postgres
-    networks:
-      - keycloak-network
-    restart: unless-stopped
-
+  image: quay.io/keycloak/keycloak:24.0.1
+  container_name: keycloak_server
+  command: ["start-dev"]
+  env_file:
+    - keycloak.env
+  environment:
+    - QUARKUS_LOG_LEVEL=DEBUG
+    - QUARKUS_LOG_CATEGORY__ORG_KEYCLOAK_THEME__LEVEL=TRACE
+    - QUARKUS_LOG_CATEGORY__ORG_KEYCLOAK_FORMS__LEVEL=DEBUG
+  ports:
+    - "8180:8080"
+  volumes:
+    - ./keycloak_imports:/opt/keycloak/data/import
+    - ./keycloak_exports:/opt/keycloak/data/export
+    - ./keycloak_providers:/opt/keycloak/providers
+    - ../mytheme:/opt/keycloak/themes/mytheme
+  expose:
+    - "8080"
+  depends_on:
+    - postgres
+  networks:
+    - keycloak-network
+  restart: unless-stopped
   mysql:
     image: mysql:8
     container_name: mysql_fantasy

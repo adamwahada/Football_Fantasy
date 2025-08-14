@@ -1,9 +1,9 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnInit, OnDestroy, ChangeDetectorRef, AfterViewInit } from '@angular/core';
 import { TeamService } from '../../../../match/team.service';
 import { CommonModule } from '@angular/common';
 import { Router, ActivatedRoute } from '@angular/router';
 import { Subject, takeUntil, finalize } from 'rxjs';
-
+import { NotificationService } from '../../../../shared/notification.service';
 interface League {
   displayName: string;
   iconUrl: string;
@@ -22,7 +22,7 @@ interface LeagueListItem {
   styleUrls: ['./user-gameweek-list.component.scss'],
   imports: [CommonModule],
 })
-export class UserGameweekListComponent implements OnInit, OnDestroy {
+export class UserGameweekListComponent implements OnInit, OnDestroy, AfterViewInit {
   leagues: LeagueListItem[] = [];
   loading = true;
   error = '';
@@ -52,11 +52,20 @@ export class UserGameweekListComponent implements OnInit, OnDestroy {
   constructor(
     private teamService: TeamService,
     private router: Router,
-    private route: ActivatedRoute
+    private route: ActivatedRoute,
+    public notificationService: NotificationService,
+    private cdRef: ChangeDetectorRef
   ) {}
 
   ngOnInit(): void {
     this.loadLeagues();
+  }
+  
+  ngAfterViewInit(): void {
+    // Force change detection in case message is set after navigation
+    if (this.notificationService.message) {
+      this.cdRef.detectChanges();
+    }
   }
 
   ngOnDestroy(): void {

@@ -2,7 +2,7 @@ import { Component, OnInit, AfterViewInit, OnDestroy } from '@angular/core';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule, AbstractControl, ValidationErrors } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
-import { AuthService } from '../auth.service';
+import { AuthService } from '../../core/services/auth.service';
 import { Router } from '@angular/router';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
@@ -429,128 +429,128 @@ export class RegistrationComponent implements OnInit, AfterViewInit, OnDestroy {
     });
   }
 
-  async onSubmit() {
-    console.log('🔍 Form submission started');
-    if (this.currentStep === 1) {
-      this.nextStep();
-      return;
-    }
-
-    this.markFormGroupTouched(this.customForm);
-
-    if (this.customForm.invalid) {
-      console.log('❌ Form is invalid');
-      this.errorMessage = 'Veuillez corriger les erreurs ci-dessus';
-      return;
-    }
-
-    if (!this.recaptchaToken) {
-      console.error('❌ No reCAPTCHA token available');
-      this.setFieldError('recaptcha', 'Veuillez compléter la vérification reCAPTCHA');
-      return;
-    }
-
-    this.isSubmitting = true;
-    this.errorMessage = '';
-    this.fieldErrors = {};
-
-    try {
-      const formData = {
-        ...this.customForm.value,
-        ...this.basicForm.value,
-        recaptchaToken: this.recaptchaToken
-      };
-
-      if (formData.birthDate instanceof Date) {
-        formData.birthDate = this.formatDateForInput(formData.birthDate);
-      }
-
-      console.log('🚀 Submitting registration with data:', {
-        ...formData,
-        password: '***',
-        recaptchaToken: 'TOKEN_PROVIDED'
-      });
-
-      const response = await this.authService.registerUser(formData).toPromise();
-      console.log('✅ Registration successful:', response);
-      this.snackBar.open(
-        'Inscription réussie ! Vérifiez votre email pour activer votre compte.',
-        'Fermer',
-        { duration: 7000, panelClass: 'snackbar-success' }
-      );
-      this.router.navigate(['/email-verification']);
-      return;
-    } catch (error: any) {
-      console.error('❌ Registration failed:', error);
-      const msg = (error.message || '').toLowerCase();
-    
-      // 🔎 Détails dynamiques
-      if (msg.includes('user already exists')) {
-        const friendlyMsg = '❌ Ce nom d\'utilisateur ou cette adresse email est déjà associé à un compte. Veuillez en choisir un autre ou vous connecter à votre compte.';
-        this.snackBar.openFromComponent(SnackbarErrorComponent, {
-          data: friendlyMsg,
-          duration: 7000,
-          horizontalPosition: 'center',
-          verticalPosition: 'top',
-          panelClass: 'snackbar-error'
-        });
-        if (msg.includes('email')) {
-          this.setFieldError('email', '');
-        } else if (msg.includes('username')) {
-          this.setFieldError('username', '');
-        } else {
-          this.errorMessage = '';
-        }
-      } else if (msg.includes('postal') || msg.includes('code postal')) {
-        this.setFieldError('postalNumber', error.message);
-        this.snackBar.openFromComponent(SnackbarErrorComponent, {
-          data: error.message,
-          duration: 7000,
-          horizontalPosition: 'center',
-          verticalPosition: 'top',
-          panelClass: 'snackbar-error'
-        });
-      } else if (msg.includes('phone') || msg.includes('téléphone')) {
-        this.setFieldError('phone', error.message);
-        this.snackBar.openFromComponent(SnackbarErrorComponent, {
-          data: error.message,
-          duration: 7000,
-          horizontalPosition: 'center',
-          verticalPosition: 'top',
-          panelClass: 'snackbar-error'
-        });
-      } else if (msg.includes('recaptcha')) {
-        this.setFieldError('recaptcha', error.message);
-        this.snackBar.openFromComponent(SnackbarErrorComponent, {
-          data: error.message,
-          duration: 7000,
-          horizontalPosition: 'center',
-          verticalPosition: 'top',
-          panelClass: 'snackbar-error'
-        });
-      } else {
-        this.snackBar.openFromComponent(SnackbarErrorComponent, {
-          data: error.message || 'Une erreur s\'est produite lors de l\'inscription. Veuillez réessayer.',
-          duration: 7000,
-          horizontalPosition: 'center',
-          verticalPosition: 'top',
-          panelClass: 'snackbar-error'
-        });
-      }
-    
-      // ♻️ Recharger le captcha
-      if (this.recaptchaWidgetId !== null) {
-        try {
-          window.grecaptcha.reset(this.recaptchaWidgetId);
-          this.recaptchaToken = null;
-        } catch (recaptchaError) {
-          console.error('Error resetting reCAPTCHA:', recaptchaError);
-        }
-      }
-      this.isSubmitting = false;
-    }
-    
+async onSubmit() {
+  if (this.currentStep === 1) {
+    this.nextStep();
+    return;
   }
+
+  this.markFormGroupTouched(this.customForm);
+
+  if (this.customForm.invalid) {
+    this.errorMessage = 'Veuillez corriger les erreurs ci-dessus';
+    return;
+  }
+
+  if (!this.recaptchaToken) {
+    this.setFieldError('recaptcha', 'Veuillez compléter la vérification reCAPTCHA');
+    return;
+  }
+
+  this.isSubmitting = true;
+  this.errorMessage = '';
+  this.fieldErrors = {};
+
+  try {
+    // Format birth date properly
+    const birthDateValue = this.customForm.get('birthDate')?.value;
+    let formattedBirthDate = null;
+    
+    if (birthDateValue) {
+      if (birthDateValue instanceof Date) {
+        // If it's a Date object, format it as YYYY-MM-DD
+        formattedBirthDate = birthDateValue.toISOString().split('T')[0];
+      } else if (typeof birthDateValue === 'string') {
+        // If it's already a string, use it as is (assuming it's in correct format)
+        formattedBirthDate = birthDateValue;
+      }
+    }
+
+    // Collect all form data with proper formatting
+    const userData = {
+      username: this.basicForm.get('username')?.value?.trim(),
+      firstName: this.basicForm.get('firstName')?.value?.trim(),
+      lastName: this.basicForm.get('lastName')?.value?.trim(),
+      email: this.basicForm.get('email')?.value?.trim().toLowerCase(),
+      password: this.basicForm.get('password')?.value,
+      phone: this.customForm.get('phone')?.value?.trim() || null,
+      country: this.customForm.get('country')?.value?.trim() || null,
+      address: this.customForm.get('address')?.value?.trim() || null,
+      postalNumber: this.customForm.get('postalNumber')?.value?.trim() || null,
+      birthDate: formattedBirthDate,
+      referralCode: this.customForm.get('referralCode')?.value?.trim() || null,
+      termsAccepted: this.customForm.get('termsAccepted')?.value || false,
+      recaptchaToken: this.recaptchaToken
+    };
+
+    // Log the data being sent (without password)
+    console.log('🚀 Submitting registration data:', { 
+      ...userData, 
+      password: '***',
+      birthDate: formattedBirthDate 
+    });
+
+    // Call backend registration endpoint
+    this.authService.registerUser(userData).subscribe({
+      next: (response) => {
+        console.log('✅ Registration successful:', response);
+        
+        this.snackBar.open(
+          'Inscription réussie ! Vous pouvez maintenant vous connecter.',
+          'Fermer', 
+          { 
+            duration: 5000,
+            panelClass: ['success-snackbar']
+          }
+        );
+        
+        // Redirect to login page
+        this.router.navigate(['/login']);
+      },
+      error: (error) => {
+        console.error('❌ Registration failed:', error);
+        
+        this.isSubmitting = false;
+        
+        // Handle specific error cases
+        if (error.status === 400) {
+          // Check if there are field-specific errors
+          if (error.error && error.error.errors) {
+            // Handle validation errors for specific fields
+            const fieldErrors = error.error.errors;
+            for (const [field, message] of Object.entries(fieldErrors)) {
+              this.setFieldError(field, message as string);
+            }
+            this.errorMessage = 'Veuillez corriger les erreurs ci-dessus.';
+          } else {
+            this.errorMessage = error.error?.message || 'Données d\'inscription invalides. Veuillez vérifier vos informations.';
+          }
+        } else if (error.status === 409) {
+          this.errorMessage = 'Un compte avec ce nom d\'utilisateur ou email existe déjà.';
+        } else if (error.error && error.error.message) {
+          this.errorMessage = error.error.message;
+        } else {
+          this.errorMessage = 'Erreur lors de l\'inscription. Veuillez réessayer.';
+        }
+        
+        // Reset reCAPTCHA
+        if (this.recaptchaWidgetId !== null) {
+          try {
+            window.grecaptcha.reset(this.recaptchaWidgetId);
+            this.recaptchaToken = null;
+          } catch (e) {
+            console.error('Error resetting reCAPTCHA:', e);
+          }
+        }
+      }
+    });
+
+  } catch (error) {
+    console.error('❌ Unexpected error during registration:', error);
+    this.errorMessage = 'Erreur inattendue. Veuillez réessayer.';
+    this.isSubmitting = false;
+  }
+}
 
   // ✅ Méthode pour formater la date pour l'input date
   formatDateForInput(date: Date): string {

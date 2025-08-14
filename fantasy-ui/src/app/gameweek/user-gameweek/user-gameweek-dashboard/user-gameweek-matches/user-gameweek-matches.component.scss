@@ -31,6 +31,41 @@ header > div {
   align-items: center;
   gap: 0.5rem;
 }
+.custom-message-bar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  z-index: 1000;
+  padding: 18px 32px;
+  font-size: 1.2rem;
+  font-weight: 600;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.12);
+  transition: background 0.3s;
+}
+
+.custom-message-bar.success {
+  background: linear-gradient(90deg, #43e97b 0%, #38f9d7 100%);
+  color: #1b3c2e;
+}
+
+.custom-message-bar.error {
+  background: linear-gradient(90deg, #ff5858 0%, #f09819 100%);
+  color: #fff;
+}
+
+.close-btn {
+  background: none;
+  border: none;
+  color: inherit;
+  font-size: 1.5rem;
+  margin-left: 24px;
+  cursor: pointer;
+  font-weight: bold;
+}
 
 
 .match-card {

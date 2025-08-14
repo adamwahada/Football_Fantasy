@@ -30,6 +30,15 @@ export class AppComponent {
     });
   }
 
+  ngOnInit() {
+    if (this.auth.isLoggedIn()) {
+      this.auth.loadCurrentUser().subscribe({
+        next: user => console.log('User profile loaded:', user),
+        error: err => console.error('Failed to load user profile:', err)
+      });
+    }
+  }
+
   login() {
     this.auth.login();
   }

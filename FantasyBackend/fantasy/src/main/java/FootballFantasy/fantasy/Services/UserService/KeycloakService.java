@@ -13,9 +13,16 @@ import org.keycloak.representations.idm.CredentialRepresentation;
 import org.keycloak.representations.idm.RoleRepresentation;
 import org.keycloak.representations.idm.UserRepresentation;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Service;
 
-import java.util.*;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 @Service
 @Slf4j
@@ -34,30 +41,14 @@ public class KeycloakService {
     @Value("${keycloak.backend.client-secret}")
     private String clientSecret;
 
-    // Debug method to check if environment variables are loaded correctly
-    public void printConfiguration() {
-        log.info("🔍 CONFIGURATION CHECK:");
-        log.info("Server URL: {}", serverUrl);
-        log.info("Realm: {}", realm);
-        log.info("Client ID: {}", clientId);
-        log.info("Client Secret: {}", clientSecret != null ? clientSecret.substring(0, 8) + "..." : "NULL");
-        log.info("Expected: http://localhost:8180, football-fantasy, fantasy-backend");
-    }
-
-    public void createUser(RegisterRequest request) {
-        printConfiguration(); // Optional debug
+    // =======================
+    // USER CREATION METHODS
+    // =======================
+    public String createUser(RegisterRequest request) {
+        printConfiguration();
 
         Keycloak keycloak = null;
-
         try {
-            log.info("🔍 Configuration:");
-            log.info("Server URL: {}", serverUrl);
-            log.info("Realm: {}", realm);
-            log.info("Client ID: {}", clientId);
-            log.info("Client Secret: {}", clientSecret != null ? "***PROVIDED***" : "NULL");
-
-            // 1. Connect as service account
-            log.info("🔄 Building Keycloak client...");
             keycloak = KeycloakBuilder.builder()
                     .serverUrl(serverUrl)
                     .realm(realm)
@@ -66,79 +57,54 @@ public class KeycloakService {
                     .clientSecret(clientSecret)
                     .build();
 
-            // 2. Test connection
-            log.info("🔍 Testing connection...");
-            try {
-                var realmRepresentation = keycloak.realm(realm).toRepresentation();
-                log.info("✅ Connected to realm: {}", realmRepresentation.getRealm());
-            } catch (Exception e) {
-                log.error("❌ Connection to realm failed: {}", e.getMessage());
-                throw new RuntimeException("Impossible de se connecter au serveur d'authentification.", e);
-            }
-
-            // 3. Test user access
-            log.info("🔍 Checking access to users resource...");
             UsersResource usersResource = keycloak.realm(realm).users();
-            try {
-                int userCount = usersResource.count();
-                log.info("✅ Access to users resource confirmed. Current count: {}", userCount);
-            } catch (Exception e) {
-                log.error("❌ Access to users resource failed: {}", e.getMessage());
-                throw new RuntimeException("Accès refusé à la ressource utilisateurs. Vérifiez les permissions du client.", e);
-            }
-
-            // 4. Create user representation
             UserRepresentation user = buildUserRepresentation(request);
-            log.info("🔧 Prepared user representation for: {}", user.getUsername());
 
-            // 5. Create user
-            log.info("🚀 Creating user...");
+            log.info("📝 Creating user in Keycloak: {}", request.getUsername());
             Response response = usersResource.create(user);
             int status = response.getStatus();
-            log.info("📩 Response status: {}", status);
 
             if (status == 201) {
-                log.info("✅ UserEntity created successfully.");
-
                 String userId = extractUserIdFromResponse(response);
+                log.info("✅ User created in Keycloak with ID: {}", userId);
+
+                // Set password
                 setUserPassword(usersResource, userId, request.getPassword());
-                assignUserRole(keycloak, usersResource, userId);
+                log.info("✅ Password set successfully");
 
-                log.info("🎉 UserEntity setup completed successfully: {}", userId);
+                // 🔥 KEY: Send email verification
+                sendEmailVerification(usersResource, userId, request.getEmail());
+
+                log.info("🎉 User setup completed successfully: {}", userId);
+                return userId;
+
             } else if (status == 409) {
-                log.warn("⚠️ UserEntity already exists: {}", request.getUsername());
+                String errorDetails = getErrorDetails(response);
+                log.warn("❌ User already exists: {}", errorDetails);
                 throw new UserAlreadyExistsException("Un compte avec ce nom d'utilisateur ou email existe déjà.");
+
             } else {
-                String errorDetails = "Non spécifié";
-                try {
-                    errorDetails = response.readEntity(String.class);
-                } catch (Exception e) {
-                    log.warn("⚠️ Impossible de lire le corps de la réponse: {}", e.getMessage());
-                }
-
-                log.error("❌ Erreur lors de la création de l'utilisateur. Statut: {}, Détails: {}", status, errorDetails);
-
-                if (status == 403) {
-                    throw new RuntimeException("Permission refusée : vérifiez que le client Keycloak possède le rôle 'manage-users'.");
-                }
-
+                String errorDetails = getErrorDetails(response);
+                log.error("❌ Failed to create user. Status: {}, Details: {}", status, errorDetails);
                 throw new RuntimeException("Échec de la création de l'utilisateur. Statut: " + status + ". Détails: " + errorDetails);
             }
 
         } catch (UserAlreadyExistsException e) {
-            throw e; // Let the controller advice handle it
+            throw e;
         } catch (Exception e) {
             log.error("❌ Exception during user creation: {}", e.getMessage(), e);
             throw new RuntimeException("Erreur inattendue lors de la création du compte utilisateur.", e);
         } finally {
-            if (keycloak != null) {
-                try {
-                    keycloak.close();
-                } catch (Exception e) {
-                    log.warn("⚠️ Erreur lors de la fermeture du client Keycloak: {}", e.getMessage());
-                }
-            }
+            if (keycloak != null) keycloak.close();
         }
+    }
+
+    private void printConfiguration() {
+        log.info("🔍 KEYCLOAK CONFIGURATION CHECK:");
+        log.info("Server URL: {}", serverUrl);
+        log.info("Realm: {}", realm);
+        log.info("Client ID: {}", clientId);
+        log.info("Client Secret: {}", clientSecret != null ? "***PROVIDED***" : "NULL");
     }
 
     private UserRepresentation buildUserRepresentation(RegisterRequest request) {
@@ -147,7 +113,9 @@ public class KeycloakService {
         user.setEmail(request.getEmail());
         user.setFirstName(request.getFirstName());
         user.setLastName(request.getLastName());
-        user.setEnabled(true);
+        user.setEnabled(true); // ✅ Account is immediately active
+
+        // ✅ Email is unverified but user can still login
         user.setEmailVerified(false);
 
         // Add custom attributes
@@ -159,13 +127,13 @@ public class KeycloakService {
         addAttributeIfPresent(attributes, "birthDate", request.getBirthDate());
         addAttributeIfPresent(attributes, "referralCode", request.getReferralCode());
         attributes.put("termsAccepted", List.of(String.valueOf(request.isTermsAccepted())));
-
         user.setAttributes(attributes);
-        log.info("🔍 UserEntity attributes: {}", attributes);
+
+        // 🔥 REMOVE THIS LINE - no required actions needed
+        // user.setRequiredActions(Arrays.asList("VERIFY_EMAIL"));
 
         return user;
     }
-
     private void addAttributeIfPresent(Map<String, List<String>> attributes, String key, String value) {
         if (value != null && !value.trim().isEmpty()) {
             attributes.put(key, List.of(value.trim()));
@@ -173,74 +141,97 @@ public class KeycloakService {
     }
 
     private String extractUserIdFromResponse(Response response) {
-        String location = response.getLocation().getPath();
-        String userId = location.replaceAll(".*/([^/]+)$", "$1");
-        log.info("🔍 Extracted user ID: {}", userId);
-        return userId;
+        String path = response.getLocation().getPath();
+        return path.replaceAll(".*/([^/]+)$", "$1");
     }
 
     private void setUserPassword(UsersResource usersResource, String userId, String password) {
         try {
-            CredentialRepresentation passwordCred = new CredentialRepresentation();
-            passwordCred.setTemporary(false);
-            passwordCred.setType(CredentialRepresentation.PASSWORD);
-            passwordCred.setValue(password);
-
-            usersResource.get(userId).resetPassword(passwordCred);
-            log.info("✅ Password set for user: {}", userId);
+            CredentialRepresentation cred = new CredentialRepresentation();
+            cred.setType(CredentialRepresentation.PASSWORD);
+            cred.setTemporary(false);
+            cred.setValue(password);
+            usersResource.get(userId).resetPassword(cred);
+            log.info("✅ Password set successfully for user: {}", userId);
         } catch (Exception e) {
             log.error("❌ Failed to set password: {}", e.getMessage());
-            throw new RuntimeException("Failed to set user password: " + e.getMessage(), e);
+            throw new RuntimeException("Erreur lors de la définition du mot de passe: " + e.getMessage());
         }
     }
 
     private void assignUserRole(Keycloak keycloak, UsersResource usersResource, String userId) {
         try {
-            RoleRepresentation userRole = keycloak.realm(realm).roles().get("user").toRepresentation();
-            usersResource.get(userId).roles().realmLevel().add(Collections.singletonList(userRole));
-            log.info("✅ UserEntity role assigned to: {}", userId);
+            RoleRepresentation role = keycloak.realm(realm).roles().get("user").toRepresentation();
+            usersResource.get(userId).roles().realmLevel().add(Collections.singletonList(role));
+            log.info("✅ Role 'user' assigned successfully");
         } catch (Exception e) {
-            log.warn("⚠️ Failed to assign user role (user might still be functional): {}", e.getMessage());
-            // Don't throw exception here as user creation was successful
+            log.error("❌ Failed to assign role: {}", e.getMessage());
+            log.warn("⚠️ User created but role assignment failed. User may need role assigned manually.");
         }
     }
 
-    // Debug method - add this to a test controller
-    public void debugKeycloakConnection() {
-        Keycloak keycloak = null;
+
+    private void sendEmailVerification(UsersResource usersResource, String userId, String email) {
         try {
-            log.info("🔍 DEBUG CONNECTION TEST");
-            log.info("Server URL: {}", serverUrl);
-            log.info("Realm: {}", realm);
-            log.info("Client ID: {}", clientId);
+            // ✅ Use executeActionsEmail for seamless verification
+            List<String> actions = Arrays.asList("VERIFY_EMAIL");
 
-            keycloak = KeycloakBuilder.builder()
-                    .serverUrl(serverUrl)
-                    .realm(realm)
-                    .grantType(OAuth2Constants.CLIENT_CREDENTIALS)
-                    .clientId(clientId)
-                    .clientSecret(clientSecret)
-                    .build();
+            usersResource.get(userId).executeActionsEmail(
+                    "angular-client",                           // Your Angular client ID
+                    "http://localhost:4200/user-gameweek-list", // Direct redirect to main page
+                    actions
+            );
 
-            // Test realm access
-            var realmRep = keycloak.realm(realm).toRepresentation();
-            log.info("✅ Realm access OK: {}", realmRep.getRealm());
-
-            // Test users resource
-            var users = keycloak.realm(realm).users();
-            var count = users.count();
-            log.info("✅ Users resource access OK. Count: {}", count);
-
-            // Test roles
-            var roles = keycloak.realm(realm).roles().list();
-            log.info("✅ Roles access OK. Found {} roles", roles.size());
+            log.info("✅ Seamless email verification sent to: {}", email);
 
         } catch (Exception e) {
-            log.error("❌ Debug connection failed: {}", e.getMessage(), e);
-        } finally {
-            if (keycloak != null) {
-                keycloak.close();
-            }
+            log.error("❌ Failed to send email verification: {}", e.getMessage(), e);
+            // Don't throw - user account should still work even if email fails
+            log.warn("⚠️ User can still login, but email verification failed");
         }
+    }
+    private String getErrorDetails(Response response) {
+        try {
+            return response.readEntity(String.class);
+        } catch (Exception e) {
+            return "Non spécifié";
+        }
+    }
+
+    // =======================
+    // JWT METHODS FOR LOGGED-IN USERS
+    // =======================
+    public Jwt getCurrentJwt() {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        if (auth == null || !(auth.getPrincipal() instanceof Jwt)) {
+            throw new RuntimeException("User not authenticated");
+        }
+        return (Jwt) auth.getPrincipal();
+    }
+
+    public String getCurrentKeycloakId() {
+        return getCurrentJwt().getSubject();
+    }
+
+    public String getCurrentUsername() {
+        return (String) getCurrentJwt().getClaims().getOrDefault("preferred_username", "");
+    }
+
+    public String getCurrentEmail() {
+        return (String) getCurrentJwt().getClaims().getOrDefault("email", "");
+    }
+
+    public String getCurrentFirstName() {
+        return (String) getCurrentJwt().getClaims().getOrDefault("given_name", "");
+    }
+
+    public String getCurrentLastName() {
+        return (String) getCurrentJwt().getClaims().getOrDefault("family_name", "");
+    }
+
+    public boolean isCurrentUserEmailVerified() {
+        Jwt jwt = getCurrentJwt();
+        Object emailVerified = jwt.getClaims().get("email_verified");
+        return emailVerified != null && (Boolean) emailVerified;
     }
 }

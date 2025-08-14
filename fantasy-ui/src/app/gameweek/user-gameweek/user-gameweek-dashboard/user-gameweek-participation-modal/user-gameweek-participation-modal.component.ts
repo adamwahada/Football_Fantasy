@@ -3,7 +3,6 @@ import { Component, Input, Output, EventEmitter, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { LeagueTheme, SessionType } from '../../../session-participation.service';
-import { Router } from '@angular/router';
 
 // Define preconfigured amounts as decimals to match backend BigDecimal expectations
 export const PRECONFIGURED_BUY_IN_AMOUNTS = [10.00, 20.00, 50.00, 100.00] as const;
@@ -51,13 +50,11 @@ export class UserGameweekParticipationModalComponent implements OnInit {
   readonly buyInOptions = PRECONFIGURED_BUY_IN_AMOUNTS;
   selectedBuyIn: number = 10.00; // Use decimal default
 
-  constructor(private fb: FormBuilder,    private router: Router) {
-    // 
+  constructor(private fb: FormBuilder) {
     this.participationForm = this.fb.group({
       sessionType: ['', Validators.required],
       isPrivate: [false],
-      accessKey: [''],
-
+      accessKey: ['']
     });
   }
 
@@ -89,7 +86,6 @@ export class UserGameweekParticipationModalComponent implements OnInit {
   closeModal() {
     this.isVisible = false;
     this.modalClosed.emit();
-    this.router.navigate(['/user/user-gameweek-lisek']);
   }
 
   // Method to handle buy-in selection

@@ -2,6 +2,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
+import { AuthService } from '../core/services/auth.service';
 
 export interface PredictionDTO {
   matchId: number;
@@ -10,19 +11,18 @@ export interface PredictionDTO {
   predictedAwayScore?: number | null;
 }
 
-// ✅ FIXED: Make session fields optional since they go as query params
+// ✅ Match backend DTO structure
 export interface GameweekPredictionSubmissionDTO {
-  userId: number;
-  gameweekId: number;
-  competition: string;
-  predictions: PredictionDTO[];
-  // ✅ Optional fields (sent as query parameters)
-  sessionType?: string;
-  buyInAmount?: number;
+  userId: number;          // Required by backend
+  gameweekId: number;      // Required
+  competition: string;     // LeagueTheme enum
+  predictions: PredictionDTO[];  // Required
+  sessionType: string;     // Required - SessionType enum
+  buyInAmount: number;     // Required - matches BigDecimal
   sessionId?: number | null;
-  isPrivate?: boolean;
-  sessionDescription?: string;
-  complete?: boolean;
+  isPrivate: boolean;      // Defaults to false
+  sessionDescription?: string;  // Optional
+  complete: boolean;       // For validation
 }
 
 export interface SubmitPredictionResponse {
@@ -36,7 +36,10 @@ export interface SubmitPredictionResponse {
 export class PredictionService {
   private apiUrl = 'http://localhost:9090/fantasy/api/predictions';
 
-  constructor(private http: HttpClient) {}
+  constructor(
+    private http: HttpClient,
+    private authService: AuthService
+  ) {}
 
   submitPredictionsAndJoinSession(
     submissionDTO: GameweekPredictionSubmissionDTO,
@@ -68,19 +71,31 @@ export class PredictionService {
       params = params.set('accessKey', accessKey.trim());
     }
 
-    // ✅ CLEAN REQUEST BODY (remove session fields to avoid confusion)
+    // Check if user is logged in and get their ID
+    if (!this.authService.isLoggedIn()) {
+      throw new Error('User must be logged in to submit predictions');
+    }
+    
+    const currentUserId = this.authService.getCurrentUserId();
+    if (!currentUserId) {
+      throw new Error('Could not determine user ID');
+    }
+
+    // ✅ BUILD REQUEST BODY with all required fields
     const requestBody: GameweekPredictionSubmissionDTO = {
-      userId: submissionDTO.userId,
+      userId: currentUserId,
       gameweekId: submissionDTO.gameweekId,
       competition: submissionDTO.competition,
       predictions: submissionDTO.predictions,
-      sessionType: sessionType,         // <-- ADD THIS
-      buyInAmount: cleanBuyInAmount,    // <-- ADD THIS
+      sessionType: sessionType,
+      buyInAmount: cleanBuyInAmount,
+      isPrivate: isPrivate,
       complete: true
     };
 
     // Debug logging
     console.log('[PREDICTION SERVICE] Request details:');
+    console.log('- User ID:', currentUserId);
     console.log('- sessionType param:', sessionType, typeof sessionType);
     console.log('- buyInAmount param:', cleanBuyInAmount, typeof cleanBuyInAmount);
     console.log('- isPrivate param:', isPrivate, typeof isPrivate);

@@ -11,7 +11,10 @@ import { TeamService, TeamIcon } from '../../../../match/team.service';
 import { SessionParticipationData, PredictionPayload, UserGameweekParticipationModalComponent } from '../user-gameweek-participation-modal/user-gameweek-participation-modal.component';
 import { SessionParticipationService } from '../../../session-participation.service';
 import { Router } from '@angular/router';
+import { MatSnackBar } from '@angular/material/snack-bar';
+import { NotificationService } from '../../../../shared/notification.service';
 import { PredictionService, PredictionDTO, GameweekPredictionSubmissionDTO } from '../../../prediction.service';
+import { AuthService } from '../../../../core/services/auth.service';
 
 type PickOption = 'HOME_WIN' | 'DRAW' | 'AWAY_WIN' | null;
 
@@ -40,6 +43,8 @@ interface UIMatch extends MatchWithIconsDTO {
   homeIconUrl?: string;  
   awayIconUrl?: string; 
 }
+
+
 
 // Use consistent number values (no decimals in the constant)
 export const PRECONFIGURED_BUY_IN_AMOUNTS = [10, 20, 50, 100] as const;
@@ -138,7 +143,10 @@ export class UserGameweekMatchesComponent implements OnInit, OnDestroy {
     private teamService: TeamService,
     private router: Router,
     private sessionParticipationService: SessionParticipationService,
-    private predictionService: PredictionService 
+    private snackBar: MatSnackBar,
+    private notificationService: NotificationService,
+    private predictionService: PredictionService,
+    private authService: AuthService
   ) {}
 
   ngOnInit(): void {
@@ -381,38 +389,24 @@ export class UserGameweekMatchesComponent implements OnInit, OnDestroy {
     // Navigate back to the gameweek list
     this.router.navigate(['../user-gameweek-list'], { relativeTo: this.route });
   }
-onParticipationSubmitted(event: {
+async onParticipationSubmitted(event: {
   sessionData: SessionParticipationData;
   predictions: PredictionPayload[];
-}): void {
-  console.log('[PARENT] Received participation event:', event);
-
+}): Promise<void> {
   this.isSubmitting = true;
   const { sessionData, predictions } = event;
-
-  // Use the real Gameweek ID loaded from backend, not the one from sessionData
-  const gameweekIdToSend = this.currentGameweekId ?? sessionData.gameweekId;
-  console.log('[PARENT] Using gameweekId for submission:', gameweekIdToSend);
-
-  // Ensure buyInAmount is a clean number
-  const cleanBuyInAmount = Number(sessionData.buyInAmount);
   
-  // Validate essential data
-  if (!sessionData.gameweekId || !sessionData.competition || !sessionData.sessionType) {
-    console.error('[PARENT] Missing essential session data');
-    this.showErrorMessage('Données de session manquantes. Veuillez réessayer.');
+  // Check authentication first
+  const currentUserId = await this.getCurrentUserId();
+  if (!currentUserId) {
     this.isSubmitting = false;
+    this.notificationService.show('Erreur: Utilisateur non identifié. Veuillez vous reconnecter.', 'error');
     return;
   }
 
-  if (isNaN(cleanBuyInAmount) || cleanBuyInAmount < 0) {
-    console.error('[PARENT] Invalid buyInAmount:', sessionData.buyInAmount);
-    this.showErrorMessage('Montant de mise invalide. Veuillez sélectionner un montant valide.');
-    this.isSubmitting = false;
-    return;
-  }
+  const gameweekIdToSend = this.currentGameweekId ?? sessionData.gameweekId;
+  const cleanBuyInAmount = Number(sessionData.buyInAmount);
 
-  // Convert predictions to the required DTO format
   const predictionDTOs: PredictionDTO[] = predictions.map(p => ({
     matchId: p.matchId,
     predictedResult: this.mapPickToResult(p.pick),
@@ -420,35 +414,38 @@ onParticipationSubmitted(event: {
     predictedAwayScore: p.scoreAway
   }));
 
-  // ✅ CREATE CLEAN REQUEST BODY (no session fields)
   const submissionDTO: GameweekPredictionSubmissionDTO = {
-    userId: this.getCurrentUserId(),
-    gameweekId: gameweekIdToSend, // <-- always use the backend ID
+    userId: currentUserId,
+    gameweekId: gameweekIdToSend,
     competition: sessionData.competition,
-    predictions: predictionDTOs
+    predictions: predictionDTOs,
+    sessionType: sessionData.sessionType,
+    buyInAmount: cleanBuyInAmount,
+    isPrivate: sessionData.isPrivate,
+    complete: true // or set to the appropriate value if needed
   };
 
-  console.log('[PARENT] Final submission DTO:', submissionDTO);
-  console.log('[PARENT] Session params - sessionType:', sessionData.sessionType, 'buyInAmount:', Number(sessionData.buyInAmount));
-
-  // ✅ PASS SESSION DATA AS SEPARATE PARAMETERS
   this.predictionService.submitPredictionsAndJoinSession(
-    submissionDTO,              // Clean request body
-    sessionData.sessionType,    // Query param
-    Number(sessionData.buyInAmount), // Query param
-    sessionData.isPrivate,     // Query param
-    sessionData.accessKey      // Query param (optional)
+    submissionDTO,
+    sessionData.sessionType,
+    cleanBuyInAmount,
+    sessionData.isPrivate,
+    sessionData.accessKey
   ).subscribe({
-    next: (result) => {
-      console.log('[PARENT] Submission successful:', result);
-      this.showSuccessMessage('Prédictions soumises avec succès!');
+    next: () => {
       this.showParticipationModal = false;
       this.isSubmitting = false;
+      // Set notification before navigation
+      this.notificationService.show('Prédictions soumises avec succès!', 'success');
+      // Add a small delay before navigation to ensure notification is set
+      setTimeout(() => {
+        this.router.navigate(['/user/user-gameweek-list']);
+      }, 100);
     },
     error: (error) => {
-      console.error('[PARENT] Submission error:', error);
       this.isSubmitting = false;
-      this.showErrorMessage(this.getErrorMessage(error));
+      this.notificationService.show(this.getErrorMessage(error), 'error');
+      // Modal stays open
     }
   });
 }
@@ -460,11 +457,34 @@ onParticipationSubmitted(event: {
     return 'DRAW'; // Default to DRAW for 'X' or null
   }
 
-  // Implement this to get the logged-in user's ID
-  private getCurrentUserId(): number {
-    // TODO: Replace with actual user service implementation
-    // Example: return this.authService.getCurrentUser()?.id || 1;
-    return 1; // placeholder
+  private async getCurrentUserId(): Promise<number | null> {
+    if (!this.authService.isLoggedIn()) {
+      console.error('[AUTH] User is not authenticated');
+      return null;
+    }
+
+    // Get user roles to verify
+    const roles = this.authService.getUserRoles();
+    if (!roles.includes('ROLE_USER') && !roles.includes('ROLE_ADMIN')) {
+      console.error('[AUTH] User does not have required roles');
+      return null;
+    }
+
+    try {
+      // Get token from KeycloakService
+      const token = await this.authService.getAccessToken();
+      if (!token) {
+        console.error('[AUTH] No token available');
+        return null;
+      }
+
+      // For now, we'll use a default ID since the real user mapping should be handled on the backend
+      // The backend should use the token to identify the user, not rely on the ID we send
+      return 1;
+    } catch (error) {
+      console.error('[AUTH] Error getting user ID:', error);
+      return null;
+    }
   }
 
   private getErrorMessage(error: any): string {

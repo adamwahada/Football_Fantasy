@@ -243,81 +243,81 @@
     "templateName": "Private One Vs One - $10 - Europe League",
     "isPrivate": true,
     "sessionType": "ONE_VS_ONE",
-    "competition": "EUROPE_LEAGUE",
+"competition": "EUROPA_LEAGUE",
     "buyInAmount": 10,
     "maxParticipants": 2,
     "isActive": true,
-    "description": "Private session (ONE_VS_ONE) for EUROPE_LEAGUE with buy-in $10"
+    "description": "Private session (ONE_VS_ONE) for EUROPA_LEAGUE with buy-in $10"
   },
   {
     "templateName": "Public One Vs One - $10 - Europe League",
     "isPrivate": false,
     "sessionType": "ONE_VS_ONE",
-    "competition": "EUROPE_LEAGUE",
+    "competition": "EUROPA_LEAGUE",
     "buyInAmount": 10,
     "maxParticipants": 2,
     "isActive": true,
-    "description": "Public session (ONE_VS_ONE) for EUROPE_LEAGUE with buy-in $10"
+    "description": "Public session (ONE_VS_ONE) for EUROPA_LEAGUE with buy-in $10"
   },
   {
     "templateName": "Private One Vs One - $20 - Europe League",
     "isPrivate": true,
     "sessionType": "ONE_VS_ONE",
-    "competition": "EUROPE_LEAGUE",
+"competition": "EUROPA_LEAGUE",
     "buyInAmount": 20,
     "maxParticipants": 2,
     "isActive": true,
-    "description": "Private session (ONE_VS_ONE) for EUROPE_LEAGUE with buy-in $20"
+    "description": "Private session (ONE_VS_ONE) for EUROPA_LEAGUE with buy-in $20"
   },
   {
     "templateName": "Public One Vs One - $20 - Europe League",
     "isPrivate": false,
     "sessionType": "ONE_VS_ONE",
-    "competition": "EUROPE_LEAGUE",
+"competition": "EUROPA_LEAGUE",
     "buyInAmount": 20,
     "maxParticipants": 2,
     "isActive": true,
-    "description": "Public session (ONE_VS_ONE) for EUROPE_LEAGUE with buy-in $20"
+    "description": "Public session (ONE_VS_ONE) for EUROPA_LEAGUE with buy-in $20"
   },
   {
     "templateName": "Private One Vs One - $50 - Europe League",
     "isPrivate": true,
     "sessionType": "ONE_VS_ONE",
-    "competition": "EUROPE_LEAGUE",
+"competition": "EUROPA_LEAGUE",
     "buyInAmount": 50,
     "maxParticipants": 2,
     "isActive": true,
-    "description": "Private session (ONE_VS_ONE) for EUROPE_LEAGUE with buy-in $50"
+    "description": "Private session (ONE_VS_ONE) for EUROPA_LEAGUE with buy-in $50"
   },
   {
     "templateName": "Public One Vs One - $50 - Europe League",
     "isPrivate": false,
     "sessionType": "ONE_VS_ONE",
-    "competition": "EUROPE_LEAGUE",
+"competition": "EUROPA_LEAGUE",
     "buyInAmount": 50,
     "maxParticipants": 2,
     "isActive": true,
-    "description": "Public session (ONE_VS_ONE) for EUROPE_LEAGUE with buy-in $50"
+    "description": "Public session (ONE_VS_ONE) for EUROPA_LEAGUE with buy-in $50"
   },
   {
     "templateName": "Private One Vs One - $100 - Europe League",
     "isPrivate": true,
     "sessionType": "ONE_VS_ONE",
-    "competition": "EUROPE_LEAGUE",
+"competition": "EUROPA_LEAGUE",
     "buyInAmount": 100,
     "maxParticipants": 2,
     "isActive": true,
-    "description": "Private session (ONE_VS_ONE) for EUROPE_LEAGUE with buy-in $100"
+    "description": "Private session (ONE_VS_ONE) for EUROPA_LEAGUE with buy-in $100"
   },
   {
     "templateName": "Public One Vs One - $100 - Europe League",
     "isPrivate": false,
     "sessionType": "ONE_VS_ONE",
-    "competition": "EUROPE_LEAGUE",
+"competition": "EUROPA_LEAGUE",
     "buyInAmount": 100,
     "maxParticipants": 2,
     "isActive": true,
-    "description": "Public session (ONE_VS_ONE) for EUROPE_LEAGUE with buy-in $100"
+    "description": "Public session (ONE_VS_ONE) for EUROPA_LEAGUE with buy-in $100"
   },
   {
     "templateName": "Private One Vs One - $10 - BUNDESLIGA",
@@ -963,81 +963,81 @@
     "templateName": "Private Small Group - $10 - Europe League",
     "isPrivate": true,
     "sessionType": "SMALL_GROUP",
-    "competition": "EUROPE_LEAGUE",
+"competition": "EUROPA_LEAGUE",
     "buyInAmount": 10,
     "maxParticipants": 5,
     "isActive": true,
-    "description": "Private session (SMALL_GROUP) for EUROPE_LEAGUE with buy-in $10"
+    "description": "Private session (SMALL_GROUP) for EUROPA_LEAGUE with buy-in $10"
   },
   {
     "templateName": "Public Small Group - $10 - Europe League",
     "isPrivate": false,
     "sessionType": "SMALL_GROUP",
-    "competition": "EUROPE_LEAGUE",
+"competition": "EUROPA_LEAGUE",
     "buyInAmount": 10,
     "maxParticipants": 5,
     "isActive": true,
-    "description": "Public session (SMALL_GROUP) for EUROPE_LEAGUE with buy-in $10"
+    "description": "Public session (SMALL_GROUP) for EUROPA_LEAGUE with buy-in $10"
   },
   {
     "templateName": "Private Small Group - $20 - Europe League",
     "isPrivate": true,
     "sessionType": "SMALL_GROUP",
-    "competition": "EUROPE_LEAGUE",
+"competition": "EUROPA_LEAGUE",
     "buyInAmount": 20,
     "maxParticipants": 5,
     "isActive": true,
-    "description": "Private session (SMALL_GROUP) for EUROPE_LEAGUE with buy-in $20"
+    "description": "Private session (SMALL_GROUP) for EUROPA_LEAGUE with buy-in $20"
   },
   {
     "templateName": "Public Small Group - $20 - Europe League",
     "isPrivate": false,
     "sessionType": "SMALL_GROUP",
-    "competition": "EUROPE_LEAGUE",
+"competition": "EUROPA_LEAGUE",
     "buyInAmount": 20,
     "maxParticipants": 5,
     "isActive": true,
-    "description": "Public session (SMALL_GROUP) for EUROPE_LEAGUE with buy-in $20"
+    "description": "Public session (SMALL_GROUP) for EUROPA_LEAGUE with buy-in $20"
   },
   {
     "templateName": "Private Small Group - $50 - Europe League",
     "isPrivate": true,
     "sessionType": "SMALL_GROUP",
-    "competition": "EUROPE_LEAGUE",
+"competition": "EUROPA_LEAGUE",
     "buyInAmount": 50,
     "maxParticipants": 5,
     "isActive": true,
-    "description": "Private session (SMALL_GROUP) for EUROPE_LEAGUE with buy-in $50"
+    "description": "Private session (SMALL_GROUP) for EUROPA_LEAGUE with buy-in $50"
   },
   {
     "templateName": "Public Small Group - $50 - Europe League",
     "isPrivate": false,
     "sessionType": "SMALL_GROUP",
-    "competition": "EUROPE_LEAGUE",
+"competition": "EUROPA_LEAGUE",
     "buyInAmount": 50,
     "maxParticipants": 5,
     "isActive": true,
-    "description": "Public session (SMALL_GROUP) for EUROPE_LEAGUE with buy-in $50"
+    "description": "Public session (SMALL_GROUP) for EUROPA_LEAGUE with buy-in $50"
   },
   {
     "templateName": "Private Small Group - $100 - Europe League",
     "isPrivate": true,
     "sessionType": "SMALL_GROUP",
-    "competition": "EUROPE_LEAGUE",
+"competition": "EUROPA_LEAGUE",
     "buyInAmount": 100,
     "maxParticipants": 5,
     "isActive": true,
-    "description": "Private session (SMALL_GROUP) for EUROPE_LEAGUE with buy-in $100"
+    "description": "Private session (SMALL_GROUP) for EUROPA_LEAGUE with buy-in $100"
   },
   {
     "templateName": "Public Small Group - $100 - Europe League",
     "isPrivate": false,
     "sessionType": "SMALL_GROUP",
-    "competition": "EUROPE_LEAGUE",
+"competition": "EUROPA_LEAGUE",
     "buyInAmount": 100,
     "maxParticipants": 5,
     "isActive": true,
-    "description": "Public session (SMALL_GROUP) for EUROPE_LEAGUE with buy-in $100"
+    "description": "Public session (SMALL_GROUP) for EUROPA_LEAGUE with buy-in $100"
   },
   {
     "templateName": "Private Small Group - $10 - BUNDESLIGA",
@@ -1683,81 +1683,81 @@
     "templateName": "Private Medium Group - $10 - Europe League",
     "isPrivate": true,
     "sessionType": "MEDIUM_GROUP",
-    "competition": "EUROPE_LEAGUE",
+"competition": "EUROPA_LEAGUE",
     "buyInAmount": 10,
     "maxParticipants": 10,
     "isActive": true,
-    "description": "Private session (MEDIUM_GROUP) for EUROPE_LEAGUE with buy-in $10"
+    "description": "Private session (MEDIUM_GROUP) for EUROPA_LEAGUE with buy-in $10"
   },
   {
     "templateName": "Public Medium Group - $10 - Europe League",
     "isPrivate": false,
     "sessionType": "MEDIUM_GROUP",
-    "competition": "EUROPE_LEAGUE",
+"competition": "EUROPA_LEAGUE",
     "buyInAmount": 10,
     "maxParticipants": 10,
     "isActive": true,
-    "description": "Public session (MEDIUM_GROUP) for EUROPE_LEAGUE with buy-in $10"
+    "description": "Public session (MEDIUM_GROUP) for EUROPA_LEAGUE with buy-in $10"
   },
   {
     "templateName": "Private Medium Group - $20 - Europe League",
     "isPrivate": true,
     "sessionType": "MEDIUM_GROUP",
-    "competition": "EUROPE_LEAGUE",
+"competition": "EUROPA_LEAGUE",
     "buyInAmount": 20,
     "maxParticipants": 10,
     "isActive": true,
-    "description": "Private session (MEDIUM_GROUP) for EUROPE_LEAGUE with buy-in $20"
+    "description": "Private session (MEDIUM_GROUP) for EUROPA_LEAGUE with buy-in $20"
   },
   {
     "templateName": "Public Medium Group - $20 - Europe League",
     "isPrivate": false,
     "sessionType": "MEDIUM_GROUP",
-    "competition": "EUROPE_LEAGUE",
+"competition": "EUROPA_LEAGUE",
     "buyInAmount": 20,
     "maxParticipants": 10,
     "isActive": true,
-    "description": "Public session (MEDIUM_GROUP) for EUROPE_LEAGUE with buy-in $20"
+    "description": "Public session (MEDIUM_GROUP) for EUROPA_LEAGUE with buy-in $20"
   },
   {
     "templateName": "Private Medium Group - $50 - Europe League",
     "isPrivate": true,
     "sessionType": "MEDIUM_GROUP",
-    "competition": "EUROPE_LEAGUE",
+"competition": "EUROPA_LEAGUE",
     "buyInAmount": 50,
     "maxParticipants": 10,
     "isActive": true,
-    "description": "Private session (MEDIUM_GROUP) for EUROPE_LEAGUE with buy-in $50"
+    "description": "Private session (MEDIUM_GROUP) for EUROPA_LEAGUE with buy-in $50"
   },
   {
     "templateName": "Public Medium Group - $50 - Europe League",
     "isPrivate": false,
     "sessionType": "MEDIUM_GROUP",
-    "competition": "EUROPE_LEAGUE",
+"competition": "EUROPA_LEAGUE",
     "buyInAmount": 50,
     "maxParticipants": 10,
     "isActive": true,
-    "description": "Public session (MEDIUM_GROUP) for EUROPE_LEAGUE with buy-in $50"
+    "description": "Public session (MEDIUM_GROUP) for EUROPA_LEAGUE with buy-in $50"
   },
   {
     "templateName": "Private Medium Group - $100 - Europe League",
     "isPrivate": true,
     "sessionType": "MEDIUM_GROUP",
-    "competition": "EUROPE_LEAGUE",
+"competition": "EUROPA_LEAGUE",
     "buyInAmount": 100,
     "maxParticipants": 10,
     "isActive": true,
-    "description": "Private session (MEDIUM_GROUP) for EUROPE_LEAGUE with buy-in $100"
+    "description": "Private session (MEDIUM_GROUP) for EUROPA_LEAGUE with buy-in $100"
   },
   {
     "templateName": "Public Medium Group - $100 - Europe League",
     "isPrivate": false,
     "sessionType": "MEDIUM_GROUP",
-    "competition": "EUROPE_LEAGUE",
+"competition": "EUROPA_LEAGUE",
     "buyInAmount": 100,
     "maxParticipants": 10,
     "isActive": true,
-    "description": "Public session (MEDIUM_GROUP) for EUROPE_LEAGUE with buy-in $100"
+    "description": "Public session (MEDIUM_GROUP) for EUROPA_LEAGUE with buy-in $100"
   },
   {
     "templateName": "Private Medium Group - $10 - BUNDESLIGA",
@@ -2403,81 +2403,81 @@
     "templateName": "Private Open Room - $10 - Europe League",
     "isPrivate": true,
     "sessionType": "OPEN_ROOM",
-    "competition": "EUROPE_LEAGUE",
+"competition": "EUROPA_LEAGUE",
     "buyInAmount": 10,
     "maxParticipants": 100,
     "isActive": true,
-    "description": "Private session (OPEN_ROOM) for EUROPE_LEAGUE with buy-in $10"
+    "description": "Private session (OPEN_ROOM) for EUROPA_LEAGUE with buy-in $10"
   },
   {
     "templateName": "Public Open Room - $10 - Europe League",
     "isPrivate": false,
     "sessionType": "OPEN_ROOM",
-    "competition": "EUROPE_LEAGUE",
+"competition": "EUROPA_LEAGUE",
     "buyInAmount": 10,
     "maxParticipants": 100,
     "isActive": true,
-    "description": "Public session (OPEN_ROOM) for EUROPE_LEAGUE with buy-in $10"
+    "description": "Public session (OPEN_ROOM) for EUROPA_LEAGUE with buy-in $10"
   },
   {
     "templateName": "Private Open Room - $20 - Europe League",
     "isPrivate": true,
     "sessionType": "OPEN_ROOM",
-    "competition": "EUROPE_LEAGUE",
+"competition": "EUROPA_LEAGUE",
     "buyInAmount": 20,
     "maxParticipants": 100,
     "isActive": true,
-    "description": "Private session (OPEN_ROOM) for EUROPE_LEAGUE with buy-in $20"
+    "description": "Private session (OPEN_ROOM) for EUROPA_LEAGUE with buy-in $20"
   },
   {
     "templateName": "Public Open Room - $20 - Europe League",
     "isPrivate": false,
     "sessionType": "OPEN_ROOM",
-    "competition": "EUROPE_LEAGUE",
+"competition": "EUROPA_LEAGUE",
     "buyInAmount": 20,
     "maxParticipants": 100,
     "isActive": true,
-    "description": "Public session (OPEN_ROOM) for EUROPE_LEAGUE with buy-in $20"
+    "description": "Public session (OPEN_ROOM) for EUROPA_LEAGUE with buy-in $20"
   },
   {
     "templateName": "Private Open Room - $50 - Europe League",
     "isPrivate": true,
     "sessionType": "OPEN_ROOM",
-    "competition": "EUROPE_LEAGUE",
+"competition": "EUROPA_LEAGUE",
     "buyInAmount": 50,
     "maxParticipants": 100,
     "isActive": true,
-    "description": "Private session (OPEN_ROOM) for EUROPE_LEAGUE with buy-in $50"
+    "description": "Private session (OPEN_ROOM) for EUROPA_LEAGUE with buy-in $50"
   },
   {
     "templateName": "Public Open Room - $50 - Europe League",
     "isPrivate": false,
     "sessionType": "OPEN_ROOM",
-    "competition": "EUROPE_LEAGUE",
+"competition": "EUROPA_LEAGUE",
     "buyInAmount": 50,
     "maxParticipants": 100,
     "isActive": true,
-    "description": "Public session (OPEN_ROOM) for EUROPE_LEAGUE with buy-in $50"
+    "description": "Public session (OPEN_ROOM) for EUROPA_LEAGUE with buy-in $50"
   },
   {
     "templateName": "Private Open Room - $100 - Europe League",
     "isPrivate": true,
     "sessionType": "OPEN_ROOM",
-    "competition": "EUROPE_LEAGUE",
+"competition": "EUROPA_LEAGUE",
     "buyInAmount": 100,
     "maxParticipants": 100,
     "isActive": true,
-    "description": "Private session (OPEN_ROOM) for EUROPE_LEAGUE with buy-in $100"
+    "description": "Private session (OPEN_ROOM) for EUROPA_LEAGUE with buy-in $100"
   },
   {
     "templateName": "Public Open Room - $100 - Europe League",
     "isPrivate": false,
     "sessionType": "OPEN_ROOM",
-    "competition": "EUROPE_LEAGUE",
+"competition": "EUROPA_LEAGUE",
     "buyInAmount": 100,
     "maxParticipants": 100,
     "isActive": true,
-    "description": "Public session (OPEN_ROOM) for EUROPE_LEAGUE with buy-in $100"
+    "description": "Public session (OPEN_ROOM) for EUROPA_LEAGUE with buy-in $100"
   },
   {
     "templateName": "Private Open Room - $10 - BUNDESLIGA",
