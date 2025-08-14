@@ -27,9 +27,17 @@ export class ChatService {
     return this.http.post<ChatRoomDTO>(`${this.baseUrl}/rooms/group`, groupData);
   }
 
-  // Send message - CORRIGÉ
+  // Send text message
   sendMessage(messageData: SendMessageDTO): Observable<ChatMessageDTO> {
     return this.http.post<ChatMessageDTO>(`${this.baseUrl}/messages`, messageData);
+  }
+
+  // ✅ NOUVELLE MÉTHODE : Upload fichier avec Cloudinary
+  uploadFile(roomId: string, file: File): Observable<ChatMessageDTO> {
+    const formData = new FormData();
+    formData.append('file', file);
+
+    return this.http.post<ChatMessageDTO>(`${this.baseUrl}/rooms/${roomId}/files`, formData);
   }
 
   // Get room messages
@@ -41,7 +49,7 @@ export class ChatService {
     return this.http.get<any>(`${this.baseUrl}/rooms/${roomId}/messages`, { params });
   }
 
-  // Mark message as read - CORRIGÉ
+  // Mark message as read
   markAsRead(messageId: number, roomId: string): Observable<void> {
     return this.http.post<void>(`${this.baseUrl}/messages/${messageId}/read?roomId=${roomId}`, {});
   }
@@ -52,10 +60,10 @@ export class ChatService {
     return this.http.get<ChatMessageDTO[]>(`${this.baseUrl}/rooms/${roomId}/search`, { params });
   }
 
-  // Edit message - CORRIGÉ pour envoyer JSON
+  // Edit message
   editMessage(messageId: number, newContent: string): Observable<ChatMessageDTO> {
     return this.http.put<ChatMessageDTO>(`${this.baseUrl}/messages/${messageId}`,
-        { content: newContent }, // Envoi en JSON au lieu de text/plain
+        { content: newContent },
         {
           headers: {
             'Content-Type': 'application/json'
@@ -64,7 +72,7 @@ export class ChatService {
     );
   }
 
-  // Delete message
+  // Delete message (maintenant avec suppression Cloudinary)
   deleteMessage(messageId: number): Observable<void> {
     return this.http.delete<void>(`${this.baseUrl}/messages/${messageId}`);
   }
@@ -93,12 +101,30 @@ export class ChatService {
   updateGroupInfo(roomId: string, updateData: CreateGroupDTO): Observable<ChatRoomDTO> {
     return this.http.put<ChatRoomDTO>(`${this.baseUrl}/rooms/${roomId}`, updateData);
   }
-  uploadFile(roomId: string, file: File, senderId: number): Observable<any> {
-    const formData = new FormData();
-    formData.append('file', file);
-    formData.append('senderId', senderId.toString());
 
-    return this.http.post(`${this.baseUrl}/rooms/${roomId}/files`, formData);
+  // ✅ MÉTHODE UTILITAIRE : Vérifier si c'est une image
+  isImageFile(mimeType: string): boolean {
+    return mimeType?.startsWith('image/') || false;
   }
 
+  // ✅ MÉTHODE UTILITAIRE : Vérifier si c'est une vidéo
+  isVideoFile(mimeType: string): boolean {
+    return mimeType?.startsWith('video/') || false;
+  }
+
+  // ✅ MÉTHODE UTILITAIRE : Vérifier si c'est un audio
+  isAudioFile(mimeType: string): boolean {
+    return mimeType?.startsWith('audio/') || false;
+  }
+
+  // ✅ MÉTHODE UTILITAIRE : Obtenir l'icône pour un type de fichier
+  getFileIcon(mimeType: string): string {
+    if (this.isImageFile(mimeType)) return '🖼️';
+    if (this.isVideoFile(mimeType)) return '🎥';
+    if (this.isAudioFile(mimeType)) return '🎵';
+    if (mimeType?.includes('pdf')) return '📄';
+    if (mimeType?.includes('word')) return '📝';
+    if (mimeType?.includes('excel') || mimeType?.includes('sheet')) return '📊';
+    return '📎';
+  }
 }

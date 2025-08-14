@@ -15,6 +15,10 @@
                 <span class="last-seen">Dernière activité: {{ room?.lastActivity | date:'short' }}</span>
             </div>
         </div>
+        <div class="room-actions">
+            <button class="action-btn" title="Rechercher">🔍</button>
+            <button class="action-btn" title="Menu">⋮</button>
+        </div>
     </div>
 
     <!-- Zone de messages -->
@@ -31,26 +35,28 @@
 
                 <!-- Avatar ou initiales de l'expéditeur -->
                 <div *ngIf="!isMine(msg)" class="sender-avatar">
-                    <div class="sender-initials">{{ getSenderInitials(msg) }}</div>
+                    <img *ngIf="msg.senderAvatar" [src]="msg.senderAvatar" alt="Avatar" class="sender-avatar-img" />
+                    <div *ngIf="!msg.senderAvatar" class="sender-initials">{{ getSenderInitials(msg) }}</div>
                 </div>
 
                 <div class="message-content">
                     <div class="bubble"
+                         [ngClass]="{'image-bubble': isImageMessage(msg), 'file-bubble': isFileMessage(msg)}"
                          (mouseenter)="showMessageActions(msg.id)"
                          (mouseleave)="hideMessageActions(msg.id)">
 
                         <!-- En-tête du message -->
-                        <div class="message-header">
-              <span *ngIf="room?.type === 'GROUP' && !isMine(msg)" class="sender-name">
-                {{ msg.senderName }}
-              </span>
+                        <div class="message-header" *ngIf="!isImageMessage(msg) || room?.type === 'GROUP'">
+                            <span *ngIf="room?.type === 'GROUP' && !isMine(msg)" class="sender-name">
+                                {{ msg.senderName }}
+                            </span>
                             <span class="message-time">{{ msg.timestamp | date:'HH:mm' }}</span>
                             <span *ngIf="msg.isEdited" class="edited-badge">modifié</span>
                             <span *ngIf="isMine(msg)" class="message-status">
-                <span *ngIf="msg.status === 'SENT'">✓</span>
-                <span *ngIf="msg.status === 'DELIVERED'">✓✓</span>
-                <span *ngIf="msg.status === 'READ'" class="read">✓✓</span>
-              </span>
+                                <span *ngIf="msg.status === 'SENT'">✓</span>
+                                <span *ngIf="msg.status === 'DELIVERED'">✓✓</span>
+                                <span *ngIf="msg.status === 'READ'" class="read">✓✓</span>
+                            </span>
                         </div>
 
                         <!-- Référence à un message -->
@@ -65,7 +71,8 @@
                         <!-- Contenu du message -->
                         <div class="message-body">
                             <!-- Modification de message -->
-                            <form *ngIf="editingMsgId === msg.id" (ngSubmit)="confirmEditMessage(msg)" class="edit-form">
+                            <form *ngIf="editingMsgId === msg.id && msg.type === 'TEXT'"
+                                  (ngSubmit)="confirmEditMessage(msg)" class="edit-form">
                                 <input [(ngModel)]="editedContent" name="editContent{{msg.id}}" required autocomplete="off"
                                        (keydown.escape)="cancelEditMessage()" />
                                 <div class="edit-actions">
@@ -76,46 +83,157 @@
 
                             <!-- Message texte -->
                             <div *ngIf="msg.type === 'TEXT' && editingMsgId !== msg.id" class="text-content">
-                                {{ msg.content }}
+                                <div class="text-message">{{ msg.content }}</div>
+                                <!-- Timestamps pour messages texte -->
+                                <div class="message-footer">
+                                    <span class="message-time-footer">{{ msg.timestamp | date:'HH:mm' }}</span>
+                                    <span *ngIf="msg.isEdited" class="edited-badge-footer">modifié</span>
+                                    <span *ngIf="isMine(msg)" class="message-status-footer">
+                                        <span *ngIf="msg.status === 'SENT'">✓</span>
+                                        <span *ngIf="msg.status === 'DELIVERED'">✓✓</span>
+                                        <span *ngIf="msg.status === 'READ'" class="read">✓✓</span>
+                                    </span>
+                                </div>
                             </div>
 
                             <!-- Message image -->
                             <div *ngIf="msg.type === 'IMAGE'" class="image-content">
-                                <img [src]="getFileUrl(msg)" (click)="openImagePreview(msg.content)"
-                                     alt="Image envoyée" class="message-image" />
+                                <div class="image-wrapper" (click)="openImagePreview(getImageUrl(msg))">
+                                    <img [src]="getImageUrl(msg)"
+                                         [alt]="msg.fileName || 'Image envoyée'"
+                                         class="message-image"
+                                         (load)="onImageLoad()"
+                                         (error)="onImageError($event)" />
+
+                                    <!-- Overlay avec timestamp pour les images -->
+                                    <div class="image-overlay">
+                                        <div class="image-info">
+                                            <span class="image-time">{{ msg.timestamp | date:'HH:mm' }}</span>
+                                            <span *ngIf="isMine(msg)" class="image-status">
+                                                <span *ngIf="msg.status === 'SENT'">✓</span>
+                                                <span *ngIf="msg.status === 'DELIVERED'">✓✓</span>
+                                                <span *ngIf="msg.status === 'READ'" class="read">✓✓</span>
+                                            </span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Message vidéo -->
+                            <div *ngIf="msg.type === 'VIDEO'" class="video-content">
+                                <div class="video-wrapper">
+                                    <video [src]="getVideoUrl(msg)"
+                                           controls
+                                           preload="metadata"
+                                           class="message-video"
+                                           (click)="$event.stopPropagation()">
+                                        Votre navigateur ne supporte pas la lecture vidéo.
+                                    </video>
+
+                                    <!-- Overlay avec timestamp pour les vidéos -->
+                                    <div class="video-overlay">
+                                        <div class="video-info">
+                                            <span class="video-time">{{ msg.timestamp | date:'HH:mm' }}</span>
+                                            <span *ngIf="isMine(msg)" class="video-status">
+                                                <span *ngIf="msg.status === 'SENT'">✓</span>
+                                                <span *ngIf="msg.status === 'DELIVERED'">✓✓</span>
+                                                <span *ngIf="msg.status === 'READ'" class="read">✓✓</span>
+                                            </span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="file-name" *ngIf="msg.fileName">{{ msg.fileName }}</div>
+                            </div>
+
+                            <!-- Message audio -->
+                            <div *ngIf="msg.type === 'AUDIO'" class="audio-content">
+                                <div class="audio-wrapper">
+                                    <div class="audio-player">
+                                        <button (click)="toggleAudioPlay(msg)" class="play-pause-btn">
+                                            <span *ngIf="!isAudioPlaying(msg.id)">▶️</span>
+                                            <span *ngIf="isAudioPlaying(msg.id)">⏸️</span>
+                                        </button>
+                                        <audio #audioPlayer [src]="getAudioUrl(msg)"
+                                               (ended)="onAudioEnded(msg.id)"
+                                               (timeupdate)="onAudioTimeUpdate($event, msg.id)">
+                                        </audio>
+                                        <div class="audio-info">
+                                            <span class="audio-duration">{{ getAudioDuration(msg.id) }}</span>
+                                            <span class="file-name">{{ msg.fileName || 'Audio' }}</span>
+                                        </div>
+                                    </div>
+                                    <div class="audio-footer">
+                                        <span class="message-time">{{ msg.timestamp | date:'HH:mm' }}</span>
+                                        <span *ngIf="isMine(msg)" class="message-status">
+                                            <span *ngIf="msg.status === 'SENT'">✓</span>
+                                            <span *ngIf="msg.status === 'DELIVERED'">✓✓</span>
+                                            <span *ngIf="msg.status === 'READ'" class="read">✓✓</span>
+                                        </span>
+                                    </div>
+                                </div>
                             </div>
 
                             <!-- Message fichier -->
-                            <div *ngIf="msg.type === 'FILE' && !isImage(msg.content)" class="file-content">
-                                <div class="file-icon">
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                        <path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"></path>
-                                        <polyline points="13 2 13 9 20 9"></polyline>
-                                    </svg>
+                            <div *ngIf="msg.type === 'FILE'" class="file-content">
+                                <div class="file-wrapper">
+                                    <div class="file-icon">
+                                        <span class="file-type-icon">{{ getFileIcon(msg.mimeType) }}</span>
+                                    </div>
+                                    <div class="file-info">
+                                        <span class="file-name">{{ msg.fileName || msg.content }}</span>
+                                        <span class="file-size" *ngIf="msg.fileSize">{{ formatFileSize(msg.fileSize) }}</span>
+                                        <a [href]="getFileUrl(msg)" download [download]="msg.fileName" class="download-btn">
+                                            📥 Télécharger
+                                        </a>
+                                    </div>
                                 </div>
-                                <div class="file-info">
-                                    <span class="file-name">{{ msg.content }}</span>
-                                    <a [href]="getFileUrl(msg)" download class="download-btn">Télécharger</a>
+                                <div class="file-footer">
+                                    <span class="message-time">{{ msg.timestamp | date:'HH:mm' }}</span>
+                                    <span *ngIf="isMine(msg)" class="message-status">
+                                        <span *ngIf="msg.status === 'SENT'">✓</span>
+                                        <span *ngIf="msg.status === 'DELIVERED'">✓✓</span>
+                                        <span *ngIf="msg.status === 'READ'" class="read">✓✓</span>
+                                    </span>
                                 </div>
                             </div>
                         </div>
 
                         <!-- Menu d'actions -->
                         <div class="message-actions" *ngIf="actionsMenuOpened === msg.id">
-                            <button *ngIf="isMine(msg)" (click)="startEditMessage(msg); $event.stopPropagation()" class="action-btn" title="Modifier">
-                                Modifier
+                            <button *ngIf="isMine(msg) && msg.type === 'TEXT'"
+                                    (click)="startEditMessage(msg); $event.stopPropagation()"
+                                    class="action-btn" title="Modifier">
+                                ✏️ Modifier
                             </button>
-                            <button *ngIf="isMine(msg)" (click)="deleteMessage(msg); $event.stopPropagation()" class="action-btn danger" title="Supprimer">
-                                Supprimer
+                            <button *ngIf="isMine(msg)"
+                                    (click)="deleteMessage(msg); $event.stopPropagation()"
+                                    class="action-btn danger" title="Supprimer">
+                                🗑️ Supprimer
                             </button>
-                            <button (click)="replyToMessage(msg); $event.stopPropagation()" class="action-btn" title="Répondre">
-                                Répondre
+                            <button (click)="replyToMessage(msg); $event.stopPropagation()"
+                                    class="action-btn" title="Répondre">
+                                ↩️ Répondre
+                            </button>
+                            <button *ngIf="msg.type === 'IMAGE' || msg.type === 'FILE'"
+                                    (click)="downloadFile(msg); $event.stopPropagation()"
+                                    class="action-btn" title="Télécharger">
+                                📥 Télécharger
                             </button>
                         </div>
                     </div>
                 </div>
             </div>
         </ng-container>
+
+        <!-- Indicateur de frappe -->
+        <div *ngIf="someoneIsTyping" class="typing-indicator">
+            <div class="typing-dots">
+                <span></span>
+                <span></span>
+                <span></span>
+            </div>
+            <span class="typing-text">{{ typingUserName }} est en train d'écrire...</span>
+        </div>
     </div>
 
     <!-- Barre de réponse -->
@@ -123,45 +241,114 @@
         <div class="reply-info">
             <span class="reply-label">Répondre à</span>
             <span class="reply-sender">{{ replyToMsg.senderName }}</span>
-            <span class="reply-content">{{ replyToMsg.content.length > 30 ? (replyToMsg.content ) + '...' : replyToMsg.content }}</span>
+            <div class="reply-content">
+                <span *ngIf="replyToMsg.type === 'TEXT'">{{ getReplyPreview(replyToMsg.content) }}</span>
+                <span *ngIf="replyToMsg.type === 'IMAGE'">🖼️ Image</span>
+                <span *ngIf="replyToMsg.type === 'VIDEO'">🎥 Vidéo</span>
+                <span *ngIf="replyToMsg.type === 'AUDIO'">🎵 Audio</span>
+                <span *ngIf="replyToMsg.type === 'FILE'">📎 {{ replyToMsg.fileName }}</span>
+            </div>
         </div>
-        <button (click)="cancelReply()" class="cancel-reply" title="Annuler la réponse">
-            ✕
-        </button>
+        <button (click)="cancelReply()" class="cancel-reply" title="Annuler la réponse">✕</button>
     </div>
 
     <!-- Zone de saisie -->
     <div class="input-area">
-        <div class="input-container">
-            <label class="file-upload">
-                <input type="file" (change)="onFileSelected($event)" accept="image/*, .pdf, .doc, .docx, .xls, .xlsx" />
-                📎
-            </label>
+        <!-- Prévisualisation de fichier -->
+        <div *ngIf="fileToSend" class="file-preview-container">
+            <div class="file-preview">
+                <!-- Prévisualisation image -->
+                <div *ngIf="isImageFile(fileToSend)" class="image-preview">
+                    <img [src]="filePreviewUrl" alt="Prévisualisation" class="preview-image" />
+                    <div class="preview-overlay">
+                        <span class="preview-filename">{{ fileToSend.name }}</span>
+                        <button (click)="clearFile()" class="remove-file-btn" title="Supprimer">❌</button>
+                    </div>
+                </div>
 
+                <!-- Prévisualisation autres fichiers -->
+                <div *ngIf="!isImageFile(fileToSend)" class="file-preview-info">
+                    <div class="file-preview-icon">{{ getFileTypeIcon(fileToSend.type) }}</div>
+                    <div class="file-preview-details">
+                        <span class="preview-filename">{{ fileToSend.name }}</span>
+                        <span class="preview-filesize">{{ formatFileSize(fileToSend.size) }}</span>
+                    </div>
+                    <button (click)="clearFile()" class="remove-file-btn" title="Supprimer">❌</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="input-container">
+            <!-- Boutons d'attachement -->
+            <div class="attachment-buttons">
+                <label class="file-upload-btn" title="Joindre un fichier">
+                    <input type="file"
+                           (change)="onFileSelected($event)"
+                           accept="image/*,video/*,audio/*,.pdf,.doc,.docx,.xls,.xlsx,.txt,.zip,.rar"
+                           multiple="false" />
+                    📎
+                </label>
+
+                <label class="image-upload-btn" title="Envoyer une image">
+                    <input type="file"
+                           (change)="onImageSelected($event)"
+                           accept="image/*" />
+                    🖼️
+                </label>
+            </div>
+
+            <!-- Zone de texte -->
             <div class="input-wrapper">
-                <input type="text" placeholder="Écrivez un message..." [(ngModel)]="messageContent"
-                       (keyup.enter)="sendMessage()" (focus)="scrollToBottom()" />
-                <div *ngIf="fileToSend" class="file-preview">
-                    <span class="file-name">{{ fileToSend.name }}</span>
-                    <button (click)="clearFile()" class="clear-file" title="Supprimer le fichier">
-                        ✕
-                    </button>
+                <input type="text"
+                       placeholder="Écrivez un message..."
+                       [(ngModel)]="messageContent"
+                       (keyup.enter)="sendMessage()"
+                       (focus)="scrollToBottom()"
+                       (input)="onTyping()"
+                       [disabled]="isUploading"
+                       class="message-input" />
+
+                <!-- Indicateur d'upload -->
+                <div *ngIf="isUploading" class="upload-progress">
+                    <div class="upload-spinner"></div>
+                    <span>Envoi en cours...</span>
                 </div>
             </div>
 
-            <button (click)="sendMessage()" [disabled]="!canSendMessage()" class="send-btn" title="Envoyer">
-                {{ (!messageContent.trim() && !fileToSend) ? '😊' : '➤' }}
+            <!-- Bouton d'envoi -->
+            <button (click)="sendMessage()"
+                    [disabled]="!canSendMessage() || isUploading"
+                    class="send-btn"
+                    [ngClass]="{'has-content': canSendMessage()}"
+                    title="Envoyer">
+                <span *ngIf="!canSendMessage()">😊</span>
+                <span *ngIf="canSendMessage() && !isUploading">➤</span>
+                <div *ngIf="isUploading" class="send-spinner"></div>
             </button>
         </div>
     </div>
 
-    <!-- Prévisualisation d'image -->
+    <!-- Prévisualisation d'image plein écran -->
     <div *ngIf="imagePreviewUrl" class="image-preview-overlay" (click)="closeImagePreview()">
-        <div class="image-preview-container" (click)="$event.stopPropagation()">
-            <img [src]="imagePreviewUrl" alt="Prévisualisation" class="preview-image" />
-            <button (click)="closeImagePreview()" class="close-preview" title="Fermer">
-                ✕
-            </button>
+        <div class="image-preview-modal" (click)="$event.stopPropagation()">
+            <div class="image-preview-header">
+                <div class="image-preview-info">
+                    <span class="image-sender">{{ imagePreviewSender }}</span>
+                    <span class="image-date">{{ imagePreviewDate | date:'dd/MM/yyyy à HH:mm' }}</span>
+                </div>
+                <button (click)="closeImagePreview()" class="close-preview" title="Fermer">✕</button>
+            </div>
+            <div class="image-preview-content">
+                <img [src]="imagePreviewUrl" alt="Prévisualisation" class="full-preview-image" />
+            </div>
+            <div class="image-preview-footer">
+                <button *ngIf="imagePreviewDownload"
+                        (click)="downloadImagePreview()"
+                        class="download-preview-btn"
+                        title="Télécharger">
+                    📥 Télécharger
+                </button>
+            </div>
         </div>
     </div>
 </div>
@@ -169,7 +356,7 @@
 <!-- État vide -->
 <div *ngIf="!room" class="empty-state">
     <div class="empty-content">
-        💬
+        <div class="empty-icon">💬</div>
         <h2>Sélectionnez une discussion</h2>
         <p>Choisissez une conversation existante ou démarrez-en une nouvelle</p>
     </div>

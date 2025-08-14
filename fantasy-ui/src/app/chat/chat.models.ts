@@ -60,11 +60,24 @@ export interface ChatMessageDTO {
     type: 'TEXT' | 'IMAGE' | 'FILE' | 'AUDIO' | 'VIDEO';
     senderId: number;
     senderName: string;
-    timestamp: string;
+    senderAvatar?: string;        // avatar du sender
+    timestamp: string;            // ISO string
+    editedAt?: string;            // date édition
     isEdited: boolean;
+    isDeleted?: boolean;
     replyToId?: number;
+    replyToMessage?: ChatMessageDTO;
     status?: 'SENT' | 'DELIVERED' | 'READ';
+
+    // Nouveaux champs pour fichiers / Cloudinary
+    fileName?: string;
+    fileUrl?: string;
+    cloudinarySecureUrl?: string;
+    cloudinaryPublicId?: string;
+    fileSize?: number;
+    mimeType?: string;
 }
+
 
 export interface ChatParticipantDTO {
     id: number;
