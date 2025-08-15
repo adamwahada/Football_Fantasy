@@ -20,7 +20,9 @@ export interface CurrentUser {
 })
 export class AuthService {
   
-  private apiUrl = 'http://localhost:9090/fantasy/api/users';
+  private registrationApiUrl = 'http://localhost:9090/fantasy/api/user';
+  private userApiUrl = 'http://localhost:9090/fantasy/api/users';
+
   private currentUserSubject = new BehaviorSubject<CurrentUser | null>(null);
   public currentUser$ = this.currentUserSubject.asObservable();
   
@@ -108,7 +110,7 @@ export class AuthService {
   loadCurrentUser(): Observable<CurrentUser> {
     if (!this.isLoggedIn()) return throwError(() => new Error('User not authenticated'));
 
-    return this.http.get<CurrentUser>(`${this.apiUrl}/profile`).pipe(
+    return this.http.get<CurrentUser>(`${this.userApiUrl}/profile`).pipe(
       tap(user => this.currentUserSubject.next(user)),
       catchError(error => {
         console.error('Failed to load current user:', error);
@@ -121,7 +123,7 @@ export class AuthService {
   // ================= REGISTRATION =================
 
 registerUser(userData: any): Observable<any> {
-  return this.http.post(`${this.apiUrl}/register`, userData).pipe(
+  return this.http.post(`${this.registrationApiUrl}/register`, userData).pipe(
     tap(response => {
       console.log('✅ Registration successful:', response);
     }),
@@ -150,7 +152,7 @@ registerUser(userData: any): Observable<any> {
     return from(this.getAccessToken()).pipe(
       switchMap(token =>
         this.http.post<CurrentUser>(
-          `${this.apiUrl}/auto-create`,
+          `${this.userApiUrl}/auto-create`,
           {},
           { headers: { Authorization: `Bearer ${token}` } }
         )
