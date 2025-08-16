@@ -26,6 +26,8 @@ public class ChatRoom {
     private String roomId; // UUID pour identifier la room
 
     @Enumerated(EnumType.STRING)
+    @Column(name = "type", length = 20, nullable = false) // Augmenté à 20 caractères
+
     private ChatRoomType type; // PRIVATE, GROUP
 
     private String name; // Pour les groupes
@@ -58,4 +60,21 @@ public class ChatRoom {
     public void updateLastActivity() {
         this.lastActivity = LocalDateTime.now();
     }
+
+
+
+    //support ticket
+    @Column(name = "is_support_chat")
+    private boolean isSupportChat = false;
+
+    @Column(name = "support_ticket_id")
+    private String supportTicketId; // Format: "TICKET-001"
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "support_status", length = 15)
+    private SupportStatus supportStatus; // OPEN, IN_PROGRESS, RESOLVED, CLOSED
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "support_type")
+    private SupportType supportType; // PAYMENT, TECHNICAL, ACCOUNT, GENERAL
 }

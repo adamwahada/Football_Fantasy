@@ -2,6 +2,7 @@ package FootballFantasy.fantasy.Repositories.ChatRepository;
 
 import FootballFantasy.fantasy.Entities.Chat.ChatRoom;
 import FootballFantasy.fantasy.Entities.Chat.ChatRoomType;
+import FootballFantasy.fantasy.Entities.Chat.SupportType;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -25,4 +26,32 @@ public interface ChatRoomRepository extends JpaRepository<ChatRoom, Long> {
                                            @Param("type") ChatRoomType type);
 
     List<ChatRoom> findByTypeOrderByLastActivityDesc(ChatRoomType type);
+
+    // AJOUTER ces méthodes à ton ChatRoomRepository existant :
+
+    @Query("SELECT cr FROM ChatRoom cr JOIN cr.participants p " +
+            "WHERE p.user.id = :userId AND cr.isSupportChat = true AND cr.supportStatus != 'CLOSED' " +
+            "ORDER BY cr.lastActivity DESC")
+    List<ChatRoom> findUserSupportTickets(@Param("userId") Long userId);
+
+    @Query("SELECT cr FROM ChatRoom cr JOIN cr.participants p " +
+            "WHERE p.user.id = :adminId AND cr.isSupportChat = true " +
+            "ORDER BY cr.lastActivity DESC")
+    List<ChatRoom> findAdminSupportTickets(@Param("adminId") Long adminId);
+
+    @Query("SELECT cr FROM ChatRoom cr JOIN cr.participants p " +
+            "WHERE p.user.id = :userId AND p.isActive = true " +
+            "ORDER BY cr.lastActivity DESC")
+    List<ChatRoom> findAdminChats(@Param("userId") Long userId);
+
+    // ✅ REQUÊTE CORRIGÉE - Solution simple et propre
+    @Query("SELECT cr FROM ChatRoom cr JOIN cr.participants p " +
+            "WHERE p.user.id = :userId AND cr.supportType = :supportType " +
+            "AND cr.supportStatus != 'RESOLVED' AND cr.supportStatus != 'CLOSED'")
+    Optional<ChatRoom> findActiveSupportTicket(@Param("userId") Long userId,
+                                               @Param("supportType") SupportType supportType);
+
+    @Query("SELECT c FROM ChatRoom c WHERE c.type = 'SUPPORT' ORDER BY c.createdAt DESC")
+    List<ChatRoom> findSupportChatsOrderByCreatedDesc();
+
 }
