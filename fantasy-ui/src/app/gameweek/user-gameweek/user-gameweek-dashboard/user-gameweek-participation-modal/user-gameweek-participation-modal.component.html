@@ -1,15 +1,91 @@
-<!-- user-gameweek-participation-modal.component.html -->
+<!-- user-gameweek-participation-modal.component.html - FIXED VERSION -->
 <div class="modal-overlay" *ngIf="isVisible" (click)="onOverlayClick($event)">
   <div class="modal-content" (click)="$event.stopPropagation()">
     <div class="modal-header">
       <h2>Rejoindre une Compétition</h2>
-      <button class="close-btn" (click)="closeModal()">&times;</button>
+      <button class="close-btn" (click)="closeModal()" [disabled]="isLoading">&times;</button>
+      <!-- DEBUG: Test error button - REMOVED -->
     </div>
-    
-    <form [formGroup]="participationForm" (ngSubmit)="onSubmit()">
+
+    <!-- ✅ FIXED Error Display Section - Always visible when errorDisplay.show is true -->
+    <div *ngIf="errorDisplay.show" 
+         [ngClass]="'error-display-container ' + errorDisplay.type" 
+         class="error-container">
+      <div class="error-header">
+        <span class="error-icon">{{ getErrorIcon() }}</span>
+        <strong class="error-title">{{ errorDisplay.message }}</strong>
+      </div>
+
+      <!-- Balance Information for Insufficient Balance Errors -->
+      <div *ngIf="errorDisplay.balanceInfo" class="balance-info-section">
+        <div class="balance-details">
+          <div class="balance-row">
+            <span class="label">Montant requis:</span>
+            <span class="value required">{{ errorDisplay.balanceInfo.required }}€</span>
+          </div>
+          <div class="balance-row">
+            <span class="label">Solde actuel:</span>
+            <span class="value current">{{ errorDisplay.balanceInfo.current }}€</span>
+          </div>
+          <div *ngIf="errorDisplay.balanceInfo.shortage && parseFloatSafe(errorDisplay.balanceInfo.shortage) > 0" 
+               class="balance-row shortage">
+            <span class="label">Manque:</span>
+            <span class="value shortage">{{ errorDisplay.balanceInfo.shortage }}€</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Suggestions Section -->
+      <div *ngIf="errorDisplay.suggestions && errorDisplay.suggestions.length > 0" class="suggestions-section">
+        <h4>Suggestions:</h4>
+        <ul class="suggestions-list">
+          <li *ngFor="let suggestion of errorDisplay.suggestions" class="suggestion-item">
+            {{ suggestion }}
+          </li>
+        </ul>
+      </div>
+
+      <!-- Alternative Buy-in Amounts for Insufficient Balance -->
+      <div *ngIf="isInsufficientBalanceError() && getSuggestedAmounts().length > 0" 
+           class="alternative-amounts-section">
+        <h4>Montants disponibles avec votre solde:</h4>
+        <div class="suggested-amounts">
+          <button *ngFor="let amount of getSuggestedAmounts()" 
+                  type="button"
+                  class="suggested-amount-btn"
+                  [class.selected]="selectedBuyIn === amount"
+                  (click)="selectSuggestedAmount(amount)">
+            {{ amount.toFixed(2) }}€
+          </button>
+        </div>
+      </div>
+
+      <!-- Retry/Close Button for Error Actions -->
+      <div class="error-actions">
+        <button *ngIf="errorDisplay.canRetry" 
+                type="button" 
+                class="btn-retry" 
+                (click)="clearError()"
+                [disabled]="isLoading">
+          Modifier et réessayer
+        </button>
+        <button *ngIf="!errorDisplay.canRetry" 
+                type="button" 
+                class="btn-close-error" 
+                (click)="closeModal()"
+                [disabled]="isLoading">
+          Fermer
+        </button>
+      </div>
+    </div>
+
+    <!-- ✅ Main Form - Only show if no error or retryable error -->
+    <form [formGroup]="participationForm" (ngSubmit)="onSubmit()" 
+          *ngIf="!errorDisplay.show || errorDisplay.canRetry">
+      
       <div class="form-group">
         <label for="sessionType">Type de Session:</label>
-        <select id="sessionType" formControlName="sessionType" class="form-control">
+        <select id="sessionType" formControlName="sessionType" class="form-control" [disabled]="isLoading">
           <option value="">Sélectionner un type</option>
           <option value="ONE_VS_ONE">1 vs 1</option>
           <option value="SMALL_GROUP">Best of 5</option>
@@ -21,25 +97,24 @@
         </div>
       </div>
 
-      <!-- Updated buy-in options to use numbers -->
+      <!-- Buy-in options -->
       <div class="form-group">
         <label>Mise (€):</label>
         <div class="buy-in-options">
-          <button 
-            *ngFor="let amount of buyInOptions"
-            type="button"
-            [class.active]="amount === selectedBuyIn"
-            (click)="selectBuyIn(amount)">
+          <button *ngFor="let amount of buyInOptions"
+                  type="button"
+                  [class.active]="amount === selectedBuyIn"
+                  [disabled]="isLoading"
+                  (click)="selectBuyIn(amount)">
             {{amount.toFixed(2)}}€
           </button>
         </div>
-        <!-- Show selected amount for debugging -->
         <small class="debug-info">Selected: {{selectedBuyIn.toFixed(2)}}€</small>
       </div>
 
       <div class="form-group">
         <label class="checkbox-container">
-          <input type="checkbox" formControlName="isPrivate">
+          <input type="checkbox" formControlName="isPrivate" [disabled]="isLoading">
           <span class="checkmark"></span>
           Session privée
         </label>
@@ -47,12 +122,12 @@
 
       <div class="form-group" *ngIf="participationForm.get('isPrivate')?.value">
         <label for="accessKey">Clé d'accès:</label>
-        <input 
-          type="text"
-          id="accessKey"
-          formControlName="accessKey"
-          class="form-control"
-          placeholder="Entrez la clé d'accès">
+        <input type="text"
+               id="accessKey"
+               formControlName="accessKey"
+               class="form-control"
+               [disabled]="isLoading"
+               placeholder="Entrez la clé d'accès">
         <div class="error-message" *ngIf="participationForm.get('accessKey')?.invalid && participationForm.get('accessKey')?.touched">
           La clé d'accès est requise pour les sessions privées
         </div>
@@ -65,17 +140,34 @@
       </div>
 
       <div class="modal-footer">
-        <button type="button" class="btn btn-secondary" (click)="closeModal()">
+        <button type="button" 
+                class="btn btn-secondary" 
+                (click)="closeModal()" 
+                [disabled]="isLoading">
           Annuler
         </button>
-        <button 
-          type="submit"
-          class="btn btn-primary"
-          [disabled]="participationForm.invalid || isLoading || selectedBuyIn <= 0">
+        <button type="submit"
+                class="btn btn-primary"
+                [disabled]="participationForm.invalid || isLoading || selectedBuyIn <= 0">
           <span *ngIf="isLoading" class="spinner"></span>
           {{ isLoading ? 'Traitement...' : 'Confirmer et Rejoindre' }}
         </button>
       </div>
     </form>
+
+    <!-- ✅ Alternative: Show only error message for non-retryable errors -->
+    <div *ngIf="errorDisplay.show && !errorDisplay.canRetry && errorDisplay.type !== 'success'" 
+         class="error-only-content">
+      <div class="error-only-message">
+        <p>{{ errorDisplay.message }}</p>
+        <div *ngIf="errorDisplay.suggestions && errorDisplay.suggestions.length > 0">
+          <h4>Que faire:</h4>
+          <ul>
+            <li *ngFor="let suggestion of errorDisplay.suggestions">{{ suggestion }}</li>
+          </ul>
+        </div>
+      </div>
+    </div>
   </div>
 </div>
+

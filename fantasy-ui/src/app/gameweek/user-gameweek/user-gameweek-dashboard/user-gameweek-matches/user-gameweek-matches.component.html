@@ -86,14 +86,12 @@
         </main>
         <!-- Session Participation Modal -->
 <app-session-participation-modal
-  *ngIf="showParticipationModal"
   [isVisible]="showParticipationModal"
   [gameweekId]="selectedWeekNumber"
   [currentCompetition]="selectedCompetition"
   [predictions]="preparedPredictions"
   (participationSubmitted)="onParticipationSubmitted($event)"
-  (modalClosed)="onModalClosed()"
->
+  (modalClosed)="onModalClosed()"    >
 </app-session-participation-modal>
 
         <!-- Footer -->

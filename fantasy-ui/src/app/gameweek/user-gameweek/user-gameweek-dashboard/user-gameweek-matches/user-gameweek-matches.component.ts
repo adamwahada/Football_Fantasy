@@ -1,19 +1,18 @@
 // user-gameweek-matches.component.ts
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnInit, OnDestroy, ViewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { ActivatedRoute, ParamMap } from '@angular/router';
-import { Subject, forkJoin, combineLatest, of } from 'rxjs';
+import { ActivatedRoute, ParamMap, Router } from '@angular/router';
+import { Subject, forkJoin, combineLatest } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
 import { GameweekService, Gameweek } from '../../../gameweek.service';
 import { MatchWithIconsDTO } from '../../../../match/match.service';
 import { TeamService, TeamIcon } from '../../../../match/team.service';
 import { SessionParticipationData, PredictionPayload, UserGameweekParticipationModalComponent } from '../user-gameweek-participation-modal/user-gameweek-participation-modal.component';
 import { SessionParticipationService } from '../../../session-participation.service';
-import { Router } from '@angular/router';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { NotificationService } from '../../../../shared/notification.service';
-import { PredictionService, PredictionDTO, GameweekPredictionSubmissionDTO } from '../../../prediction.service';
+import { PredictionService, PredictionDTO, GameweekPredictionSubmissionDTO, PredictionError } from '../../../prediction.service';
 import { AuthService } from '../../../../core/services/auth.service';
 
 type PickOption = 'HOME_WIN' | 'DRAW' | 'AWAY_WIN' | null;
@@ -37,16 +36,50 @@ interface LeagueConfig {
 
 interface UIMatch extends MatchWithIconsDTO {
   pick?: PickOption;
-  scoreHome: number | null; 
+  scoreHome: number | null;
   scoreAway: number | null;
   isTiebreak?: boolean;
-  homeIconUrl?: string;  
-  awayIconUrl?: string; 
+  homeIconUrl?: string;
+  awayIconUrl?: string;
 }
 
+export interface SubmitPredictionResponse {
+  success: boolean;
+  message?: string;
+  error?: string;
+  details?: {
+    shortage?: string;
+    userId?: string;
+    required?: string;
+    current?: string;
+  };
+  suggestions?: {
+    action?: string;
+    minimumRequired?: string;
+  };
+  path?: string;
+  timestamp?: string;
+}
 
+// ✅ CRITICAL FIX: Add interface for backend error responses
+export interface BackendErrorResponse {
+  success: false;
+  error: string;
+  message: string;
+  details?: {
+    required?: string;
+    current?: string;
+    shortage?: string;
+    userId?: string;
+  };
+  suggestions?: {
+    action?: string;
+    minimumRequired?: string;
+  };
+  path?: string;
+  timestamp?: string;
+}
 
-// Use consistent number values (no decimals in the constant)
 export const PRECONFIGURED_BUY_IN_AMOUNTS = [10, 20, 50, 100] as const;
 export type BuyInAmount = typeof PRECONFIGURED_BUY_IN_AMOUNTS[number];
 
@@ -58,90 +91,81 @@ export type BuyInAmount = typeof PRECONFIGURED_BUY_IN_AMOUNTS[number];
   styleUrls: ['./user-gameweek-matches.component.scss']
 })
 export class UserGameweekMatchesComponent implements OnInit, OnDestroy {
-  // route params displayed in the header/template
+  @ViewChild(UserGameweekParticipationModalComponent)
+  private modalComponent!: UserGameweekParticipationModalComponent;
+
+  // ✅ Add getter to check if modal component is available
+  get isModalComponentAvailable(): boolean {
+    return !!this.modalComponent;
+  }
+
   selectedCompetition!: LeagueTheme;
   selectedWeekNumber = 0;
 
-  //prediction data
-  showParticipationModal = false;
+  private _showParticipationModal = false;
+  
+  get showParticipationModal(): boolean {
+    return this._showParticipationModal;
+  }
+  
+  set showParticipationModal(value: boolean) {
+    console.log('[MATCHES] 🔄 Modal visibility changing:', {
+      from: this._showParticipationModal,
+      to: value,
+      stack: new Error().stack
+    });
+    
+    // ✅ CRITICAL FIX: Don't allow modal to be hidden if there's an error
+    if (value === false && this.modalComponent?.errorDisplay?.show && this.modalComponent?.errorDisplay?.canRetry) {
+      console.log('[MATCHES] 🚫 BLOCKING modal close - error is displayed and retryable!');
+      console.log('[MATCHES] 🚫 Error details:', this.modalComponent.errorDisplay);
+      console.log('[MATCHES] 🚫 This should prevent the modal from closing!');
+      return; // Don't close the modal
+    }
+    
+    console.log('[MATCHES] 🔄 Allowing modal visibility change to:', value);
+    this._showParticipationModal = value;
+  }
   preparedPredictions: PredictionPayload[] = [];
   isSubmitting = false;
   message = '';
   messageType: 'success' | 'error' = 'success';
   showMessage = false;
 
-  // UI data
   matches: UIMatch[] = [];
   loading = false;
   error: string | null = null;
-  teamIconsMap: { [key: string]: string } = {};
+  teamIconsMap: Record<string, string> = {};
   teamsWithIcons: TeamIcon[] = [];
 
-  // Deadline countdown
   deadline: Date | null = null;
-  deadlineCountdown: string = '';
+  deadlineCountdown = '';
   private countdownInterval: any;
 
   private destroy$ = new Subject<void>();
+  private currentGameweekId: number | null = null;
 
-  leagueDisplayName: string = '';
-  leagueIconUrl: string = '';
-  leagueIcons: { [key: string]: string } = {};
+  leagueDisplayName = '';
+  leagueIconUrl = '';
+  leagueIcons: Record<string, string> = {};
 
-  // League configuration mapping (same as user-gameweek-details component)
   private leagueConfigs: Record<LeagueTheme, LeagueConfig> = {
-    'PREMIER_LEAGUE': { 
-      displayName: 'Premier League', 
-      iconKey: 'Premier League',
-      theme: 'premier-league'
-    },
-    'LA_LIGA': { 
-      displayName: 'La Liga', 
-      iconKey: 'La Liga',
-      theme: 'la-liga'
-    },
-    'SERIE_A': { 
-      displayName: 'Serie A', 
-      iconKey: 'Serie A',
-      theme: 'serie-a'
-    },
-    'BUNDESLIGA': { 
-      displayName: 'Bundesliga', 
-      iconKey: 'Bundesliga',
-      theme: 'bundesliga'
-    },
-    'LIGUE_ONE': { 
-      displayName: 'Ligue 1', 
-      iconKey: 'Ligue 1',
-      theme: 'ligue-1'
-    },
-    'CHAMPIONS_LEAGUE': { 
-      displayName: 'Champions League', 
-      iconKey: 'Champions League',
-      theme: 'champions-league'
-    },
-    'EUROPA_LEAGUE': { 
-      displayName: 'Europa League', 
-      iconKey: 'Europa League',
-      theme: 'europa-league'
-    },
-    'CONFERENCE_LEAGUE': { 
-      displayName: 'Conference League', 
-      iconKey: 'Conference League',
-      theme: 'conference-league'
-    },
-    'BESTOFF': { 
-      displayName: 'Best Of', 
-      iconKey: 'Best Of',
-      theme: 'best-of'
-    }
+    'PREMIER_LEAGUE': { displayName: 'Premier League', iconKey: 'Premier League', theme: 'premier-league' },
+    'LA_LIGA': { displayName: 'La Liga', iconKey: 'La Liga', theme: 'la-liga' },
+    'SERIE_A': { displayName: 'Serie A', iconKey: 'Serie A', theme: 'serie-a' },
+    'BUNDESLIGA': { displayName: 'Bundesliga', iconKey: 'Bundesliga', theme: 'bundesliga' },
+    'LIGUE_ONE': { displayName: 'Ligue 1', iconKey: 'Ligue 1', theme: 'ligue-1' },
+    'CHAMPIONS_LEAGUE': { displayName: 'Champions League', iconKey: 'Champions League', theme: 'champions-league' },
+    'EUROPA_LEAGUE': { displayName: 'Europa League', iconKey: 'Europa League', theme: 'europa-league' },
+    'CONFERENCE_LEAGUE': { displayName: 'Conference League', iconKey: 'Conference League', theme: 'conference-league' },
+    'BESTOFF': { displayName: 'Best Of', iconKey: 'Best Of', theme: 'best-of' }
   };
 
   constructor(
     private route: ActivatedRoute,
+    private router: Router,
     private gameweekService: GameweekService,
     private teamService: TeamService,
-    private router: Router,
     private sessionParticipationService: SessionParticipationService,
     private snackBar: MatSnackBar,
     private notificationService: NotificationService,
@@ -150,11 +174,11 @@ export class UserGameweekMatchesComponent implements OnInit, OnDestroy {
   ) {}
 
   ngOnInit(): void {
-    // Load all league and team icons in parallel, then handle route params
-    const leagueIcons$ = this.teamService.getAllLeagueIcons();
-    const teamIcons$ = this.teamService.getAllTeamIcons();
-
-    combineLatest([leagueIcons$, teamIcons$, this.route.paramMap])
+    combineLatest([
+      this.teamService.getAllLeagueIcons(),
+      this.teamService.getAllTeamIcons(),
+      this.route.paramMap
+    ])
       .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: ([leagueIcons, teamIcons, params]) => {
@@ -179,8 +203,10 @@ export class UserGameweekMatchesComponent implements OnInit, OnDestroy {
       });
   }
 
-  // When you load the gameweek, store its ID:
-  private currentGameweekId: number | null = null;
+  // ✅ Add lifecycle hook to check modal component availability
+  ngAfterViewInit() {
+    console.log('[MATCHES] 👁️ View initialized, modal component available:', this.isModalComponentAvailable);
+  }
 
   private loadGameweekData(): void {
     this.loading = true;
@@ -192,42 +218,31 @@ export class UserGameweekMatchesComponent implements OnInit, OnDestroy {
       .subscribe({
         next: (gameweeks: Gameweek[]) => {
           const gw = gameweeks.find(g => g.weekNumber === this.selectedWeekNumber);
-          if (!gw || !gw.id) {
+          if (!gw?.id) {
             this.error = 'Gameweek not found.';
             this.loading = false;
             return;
           }
-          this.currentGameweekId = gw.id; // <-- Store the real ID
-          console.log('[GAMEWEEK] Loaded gameweek:', gw); // <-- Add this log
-          console.log('[GAMEWEEK] Loaded gameweekId:', gw.id, 'for weekNumber:', gw.weekNumber, 'competition:', gw.competition); // <-- Add this log
-          // Set deadline and start countdown
+          this.currentGameweekId = gw.id;
           this.deadline = gw.joinDeadline ? new Date(gw.joinDeadline) : null;
           this.updateDeadlineCountdown();
-          if (this.countdownInterval) {
-            clearInterval(this.countdownInterval);
-          }
+          if (this.countdownInterval) clearInterval(this.countdownInterval);
           this.countdownInterval = setInterval(() => this.updateDeadlineCountdown(), 1000);
 
           forkJoin({
             tiebreakers: this.gameweekService.getTiebreakerMatches(gw.id),
             matches: this.gameweekService.getMatchesWithIcons(gw.id)
-          })
-          .pipe(takeUntil(this.destroy$))
-          .subscribe({
+          }).pipe(takeUntil(this.destroy$)).subscribe({
             next: ({ tiebreakers, matches }) => {
               const tbIds = (tiebreakers || []).map(m => m.id!).filter(Boolean);
-              // Use TeamService.getTeamsWithIcons to get icon URLs for all teams in this match list
               const allTeams = Array.from(new Set((matches || []).flatMap(m => [m.homeTeam, m.awayTeam])));
               const teamsWithIcons = this.teamService.getTeamsWithIcons(allTeams, this.teamIconsMap);
-              // Build a lookup for fast access
-              const iconLookup: { [key: string]: string } = {};
+              const iconLookup: Record<string, string> = {};
               teamsWithIcons.forEach(ti => { iconLookup[ti.name] = ti.iconUrl; });
 
               this.matches = (matches || [])
-                .filter((m: MatchWithIconsDTO) =>
-                   m.active !== false 
-                )
-                .map((m: MatchWithIconsDTO) => ({
+                .filter(m => m.active !== false)
+                .map(m => ({
                   ...m,
                   pick: null,
                   scoreHome: (m as any).scoreHome ?? null,
@@ -235,7 +250,7 @@ export class UserGameweekMatchesComponent implements OnInit, OnDestroy {
                   isTiebreak: tbIds.includes((m as any).id),
                   homeIconUrl: iconLookup[m.homeTeam] || this.teamService.getDefaultIconPath(m.homeTeam),
                   awayIconUrl: iconLookup[m.awayTeam] || this.teamService.getDefaultIconPath(m.awayTeam)
-                })) as UIMatch[];
+                }));
               this.loading = false;
             },
             error: (err) => {
@@ -251,8 +266,7 @@ export class UserGameweekMatchesComponent implements OnInit, OnDestroy {
           this.loading = false;
         }
       });
-    
-    // Set league display name and icon using the same logic as user-gameweek-details
+
     this.leagueDisplayName = this.formatCompetitionName(this.selectedCompetition);
     this.leagueIconUrl = this.getLeagueIconUrl(this.selectedCompetition);
   }
@@ -273,17 +287,13 @@ export class UserGameweekMatchesComponent implements OnInit, OnDestroy {
     const hours = Math.floor(diffMs / (1000 * 60 * 60));
     diffMs -= hours * (1000 * 60 * 60);
     const minutes = Math.floor(diffMs / (1000 * 60));
-    // Only show non-zero units for compactness
-    const parts = [];
+    const parts: string[] = [];
     if (days > 0) parts.push(`${days} day${days > 1 ? 's' : ''}`);
     if (hours > 0 || days > 0) parts.push(`${hours} hour${hours > 1 ? 's' : ''}`);
     parts.push(`${minutes} minute${minutes > 1 ? 's' : ''}`);
     this.deadlineCountdown = parts.join(' ');
   }
 
-  /**
-   * Format competition name for display (same as user-gameweek-details)
-   */
   formatCompetitionName(enumName: string): string {
     const config = this.leagueConfigs[enumName as LeagueTheme];
     return config?.displayName || enumName
@@ -293,35 +303,24 @@ export class UserGameweekMatchesComponent implements OnInit, OnDestroy {
       .join(' ');
   }
 
-  /**
-   * Get league icon URL for the current competition (same as user-gameweek-details)
-   */
   getLeagueIconUrl(competition: string): string {
     const config = this.leagueConfigs[competition as LeagueTheme];
     if (!config || !this.leagueIcons[config.iconKey]) {
       return this.teamService.getLeagueIconUrl('/assets/images/leagues/default.png');
     }
-
     return this.teamService.getLeagueIconUrl(this.leagueIcons[config.iconKey]);
   }
 
-  /**
-   * Handle image loading errors
-   */
   handleImageError(event: Event): void {
-    const imgElement = event.target as HTMLImageElement;
-    imgElement.src = this.teamService.getLeagueIconUrl('/assets/images/leagues/default.png');
-    
-    // Add error class for styling
-    imgElement.classList.add('image-error');
+    const img = event.target as HTMLImageElement;
+    img.src = this.teamService.getLeagueIconUrl('/assets/images/leagues/default.png');
+    img.classList.add('image-error');
   }
 
-  // toggle pick (1 / X / 2)
   selectPick(match: UIMatch, pick: PickOption): void {
     match.pick = match.pick === pick ? null : pick;
   }
 
-  // reset picks & tie-break scores
   resetPredictions(): void {
     this.matches.forEach(m => {
       m.pick = null;
@@ -332,53 +331,38 @@ export class UserGameweekMatchesComponent implements OnInit, OnDestroy {
     });
   }
 
-  // basic client-side validations then emit or POST payload
   submitPredictions(): void {
-    // Validate picks
     const missingPicks = this.matches.filter(m => !m.pick);
-    if (missingPicks.length > 0) {
-      const ids = missingPicks.map(m => (m as any).id ?? '?').join(', ');
-      this.showErrorMessage(`Veuillez choisir 1/X/2 pour tous les matches. Manquants: ${ids}`);
+    if (missingPicks.length) {
+      this.showErrorMessage(`Veuillez choisir 1/X/2 pour tous les matches.`);
       return;
     }
 
-    const invalidTiebreaks = this.matches
-      .filter(m => m.isTiebreak)
-      .filter(m => m.scoreHome === null || m.scoreAway === null);
-
-    if (invalidTiebreaks.length > 0) {
+    const invalidTiebreaks = this.matches.filter(m => m.isTiebreak && (m.scoreHome === null || m.scoreAway === null));
+    if (invalidTiebreaks.length) {
       this.showErrorMessage('Veuillez renseigner les scores pour les tie-breaks.');
       return;
     }
 
-    // Ensure selectedCompetition is a valid LeagueTheme
-    if (!this.selectedCompetition || typeof this.selectedCompetition !== 'string' || !(this.selectedCompetition in this.leagueConfigs)) {
+    if (!this.selectedCompetition || !(this.selectedCompetition in this.leagueConfigs)) {
       this.showErrorMessage('Competition is not valid. Please reload the page.');
       return;
     }
 
-    // Prepare predictions payload
-    this.preparedPredictions = this.matches
-      .filter(m => m && typeof (m as any).id !== 'undefined' && !isNaN(Number((m as any).id)))
-      .map(m => ({
-        matchId: Number((m as any).id),
-        pick: m.pick || '',
-        scoreHome: m.isTiebreak ? (m.scoreHome ?? null) : null,
-        scoreAway: m.isTiebreak ? (m.scoreAway ?? null) : null
-      }));
+    this.preparedPredictions = this.matches.map(m => ({
+      matchId: Number((m as any).id),
+      pick: m.pick || '',
+      scoreHome: m.isTiebreak ? (m.scoreHome ?? null) : null,
+      scoreAway: m.isTiebreak ? (m.scoreAway ?? null) : null
+    }));
 
-    console.log('Prepared predictions:', this.preparedPredictions);
-
-    // Show modal for session participation
     this.showParticipationModal = true;
   }
 
   ngOnDestroy(): void {
     this.destroy$.next();
     this.destroy$.complete();
-    if (this.countdownInterval) {
-      clearInterval(this.countdownInterval);
-    }
+    if (this.countdownInterval) clearInterval(this.countdownInterval);
   }
 
   get tiebreakCount(): number {
@@ -386,135 +370,184 @@ export class UserGameweekMatchesComponent implements OnInit, OnDestroy {
   }
 
   cancelPredictions(): void {
-    // Navigate back to the gameweek list
     this.router.navigate(['../user-gameweek-list'], { relativeTo: this.route });
   }
-async onParticipationSubmitted(event: {
-  sessionData: SessionParticipationData;
-  predictions: PredictionPayload[];
-}): Promise<void> {
-  this.isSubmitting = true;
-  const { sessionData, predictions } = event;
+
+  async onParticipationSubmitted(event: { sessionData: SessionParticipationData; predictions: PredictionPayload[] }): Promise<void> {
+    const { sessionData, predictions } = event;
+    try {
+      const currentUserId = await this.getCurrentUserId();
+      if (!currentUserId) {
+        return this.modalComponent.handleSubmissionError({
+          message: 'Utilisateur non identifié',
+          errorCode: 'USER_NOT_LOGGED_IN'
+        });
+      }
   
-  // Check authentication first
-  const currentUserId = await this.getCurrentUserId();
-  if (!currentUserId) {
-    this.isSubmitting = false;
-    this.notificationService.show('Erreur: Utilisateur non identifié. Veuillez vous reconnecter.', 'error');
-    return;
-  }
-
-  const gameweekIdToSend = this.currentGameweekId ?? sessionData.gameweekId;
-  const cleanBuyInAmount = Number(sessionData.buyInAmount);
-
-  const predictionDTOs: PredictionDTO[] = predictions.map(p => ({
-    matchId: p.matchId,
-    predictedResult: this.mapPickToResult(p.pick),
-    predictedHomeScore: p.scoreHome,
-    predictedAwayScore: p.scoreAway
-  }));
-
-  const submissionDTO: GameweekPredictionSubmissionDTO = {
-    userId: currentUserId,
-    gameweekId: gameweekIdToSend,
-    competition: sessionData.competition,
-    predictions: predictionDTOs,
-    sessionType: sessionData.sessionType,
-    buyInAmount: cleanBuyInAmount,
-    isPrivate: sessionData.isPrivate,
-    complete: true // or set to the appropriate value if needed
-  };
-
-  this.predictionService.submitPredictionsAndJoinSession(
-    submissionDTO,
-    sessionData.sessionType,
-    cleanBuyInAmount,
-    sessionData.isPrivate,
-    sessionData.accessKey
-  ).subscribe({
-    next: () => {
-      this.showParticipationModal = false;
-      this.isSubmitting = false;
-      // Set notification before navigation
-      this.notificationService.show('Prédictions soumises avec succès!', 'success');
-      // Add a small delay before navigation to ensure notification is set
-      setTimeout(() => {
-        this.router.navigate(['/user/user-gameweek-list']);
-      }, 100);
-    },
-    error: (error) => {
-      this.isSubmitting = false;
-      this.notificationService.show(this.getErrorMessage(error), 'error');
-      // Modal stays open
+      const gameweekIdToSend = this.currentGameweekId ?? sessionData.gameweekId;
+      if (!gameweekIdToSend) {
+        return this.modalComponent.handleSubmissionError({
+          message: 'ID de la gameweek non trouvé',
+          errorCode: 'GAMEWEEK_ID_MISSING'
+        });
+      }
+  
+      const buyInAmount = Number(sessionData.buyInAmount);
+      if (isNaN(buyInAmount) || buyInAmount <= 0) {
+        return this.modalComponent.handleSubmissionError({
+          message: 'Montant de mise invalide',
+          errorCode: 'INVALID_BUY_IN_AMOUNT'
+        });
+      }
+  
+      const predictionDTOs: PredictionDTO[] = predictions.map(p => ({
+        matchId: p.matchId,
+        predictedResult: this.mapPickToResult(p.pick),
+        predictedHomeScore: p.scoreHome,
+        predictedAwayScore: p.scoreAway
+      }));
+  
+      const submissionDTO: GameweekPredictionSubmissionDTO = {
+        userId: currentUserId,
+        gameweekId: gameweekIdToSend,
+        competition: sessionData.competition,
+        predictions: predictionDTOs,
+        sessionType: sessionData.sessionType,
+        buyInAmount,
+        isPrivate: sessionData.isPrivate,
+        complete: true
+      };
+  
+      this.predictionService
+        .submitPredictionsAndJoinSession(
+          submissionDTO,
+          sessionData.sessionType,
+          buyInAmount,
+          sessionData.isPrivate,
+          sessionData.accessKey
+        )
+        .subscribe({
+          next: (response: SubmitPredictionResponse) => {
+            console.log('[MATCHES] 📥 Response received:', response);
+            
+            // ✅ CRITICAL FIX: Check if this is actually an error response
+            if (!response.success || response.error) {
+              console.log('[MATCHES] 🚨 Error response detected in next callback');
+              // 🚨 Error returned by backend
+              this.modalComponent.handleSubmissionError({
+                message: response.message || 'Une erreur est survenue',
+                errorCode: response.error || 'UNKNOWN_ERROR',
+                details: response.details || null
+              });
+              return; // modal stays open, user can change amount
+            }
+  
+            // ✅ Success - only if truly successful
+            console.log('[MATCHES] ✅ Success response confirmed');
+            this.modalComponent.handleSubmissionSuccess(response.message || 'Prédictions soumises avec succès!');
+            this.notificationService.show('Prédictions soumises avec succès!', 'success');
+            setTimeout(() => this.router.navigate(['/user/user-gameweek-list']), 2000);
+          },
+          error: (error) => {
+            console.log('[MATCHES] 🔥 Error received from prediction service:', error);
+            console.log('[MATCHES] 🔥 Error type analysis:', {
+              isError: error instanceof Error,
+              hasErrorCode: 'errorCode' in error,
+              errorKeys: Object.keys(error),
+              errorConstructor: error.constructor.name,
+              // ✅ CRITICAL FIX: Add more detailed error analysis
+              errorStatus: (error as any)?.status,
+              errorStatusText: (error as any)?.statusText,
+              errorUrl: (error as any)?.url,
+              errorName: (error as any)?.name
+            });
+            
+            // ✅ CRITICAL FIX: Handle PredictionError properly
+            if (error instanceof Error && 'errorCode' in error) {
+              console.log('[MATCHES] 🔥 Handling as PredictionError');
+              const errorData = {
+                message: error.message || 'Une erreur est survenue',
+                errorCode: (error as any).errorCode || 'UNKNOWN_ERROR',
+                details: (error as any).details || null
+              };
+              console.log('[MATCHES] 🔥 Modal component available:', this.isModalComponentAvailable);
+              console.log('[MATCHES] 🔥 About to call handleSubmissionError with:', errorData);
+              if (this.isModalComponentAvailable) {
+                this.modalComponent.handleSubmissionError(errorData);
+                console.log('[MATCHES] 🔥 handleSubmissionError called successfully');
+                console.log('[MATCHES] 🔥 Modal state after error handling:', {
+                  showParticipationModal: this.showParticipationModal,
+                  modalErrorState: this.modalComponent.errorDisplay
+                });
+              } else {
+                console.error('[MATCHES] ❌ Modal component not available!');
+              }
+            } else {
+              console.log('[MATCHES] 🔥 Handling as other error type');
+              // Handle other types of errors
+              const backend = (error as any)?.error || error;
+              const errorData = {
+                message: backend?.message || 'Une erreur est survenue',
+                errorCode: backend?.error || 'UNKNOWN_ERROR',
+                details: backend?.details || null
+              };
+              console.log('[MATCHES] 🔥 Modal component available:', this.isModalComponentAvailable);
+              console.log('[MATCHES] 🔥 About to call handleSubmissionError with:', errorData);
+              if (this.isModalComponentAvailable) {
+                this.modalComponent.handleSubmissionError(errorData);
+                console.log('[MATCHES] 🔥 handleSubmissionError called successfully');
+                console.log('[MATCHES] 🔥 Modal state after error handling:', {
+                  showParticipationModal: this.showParticipationModal,
+                  modalErrorState: this.modalComponent.errorDisplay
+                });
+              } else {
+                console.error('[MATCHES] ❌ Modal component not available!');
+              }
+            }
+          }
+        });
+    } catch (error) {
+      console.error('[MATCHES] 💥 Unexpected error:', error);
+      this.modalComponent.handleSubmissionError({
+        message: 'Une erreur inattendue est survenue.',
+        errorCode: 'UNEXPECTED_ERROR'
+      });
     }
-  });
-}
+  }
+  
 
-  // Helper to map pick to backend result
+
   private mapPickToResult(pick: string | null): 'HOME_WIN' | 'DRAW' | 'AWAY_WIN' {
     if (pick === 'HOME_WIN' || pick === '1') return 'HOME_WIN';
     if (pick === 'AWAY_WIN' || pick === '2') return 'AWAY_WIN';
-    return 'DRAW'; // Default to DRAW for 'X' or null
+    return 'DRAW';
   }
 
   private async getCurrentUserId(): Promise<number | null> {
-    if (!this.authService.isLoggedIn()) {
-      console.error('[AUTH] User is not authenticated');
-      return null;
-    }
-
-    // Get user roles to verify
-    const roles = this.authService.getUserRoles();
-    if (!roles.includes('ROLE_USER') && !roles.includes('ROLE_ADMIN')) {
-      console.error('[AUTH] User does not have required roles');
-      return null;
-    }
-
-    try {
-      // Get token from KeycloakService
-      const token = await this.authService.getAccessToken();
-      if (!token) {
-        console.error('[AUTH] No token available');
-        return null;
-      }
-
-      // For now, we'll use a default ID since the real user mapping should be handled on the backend
-      // The backend should use the token to identify the user, not rely on the ID we send
-      return 1;
-    } catch (error) {
-      console.error('[AUTH] Error getting user ID:', error);
-      return null;
-    }
-  }
-
-  private getErrorMessage(error: any): string {
-    if (!error) return 'Erreur lors de la soumission. Veuillez réessayer.';
-    
-    if (error.status === 409) {
-      return 'Vous participez déjà à cette session ou la session est pleine.';
-    }
-    
-    if (error.status === 400) {
-      return 'Paramètres invalides. Vérifiez vos données.';
-    }
-    
-    if (error.status === 500) {
-      return 'Erreur serveur. Veuillez réessayer plus tard.';
-    }
-    
-    if (error.error && typeof error.error === 'string') {
-      return error.error;
-    }
-    
-    if (error.message) {
-      return error.message;
-    }
-    
-    return 'Erreur lors de la soumission. Veuillez réessayer.';
+    if (!this.authService.isLoggedIn()) return null;
+    const userId = this.authService.getCurrentUserId();
+    return userId || null;
   }
 
   onModalClosed(): void {
-    console.log('[PARENT] Modal closed');
+    console.log('[MATCHES] 🚪 Modal closed event received');
+    console.log('[MATCHES] 🚪 Current modal state:', {
+      showParticipationModal: this.showParticipationModal,
+      modalComponentAvailable: this.isModalComponentAvailable,
+      modalErrorState: this.modalComponent?.errorDisplay
+    });
+    console.log('[MATCHES] 🚪 Stack trace for modal close event:', new Error().stack);
+    
+    // ✅ CRITICAL FIX: Don't close modal if there's a retryable error
+    if (this.modalComponent?.errorDisplay?.show && this.modalComponent?.errorDisplay?.canRetry) {
+      console.log('[MATCHES] 🚫 BLOCKING modal close from onModalClosed - retryable error is displayed');
+      console.log('[MATCHES] 🚫 Error details:', this.modalComponent.errorDisplay);
+      console.log('[MATCHES] 🚫 Error message:', this.modalComponent.errorDisplay.message);
+      console.log('[MATCHES] 🚫 Error type:', this.modalComponent.errorDisplay.type);
+      console.log('[MATCHES] 🚫 Can retry:', this.modalComponent.errorDisplay.canRetry);
+      return;
+    }
+    
     this.showParticipationModal = false;
   }
 

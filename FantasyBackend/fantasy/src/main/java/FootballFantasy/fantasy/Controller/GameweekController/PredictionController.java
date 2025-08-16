@@ -2,13 +2,18 @@ package FootballFantasy.fantasy.Controller.GameweekController;
 
 import FootballFantasy.fantasy.Dto.GameweekPredictionSubmissionDTO;
 import FootballFantasy.fantasy.Entities.GameweekEntity.*;
+import FootballFantasy.fantasy.Exception.BusinessLogicException;
+import FootballFantasy.fantasy.Exception.InsufficientBalanceException;
 import FootballFantasy.fantasy.Services.GameweekService.*;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -25,85 +30,108 @@ public class PredictionController {
     @Autowired
     private SessionParticipationService sessionParticipationService;
 
-    // 🆕 FIXED: Combined endpoint with proper error handling
     @PostMapping("/submit-predictions")
-    public ResponseEntity<?> submitPredictionsAndJoinSession(
+    public ResponseEntity<Map<String, Object>> submitPredictionsAndJoinSession(
             @Valid @RequestBody GameweekPredictionSubmissionDTO submissionDTO,
             @RequestParam SessionType sessionType,
             @RequestParam BigDecimal buyInAmount,
             @RequestParam boolean isPrivate,
             @RequestParam(required = false) String accessKey) {
 
+        System.out.println("🔍 [CONTROLLER] Received submission for user: " + submissionDTO.getUserId());
+        System.out.println("- Gameweek: " + submissionDTO.getGameweekId());
+        System.out.println("- Buy-in: " + buyInAmount);
+        System.out.println("- Session type: " + sessionType);
+
         try {
-            // Add detailed logging for debugging
-            System.out.println("🔍 [CONTROLLER] Received submission:");
-            System.out.println("- DTO: " + submissionDTO);
-            System.out.println("- sessionType: " + sessionType);
-            System.out.println("- buyInAmount: " + buyInAmount);
-            System.out.println("- isPrivate: " + isPrivate);
-            System.out.println("- accessKey: " + accessKey);
-            System.out.println("- predictions count: " +
-                    (submissionDTO.getPredictions() != null ? submissionDTO.getPredictions().size() : "null"));
+            // Basic validation
+            validateSubmissionRequest(submissionDTO);
 
-            // Validate required fields
-            if (submissionDTO.getUserId() == null) {
-                throw new RuntimeException("User ID is required");
-            }
-            if (submissionDTO.getGameweekId() == null) {
-                throw new RuntimeException("Gameweek ID is required");
-            }
-            if (submissionDTO.getCompetition() == null) {
-                throw new RuntimeException("Competition is required");
-            }
-            if (submissionDTO.getPredictions() == null || submissionDTO.getPredictions().isEmpty()) {
-                throw new RuntimeException("Predictions are required");
-            }
-
+            // Call service to submit predictions and join session
             Map<String, Object> result = predictionService.submitPredictionsAndJoinSession(
                     submissionDTO, sessionType, buyInAmount, isPrivate, accessKey);
 
-            // FIXED: Return the structure your frontend expects
-            return ResponseEntity.ok(Map.of(
-                    "success", true,
-                    "message", "Predictions submitted and session joined successfully!",
-                    "predictions", result.get("predictions"),
-                    "sessionParticipation", result.get("sessionParticipation")
-            ));
+            // Return success response
+            Map<String, Object> successResponse = new HashMap<>();
+            successResponse.put("success", true);
+            successResponse.put("message", "Predictions submitted and session joined successfully!");
+            successResponse.put("data", result);
+            successResponse.put("timestamp", LocalDateTime.now());
 
-        } catch (RuntimeException e) {
-            System.err.println("❌ [CONTROLLER] Error: " + e.getMessage());
-            e.printStackTrace();
+            System.out.println("✅ [CONTROLLER] Successfully processed submission for user: " + submissionDTO.getUserId());
+            return ResponseEntity.ok(successResponse);
 
-            return ResponseEntity.badRequest().body(Map.of(
-                    "success", false,
-                    "error", e.getMessage()
-            ));
-        } catch (Exception e) {
-            System.err.println("❌ [CONTROLLER] Unexpected error: " + e.getMessage());
-            e.printStackTrace();
+        } catch (InsufficientBalanceException ex) {
+            System.out.println("❌ [CONTROLLER] Insufficient balance for user: " + submissionDTO.getUserId());
+            // Re-throw to let GlobalExceptionHandler handle it with proper error structure
+            throw ex;
 
-            return ResponseEntity.status(500).body(Map.of(
-                    "success", false,
-                    "error", "Internal server error: " + e.getMessage()
-            ));
+        } catch (BusinessLogicException ex) {
+            System.out.println("❌ [CONTROLLER] Business logic error: " + ex.getMessage());
+            // Re-throw to let GlobalExceptionHandler handle it with proper error structure
+            throw ex;
+
+        } catch (Exception ex) {
+            System.err.println("❌ [CONTROLLER] Unexpected error: " + ex.getMessage());
+            ex.printStackTrace();
+            // Re-throw as BusinessLogicException to ensure consistent error handling
+            throw new BusinessLogicException("An unexpected error occurred while processing your request", "UNEXPECTED_ERROR");
         }
     }
 
-    // 🔍 Get user's predictions for a session
+    /**
+     * Validate the submission request
+     */
+    private void validateSubmissionRequest(GameweekPredictionSubmissionDTO submissionDTO) {
+        if (submissionDTO.getUserId() == null) {
+            throw new BusinessLogicException("User ID is required", "USER_ID_REQUIRED");
+        }
+        if (submissionDTO.getGameweekId() == null) {
+            throw new BusinessLogicException("Gameweek ID is required", "GAMEWEEK_ID_REQUIRED");
+        }
+        if (submissionDTO.getCompetition() == null) {
+            throw new BusinessLogicException("Competition is required", "COMPETITION_REQUIRED");
+        }
+        if (submissionDTO.getPredictions() == null || submissionDTO.getPredictions().isEmpty()) {
+            throw new BusinessLogicException("Predictions are required", "PREDICTIONS_REQUIRED");
+        }
+    }
+
+    /**
+     * Get user's predictions for a session
+     */
     @GetMapping("/user/{participationId}")
-    public ResponseEntity<?> getUserPredictions(@PathVariable Long participationId) {
+    public ResponseEntity<Map<String, Object>> getUserPredictions(@PathVariable Long participationId) {
         try {
             List<Prediction> predictions = predictionService.getUserPredictionsForSession(participationId);
-            return ResponseEntity.ok(Map.of(
-                    "success", true,
-                    "predictions", predictions,
-                    "totalPredictions", predictions.size()
-            ));
-        } catch (RuntimeException e) {
-            return ResponseEntity.badRequest().body(Map.of(
-                    "success", false,
-                    "error", e.getMessage()
-            ));
+
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", true);
+            response.put("predictions", predictions);
+            response.put("totalPredictions", predictions.size());
+            response.put("timestamp", LocalDateTime.now());
+
+            return ResponseEntity.ok(response);
+
+        } catch (Exception ex) {
+            System.err.println("❌ [CONTROLLER] Error getting user predictions: " + ex.getMessage());
+            throw new BusinessLogicException("Failed to retrieve predictions", "PREDICTIONS_RETRIEVAL_ERROR");
         }
+    }
+
+    /**
+     * Health check endpoint to test error handling
+     */
+    @GetMapping("/test-insufficient-balance")
+    public ResponseEntity<Map<String, Object>> testInsufficientBalance() {
+        throw new InsufficientBalanceException("TEST_USER", "100.00", "50.00");
+    }
+
+    /**
+     * Health check endpoint to test business logic error
+     */
+    @GetMapping("/test-business-error")
+    public ResponseEntity<Map<String, Object>> testBusinessError() {
+        throw new BusinessLogicException("This is a test business logic error", "TEST_ERROR");
     }
 }

@@ -38,7 +38,7 @@ public class Match {
     private MatchStatus status;
 
     @JsonIgnore
-    @ManyToMany
+    @ManyToMany(fetch = FetchType.LAZY)
     @JoinTable(
             name = "match_gameweek",
             joinColumns = @JoinColumn(name = "match_id"),

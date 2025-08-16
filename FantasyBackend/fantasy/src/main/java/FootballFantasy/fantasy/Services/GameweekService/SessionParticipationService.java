@@ -3,6 +3,8 @@ package FootballFantasy.fantasy.Services.GameweekService;
 import FootballFantasy.fantasy.Dto.UserSessionStats;
 import FootballFantasy.fantasy.Entities.GameweekEntity.*;
 import FootballFantasy.fantasy.Entities.UserEntity.UserEntity;
+import FootballFantasy.fantasy.Exception.BusinessLogicException;
+import FootballFantasy.fantasy.Exception.InsufficientBalanceException;
 import FootballFantasy.fantasy.Repositories.GameweekRepository.CompetitionSessionRepository;
 import FootballFantasy.fantasy.Repositories.GameweekRepository.GameWeekRepository;
 import FootballFantasy.fantasy.Repositories.GameweekRepository.PredictionRepository;
@@ -54,19 +56,19 @@ public class SessionParticipationService {
                                                 Long userId) {
 
         UserEntity user = userRepository.findById(userId)
-                .orElseThrow(() -> new RuntimeException("User not found"));
+                .orElseThrow(() -> new BusinessLogicException("User not found", "USER_NOT_FOUND"));
 
         validateUserHasBalance(user, buyInAmount);
 
         // ✅ Get the actual GameWeek and real competition from DB
         GameWeek gameWeek = gameWeekRepository.findById(gameweekId)
-                .orElseThrow(() -> new IllegalArgumentException("GameWeek not found"));
+                .orElseThrow(() -> new BusinessLogicException("GameWeek not found", "GAMEWEEK_NOT_FOUND"));
 
         LeagueTheme actualCompetition = gameWeek.getCompetition();
 
         // ❌ Optional validation (but recommended)
         if (!actualCompetition.equals(competitionFromFrontend)) {
-            throw new IllegalArgumentException("Mismatch between GameWeek's competition and provided competition");
+            throw new BusinessLogicException("Mismatch between GameWeek's competition and provided competition", "COMPETITION_MISMATCH");
         }
 
         // ✅ Always use the correct competition from GameWeek
@@ -86,11 +88,11 @@ public class SessionParticipationService {
                                                             BigDecimal buyInAmount,
                                                             boolean isPrivate, String accessKeyFromUser, String keycloakId) {
         if (keycloakId == null || keycloakId.isBlank()) {
-            throw new IllegalArgumentException("Keycloak ID is required");
+            throw new BusinessLogicException("Keycloak ID is required", "KEYCLOAK_ID_REQUIRED");
         }
 
         UserEntity user = userRepository.findByKeycloakId(keycloakId)
-                .orElseThrow(() -> new RuntimeException("User not found with Keycloak ID: " + keycloakId));
+                .orElseThrow(() -> new BusinessLogicException("User not found with Keycloak ID: " + keycloakId, "USER_NOT_FOUND"));
         validateUserHasBalance(user, buyInAmount);
 
         return joinCompetition(gameweekId, competitionFromFrontend, sessionType, buyInAmount,
@@ -106,10 +108,10 @@ public class SessionParticipationService {
     public SessionParticipation joinSession(Long sessionId, Long userId) {
         // Get session and user
         CompetitionSession session = competitionSessionRepository.findById(sessionId)
-                .orElseThrow(() -> new RuntimeException("Session not found"));
+                .orElseThrow(() -> new BusinessLogicException("Session not found", "SESSION_NOT_FOUND"));
 
         UserEntity user = userRepository.findById(userId)
-                .orElseThrow(() -> new RuntimeException("User not found"));
+                .orElseThrow(() -> new BusinessLogicException("User not found", "USER_NOT_FOUND"));
 
         // Validate session state
         validateSessionForJoining(session);
@@ -120,16 +122,13 @@ public class SessionParticipationService {
 
         // Check if user already joined this session
         if (sessionParticipationRepository.existsByUserIdAndSessionId(userId, sessionId)) {
-            throw new RuntimeException("User already joined this session");
+            throw new BusinessLogicException("User already joined this session", "ALREADY_JOINED");
         }
 
         // Check if session is full
         if (session.getCurrentParticipants() >= session.getMaxParticipants()) {
-            throw new RuntimeException("Session is full");
+            throw new BusinessLogicException("Session is full", "SESSION_FULL");
         }
-
-        // Validate user eligibility (e.g., terms accepted, profile complete)
-        validateUserEligibility(user);
 
         // Create participation record
         SessionParticipation participation = createParticipation(session, user);
@@ -137,6 +136,7 @@ public class SessionParticipationService {
         // Update session stats
         updateSessionStats(session);
         user.setBalance(user.getBalance().subtract(session.getBuyInAmount()));
+        userRepository.save(user); // ✅ Add this to save user balance
 
         // Save everything
         SessionParticipation savedParticipation = sessionParticipationRepository.save(participation);
@@ -154,7 +154,7 @@ public class SessionParticipationService {
     @Transactional
     public SessionParticipation joinSessionByKeycloakId(Long sessionId, String keycloakId) {
         UserEntity user = userRepository.findByKeycloakId(keycloakId)
-                .orElseThrow(() -> new RuntimeException("User not found with Keycloak ID: " + keycloakId));
+                .orElseThrow(() -> new BusinessLogicException("User not found with Keycloak ID: " + keycloakId, "USER_NOT_FOUND"));
 
         return joinSession(sessionId, user.getId());
     }
@@ -166,18 +166,31 @@ public class SessionParticipationService {
     public void leaveSession(Long sessionId, Long userId) {
         SessionParticipation participation = sessionParticipationRepository
                 .findByUserIdAndSessionId(userId, sessionId)
-                .orElseThrow(() -> new RuntimeException("Participation not found"));
+                .orElseThrow(() -> new BusinessLogicException("Participation not found", "PARTICIPATION_NOT_FOUND"));
 
         CompetitionSession session = participation.getSession();
 
         // Can only leave if session is still open
         if (session.getStatus() != CompetitionSessionStatus.OPEN) {
-            throw new RuntimeException("Cannot leave session - it has already started");
+            throw new BusinessLogicException("Cannot leave session - it has already started", "SESSION_ALREADY_STARTED");
         }
+
+        UserEntity user = userRepository.findById(userId)
+                .orElseThrow(() -> new BusinessLogicException("User not found", "USER_NOT_FOUND"));
+
+        // Refund the user
+        user.setBalance(user.getBalance().add(session.getBuyInAmount()));
+        userRepository.save(user);
 
         // Update session stats
         session.setCurrentParticipants(session.getCurrentParticipants() - 1);
         session.setTotalPrizePool(session.getTotalPrizePool().subtract(session.getBuyInAmount()));
+
+        // If session becomes available again, change status back to OPEN
+        if (session.getStatus() == CompetitionSessionStatus.FULL &&
+                session.getCurrentParticipants() < session.getMaxParticipants()) {
+            session.setStatus(CompetitionSessionStatus.OPEN);
+        }
 
         // Remove participation
         sessionParticipationRepository.delete(participation);
@@ -192,7 +205,7 @@ public class SessionParticipationService {
     @Transactional
     public void leaveSessionByKeycloakId(Long sessionId, String keycloakId) {
         UserEntity user = userRepository.findByKeycloakId(keycloakId)
-                .orElseThrow(() -> new RuntimeException("User not found with Keycloak ID: " + keycloakId));
+                .orElseThrow(() -> new BusinessLogicException("User not found with Keycloak ID: " + keycloakId, "USER_NOT_FOUND"));
 
         leaveSession(sessionId, user.getId());
     }
@@ -204,7 +217,7 @@ public class SessionParticipationService {
     public void updatePredictionProgress(Long participationId, int correctPredictions,
                                          int totalPredictions, boolean hasCompletedAll) {
         SessionParticipation participation = sessionParticipationRepository.findById(participationId)
-                .orElseThrow(() -> new RuntimeException("Participation not found"));
+                .orElseThrow(() -> new BusinessLogicException("Participation not found", "PARTICIPATION_NOT_FOUND"));
 
         participation.setTotalCorrectPredictions(correctPredictions);
         participation.setTotalPredictions(totalPredictions);
@@ -230,7 +243,7 @@ public class SessionParticipationService {
      */
     public Optional<SessionParticipation> getUserParticipationByKeycloakId(String keycloakId, Long sessionId) {
         UserEntity user = userRepository.findByKeycloakId(keycloakId)
-                .orElseThrow(() -> new RuntimeException("User not found with Keycloak ID: " + keycloakId));
+                .orElseThrow(() -> new BusinessLogicException("User not found with Keycloak ID: " + keycloakId, "USER_NOT_FOUND"));
 
         return sessionParticipationRepository.findByUserIdAndSessionId(user.getId(), sessionId);
     }
@@ -247,7 +260,7 @@ public class SessionParticipationService {
      */
     public List<SessionParticipation> getUserParticipationsForGameweekByKeycloakId(String keycloakId, Long gameweekId) {
         UserEntity user = userRepository.findByKeycloakId(keycloakId)
-                .orElseThrow(() -> new RuntimeException("User not found with Keycloak ID: " + keycloakId));
+                .orElseThrow(() -> new BusinessLogicException("User not found with Keycloak ID: " + keycloakId, "USER_NOT_FOUND"));
 
         return sessionParticipationRepository.findByUserIdAndGameweekId(user.getId(), gameweekId);
     }
@@ -271,7 +284,7 @@ public class SessionParticipationService {
      */
     public List<SessionParticipation> getUserActiveParticipationsByKeycloakId(String keycloakId) {
         UserEntity user = userRepository.findByKeycloakId(keycloakId)
-                .orElseThrow(() -> new RuntimeException("User not found with Keycloak ID: " + keycloakId));
+                .orElseThrow(() -> new BusinessLogicException("User not found with Keycloak ID: " + keycloakId, "USER_NOT_FOUND"));
 
         return sessionParticipationRepository.findByUserIdAndStatus(user.getId(), ParticipationStatus.ACTIVE);
     }
@@ -302,7 +315,7 @@ public class SessionParticipationService {
     public boolean canUserJoinSessionByKeycloakId(String keycloakId, Long gameweekId,
                                                   SessionType sessionType, BigDecimal buyInAmount,LeagueTheme competition) {
         UserEntity user = userRepository.findByKeycloakId(keycloakId)
-                .orElseThrow(() -> new RuntimeException("User not found with Keycloak ID: " + keycloakId));
+                .orElseThrow(() -> new BusinessLogicException("User not found with Keycloak ID: " + keycloakId, "USER_NOT_FOUND"));
 
         return canUserJoinSession(user.getId(), gameweekId, sessionType, buyInAmount,competition);
     }
@@ -319,7 +332,7 @@ public class SessionParticipationService {
      */
     public BigDecimal calculateUserTotalWinningsByKeycloakId(String keycloakId) {
         UserEntity user = userRepository.findByKeycloakId(keycloakId)
-                .orElseThrow(() -> new RuntimeException("User not found with Keycloak ID: " + keycloakId));
+                .orElseThrow(() -> new BusinessLogicException("User not found with Keycloak ID: " + keycloakId, "USER_NOT_FOUND"));
 
         return calculateUserTotalWinnings(user.getId());
     }
@@ -363,13 +376,12 @@ public class SessionParticipationService {
         );
     }
 
-
     /**
      * Get user's session statistics by Keycloak ID
      */
     public UserSessionStats getUserSessionStatsByKeycloakId(String keycloakId) {
         UserEntity user = userRepository.findByKeycloakId(keycloakId)
-                .orElseThrow(() -> new RuntimeException("User not found with Keycloak ID: " + keycloakId));
+                .orElseThrow(() -> new BusinessLogicException("User not found with Keycloak ID: " + keycloakId, "USER_NOT_FOUND"));
 
         return getUserSessionStats(user.getId());
     }
@@ -378,11 +390,17 @@ public class SessionParticipationService {
 
     private void validateSessionForJoining(CompetitionSession session) {
         if (session.getStatus() != CompetitionSessionStatus.OPEN) {
-            throw new RuntimeException("Session is not open for joining");
+            throw new BusinessLogicException(
+                    "Session is not open for joining",
+                    "SESSION_NOT_OPEN"
+            );
         }
 
         if (session.getJoinDeadline() != null && LocalDateTime.now().isAfter(session.getJoinDeadline())) {
-            throw new RuntimeException("Join deadline has passed");
+            throw new BusinessLogicException(
+                    "Join deadline has passed",
+                    "DEADLINE_PASSED"
+            );
         }
     }
 
@@ -392,9 +410,11 @@ public class SessionParticipationService {
     private void validateUserEligibility(UserEntity user) {
         // Check if user has accepted terms and conditions
         if (!Boolean.TRUE.equals(user.getTermsAccepted())) {
-            throw new RuntimeException("User must accept terms and conditions before joining sessions");
+            throw new BusinessLogicException(
+                    "User must accept terms and conditions before joining sessions",
+                    "TERMS_NOT_ACCEPTED"
+            );
         }
-
         // Add any other eligibility checks here
         // For example: age verification, profile completion, etc.
     }
@@ -424,12 +444,14 @@ public class SessionParticipationService {
             session.setStatus(CompetitionSessionStatus.FULL);
         }
     }
+
     private void validateUserHasBalance(UserEntity user, BigDecimal buyInAmount) {
         if (user.getBalance().compareTo(buyInAmount) < 0) {
-            throw new RuntimeException(
-                    "Insufficient balance: required " + buyInAmount + ", current balance " + user.getBalance()
+            throw new InsufficientBalanceException(
+                    user.getId().toString(),
+                    buyInAmount.toString(),
+                    user.getBalance().toString()
             );
         }
     }
-
 }

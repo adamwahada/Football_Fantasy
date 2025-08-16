@@ -2,6 +2,7 @@ package FootballFantasy.fantasy.Controller.GameweekController;
 
 import FootballFantasy.fantasy.Dto.MatchSeedDTO;
 import FootballFantasy.fantasy.Entities.GameweekEntity.Match;
+import FootballFantasy.fantasy.Services.DataService.MatchUpdateService;
 import FootballFantasy.fantasy.Services.GameweekService.MatchService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -15,6 +16,10 @@ public class MatchController {
 
     @Autowired
     private MatchService matchService;
+
+    @Autowired
+    private MatchUpdateService matchUpdateService;
+
 
     // ✅ Create a match and attach it to a GameWeek
     @PostMapping
@@ -57,5 +62,11 @@ public class MatchController {
     public ResponseEntity<String> setMatchActiveStatus(@PathVariable Long matchId, @RequestParam boolean active) {
         Match match = matchService.setMatchActiveStatus(matchId, active);
         return ResponseEntity.ok("✅ Match " + matchId + " active status set to " + active);
+    }
+
+    @GetMapping("/update")
+    public ResponseEntity<String> updateMatchesManually() {
+        matchUpdateService.updateMatches();
+        return ResponseEntity.ok("Matches updated successfully!");
     }
 }
