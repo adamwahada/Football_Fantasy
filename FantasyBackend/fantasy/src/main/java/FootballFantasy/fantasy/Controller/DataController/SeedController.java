@@ -32,9 +32,11 @@ public class SeedController {
         } catch (IllegalArgumentException e) {
             return ResponseEntity.badRequest().body("Invalid league or week: " + e.getMessage());
         } catch (Exception e) {
+            e.printStackTrace(); // 👈 log full stack trace in console
             return ResponseEntity.internalServerError().body("Error: " + e.getMessage());
         }
     }
+
 
     /*** Update results for completed matches: homeScore, awayScore */
 

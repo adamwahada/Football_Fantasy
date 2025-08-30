@@ -146,7 +146,22 @@
             aria-label="Ajouter des matchs">
             <mat-icon>add_circle_outline</mat-icon>
           </button>
-
+          <button 
+            mat-icon-button
+            class="btn-icon purple"
+            (click)="onSeedGameweek(gameweek)" 
+            matTooltip="Seeder les matchs"
+            aria-label="Seeder les matchs">
+            <mat-icon>cloud_download</mat-icon>
+          </button>
+          <button 
+          mat-icon-button
+          class="btn-icon purple"
+          (click)="onUpdateAllMatches()" 
+          matTooltip="Mettre à jour tous les matchs"
+          aria-label="Mettre à jour tous les matchs">
+          <mat-icon>update</mat-icon>
+        </button>
           <!-- Réinitialiser -->
           <button
             mat-icon-button

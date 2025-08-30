@@ -561,4 +561,35 @@ private updateSingleGameweekCounts(gameweek: Gameweek, matches: MatchWithIconsDT
   });
 }
 
+onSeedGameweek(gameweek: Gameweek): void {
+  if (!gameweek.competition || !gameweek.weekNumber) {
+    alert('Competition or week number missing!');
+    return;
+  }
+
+  this.gameweekService.seedGameweek(gameweek.competition, gameweek.weekNumber).subscribe({
+    next: (res) => {
+      alert(`✅ ${res}`);
+      this.loadGameweeks(); // refresh table
+    },
+    error: (err) => {
+      console.error('❌ Error seeding gameweek:', err);
+      alert(err.error || 'Erreur lors du seed.');
+    }
+  });
+}
+onUpdateAllMatches(): void {
+  this.gameweekService.updateMatchesNow().subscribe({
+    next: (res) => {
+      alert(`✅ ${res}`);
+      this.loadGameweeks(); // refresh table after update
+    },
+    error: (err) => {
+      console.error('❌ Error updating matches:', err);
+      alert(err.error || 'Erreur lors de la mise à jour des matchs.');
+    }
+  });
+}
+
+
 }

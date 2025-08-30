@@ -30,6 +30,8 @@ export interface Gameweek {
 })
 export class GameweekService {
   private apiUrl = 'http://localhost:9090/fantasy/api/gameweeks';
+  private matchSeedApiUrl = 'http://localhost:9090/fantasy/api/seed';
+  private matchUpdateApiUrl = 'http://localhost:9090/fantasy/api/admin';
 
   constructor(private http: HttpClient) {}
 
@@ -171,4 +173,21 @@ deleteTiebreakerMatches(gameweekId: number, matchIds: number[]): Observable<void
     body: matchIds
   });
 }
+
+// ✅ POST seed gameweek by league and weekNumber
+seedGameweek(league: string, weekNumber: number): Observable<string> {
+  return this.http.post(
+    `${this.matchSeedApiUrl.replace('/gameweeks', '')}/gameweek/${league}/${weekNumber}`,
+    {},
+    { responseType: 'text' }
+  );
+}
+updateMatchesNow(competition?: string): Observable<string> {
+  let url = `${this.matchUpdateApiUrl}/matches/update-now`;
+  if (competition) {
+    url += `?competition=${competition}`;
+  }
+  return this.http.post(url, {}, { responseType: 'text' });
+}
+
 }
