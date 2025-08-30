@@ -1,14 +1,47 @@
-
-<nav class="user-sidebar" [class.collapsed]="sidebarCollapsed" [class.hidden]="sidebarHidden">
+<nav class="user-sidebar no-underline" [class.collapsed]="sidebarCollapsed" [class.hidden]="sidebarHidden">
   <ul>
     <li *ngFor="let route of routes; let i = index">
-      <div class="menu-parent"
-           (click)="toggle(i)"
+      <a *ngIf="route.route"
+         [routerLink]="route.route"
+         class="menu-parent"
+         [class.icon-only]="sidebarCollapsed"
+         routerLinkActive="active"
+         (mouseenter)="hoveredIndex = i"
+         (mouseleave)="hoveredIndex = null"
+         [attr.title]="sidebarCollapsed ? route.title : null">
+        <span class="menu-content">
+          <!-- Always show icon if present, add a helper class for CSS targeting -->
+          <span *ngIf="route.icon" class="material-icons sidebar-icon">{{route.icon}}</span>
+          <!-- Only show title if not collapsed or hovered -->
+          <span class="menu-title" *ngIf="!sidebarCollapsed || hoveredIndex === i">
+            {{ route.title }}
+          </span>
+        </span>
+        <!-- Tooltip for collapsed sidebar on hover -->
+        <span
+          class="sidebar-tooltip"
+          *ngIf="sidebarCollapsed && hoveredIndex === i">
+          {{ route.title }}
+        </span>
+      </a>
+      <div *ngIf="!route.route"
+           class="menu-parent"
            [class.icon-only]="sidebarCollapsed"
            (mouseenter)="hoveredIndex = i"
-           (mouseleave)="hoveredIndex = null">
-        <span *ngIf="route.icon" class="material-icons">{{route.icon}}</span>
-        <span class="menu-title" *ngIf="!sidebarCollapsed || hoveredIndex === i">
+           (mouseleave)="hoveredIndex = null"
+           [attr.title]="sidebarCollapsed ? route.title : null">
+        <span class="menu-content">
+          <!-- Always show icon if present, add a helper class for CSS targeting -->
+          <span *ngIf="route.icon" class="material-icons sidebar-icon">{{route.icon}}</span>
+          <!-- Only show title if not collapsed or hovered -->
+          <span class="menu-title" *ngIf="!sidebarCollapsed || hoveredIndex === i">
+            {{ route.title }}
+          </span>
+        </span>
+        <!-- Tooltip for collapsed sidebar on hover -->
+        <span
+          class="sidebar-tooltip"
+          *ngIf="sidebarCollapsed && hoveredIndex === i">
           {{ route.title }}
         </span>
       </div>
@@ -22,3 +55,4 @@
       -->
     </li>
   </ul>
+</nav>

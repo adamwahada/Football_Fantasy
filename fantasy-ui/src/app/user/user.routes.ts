@@ -14,7 +14,7 @@ export const userRoutes: Routes = [
     children: [
       { path: 'user-gameweek-list', component: UserGameweekListComponent },
       { path: 'user-gameweek-list/:competition', component: UserGameweekDetailsComponent ,canActivate: [gameweekAccessGuard] },
-      { path: 'user-gameweek-list/:competition/:weekNumber', component: UserGameweekMatchesComponent, canActivate: [gameweekAccessGuard] }
+      { path: 'user-gameweek-list/:competition/:weekNumber', component: UserGameweekMatchesComponent, canActivate: [gameweekAccessGuard] },
     ]
   }
 ];

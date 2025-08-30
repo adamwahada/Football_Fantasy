@@ -6,6 +6,13 @@
 // Sidebar hidden state
 .user-sidebar.hidden {
   display: none !important;
+  width: 0 !important;
+  min-width: 0 !important;
+  max-width: 0 !important;
+  padding: 0 !important;
+  border: none !important;
+  box-shadow: none !important;
+  position: static !important;
 }
 
 .user-sidebar {
@@ -23,6 +30,7 @@
   border-right: 1px solid rgba(76, 175, 80, 0.2);
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   overflow-x: hidden;
+  overflow: visible; // <-- add this to allow tooltip overflow
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
   z-index: 1050;
 
@@ -49,6 +57,7 @@
     user-select: none;
     position: relative;
     overflow: hidden;
+    overflow: visible; // <-- add this to allow tooltip overflow
 
     &::before {
       content: '';
@@ -101,10 +110,6 @@
       filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.3));
     }
   }
-
-    .user-sidebar.hidden {
-      display: none !important;
-    }
 
   .submenu {
     padding-left: 2.5rem;
@@ -243,27 +248,67 @@
     .menu-parent {
       justify-content: center;
 
-      .material-icons {
-        margin-right: 0;
+      .material-icons,
+      .sidebar-icon {
+        display: inline-block !important;
+        opacity: 1 !important;
+        visibility: visible !important;
+        margin-right: 0 !important;
+        font-size: 1.6rem !important;
+        min-width: 24px;
+        text-align: center;
+        color: inherit;
+        filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3));
       }
 
-      span:not(.material-icons):not(.arrow) {
-        display: none;
+      // Hide menu-title except on hover
+      .menu-title {
+        display: none !important;
       }
-
-      .arrow {
-        display: none;
+      &:hover .menu-title {
+        display: inline !important;
+        position: absolute;
+        left: 60px;
+        background: #222;
+        color: #a5d6a7;
+        padding: 0.25rem 0.75rem;
+        border-radius: 0.5rem;
+        white-space: nowrap;
+        z-index: 2000;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.4);
       }
     }
 
+    // Hide submenu in collapsed mode
     .submenu {
       display: none;
     }
   }
+
+  // Tooltip for collapsed sidebar
+  .sidebar-tooltip {
+    display: block;
+    position: absolute;
+    left: 60px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: #222;
+    color: #a5d6a7;
+    padding: 0.25rem 0.75rem;
+    border-radius: 0.5rem;
+    white-space: nowrap;
+    z-index: 9999; // <-- ensure tooltip is always on top
+    box-shadow: 0 2px 8px rgba(0,0,0,0.4);
+    font-size: 1rem;
+    pointer-events: none;
+    opacity: 1;
+    transition: opacity 0.2s;
+  }
 }
 
 // Main content full screen when sidebar is hidden
-.user-content.fullscreen {
+.user-content.fullscreen,
+.user-content.sidebar-hidden {
   margin-left: 0 !important;
   width: 100vw;
   max-width: 100vw;
@@ -307,6 +352,11 @@
     transform: scale(1.05);
     box-shadow: 0 6px 25px rgba(76, 175, 80, 0.3);
   }
+}
+
+// Remove underline from all sidebar links
+.user-sidebar.no-underline a {
+  text-decoration: none !important;
 }
 
 // Pulse animation for active indicator

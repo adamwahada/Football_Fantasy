@@ -26,6 +26,14 @@ export class UserSidebarComponent implements OnInit {
   ngOnInit() {
     this.userRoles = this.keycloakService.getUserRoles().map(r => r.replace('ROLE_', ''));
     this.routes = this.filterRoutesForRoles(this.allRoutes, this.userRoles);
+
+    // Ensure Competition route points to 'user-gameweek-list'
+    this.routes = this.routes.map(route => {
+      if (route.title === 'Competitions') {
+        return { ...route, route: 'user-gameweek-list' };
+      }
+      return route;
+    });
   }
 
   toggle(index: number) {
