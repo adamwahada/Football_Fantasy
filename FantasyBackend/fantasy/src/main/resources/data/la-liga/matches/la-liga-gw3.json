@@ -1,0 +1,42 @@
+[
+  {
+    "homeTeam": "Deportivo Alavés",
+    "awayTeam": "Atletico Madrid",
+    "matchDate": "2025-08-30T16:00:00"
+  },
+  {
+    "homeTeam": "Real Oviedo",
+    "awayTeam": "Real Sociedad",
+    "matchDate": "2025-08-30T18:00:00"
+  },
+  {
+    "homeTeam": "Girona",
+    "awayTeam": "Seville",
+    "matchDate": "2025-08-30T18:30:00"
+  },
+  {
+    "homeTeam": "Real Madrid",
+    "awayTeam": "Mallorca",
+    "matchDate": "2025-08-30T20:30:00"
+  },
+  {
+    "homeTeam": "Celta Vigo",
+    "awayTeam": "Villarreal",
+    "matchDate": "2025-08-31T16:00:00"
+  },
+  {
+    "homeTeam": "Real Betis",
+    "awayTeam": "Ath. Bilbao",
+    "matchDate": "2025-08-31T18:00:00"
+  },
+  {
+    "homeTeam": "Espanyol",
+    "awayTeam": "Osasuna",
+    "matchDate": "2025-08-31T18:30:00"
+  },
+  {
+    "homeTeam": "Rayo Vallecano",
+    "awayTeam": "Barcelona",
+    "matchDate": "2025-08-31T20:30:00"
+  }
+]

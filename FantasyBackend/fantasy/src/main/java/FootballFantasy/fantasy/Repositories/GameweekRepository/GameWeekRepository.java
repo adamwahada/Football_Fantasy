@@ -13,14 +13,18 @@ import java.util.List;
 import java.util.Optional;
 
 public interface GameWeekRepository extends JpaRepository<GameWeek, Long> {
+
     Optional<GameWeek> findByWeekNumber(int weekNumber);
+
     List<GameWeek> findByCompetition(LeagueTheme Competition);
+
     Optional<GameWeek> findByWeekNumberAndCompetition(int weekNumber, LeagueTheme competition);
+
     @Query("""
-    SELECT gw FROM GameWeek gw
-    LEFT JOIN FETCH gw.matches m
-    WHERE gw.id = :id
-  """)
+        SELECT gw FROM GameWeek gw
+        LEFT JOIN FETCH gw.matches m
+        WHERE gw.id = :id
+    """)
     GameWeek findWithMatchesById(@Param("id") Long id);
 
     @EntityGraph(attributePaths = "matches")
@@ -28,5 +32,4 @@ public interface GameWeekRepository extends JpaRepository<GameWeek, Long> {
 
     @EntityGraph(attributePaths = "matches")
     List<GameWeek> findByCompetitionAndJoinDeadlineAfter(LeagueTheme competition, LocalDateTime now);
-
 }

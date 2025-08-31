@@ -306,6 +306,14 @@ export class UserGameweekDetailsComponent implements OnInit, OnDestroy {
     }
   }
   isLockedGameweek(weekNumber: number): boolean {
+  const gw = this.gameweeks.find(gw => gw.weekNumber === weekNumber);
+  if (!gw) return false;
+  // If this is the current gameweek and its deadline has passed, lock it
+  if (this.currentGameweek === weekNumber) {
+    const minutesLeft = this.getMinutesUntilDeadline(gw);
+    if (minutesLeft === null || minutesLeft <= 0) return true;
+  }
+  // Lock if more than 2 ahead of current gameweek (keep your original logic)
   if (this.currentGameweek === null) return false;
   return weekNumber > this.currentGameweek + 2;
 }
@@ -330,6 +338,28 @@ export class UserGameweekDetailsComponent implements OnInit, OnDestroy {
     // Return true only for the first upcoming gameweek
     return gameweek.weekNumber === upcomingGameweeks[0].weekNumber;
   }
+
+  // Fix deadline calculation: subtract 20 minutes from the deadline
+getMinutesUntilDeadline(gameweek: Gameweek): number | null {
+  const now = new Date();
+  // Use the actual joinDeadline, do NOT subtract 20 minutes
+  const deadline = new Date(gameweek.joinDeadline);
+  const diffMs = deadline.getTime() - now.getTime();
+  if (diffMs > 0) {
+    return Math.ceil(diffMs / (1000 * 60)); // minutes left
+  }
+  return null;
+}
+
+// Returns true if the gameweek is one of the next two upcoming gameweeks
+isNextTwoUpcomingGameweek(gameweek: Gameweek): boolean {
+  const upcoming = this.gameweeks
+    .filter(gw => this.getGameweekStatus(gw) === 'UPCOMING')
+    .sort((a, b) => a.weekNumber - b.weekNumber)
+    .slice(0, 2)
+    .map(gw => gw.weekNumber);
+  return upcoming.includes(gameweek.weekNumber);
+}
 
   /**
    * Get the display status for a gameweek
@@ -437,18 +467,23 @@ export class UserGameweekDetailsComponent implements OnInit, OnDestroy {
   getUpcomingCount(): number {
     return this.gameweeks.filter(gw => this.isUpcomingGameweek(gw)).length;
   }
-  getHoursUntilDeadline(gameweek: Gameweek): number | null {
+getHoursUntilDeadline(gameweek: Gameweek): number | null {
   const now = new Date();
-  const deadline = new Date(gameweek.joinDeadline); // Use joinDeadline instead of endDate
+  let deadline = new Date(gameweek.joinDeadline);
+
+  // Apply 1-hour fix if MySQL is 1 hour behind
+  deadline = new Date(deadline.getTime() + 60 * 60 * 1000);
+
   const diffMs = deadline.getTime() - now.getTime();
 
   if (diffMs > 0) {
-    return Math.floor(diffMs / (1000 * 60 * 60)); // convert ms to full hours left
+    return diffMs / (1000 * 60 * 60); // fractional hours for minutes
   }
   return null; // deadline passed
 }
+
 showDeadlineMessage(gameweek: Gameweek): void {
-  if (this.isNextUpcomingGameweek(gameweek)) {
+  if (this.isNextTwoUpcomingGameweek(gameweek)) {
     this.hoveredGameweekNumber = gameweek.weekNumber;
   } else {
     this.hoveredGameweekNumber = null;
@@ -461,14 +496,53 @@ hideDeadlineMessage(): void {
 
 getDeadlineMessage(gameweek: Gameweek): string | null {
   if (this.hoveredGameweekNumber === gameweek.weekNumber) {
-    const hoursLeft = this.getHoursUntilDeadline(gameweek);
-    if (hoursLeft !== null) {
-      return `Deadline in ${hoursLeft} hour${hoursLeft !== 1 ? 's' : ''}`;
-    } else {
+    const minutesLeft = this.getMinutesUntilDeadline(gameweek);
+
+    if (minutesLeft === null || minutesLeft <= 0) {
       return 'Deadline has passed';
     }
+
+    if (minutesLeft >= 2880) { // 2 days
+      const days = Math.floor(minutesLeft / 1440);
+      return `Deadline in ${days} day${days !== 1 ? 's' : ''}`;
+    }
+
+    if (minutesLeft < 180) { // less than 3 hours
+      const hours = Math.floor(minutesLeft / 60);
+      const minutes = minutesLeft % 60;
+      if (hours > 0) {
+        return `Deadline in ${hours}h ${minutes}m`;
+      } else {
+        return `Deadline in ${minutes} minute${minutes !== 1 ? 's' : ''}`;
+      }
+    }
+
+    return `Deadline in ${Math.floor(minutesLeft / 60)} hour${Math.floor(minutesLeft / 60) !== 1 ? 's' : ''}`;
   }
   return null;
 }
+
+getVisibleDeadlines(): Gameweek[] {
+  if (!this.currentGameweek) return [];
+  
+  return this.gameweeks.filter(gw =>
+    gw.weekNumber >= this.currentGameweek! && this.currentGameweek! + 1 
+  );
+}
+
+getFormattedDeadline(gameweek: Gameweek): string {
+  const deadline = new Date(gameweek.joinDeadline);
+  // Apply 1-hour fix if needed
+  const fixedDeadline = new Date(deadline.getTime() + 60 * 60 * 1000);
+
+  return fixedDeadline.toLocaleString('en-US', {
+    month: 'short',
+    day: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit'
+  });
+}
+
+
 
 }

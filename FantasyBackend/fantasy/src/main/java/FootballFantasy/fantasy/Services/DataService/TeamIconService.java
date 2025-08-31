@@ -85,7 +85,7 @@ public class TeamIconService {
     private void initializeLaLigaTeams() {
         String league = "La Liga";
 
-        addTeam("Deportivo Alaves", league, "/assets/images/teams/alaves.png");
+        addTeam("Deportivo Alavés", league, "/assets/images/teams/alaves.png");
         addTeam("Ath. Bilbao", league, "/assets/images/teams/athletic-bilbao.png");
         addTeam("Atletico Madrid", league, "/assets/images/teams/atletico-madrid.png");
         addTeam("Barcelona", league, "/assets/images/teams/barcelona.png");

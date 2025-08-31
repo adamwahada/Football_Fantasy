@@ -67,7 +67,10 @@
           </div>
 
           <!-- Deadline Tooltip inside the button -->
-          <div class="deadline-tooltip">
+          <div
+            class="deadline-tooltip"
+            *ngIf="isNextTwoUpcomingGameweek(gw) && hoveredGameweekNumber === gw.weekNumber"
+          >
             {{ getDeadlineMessage(gw) }}
           </div>
         </button>
