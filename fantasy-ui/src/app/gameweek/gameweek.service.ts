@@ -189,5 +189,14 @@ updateMatchesNow(competition?: string): Observable<string> {
   }
   return this.http.post(url, {}, { responseType: 'text' });
 }
+updateSpecificGameweek(competition: string, weekNumber: number): Observable<string> {
+  const url = `${this.matchUpdateApiUrl}/matches/update-gameweek?competition=${competition}&weekNumber=${weekNumber}`;
+  return this.http.post(url, {}, { responseType: 'text' });
+}
+
+testUpdateGameweek(competition: string, weekNumber: number): Observable<string> {
+  const url = `${this.matchUpdateApiUrl}/matches/update-gameweek-test?competition=${competition}&weekNumber=${weekNumber}`;
+  return this.http.get(url, { responseType: 'text' });
+}
 
 }

@@ -125,16 +125,23 @@ public class GameWeekService {
         return gameWeekRepository.save(existingGameWeek);
     }
 
+    @Transactional
     public void deleteGameWeek(Long gameWeekId) {
         GameWeek gameWeek = gameWeekRepository.findById(gameWeekId)
                 .orElseThrow(() -> new RuntimeException("GameWeek not found"));
 
-        for (Match match : gameWeek.getMatches()) {
+        // Detach from matches first
+        for (Match match : new ArrayList<>(gameWeek.getMatches())) {
             match.getGameweeks().remove(gameWeek);
         }
+
         gameWeek.getMatches().clear();
+
         gameWeekRepository.delete(gameWeek);
     }
+
+
+
 
     @Transactional
     public Match addMatchToGameWeek(Long gameWeekId, Match matchData) {

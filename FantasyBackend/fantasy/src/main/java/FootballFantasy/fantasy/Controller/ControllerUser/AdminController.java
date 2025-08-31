@@ -1,8 +1,10 @@
 package FootballFantasy.fantasy.Controller.ControllerUser;
 
+import FootballFantasy.fantasy.Entities.GameweekEntity.LeagueTheme;
 import FootballFantasy.fantasy.Services.UserService.UserService;
 import FootballFantasy.fantasy.Services.DataService.MatchUpdateService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -41,4 +43,49 @@ public class AdminController {
             return ResponseEntity.ok("✅ Match update triggered manually for all leagues");
         }
     }
+
+    @GetMapping("/matches/update-gameweek-test")
+    public ResponseEntity<String> testUpdateGameweek(
+            @RequestParam(name = "competition", required = true) String competition,
+            @RequestParam(name = "weekNumber", required = true) int weekNumber) {
+
+        System.out.println("TEST: competition = " + competition);
+        System.out.println("TEST: weekNumber = " + weekNumber);
+
+        return ResponseEntity.ok("Test successful: " + competition + " week " + weekNumber);
+    }
+
+    @PostMapping("/matches/update-gameweek")
+    public ResponseEntity<String> updateSpecificGameweek(
+            @RequestParam(name = "competition", required = true) String competition,
+            @RequestParam(name = "weekNumber", required = true) int weekNumber) {
+
+        System.out.println("DEBUG: Controller method called successfully!");
+        System.out.println("DEBUG: competition = " + competition);
+        System.out.println("DEBUG: weekNumber = " + weekNumber);
+
+        try {
+            // Use the service mapping to get the LeagueTheme
+            LeagueTheme league = matchUpdateService.mapToLeagueTheme(competition);
+
+            if (league == null) {
+                System.out.println("Invalid competition: " + competition);
+                return ResponseEntity.badRequest().body("Invalid competition: " + competition);
+            }
+
+            System.out.println("Mapped to league: " + league);
+
+            // Pass the original competition string
+            matchUpdateService.updateMatchesForGameweek(competition, weekNumber);
+
+            return ResponseEntity.ok("Match update triggered for " + league.name() + " week " + weekNumber);
+
+        } catch (Exception e) {
+            System.out.println("Exception in controller: " + e.getMessage());
+            e.printStackTrace();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("Error updating matches for " + competition + " week " + weekNumber + ": " + e.getMessage());
+        }
+    }
+
 }

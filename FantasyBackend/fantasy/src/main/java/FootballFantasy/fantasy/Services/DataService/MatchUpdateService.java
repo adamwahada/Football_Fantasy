@@ -3,6 +3,7 @@ package FootballFantasy.fantasy.Services.DataService;
 import FootballFantasy.fantasy.Entities.GameweekEntity.*;
 import FootballFantasy.fantasy.Repositories.GameweekRepository.GameWeekRepository;
 import FootballFantasy.fantasy.Repositories.GameweekRepository.MatchRepository;
+import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.*;
@@ -173,16 +174,19 @@ public class MatchUpdateService {
             }
         }
 
-        if (!dbMatch.getGameweeks().contains(gameWeek)) {
-            dbMatch.getGameweeks().add(gameWeek);
+        // 🔹 FIX: Ensure we're working with a managed GameWeek entity
+        // Re-fetch the gameweek to ensure it's managed by the current session
+        GameWeek managedGameWeek = gameweekRepository.findById(gameWeek.getId()).orElse(gameWeek);
+
+        if (!dbMatch.getGameweeks().contains(managedGameWeek)) {
+            dbMatch.getGameweeks().add(managedGameWeek);
         }
 
         matchRepository.save(dbMatch);
-        affectedGameWeeks.add(gameWeek);
+        affectedGameWeeks.add(managedGameWeek);
 
         System.out.println("✅ Synced match: " + homeTeamName + " vs " + awayTeamName + " (" + apiStatus + ")");
     }
-    
 
     private void updateGameweeks(Set<GameWeek> affectedGameWeeks) {
         for (GameWeek gw : affectedGameWeeks) {
@@ -224,6 +228,112 @@ public class MatchUpdateService {
 
         gameweekRepository.save(gameWeek);
     }
+
+    @Transactional
+    public void updateMatchesForGameweek(String competition, int weekNumber) {
+        try {
+            System.out.println("🔍 DEBUG: Received competition: '" + competition + "', weekNumber: " + weekNumber);
+
+            // Map user input to LeagueTheme enum
+            LeagueTheme league = mapToLeagueTheme(competition);
+
+            if (league == null) {
+                System.out.println("❌ Invalid competition: " + competition);
+                System.out.println("🔍 Available competitions: " + Arrays.toString(LeagueTheme.values()));
+                return;
+            }
+
+            System.out.println("✅ Mapped to league: " + league + " (API code: " + league.getApiCode() + ")");
+
+            String apiUrl = apiUrlTemplate
+                    .replace("{competition}", league.getApiCode())
+                    .replace("{season}", "2025");
+
+            System.out.println("🔍 API URL: " + apiUrl);
+
+            RestTemplate restTemplate = new RestTemplate();
+            HttpHeaders headers = new HttpHeaders();
+            headers.set("X-Auth-Token", apiKey);
+            HttpEntity<String> entity = new HttpEntity<>(headers);
+
+            ResponseEntity<Map> response = restTemplate.exchange(apiUrl, HttpMethod.GET, entity, Map.class);
+
+            if (!response.getStatusCode().is2xxSuccessful() || response.getBody() == null) {
+                System.out.println("⚠️ API call failed for " + league + " with status: " + response.getStatusCode());
+                if (response.getBody() != null) {
+                    System.out.println("Response body: " + response.getBody());
+                }
+                return;
+            }
+
+            List<Map<String, Object>> matches = (List<Map<String, Object>>) response.getBody().get("matches");
+            System.out.println("🔍 Total matches received: " + (matches != null ? matches.size() : 0));
+
+            if (matches == null) {
+                System.out.println("⚠️ No matches found in API response");
+                return;
+            }
+
+            // Filter only matches from the requested week
+            List<Map<String, Object>> filteredMatches = matches.stream()
+                    .filter(m -> {
+                        Integer matchday = (Integer) m.get("matchday");
+                        boolean isMatch = Objects.equals(matchday, weekNumber);
+                        if (isMatch) {
+                            System.out.println("🔍 Found match for week " + weekNumber + ": " +
+                                    m.get("homeTeam") + " vs " + m.get("awayTeam"));
+                        }
+                        return isMatch;
+                    })
+                    .toList();
+
+            System.out.println("➡️ " + filteredMatches.size() + " matches found for "
+                    + league + " week " + weekNumber);
+
+            if (filteredMatches.isEmpty()) {
+                System.out.println("⚠️ No matches found for week " + weekNumber + " in " + league);
+                return;
+            }
+
+            Set<GameWeek> affectedGameWeeks = new HashSet<>();
+
+            for (Map<String, Object> matchData : filteredMatches) {
+                processMatchData(matchData, league, affectedGameWeeks);
+            }
+
+            // Update GameWeek timings & statuses
+            for (GameWeek gw : affectedGameWeeks) {
+                updateGameWeekTimings(gw);
+            }
+            updateGameweeks(affectedGameWeeks);
+
+            System.out.println("✅ Successfully updated " + affectedGameWeeks.size() + " gameweek(s)");
+
+        } catch (Exception e) {
+            System.out.println("❌ Error fetching matches for " + competition + " week " + weekNumber + ": " + e.getMessage());
+            e.printStackTrace();
+        }
+    }
+    // Helper method to map user-friendly strings to enum
+    public LeagueTheme mapToLeagueTheme(String input) {
+        if (input == null) return null;
+        String normalized = input.toLowerCase().replace("_", " "); // <-- fix
+        return switch (normalized) {
+            case "premier league", "pl" -> LeagueTheme.PREMIER_LEAGUE;
+            case "serie a", "sa" -> LeagueTheme.SERIE_A;
+            case "champions league", "cl" -> LeagueTheme.CHAMPIONS_LEAGUE;
+            case "europa league", "el" -> LeagueTheme.EUROPA_LEAGUE;
+            case "bundesliga", "bl1" -> LeagueTheme.BUNDESLIGA;
+            case "la liga", "laliga", "pd" -> LeagueTheme.LA_LIGA;
+            case "ligue one", "fl1" -> LeagueTheme.LIGUE_ONE;
+            case "bestoff", "bo" -> LeagueTheme.BESTOFF;
+            case "conference league", "clg" -> LeagueTheme.CONFERENCE_LEAGUE;
+            default -> null;
+        };
+    }
+
+
+
 
 
     private String normalizeTeamName(String name) {

@@ -154,14 +154,16 @@
             aria-label="Seeder les matchs">
             <mat-icon>cloud_download</mat-icon>
           </button>
-          <button 
+
+        <button 
           mat-icon-button
           class="btn-icon purple"
-          (click)="onUpdateAllMatches()" 
-          matTooltip="Mettre à jour tous les matchs"
-          aria-label="Mettre à jour tous les matchs">
+          (click)="onUpdateSpecificGameweek(gameweek.competition, gameweek.weekNumber)" 
+          matTooltip="Mettre à jour le GameWeek spécifique"
+          aria-label="Mettre à jour le GameWeek spécifique">
           <mat-icon>update</mat-icon>
         </button>
+
           <!-- Réinitialiser -->
           <button
             mat-icon-button

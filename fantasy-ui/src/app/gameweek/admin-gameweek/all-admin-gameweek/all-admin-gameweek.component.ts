@@ -591,5 +591,28 @@ onUpdateAllMatches(): void {
   });
 }
 
+onUpdateSpecificGameweek(competition: string, weekNumber: number): void {
+  this.gameweekService.updateSpecificGameweek(competition, weekNumber).subscribe({
+    next: (res) => {
+      alert(`✅ ${res}`);
+      this.loadGameweeks(); // refresh table after update
+    },
+    error: (err) => {
+      console.error('❌ Error updating gameweek:', err);
+      alert(err.error || 'Erreur lors de la mise à jour du gameweek.');
+    }
+  });
+}
+onTestUpdateGameweek(competition: string, weekNumber: number): void {
+  this.gameweekService.testUpdateGameweek(competition, weekNumber).subscribe({
+    next: (res) => {
+      console.log('TEST SUCCESS:', res);
+      // If this works, then try the POST version
+    },
+    error: (err) => {
+      console.error('TEST FAILED:', err);
+    }
+  });
+}
 
 }
