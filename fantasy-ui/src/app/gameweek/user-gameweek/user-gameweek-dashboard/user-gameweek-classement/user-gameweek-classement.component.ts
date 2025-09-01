@@ -33,6 +33,7 @@ export class UserGameweekClassementComponent implements OnInit {
   loadLatestClassement(competition: string): void {
     this.loading = true;
     this.error = '';
+    
     this.gameweekService.getAllGameweeksByCompetition(competition).subscribe({
       next: (gameweeks: Gameweek[]) => {
         if (!gameweeks.length) {
@@ -40,11 +41,19 @@ export class UserGameweekClassementComponent implements OnInit {
           this.loading = false;
           return;
         }
+
         // Get the latest gameweek (highest weekNumber)
         const latestGameweek = gameweeks.reduce((a, b) => a.weekNumber > b.weekNumber ? a : b);
+
+        // Load league classement for that gameweek
         this.gameweekService.getLeagueClassement(competition, latestGameweek.weekNumber).subscribe({
           next: (standings: TeamStanding[]) => {
-            this.standings = standings;
+            // Ensure standings are sorted correctly by points, goal difference, then goals for
+            this.standings = standings.sort((a, b) => 
+              b.points - a.points ||
+              b.goalsFor - a.goalsFor ||
+              (b.goalsFor - b.goalsAgainst) - (a.goalsFor - a.goalsAgainst)
+            );
             this.loading = false;
           },
           error: () => {
