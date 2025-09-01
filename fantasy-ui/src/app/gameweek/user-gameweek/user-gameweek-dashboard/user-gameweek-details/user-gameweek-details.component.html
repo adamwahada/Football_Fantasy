@@ -1,5 +1,6 @@
 <div class="modal-backdrop" (click)="onBackdropClick($event)">
   <div class="modal" (click)="onModalContentClick($event)">
+
     <!-- Close Button -->
     <button class="close-icon" aria-label="Close modal" (click)="closeModal()">
       <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
@@ -9,25 +10,55 @@
       </svg>
     </button>
 
-    <!-- Modal Header -->
-    <div class="modal-header">
-      <img
-        *ngIf="getLeagueIconUrl(competition)"
-        [src]="getLeagueIconUrl(competition)"
-        [alt]="formatCompetitionName(competition) + ' logo'"
-        class="league-icon"
-        (error)="handleImageError($event)"
-      />
-      <h2>{{ formatCompetitionName(competition) }}</h2>
-      <a
-        class="classement-btn"
-        [routerLink]="['/user', 'user-gameweek-classement', competition]"
-        style="margin-left: 1rem;"
-        role="button"
-      >
-        View League Table
-      </a>
-    </div>
+
+<!-- Modal Header -->
+<div class="modal-header border-b pb-3">
+
+  <!-- League icon and name - centered as before -->
+  <div class="flex items-center gap-3 justify-center mb-3">
+
+
+    <img
+      *ngIf="getLeagueIconUrl(competition)"
+      [src]="getLeagueIconUrl(competition)"
+      [alt]="formatCompetitionName(competition) + ' logo'"
+      class="w-10 h-10 object-contain rounded-lg shadow-sm"
+      (error)="handleImageError($event)"
+    />
+    <h2 class="text-xl font-semibold text-gray-800">
+      {{ formatCompetitionName(competition) }}
+    </h2>
+  </div>
+    <div class="back-button">
+    <button
+      mat-stroked-button
+      color="primary"
+      class="flex items-center gap-2 px-4 py-2 rounded-lg shadow hover:scale-105 transition-transform"
+      (click)="goBack()"
+      matTooltip="Go back"
+      aria-label="Go back"
+    >
+      <mat-icon>arrow_back</mat-icon>
+      Back
+    </button>
+  </div>
+
+  <!-- Table Button - below and to the left -->
+  <div class="flex justify-start">
+    <button
+      mat-raised-button
+      color="primary"
+      class="text-white font-semibold px-4 py-2 rounded-lg shadow-lg hover:scale-105 transition-transform"
+      (click)="openLeagueTable(competition)"
+      matTooltip="View League Table"
+      aria-label="View League Table"
+    >
+      <mat-icon class="mr-2">table_chart</mat-icon>
+      Table
+    </button>
+  </div>
+</div>
+
 
     <!-- Error State -->
     <div *ngIf="error" class="error">

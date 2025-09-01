@@ -2,12 +2,16 @@ import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { GameweekService, TeamStanding, Gameweek } from '../../../gameweek.service';
 import { TeamService, TeamIcon } from '../../../../match/team.service';
-import { CommonModule } from '@angular/common';
+import { CommonModule } from '@angular/common'; 
+import { Location } from '@angular/common';
+import { MatIconModule } from '@angular/material/icon';
+import { MatButtonModule } from '@angular/material/button';
 
 @Component({
   selector: 'app-user-gameweek-classement',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule,    MatIconModule,  MatButtonModule
+],
   templateUrl: './user-gameweek-classement.component.html',
   styleUrls: ['./user-gameweek-classement.component.scss']
 })
@@ -37,8 +41,8 @@ export class UserGameweekClassementComponent implements OnInit {
   constructor(
     private route: ActivatedRoute,
     private gameweekService: GameweekService,
-    public teamService: TeamService // <-- make public for template fallback
-  ) {}
+    public teamService: TeamService ,
+    private location: Location  ) {}
 
   ngOnInit(): void {
     // Load all icons first
@@ -126,4 +130,20 @@ getTeamIconUrl(teamName: string): string {
       .map(word => word.charAt(0).toUpperCase() + word.slice(1))
       .join(' ');
   }
+
+getRowClass(position: number): string {
+  // The CSS handles position styling automatically via nth-child
+  // This method can be used for additional row classes if needed
+  return '';
+}
+
+getGDClass(goalDifference: number): string {
+  if (goalDifference > 0) return 'gd-positive';
+  if (goalDifference < 0) return 'gd-negative';
+  return 'gd-zero';
+}
+
+goBack(): void {
+  this.location.back();
+}
 }

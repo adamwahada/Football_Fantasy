@@ -45,6 +45,14 @@
      class="btn-secondary" 
      (click)="onUpdateAllMatches()" >  Mettre à jour tous les matchs
     </button>
+    <button 
+      class="btn-secondary"
+      (click)="onRefresh()"
+      [class.spin]="refreshing"
+      title="Rafraîchir la liste"
+    >
+      <mat-icon>refresh</mat-icon>
+    </button>
     <button mat-icon-button (click)="addNew()" class="col-green" matTooltip="Ajouter un gameweek">
       <mat-icon>add_circle_outline</mat-icon>
     </button>

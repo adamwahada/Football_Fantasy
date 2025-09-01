@@ -14,6 +14,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { ShowGameweekMatchesComponent } from '../show-gameweek-matches/show-gameweek-matches.component';
+import { MatSnackBar } from '@angular/material/snack-bar';
 
 @Component({
   selector: 'app-all-admin-gameweek',
@@ -61,12 +62,15 @@ export class AllAdminGameweekComponent implements OnInit, AfterViewInit {
   loadingMatches: boolean = false;
   matchesLoadError: string | null = null;
 
+  refreshing = false;
+
   constructor(
     private gameweekService: GameweekService,
     private fb: FormBuilder,
     private router: Router,
     private matchService: MatchService,
-    private route: ActivatedRoute
+    private route: ActivatedRoute,
+    private snackBar: MatSnackBar // <-- inject MatSnackBar
   ) {
     this.gameweekForm = this.fb.group({
       weekNumber: ['', [Validators.required, Validators.min(1), Validators.max(50)]],
@@ -421,7 +425,7 @@ toggleSelectAll(event: Event): void {
   }
   selectMatches(gameweekId: number): void {
   this.router.navigate(['/admin/Allmatch/select', gameweekId]);
-  }
+}
 resetGameweek(gameweekId: number): void {
   if (!confirm('Voulez-vous réinitialiser tous les matchs de ce gameweek ?')) {
     return;
@@ -601,6 +605,25 @@ onUpdateSpecificGameweek(competition: string, weekNumber: number): void {
       console.error('❌ Error updating gameweek:', err);
       alert(err.error || 'Erreur lors de la mise à jour du gameweek.');
     }
+  });
+}
+
+onRefresh(): void {
+  this.refreshing = true;
+  this.loadGameweeks().then(() => {
+    if (this.dataSource.paginator) {
+      this.dataSource.paginator.firstPage();
+    }
+
+    this.snackBar.open('Refreshed !', 'Fermer', {
+      duration: 3000,
+      verticalPosition: 'top',  // ⬅️ Snackbar at the top
+      horizontalPosition: 'center' // optional, centers horizontally
+    });
+
+    setTimeout(() => {
+      this.refreshing = false;
+    }, 1200);
   });
 }
 

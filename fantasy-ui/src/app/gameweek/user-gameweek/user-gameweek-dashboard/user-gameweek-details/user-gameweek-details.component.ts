@@ -4,7 +4,11 @@ import { GameweekService, Gameweek } from '../../../gameweek.service';
 import { TeamService } from '../../../../match/team.service';
 import { CommonModule } from '@angular/common';
 import { Subject, takeUntil } from 'rxjs';
-import { RouterModule } from '@angular/router'; // ✅ add this
+import { RouterModule } from '@angular/router';
+import { MatIconModule } from '@angular/material/icon';
+import { MatButtonModule } from '@angular/material/button';
+import { MatTooltipModule } from '@angular/material/tooltip';
+import { Location } from '@angular/common';
 
 
 export type LeagueTheme =
@@ -27,7 +31,9 @@ interface LeagueConfig {
 @Component({
   selector: 'app-user-gameweek-details',
   standalone: true,
-  imports: [CommonModule,RouterModule],
+  imports: [CommonModule,RouterModule,    MatIconModule,
+    MatButtonModule,
+    MatTooltipModule], // ✅ added RouterModule here
   templateUrl: './user-gameweek-details.component.html',
   styleUrls: ['./user-gameweek-details.component.scss']
 })
@@ -97,7 +103,8 @@ export class UserGameweekDetailsComponent implements OnInit, OnDestroy {
     private route: ActivatedRoute,
     private gameweekService: GameweekService,
     private teamService: TeamService,
-    private router: Router
+    private router: Router,
+    private location: Location
   ) {}
 
   ngOnInit(): void {
@@ -545,6 +552,12 @@ getFormattedDeadline(gameweek: Gameweek): string {
   });
 }
 
-
+  openLeagueTable(competition: string) {
+    // Using Angular Router to navigate programmatically
+    this.router.navigate(['/user', 'user-gameweek-classement', competition]);
+  }
+  goBack(): void {
+  this.location.back();
+}
 
 }

@@ -1,55 +1,125 @@
-<div *ngIf="competition">
-  <div class="classement-header">
-    <img
-      *ngIf="leagueIconUrl"
-      [src]="leagueIconUrl"
-      [alt]="formatCompetitionName(competition) + ' logo'"
-      class="league-icon"
-      (error)="leagueIconUrl = teamService.getLeagueIconUrl('/assets/images/leagues/default.png')"
-    />
-    <h2>League Table for {{ formatCompetitionName(competition) }}</h2>
+<div *ngIf="competition" class="modern-league-container">
+  
+
+
+  <!-- Loading and Error States -->
+  <div *ngIf="loading" class="loading-state">
+    <div class="loading-spinner"></div>
+    <span>Loading...</span>
   </div>
-  <div *ngIf="loading">Loading...</div>
-  <div *ngIf="error">{{ error }}</div>
-  <table *ngIf="standings.length && !loading && !error" class="league-table">
-    <thead>
-      <tr>
-        <th>#</th>
-        <th>Team</th>
-        <th>P</th>
-        <th>W</th>
-        <th>D</th>
-        <th>L</th>
-        <th>GF</th>
-        <th>GA</th>
-        <th>GD</th>
-        <th>Pts</th>
-      </tr>
-    </thead>
-    <tbody>
-      <tr *ngFor="let team of standings; let i = index">
-        <td>{{ i + 1 }}</td>
-        <td>
-          <img
-            [src]="getTeamIconUrl(team.teamName)"
-            [alt]="team.teamName + ' icon'"
-            class="team-icon"
-            style="width: 24px; height: 24px; vertical-align: middle; margin-right: 6px;"
-          />
-          {{ team.teamName }}
-        </td>
-        <td>{{ team.played }}</td>
-        <td>{{ team.won }}</td>
-        <td>{{ team.draw }}</td>
-        <td>{{ team.lost }}</td>
-        <td>{{ team.goalsFor }}</td>
-        <td>{{ team.goalsAgainst }}</td>
-        <td>{{ team.goalDifference }}</td>
-        <td>{{ team.points }}</td>
-      </tr>
-    </tbody>
-  </table>
+  
+  <div *ngIf="error" class="error-state">
+    {{ error }}
+  </div>
+
+  <!-- Modern Table Container -->
+  <div *ngIf="standings.length && !loading && !error" class="table-wrapper">
+    <!-- Header -->
+    <div class="table-header">
+              <!-- Back Button -->
+  <div class="back-button">
+    <button
+      mat-stroked-button
+      color="primary"
+      class="flex items-center gap-2 px-4 py-2 rounded-lg shadow hover:scale-105 transition-transform"
+      (click)="goBack()"
+      matTooltip="Go back"
+      aria-label="Go back"
+    >
+      <mat-icon>arrow_back</mat-icon>
+      Back
+    </button>
+  </div>
+      <div class="header-content">
+        <img
+          *ngIf="leagueIconUrl"
+          [src]="leagueIconUrl"
+          [alt]="formatCompetitionName(competition) + ' logo'"
+          class="league-logo"
+          (error)="leagueIconUrl = teamService.getLeagueIconUrl('/assets/images/leagues/default.png')"
+        />
+        <h1>{{ formatCompetitionName(competition) }}</h1>
+      </div>
+
+    </div>
+
+    <!-- Table -->
+    <div class="table-container">
+      <table class="modern-table">
+        <thead>
+          <tr>
+            <th class="pos-col">Pos</th>
+            <th class="team-col">Club</th>
+            <th class="stat-col">Pl</th>
+            <th class="stat-col">W</th>
+            <th class="stat-col hidden-mobile">D</th>
+            <th class="stat-col hidden-mobile">L</th>
+            <th class="stat-col">GF</th>
+            <th class="stat-col hidden-mobile">GA</th>
+            <th class="stat-col">GD</th>
+            <th class="pts-col">Pts</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let team of standings; let i = index" 
+              [attr.data-position]="i + 1"
+              [class]="getRowClass(i)">
+            <td class="pos-cell">
+              <span class="position-number">{{ i + 1 }}</span>
+            </td>
+            <td class="team-cell">
+              <div class="team-info">
+                <img
+                  [src]="getTeamIconUrl(team.teamName)"
+                  [alt]="team.teamName"
+                  class="team-badge"
+                />
+                <span class="team-name">{{ team.teamName }}</span>
+              </div>
+            </td>
+            <td>{{ team.played }}</td>
+            <td>{{ team.won }}</td>
+            <td class="hidden-mobile">{{ team.draw }}</td>
+            <td class="hidden-mobile">{{ team.lost }}</td>
+            <td>{{ team.goalsFor }}</td>
+            <td class="hidden-mobile">{{ team.goalsAgainst }}</td>
+            <td [class]="getGDClass(team.goalDifference)">
+              {{ team.goalDifference > 0 ? '+' : '' }}{{ team.goalDifference }}
+            </td>
+            <td class="points">{{ team.points }}</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Legend -->
+    <div class="qualification-legend">
+      <div class="legend-row">
+        <div class="legend-item">
+          <div class="indicator champion"></div>
+          <span>Premier League Champion</span>
+        </div>
+        <div class="legend-item">
+          <div class="indicator ucl"></div>
+          <span>UEFA Champions League</span>
+        </div>
+        <div class="legend-item">
+          <div class="indicator uel"></div>
+          <span>UEFA Europa League</span>
+        </div>
+        <div class="legend-item">
+          <div class="indicator uecl"></div>
+          <span>UEFA Conference League</span>
+        </div>
+        <div class="legend-item">
+          <div class="indicator relegation"></div>
+          <span>Relegation</span>
+        </div>
+      </div>
+    </div>
+  </div>
 </div>
-<div *ngIf="!competition">
+
+<div *ngIf="!competition" class="no-data">
   <p>No competition selected.</p>
 </div>

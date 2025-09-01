@@ -339,21 +339,22 @@ public class MatchUpdateService {
                 return;
             }
 
-            // ✅ Find or create GameWeek
-            GameWeek gameWeek = gameweekRepository
-                    .findByWeekNumberAndCompetition(matchday, league)
-                    .orElseGet(() -> {
-                        System.out.println("🆕 Creating new GameWeek for " + league + " week " + matchday);
-                        GameWeek gw = new GameWeek();
-                        gw.setWeekNumber(matchday);
-                        gw.setCompetition(league);
-                        gw.setStatus(GameweekStatus.UPCOMING);
-                        // Initial timing setup (will be updated later in batch)
-                        gw.setStartDate(matchDateUtc.minusDays(3));
-                        gw.setEndDate(matchDateUtc.plusDays(3));
-                        gw.setJoinDeadline(matchDateUtc.minusHours(2));
-                        return gameweekRepository.save(gw);
-                    });
+            // ✅ Find or create GameWeek (safe way)
+            GameWeek gameWeek = gameweekRepository.findByWeekNumberAndCompetition(matchday, league)
+                    .orElse(null);
+
+            if (gameWeek == null) {
+                System.out.println("🆕 Creating new GameWeek for " + league + " week " + matchday);
+                gameWeek = new GameWeek();
+                gameWeek.setWeekNumber(matchday);
+                gameWeek.setCompetition(league);
+                gameWeek.setStatus(GameweekStatus.UPCOMING);
+                // Initial timing setup (will be updated later in batch)
+                gameWeek.setStartDate(matchDateUtc.minusDays(3));
+                gameWeek.setEndDate(matchDateUtc.plusDays(3));
+                gameWeek.setJoinDeadline(matchDateUtc.minusHours(2));
+                gameWeek = gameweekRepository.save(gameWeek); // save only once
+            }
 
             // Parse score safely
             Integer homeGoals = null;
@@ -368,7 +369,7 @@ public class MatchUpdateService {
                 }
             }
 
-            // Find existing match or create new one
+            // ✅ Find existing match or create new one
             Match dbMatch = matchRepository.findWithGameweeks(
                     homeTeamName, awayTeamName,
                     matchDateUtc.minusHours(2), matchDateUtc.plusHours(2)
@@ -392,7 +393,7 @@ public class MatchUpdateService {
             dbMatch.setHomeScore(homeGoals);
             dbMatch.setAwayScore(awayGoals);
 
-            // Status mapping with better logging
+            // Map API status → internal status
             MatchStatus oldStatus = dbMatch.getStatus();
             switch (apiStatus) {
                 case "FINISHED" -> {
@@ -419,7 +420,7 @@ public class MatchUpdateService {
                         " for " + homeTeamName + " vs " + awayTeamName);
             }
 
-            // 🔹 FIX: Ensure proper GameWeek association
+            // 🔹 Ensure GameWeek association without triggering lazy errors
             if (!dbMatch.getGameweeks().contains(gameWeek)) {
                 System.out.println("🔗 Linking match to GameWeek " + gameWeek.getWeekNumber());
                 dbMatch.getGameweeks().add(gameWeek);
