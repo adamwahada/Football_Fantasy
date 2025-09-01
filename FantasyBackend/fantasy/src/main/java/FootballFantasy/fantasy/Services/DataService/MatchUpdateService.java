@@ -41,14 +41,21 @@ public class MatchUpdateService {
     public void updateMatches() {
         for (LeagueTheme league : LeagueTheme.values()) {
             try {
+                if (!league.isApiAvailable()) {
+                    System.out.println("⏭️ Skipping league not available in API: " + league.name());
+                    continue;
+                }
+
                 System.out.println("➡️ Updating matches for competition: " + league.name());
                 fetchAndUpdateMatches(league, 2025);
+
             } catch (Exception e) {
                 System.out.println("❌ Exception while updating " + league.name() + ": " + e.getMessage());
                 e.printStackTrace();
             }
         }
     }
+
 
     // ✅ Update specific league manually
     public void updateMatchesManually(String competition) {
@@ -230,6 +237,7 @@ public class MatchUpdateService {
     }
 
     @Transactional
+
     public void updateMatchesForGameweek(String competition, int weekNumber) {
         try {
             System.out.println("🔍 DEBUG: Received competition: '" + competition + "', weekNumber: " + weekNumber);
@@ -336,7 +344,7 @@ public class MatchUpdateService {
 
 
 
-    private String normalizeTeamName(String name) {
+    String normalizeTeamName(String name) {
         if (name == null) return null;
 
         String normalized = Normalizer.normalize(name, Normalizer.Form.NFD)

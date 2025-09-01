@@ -603,16 +603,5 @@ onUpdateSpecificGameweek(competition: string, weekNumber: number): void {
     }
   });
 }
-onTestUpdateGameweek(competition: string, weekNumber: number): void {
-  this.gameweekService.testUpdateGameweek(competition, weekNumber).subscribe({
-    next: (res) => {
-      console.log('TEST SUCCESS:', res);
-      // If this works, then try the POST version
-    },
-    error: (err) => {
-      console.error('TEST FAILED:', err);
-    }
-  });
-}
 
 }

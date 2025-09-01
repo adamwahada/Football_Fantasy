@@ -32,4 +32,7 @@ public interface GameWeekRepository extends JpaRepository<GameWeek, Long> {
 
     @EntityGraph(attributePaths = "matches")
     List<GameWeek> findByCompetitionAndJoinDeadlineAfter(LeagueTheme competition, LocalDateTime now);
+
+    List<GameWeek> findByCompetitionAndWeekNumberLessThanEqual(LeagueTheme competition, int weekNumber);
+
 }

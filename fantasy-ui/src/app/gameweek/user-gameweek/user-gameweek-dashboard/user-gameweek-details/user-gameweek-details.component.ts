@@ -4,6 +4,8 @@ import { GameweekService, Gameweek } from '../../../gameweek.service';
 import { TeamService } from '../../../../match/team.service';
 import { CommonModule } from '@angular/common';
 import { Subject, takeUntil } from 'rxjs';
+import { RouterModule } from '@angular/router'; // ✅ add this
+
 
 export type LeagueTheme =
   | 'PREMIER_LEAGUE'
@@ -25,7 +27,7 @@ interface LeagueConfig {
 @Component({
   selector: 'app-user-gameweek-details',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule,RouterModule],
   templateUrl: './user-gameweek-details.component.html',
   styleUrls: ['./user-gameweek-details.component.scss']
 })

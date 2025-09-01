@@ -19,6 +19,14 @@
         (error)="handleImageError($event)"
       />
       <h2>{{ formatCompetitionName(competition) }}</h2>
+      <a
+        class="classement-btn"
+        [routerLink]="['/user', 'user-gameweek-classement', competition]"
+        style="margin-left: 1rem;"
+        role="button"
+      >
+        View League Table
+      </a>
     </div>
 
     <!-- Error State -->

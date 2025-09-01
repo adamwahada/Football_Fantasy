@@ -52,7 +52,8 @@ public class SecurityConfig {
                                 "/static/**",
                                 "/images/**",
                                 "/api/admin/**",
-                                "/api/teams/**"
+                                "/api/teams/**",
+                                "/api/league-classement/**"
 
                                 ).permitAll()
 

@@ -41,6 +41,10 @@
     <button class="btn-secondary" (click)="deleteSelectedGameweeks()" [disabled]="selectedGameweekIds.size === 0">
       Supprimer sélectionnés
     </button>
+    <button 
+     class="btn-secondary" 
+     (click)="onUpdateAllMatches()" >  Mettre à jour tous les matchs
+    </button>
     <button mat-icon-button (click)="addNew()" class="col-green" matTooltip="Ajouter un gameweek">
       <mat-icon>add_circle_outline</mat-icon>
     </button>
@@ -154,7 +158,6 @@
             aria-label="Seeder les matchs">
             <mat-icon>cloud_download</mat-icon>
           </button>
-
         <button 
           mat-icon-button
           class="btn-icon purple"

@@ -25,6 +25,17 @@ export interface Gameweek {
   tiebreakerMatchIds?: string;
   matches?: Match[];
 }
+export interface TeamStanding {
+  teamName: string;
+  played: number;
+  won: number;
+  draw: number;
+  lost: number;
+  goalsFor: number;
+  goalsAgainst: number;
+  points: number;
+  goalDifference: number;
+}
 @Injectable({
   providedIn: 'root'
 })
@@ -32,6 +43,7 @@ export class GameweekService {
   private apiUrl = 'http://localhost:9090/fantasy/api/gameweeks';
   private matchSeedApiUrl = 'http://localhost:9090/fantasy/api/seed';
   private matchUpdateApiUrl = 'http://localhost:9090/fantasy/api/admin';
+  private leagueclassementApiUrl = 'http://localhost:9090/fantasy/api/league-classement';
 
   constructor(private http: HttpClient) {}
 
@@ -193,10 +205,7 @@ updateSpecificGameweek(competition: string, weekNumber: number): Observable<stri
   const url = `${this.matchUpdateApiUrl}/matches/update-gameweek?competition=${competition}&weekNumber=${weekNumber}`;
   return this.http.post(url, {}, { responseType: 'text' });
 }
-
-testUpdateGameweek(competition: string, weekNumber: number): Observable<string> {
-  const url = `${this.matchUpdateApiUrl}/matches/update-gameweek-test?competition=${competition}&weekNumber=${weekNumber}`;
-  return this.http.get(url, { responseType: 'text' });
+getLeagueClassement(competition: string, gameweek: number): Observable<TeamStanding[]> {
+  return this.http.get<TeamStanding[]>(`${this.leagueclassementApiUrl}/${competition}/${gameweek}`);
 }
-
 }

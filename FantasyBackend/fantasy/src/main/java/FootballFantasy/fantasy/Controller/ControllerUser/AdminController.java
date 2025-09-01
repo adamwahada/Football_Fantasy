@@ -44,17 +44,6 @@ public class AdminController {
         }
     }
 
-    @GetMapping("/matches/update-gameweek-test")
-    public ResponseEntity<String> testUpdateGameweek(
-            @RequestParam(name = "competition", required = true) String competition,
-            @RequestParam(name = "weekNumber", required = true) int weekNumber) {
-
-        System.out.println("TEST: competition = " + competition);
-        System.out.println("TEST: weekNumber = " + weekNumber);
-
-        return ResponseEntity.ok("Test successful: " + competition + " week " + weekNumber);
-    }
-
     @PostMapping("/matches/update-gameweek")
     public ResponseEntity<String> updateSpecificGameweek(
             @RequestParam(name = "competition", required = true) String competition,
