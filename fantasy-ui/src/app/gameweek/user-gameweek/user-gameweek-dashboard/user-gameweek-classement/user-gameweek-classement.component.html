@@ -1,5 +1,14 @@
 <div *ngIf="competition">
-  <h2>League Table for {{ competition }}</h2>
+  <div class="classement-header">
+    <img
+      *ngIf="leagueIconUrl"
+      [src]="leagueIconUrl"
+      [alt]="formatCompetitionName(competition) + ' logo'"
+      class="league-icon"
+      (error)="leagueIconUrl = teamService.getLeagueIconUrl('/assets/images/leagues/default.png')"
+    />
+    <h2>League Table for {{ formatCompetitionName(competition) }}</h2>
+  </div>
   <div *ngIf="loading">Loading...</div>
   <div *ngIf="error">{{ error }}</div>
   <table *ngIf="standings.length && !loading && !error" class="league-table">
@@ -20,7 +29,15 @@
     <tbody>
       <tr *ngFor="let team of standings; let i = index">
         <td>{{ i + 1 }}</td>
-        <td>{{ team.teamName }}</td>
+        <td>
+          <img
+            [src]="getTeamIconUrl(team.teamName)"
+            [alt]="team.teamName + ' icon'"
+            class="team-icon"
+            style="width: 24px; height: 24px; vertical-align: middle; margin-right: 6px;"
+          />
+          {{ team.teamName }}
+        </td>
         <td>{{ team.played }}</td>
         <td>{{ team.won }}</td>
         <td>{{ team.draw }}</td>
