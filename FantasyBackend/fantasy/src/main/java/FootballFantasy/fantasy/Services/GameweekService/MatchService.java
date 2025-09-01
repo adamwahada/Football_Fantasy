@@ -7,6 +7,7 @@ import FootballFantasy.fantasy.Entities.GameweekEntity.MatchStatus;
 import FootballFantasy.fantasy.Events.MatchCompletedEvent;
 import FootballFantasy.fantasy.Repositories.GameweekRepository.GameWeekRepository;
 import FootballFantasy.fantasy.Repositories.GameweekRepository.MatchRepository;
+import FootballFantasy.fantasy.Services.DataService.MatchUpdateService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -32,6 +33,9 @@ public class MatchService {
     private ObjectMapper objectMapper;
     @Autowired
     private ApplicationEventPublisher eventPublisher;
+    @Autowired
+    private MatchUpdateService matchUpdateService;
+
 
     @PreAuthorize("hasAuthority('ROLE_ADMIN')")
     public Match createMatch(Match match) {
@@ -197,13 +201,19 @@ public class MatchService {
         Match savedMatch = matchRepository.save(match);
 
         if (wasActive != active) {
-            // Re-evaluate status for each related gameweek
+            // Re-evaluate all related gameweeks
             for (GameWeek gw : match.getGameweeks()) {
+                // 1) Update gameweek status
                 gameWeekService.updateStatusIfComplete(gw.getId());
+
+                // 2) Recalculate timings based on only active matches
+                matchUpdateService.updateGameWeekTimings(gw); // ✅ use the instance
             }
         }
 
         return savedMatch;
     }
+
+
 
 }

@@ -100,8 +100,10 @@ export class ShowGameweekMatchesComponent implements OnChanges {
           this.removeTiebreakerAndUpdate(matchId);
         } else {
           // Emit updated matches to parent
-          this.matchesUpdated.emit({gameweek: this.gameweek, matches: this.matches});
-        }
+        this.matchesUpdated.emit({
+          gameweek: this.gameweek,
+          matches: this.matches.filter(m => m.active)
+        });        }
       },
       error: err => {
         console.error('Erreur lors de la suppression du match :', err);
@@ -284,8 +286,10 @@ export class ShowGameweekMatchesComponent implements OnChanges {
           next: (updatedMatches) => {
             this.matches = updatedMatches;
             // Emit both updated gameweek and matches to parent component
-            this.matchesUpdated.emit({ gameweek: updatedGameweek, matches: updatedMatches });
-            // This will trigger ngOnChanges and refresh UI
+            this.matchesUpdated.emit({
+              gameweek: updatedGameweek,
+              matches: updatedMatches.filter(m => m.active)
+            });
           }
         });
       },

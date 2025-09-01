@@ -34,5 +34,6 @@ public interface GameWeekRepository extends JpaRepository<GameWeek, Long> {
     List<GameWeek> findByCompetitionAndJoinDeadlineAfter(LeagueTheme competition, LocalDateTime now);
 
     List<GameWeek> findByCompetitionAndWeekNumberLessThanEqual(LeagueTheme competition, int weekNumber);
+    List<GameWeek> findByCompetitionOrderByWeekNumber(LeagueTheme competition);
 
 }
