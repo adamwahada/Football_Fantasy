@@ -111,10 +111,16 @@ public class PredictionService {
         // 🧠 Get tiebreakers from GameWeek entity
         List<Long> tieBreakerIds = gameWeek.getTiebreakerMatchIdList();
 
-        // 🛡️ Validate: ensure user submitted all predictions
+// Filter only active matches for this gameweek
+        Set<Long> requiredMatchIds = allMatches.stream()
+                .filter(Match::isActive)   // ✅ only active matches
+                .map(Match::getId)
+                .collect(Collectors.toSet());
+
+// Collect submitted predictions (user input)
         Set<Long> submittedMatchIds = submissionDTO.getPredictions().stream()
-                .map(PredictionDTO::getMatchId).collect(Collectors.toSet());
-        Set<Long> requiredMatchIds = allMatches.stream().map(Match::getId).collect(Collectors.toSet());
+                .map(PredictionDTO::getMatchId)
+                .collect(Collectors.toSet());
 
         if (!submittedMatchIds.equals(requiredMatchIds)) {
             throw new RuntimeException("Submitted predictions must cover all matches");
@@ -322,5 +328,36 @@ public class PredictionService {
         // Remove the duplicate winner logic from here
         System.out.println("✅ Gameweek " + gameweekId + " predictions finalized. Use CompetitionSessionService.determineWinnersForCompletedGameWeek() for winner determination.");
     }
+
+    @Transactional
+    public void scorePredictionsForMatch(Long matchId) {
+        Match match = matchRepository.findById(matchId)
+                .orElseThrow(() -> new RuntimeException("Match not found"));
+        if (match.getStatus() != MatchStatus.COMPLETED) return;
+
+        List<Prediction> predictions = predictionRepository.findByMatchId(matchId);
+        Set<SessionParticipation> affectedParticipations = new HashSet<>();
+
+        for (Prediction p : predictions) {
+            boolean isCorrect = isPredictionCorrect(p); // existing helper
+            p.setIsCorrect(isCorrect);
+
+            if (Boolean.TRUE.equals(p.getIsTiebreaker()) && p.hasScorePrediction()) {
+                p.calculateScoreDistance(match.getHomeScore(), match.getAwayScore());
+            }
+            affectedParticipations.add(p.getParticipation());
+        }
+        predictionRepository.saveAll(predictions);
+
+        // Recalculate participation stats
+        for (SessionParticipation part : affectedParticipations) {
+            List<Prediction> completed = predictionRepository
+                    .findCompletedPredictionsByParticipation(part.getId());
+            updateParticipationAccuracy(part, completed);
+        }
+        sessionParticipationRepository.saveAll(affectedParticipations);
+    }
+
+
 
 }

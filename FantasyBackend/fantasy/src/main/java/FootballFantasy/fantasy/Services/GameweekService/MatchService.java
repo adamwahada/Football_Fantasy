@@ -35,6 +35,8 @@ public class MatchService {
     private ApplicationEventPublisher eventPublisher;
     @Autowired
     private MatchUpdateService matchUpdateService;
+    @Autowired
+    private PredictionService predictionService;
 
 
     @PreAuthorize("hasAuthority('ROLE_ADMIN')")
@@ -126,17 +128,17 @@ public class MatchService {
 
         // Publish event if match was just completed
         if (shouldPublishEvent) {
-            System.out.println("🚀 Publishing MatchCompletedEvent for match ID: " + matchId);
-
-            boolean inTransaction = org.springframework.transaction.support.TransactionSynchronizationManager.isActualTransactionActive();
-            System.out.println("📝 Transaction active: " + inTransaction);
-
             try {
+                // ✅ update predictions/accuracy for everyone who picked this match
+                predictionService.scorePredictionsForMatch(saved.getId());
+
+                // (optional) still publish your event
                 MatchCompletedEvent event = new MatchCompletedEvent(this, matchId);
                 eventPublisher.publishEvent(event);
-                System.out.println("✅ MatchCompletedEvent published successfully");
+
+                System.out.println("✅ Predictions scored & event published");
             } catch (Exception e) {
-                System.err.println("❌ Error publishing event: " + e.getMessage());
+                System.err.println("❌ Error scoring predictions: " + e.getMessage());
                 e.printStackTrace();
             }
         } else {
