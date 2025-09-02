@@ -315,21 +315,20 @@ $transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .league-logo {
-  width: 50px;
-  height: 50px;
+  width: 80px;
+  height: 80px;
   object-fit: contain;
-  background: rgba(255,255,255,0.1);
   border-radius: 6px;
   padding: 6px;
 }
 
 .table-header h1 {
   color: #1a1a1a;
-  font-size: 28px;
+  font-size: 38px;
   font-weight: 700;
   margin: 0;
   letter-spacing: -0.5px;
-  text-shadow: 0 1px 2px rgba(0,0,0,0.1);
+  text-shadow: 0 2px 4px rgba(0,0,0,0.3);
 }
 
 .table-container {
@@ -375,12 +374,26 @@ $transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
 }
 
-.modern-table tbody tr:hover {
-  background-color: #f3f3f3;
+.modern-table tbody tr {
+  transition: background-color 0.2s ease;
+  
+  &:hover {
+    background-color: #f8f9fa;
+    
+    .team-name {
+      color: #0dfd86;
+      font-weight: 700;
+    }
+    
+    .position-number {
+      color: #0dfd86;
+      font-weight: 800;
+    }
+  }
 }
 
 .modern-table tbody tr:hover .pts-col {
-  background-color: #00e574;
+  background: linear-gradient(135deg, #0dfd86, #00b4d8);
 }
 
 .modern-table tbody tr:last-child {
@@ -569,7 +582,7 @@ $transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   }
   
   .table-header h1 {
-    font-size: 22px;
+    font-size: 28px;
   }
   
   .modern-table {

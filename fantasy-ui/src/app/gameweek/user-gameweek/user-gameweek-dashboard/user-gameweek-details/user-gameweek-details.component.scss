@@ -98,6 +98,38 @@
     margin-bottom: 1rem;
     filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.3));
   }
+
+  /* Back button positioning */
+  .back-button {
+    position: absolute;
+    top: 1rem;
+    left: 1rem;
+    z-index: 10;
+  }
+
+  /* Header content alignment */
+  .header-content {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 16px;
+  }
+
+  .league-logo {
+    width: 50px;
+    height: 50px;
+    object-fit: contain;
+    border-radius: 6px;
+    padding: 2px;
+  }
+
+  .league-title {
+    color: #1a1a1a;
+    font-size: 38px;
+    font-weight: 700;
+    letter-spacing: -0.5px;
+    text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+  }
 }
 
 /* Modal Content */
@@ -430,13 +462,18 @@
   .modal-header {
     padding: 1.5rem 1rem 1rem;
 
-    h2 {
-      font-size: 1.5rem;
+    .header-content {
+      flex-direction: column;
+      gap: 12px;
     }
 
-    .league-icon {
-      width: 50px;
-      height: 50px;
+    .league-title {
+      font-size: 22px;
+    }
+
+    .league-logo {
+      width: 40px;
+      height: 40px;
     }
   }
 
@@ -481,7 +518,7 @@
   .modal-header {
     padding: 1rem 0.75rem 0.75rem;
 
-    h2 {
+    .league-title {
       font-size: 1.3rem;
     }
   }
@@ -542,7 +579,7 @@
 
   button {
     display: flex;
-    align-items: left;
+    align-items: center;
     gap: 0.5rem;
     padding: 0.6rem 1.2rem;
     border-radius: 0.5rem;

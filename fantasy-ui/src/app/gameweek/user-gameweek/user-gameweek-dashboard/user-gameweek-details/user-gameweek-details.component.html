@@ -13,23 +13,8 @@
 
 <!-- Modal Header -->
 <div class="modal-header border-b pb-3">
-
-  <!-- League icon and name - centered as before -->
-  <div class="flex items-center gap-3 justify-center mb-3">
-
-
-    <img
-      *ngIf="getLeagueIconUrl(competition)"
-      [src]="getLeagueIconUrl(competition)"
-      [alt]="formatCompetitionName(competition) + ' logo'"
-      class="w-10 h-10 object-contain rounded-lg shadow-sm"
-      (error)="handleImageError($event)"
-    />
-    <h2 class="text-xl font-semibold text-gray-800">
-      {{ formatCompetitionName(competition) }}
-    </h2>
-  </div>
-    <div class="back-button">
+  <!-- Back Button - positioned at top left -->
+  <div class="back-button">
     <button
       mat-stroked-button
       color="primary"
@@ -41,6 +26,20 @@
       <mat-icon>arrow_back</mat-icon>
       Back
     </button>
+  </div>
+
+  <!-- League icon and name - centered and aligned -->
+  <div class="header-content">
+    <img
+      *ngIf="getLeagueIconUrl(competition)"
+      [src]="getLeagueIconUrl(competition)"
+      [alt]="formatCompetitionName(competition) + ' logo'"
+      class="league-logo"
+      (error)="handleImageError($event)"
+    />
+    <h2 class="league-title">
+      {{ formatCompetitionName(competition) }}
+    </h2>
   </div>
 
   <!-- Table Button - below and to the left -->
