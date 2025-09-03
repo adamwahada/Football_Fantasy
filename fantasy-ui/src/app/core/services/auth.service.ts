@@ -5,6 +5,8 @@ import { KeycloakService } from '../../keycloak.service';
 import { Router } from '@angular/router';
 import { Observable, BehaviorSubject, of, throwError, from } from 'rxjs';
 import { catchError, tap, switchMap } from 'rxjs/operators';
+import { map } from 'rxjs/operators';
+
 
 export interface CurrentUser {
   id: number;           // App DB ID
@@ -13,6 +15,8 @@ export interface CurrentUser {
   email: string;
   firstName: string;
   lastName: string;
+  balance: number;      
+  termsAccepted: boolean;
 }
 
 @Injectable({
@@ -110,7 +114,7 @@ export class AuthService {
   loadCurrentUser(): Observable<CurrentUser> {
     if (!this.isLoggedIn()) return throwError(() => new Error('User not authenticated'));
 
-    return this.http.get<CurrentUser>(`${this.userApiUrl}/profile`).pipe(
+    return this.http.get<CurrentUser>(`${this.userApiUrl}/me`).pipe(
       tap(user => this.currentUserSubject.next(user)),
       catchError(error => {
         console.error('Failed to load current user:', error);
@@ -119,6 +123,11 @@ export class AuthService {
       })
     );
   }
+getCurrentUserBalance(): Observable<number> {
+  return this.http.get<{ balance: number }>(`${this.userApiUrl}/user-balance`).pipe(
+    map(res => res.balance)
+  );
+}
 
   // ================= REGISTRATION =================
 
@@ -190,3 +199,4 @@ registerUser(userData: any): Observable<any> {
     }).catch(error => console.error('Login failed:', error));
   }
 }
+

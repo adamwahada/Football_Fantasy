@@ -33,6 +33,7 @@
     <img
       *ngIf="getLeagueIconUrl(competition)"
       [src]="getLeagueIconUrl(competition)"
+      
       [alt]="formatCompetitionName(competition) + ' logo'"
       class="league-logo"
       (error)="handleImageError($event)"
@@ -45,16 +46,17 @@
   <!-- Table Button - below and to the left -->
   <div class="flex justify-start">
     <button
-      mat-raised-button
-      color="primary"
-      class="text-white font-semibold px-4 py-2 rounded-lg shadow-lg hover:scale-105 transition-transform"
-      (click)="openLeagueTable(competition)"
-      matTooltip="View League Table"
-      aria-label="View League Table"
-    >
-      <mat-icon class="mr-2">table_chart</mat-icon>
-      Table
-    </button>
+    mat-raised-button
+    color="primary"
+    class="button-spacing text-white font-semibold px-4 py-2 rounded-lg shadow-lg hover:scale-105 transition-transform"
+    (click)="openLeagueTable(competition)"
+    matTooltip="View League Table"
+    aria-label="View League Table"
+  >
+    <mat-icon class="mr-2">table_chart</mat-icon>
+    Table
+  </button>
+  
   </div>
 </div>
 

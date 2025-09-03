@@ -324,7 +324,7 @@ export class UserGameweekDetailsComponent implements OnInit, OnDestroy {
   }
   // Lock if more than 2 ahead of current gameweek (keep your original logic)
   if (this.currentGameweek === null) return false;
-  return weekNumber > this.currentGameweek + 2;
+  return weekNumber > this.currentGameweek + 1;
 }
 
   /**

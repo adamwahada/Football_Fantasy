@@ -311,6 +311,7 @@ public class MatchUpdateService {
         }
     }
 
+    @Transactional
     private void processMatchData(Map<String, Object> matchData, LeagueTheme league, Set<GameWeek> affectedGameWeeks) {
         try {
             Map<String, Object> homeTeamMap = (Map<String, Object>) matchData.get("homeTeam");

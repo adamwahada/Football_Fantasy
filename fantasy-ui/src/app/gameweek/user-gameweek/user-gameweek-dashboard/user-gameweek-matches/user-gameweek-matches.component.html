@@ -85,14 +85,15 @@
           </section>
         </main>
         <!-- Session Participation Modal -->
-<app-session-participation-modal
-  [isVisible]="showParticipationModal"
-  [gameweekId]="selectedWeekNumber"
-  [currentCompetition]="selectedCompetition"
-  [predictions]="preparedPredictions"
-  (participationSubmitted)="onParticipationSubmitted($event)"
-  (modalClosed)="onModalClosed()"    >
-</app-session-participation-modal>
+      <app-session-participation-modal
+        [isVisible]="showParticipationModal"
+        [gameweekId]="gameweekId"
+        [currentCompetition]="selectedCompetition"
+        [predictions]="preparedPredictions"
+        [userBalance]="userBalance"
+        (participationSubmitted)="onParticipationSubmitted($event)"
+        (modalClosed)="onModalClosed()"
+      ></app-session-participation-modal>
 
         <!-- Footer -->
         <footer class="flex justify-between items-center mt-5 text-white/30 text-sm">

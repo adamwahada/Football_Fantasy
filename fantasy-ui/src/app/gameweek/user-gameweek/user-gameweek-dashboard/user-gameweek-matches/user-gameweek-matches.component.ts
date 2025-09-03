@@ -14,6 +14,8 @@ import { MatSnackBar } from '@angular/material/snack-bar';
 import { NotificationService } from '../../../../shared/notification.service';
 import { PredictionService, PredictionDTO, GameweekPredictionSubmissionDTO, PredictionError } from '../../../prediction.service';
 import { AuthService } from '../../../../core/services/auth.service';
+import { firstValueFrom } from 'rxjs';
+
 
 type PickOption = 'HOME_WIN' | 'DRAW' | 'AWAY_WIN' | null;
 
@@ -98,6 +100,7 @@ export class UserGameweekMatchesComponent implements OnInit, OnDestroy {
   get isModalComponentAvailable(): boolean {
     return !!this.modalComponent;
   }
+  userBalance: number = 0;
 
   selectedCompetition!: LeagueTheme;
   selectedWeekNumber = 0;
@@ -116,10 +119,14 @@ export class UserGameweekMatchesComponent implements OnInit, OnDestroy {
     });
     
     // ✅ CRITICAL FIX: Don't allow modal to be hidden if there's an error
-    if (value === false && this.modalComponent?.errorDisplay?.show && this.modalComponent?.errorDisplay?.canRetry) {
-      console.log('[MATCHES] 🚫 BLOCKING modal close - error is displayed and retryable!');
+    if (value === false && this.modalComponent?.errorDisplay?.show) {
+      console.log('[MATCHES] 🚫 BLOCKING modal close - error is displayed!');
       console.log('[MATCHES] 🚫 Error details:', this.modalComponent.errorDisplay);
+      console.log('[MATCHES] 🚫 Error canRetry:', this.modalComponent.errorDisplay.canRetry);
       console.log('[MATCHES] 🚫 This should prevent the modal from closing!');
+      
+      // ✅ CRITICAL FIX: Force modal to stay open by preventing the change
+      console.log('[MATCHES] 🚫 FORCING modal to stay open despite close request');
       return; // Don't close the modal
     }
     
@@ -173,35 +180,55 @@ export class UserGameweekMatchesComponent implements OnInit, OnDestroy {
     private authService: AuthService
   ) {}
 
-  ngOnInit(): void {
-    combineLatest([
-      this.teamService.getAllLeagueIcons(),
-      this.teamService.getAllTeamIcons(),
-      this.route.paramMap
-    ])
-      .pipe(takeUntil(this.destroy$))
-      .subscribe({
-        next: ([leagueIcons, teamIcons, params]) => {
-          this.leagueIcons = leagueIcons || {};
-          this.teamIconsMap = teamIcons || {};
-          this.teamsWithIcons = this.teamService.getTeamsWithIcons(Object.keys(this.teamIconsMap), this.teamIconsMap);
+ngOnInit(): void {
+  combineLatest([
+    this.teamService.getAllLeagueIcons(),
+    this.teamService.getAllTeamIcons(),
+    this.route.paramMap
+  ])
+    .pipe(takeUntil(this.destroy$))
+    .subscribe({
+      next: async ([leagueIcons, teamIcons, params]) => {
+        this.leagueIcons = leagueIcons || {};
+        this.teamIconsMap = teamIcons || {};
+        this.teamsWithIcons = this.teamService.getTeamsWithIcons(
+          Object.keys(this.teamIconsMap),
+          this.teamIconsMap
+        );
 
-          this.selectedCompetition = (params.get('competition') as LeagueTheme) || '' as LeagueTheme;
-          this.selectedWeekNumber = Number(params.get('weekNumber')) || 0;
+        this.selectedCompetition = (params.get('competition') as LeagueTheme) || ('' as LeagueTheme);
+        this.selectedWeekNumber = Number(params.get('weekNumber')) || 0;
 
-          if (this.selectedCompetition && this.selectedWeekNumber > 0) {
-            this.loadGameweekData();
-          } else {
-            this.error = 'Invalid gameweek parameters.';
-            this.matches = [];
-          }
-        },
-        error: () => {
-          this.error = 'Failed to load icons or route parameters.';
+        // ✅ Load the user balance
+        this.userBalance = await this.getCurrentUserBalance();
+
+        if (this.selectedCompetition && this.selectedWeekNumber > 0) {
+          this.loadGameweekData();
+        } else {
+          this.error = 'Invalid gameweek parameters.';
           this.matches = [];
         }
-      });
+      },
+      error: () => {
+        this.error = 'Failed to load icons or route parameters.';
+        this.matches = [];
+      }
+    });
+}
+
+// ✅ Add this helper if not already present
+private async getCurrentUserBalance(): Promise<number> {
+  if (!this.authService.isLoggedIn()) return 0;
+
+  try {
+    // Convert Observable<number> to Promise<number>
+    const balance = await firstValueFrom(this.authService.getCurrentUserBalance());
+    return balance ?? 0;
+  } catch (error) {
+    console.error('Error fetching user balance:', error);
+    return 0;
   }
+}
 
   // ✅ Add lifecycle hook to check modal component availability
   ngAfterViewInit() {
@@ -448,61 +475,17 @@ export class UserGameweekMatchesComponent implements OnInit, OnDestroy {
             this.notificationService.show('Prédictions soumises avec succès!', 'success');
             setTimeout(() => this.router.navigate(['/user/user-gameweek-list']), 2000);
           },
-          error: (error) => {
+                    error: (error) => {
             console.log('[MATCHES] 🔥 Error received from prediction service:', error);
-            console.log('[MATCHES] 🔥 Error type analysis:', {
-              isError: error instanceof Error,
-              hasErrorCode: 'errorCode' in error,
-              errorKeys: Object.keys(error),
-              errorConstructor: error.constructor.name,
-              // ✅ CRITICAL FIX: Add more detailed error analysis
-              errorStatus: (error as any)?.status,
-              errorStatusText: (error as any)?.statusText,
-              errorUrl: (error as any)?.url,
-              errorName: (error as any)?.name
-            });
             
-            // ✅ CRITICAL FIX: Handle PredictionError properly
-            if (error instanceof Error && 'errorCode' in error) {
-              console.log('[MATCHES] 🔥 Handling as PredictionError');
-              const errorData = {
-                message: error.message || 'Une erreur est survenue',
-                errorCode: (error as any).errorCode || 'UNKNOWN_ERROR',
-                details: (error as any).details || null
-              };
-              console.log('[MATCHES] 🔥 Modal component available:', this.isModalComponentAvailable);
-              console.log('[MATCHES] 🔥 About to call handleSubmissionError with:', errorData);
-              if (this.isModalComponentAvailable) {
-                this.modalComponent.handleSubmissionError(errorData);
-                console.log('[MATCHES] 🔥 handleSubmissionError called successfully');
-                console.log('[MATCHES] 🔥 Modal state after error handling:', {
-                  showParticipationModal: this.showParticipationModal,
-                  modalErrorState: this.modalComponent.errorDisplay
-                });
-              } else {
-                console.error('[MATCHES] ❌ Modal component not available!');
-              }
-            } else {
-              console.log('[MATCHES] 🔥 Handling as other error type');
-              // Handle other types of errors
-              const backend = (error as any)?.error || error;
-              const errorData = {
-                message: backend?.message || 'Une erreur est survenue',
-                errorCode: backend?.error || 'UNKNOWN_ERROR',
-                details: backend?.details || null
-              };
-              console.log('[MATCHES] 🔥 Modal component available:', this.isModalComponentAvailable);
-              console.log('[MATCHES] 🔥 About to call handleSubmissionError with:', errorData);
-              if (this.isModalComponentAvailable) {
-                this.modalComponent.handleSubmissionError(errorData);
-                console.log('[MATCHES] 🔥 handleSubmissionError called successfully');
-                console.log('[MATCHES] 🔥 Modal state after error handling:', {
-                  showParticipationModal: this.showParticipationModal,
-                  modalErrorState: this.modalComponent.errorDisplay
-                });
-              } else {
-                console.error('[MATCHES] ❌ Modal component not available!');
-              }
+            // ✅ SIMPLIFIED: Just show error message and keep modal open
+            if (this.isModalComponentAvailable) {
+              const errorMessage = error?.message || 'Une erreur est survenue lors de la soumission';
+              this.modalComponent.handleSubmissionError({
+                message: errorMessage,
+                errorCode: 'ERROR',
+                details: null
+              });
             }
           }
         });
@@ -538,17 +521,33 @@ export class UserGameweekMatchesComponent implements OnInit, OnDestroy {
     });
     console.log('[MATCHES] 🚪 Stack trace for modal close event:', new Error().stack);
     
-    // ✅ CRITICAL FIX: Don't close modal if there's a retryable error
-    if (this.modalComponent?.errorDisplay?.show && this.modalComponent?.errorDisplay?.canRetry) {
-      console.log('[MATCHES] 🚫 BLOCKING modal close from onModalClosed - retryable error is displayed');
+    // ✅ CRITICAL FIX: Don't close modal if there's any error
+    if (this.modalComponent?.errorDisplay?.show) {
+      console.log('[MATCHES] 🚫 BLOCKING modal close from onModalClosed - error is displayed');
       console.log('[MATCHES] 🚫 Error details:', this.modalComponent.errorDisplay);
       console.log('[MATCHES] 🚫 Error message:', this.modalComponent.errorDisplay.message);
       console.log('[MATCHES] 🚫 Error type:', this.modalComponent.errorDisplay.type);
-      console.log('[MATCHES] 🚫 Can retry:', this.modalComponent.errorDisplay.canRetry);
+      console.log('[MATCHES] 🚫 Error canRetry:', this.modalComponent.errorDisplay.canRetry);
+      
+      // ✅ CRITICAL FIX: Force modal to stay open by preventing the close
+      console.log('[MATCHES] 🚫 FORCING modal to stay open despite close event');
+      
+      // ✅ CRITICAL FIX: Ensure modal visibility is maintained
+      if (!this.showParticipationModal) {
+        console.log('[MATCHES] 🚫 Modal was marked as closed, forcing it back open');
+        this._showParticipationModal = true;
+      }
       return;
     }
     
-    this.showParticipationModal = false;
+    // ✅ CRITICAL FIX: Don't close modal if still loading
+    if (this.modalComponent?.isLoading) {
+      console.log('[MATCHES] 🚫 BLOCKING modal close from onModalClosed - still loading');
+      return;
+    }
+    
+    console.log('[MATCHES] 🚪 Allowing modal close - no blocking conditions');
+    this._showParticipationModal = false;
   }
 
   private showSuccessMessage(msg: string): void {
@@ -564,4 +563,47 @@ export class UserGameweekMatchesComponent implements OnInit, OnDestroy {
     this.showMessage = true;
     setTimeout(() => this.showMessage = false, 5000);
   }
+
+  // ✅ DEBUG METHOD: Log current modal state for troubleshooting
+  logModalState(context: string): void {
+    console.log(`[MATCHES DEBUG] ${context}:`, {
+      showParticipationModal: this.showParticipationModal,
+      modalComponentAvailable: this.isModalComponentAvailable,
+      modalErrorState: this.modalComponent?.errorDisplay,
+      modalLoadingState: this.modalComponent?.isLoading,
+      timestamp: new Date().toISOString()
+    });
+  }
+
+  // ✅ DEBUG METHOD: Force modal to stay open (emergency method)
+  forceModalOpen(): void {
+    console.log('[MATCHES DEBUG] 🚨 Force modal open called');
+    if (!this.showParticipationModal) {
+      console.log('[MATCHES DEBUG] 🚨 Modal was not visible, forcing it open');
+      this.showParticipationModal = true;
+    }
+    this.logModalState('forceModalOpen');
+  }
+
+  // ✅ CRITICAL FIX: Enhanced method to check if modal should stay open
+  shouldModalStayOpen(): boolean {
+    if (!this.isModalComponentAvailable) {
+      return false;
+    }
+    
+    const hasError = this.modalComponent.errorDisplay?.show;
+    const isLoading = this.modalComponent.isLoading;
+    
+    console.log('[MATCHES] 🔍 Checking if modal should stay open:', {
+      hasError,
+      isLoading,
+      errorDetails: this.modalComponent.errorDisplay
+    });
+    
+    return hasError || isLoading;
+  }
+
+get gameweekId(): number {
+  return this.currentGameweekId ?? 0;
+}
 }

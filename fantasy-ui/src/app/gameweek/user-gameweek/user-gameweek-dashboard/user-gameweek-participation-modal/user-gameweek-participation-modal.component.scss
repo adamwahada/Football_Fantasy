@@ -525,3 +525,44 @@ form {
   margin-top: 4px;
   font-weight: 500;
 }
+.buy-in-options {
+  .buy-in-option {
+    &.disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+      background-color: #f5f5f5;
+      border-color: #ddd;
+      
+      .insufficient-badge {
+        font-size: 0.75rem;
+        color: #dc3545;
+        font-weight: 500;
+      }
+    }
+    
+    &.unaffordable {
+      background-color: #fff5f5;
+      border-color: #fecaca;
+      color: #dc2626;
+    }
+  }
+}
+
+.balance-status-info {
+  padding: 8px 12px;
+  background-color: #fffbeb;
+  border: 1px solid #fed7aa;
+  border-radius: 6px;
+  margin-bottom: 12px;
+  
+  .info-icon {
+    margin-right: 6px;
+  }
+}
+
+.current-balance {
+  text-align: center;
+  margin-bottom: 12px;
+  font-size: 0.9rem;
+  color: #059669;
+}

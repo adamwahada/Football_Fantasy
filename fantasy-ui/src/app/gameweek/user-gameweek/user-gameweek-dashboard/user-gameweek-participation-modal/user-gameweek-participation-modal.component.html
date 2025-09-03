@@ -1,38 +1,16 @@
-<!-- user-gameweek-participation-modal.component.html - FIXED VERSION -->
+<!-- user-gameweek-participation-modal.component.html - Cleaned version with buy-in preserved -->
 <div class="modal-overlay" *ngIf="isVisible" (click)="onOverlayClick($event)">
   <div class="modal-content" (click)="$event.stopPropagation()">
     <div class="modal-header">
       <h2>Rejoindre une Compétition</h2>
-      <button class="close-btn" (click)="closeModal()" [disabled]="isLoading">&times;</button>
-      <!-- DEBUG: Test error button - REMOVED -->
+      <button class="close-btn" (click)="closeModal()" [disabled]="isLoading || errorDisplay.show">&times;</button>
     </div>
 
-    <!-- ✅ FIXED Error Display Section - Always visible when errorDisplay.show is true -->
-    <div *ngIf="errorDisplay.show" 
-         [ngClass]="'error-display-container ' + errorDisplay.type" 
-         class="error-container">
+    <!-- Error Display Section -->
+    <div *ngIf="errorDisplay.show" [ngClass]="'error-display-container ' + errorDisplay.type" class="error-container">
       <div class="error-header">
         <span class="error-icon">{{ getErrorIcon() }}</span>
         <strong class="error-title">{{ errorDisplay.message }}</strong>
-      </div>
-
-      <!-- Balance Information for Insufficient Balance Errors -->
-      <div *ngIf="errorDisplay.balanceInfo" class="balance-info-section">
-        <div class="balance-details">
-          <div class="balance-row">
-            <span class="label">Montant requis:</span>
-            <span class="value required">{{ errorDisplay.balanceInfo.required }}€</span>
-          </div>
-          <div class="balance-row">
-            <span class="label">Solde actuel:</span>
-            <span class="value current">{{ errorDisplay.balanceInfo.current }}€</span>
-          </div>
-          <div *ngIf="errorDisplay.balanceInfo.shortage && parseFloatSafe(errorDisplay.balanceInfo.shortage) > 0" 
-               class="balance-row shortage">
-            <span class="label">Manque:</span>
-            <span class="value shortage">{{ errorDisplay.balanceInfo.shortage }}€</span>
-          </div>
-        </div>
       </div>
 
       <!-- Suggestions Section -->
@@ -43,21 +21,6 @@
             {{ suggestion }}
           </li>
         </ul>
-      </div>
-
-      <!-- Alternative Buy-in Amounts for Insufficient Balance -->
-      <div *ngIf="isInsufficientBalanceError() && getSuggestedAmounts().length > 0" 
-           class="alternative-amounts-section">
-        <h4>Montants disponibles avec votre solde:</h4>
-        <div class="suggested-amounts">
-          <button *ngFor="let amount of getSuggestedAmounts()" 
-                  type="button"
-                  class="suggested-amount-btn"
-                  [class.selected]="selectedBuyIn === amount"
-                  (click)="selectSuggestedAmount(amount)">
-            {{ amount.toFixed(2) }}€
-          </button>
-        </div>
       </div>
 
       <!-- Retry/Close Button for Error Actions -->
@@ -79,7 +42,7 @@
       </div>
     </div>
 
-    <!-- ✅ Main Form - Only show if no error or retryable error -->
+    <!-- Main Form -->
     <form [formGroup]="participationForm" (ngSubmit)="onSubmit()" 
           *ngIf="!errorDisplay.show || errorDisplay.canRetry">
       
@@ -97,19 +60,36 @@
         </div>
       </div>
 
-      <!-- Buy-in options -->
-      <div class="form-group">
-        <label>Mise (€):</label>
+      <!-- Buy-in Amount Selection -->
+      <div class="buy-in-section">
+        <label class="section-label">Montant de mise</label>
         <div class="buy-in-options">
-          <button *ngFor="let amount of buyInOptions"
-                  type="button"
-                  [class.active]="amount === selectedBuyIn"
-                  [disabled]="isLoading"
-                  (click)="selectBuyIn(amount)">
-            {{amount.toFixed(2)}}€
+          <button 
+            *ngFor="let amount of buyInOptions" 
+            type="button"
+            [class]="getBuyInButtonClass(amount)"
+            [disabled]="!isAmountAffordable(amount) || isLoading"
+            (click)="onBuyInClick(amount)"
+            [attr.title]="!isAmountAffordable(amount) ? 'Solde insuffisant pour ce montant' : ''">
+            <span class="amount">{{ amount.toFixed(2) }}€</span>
+            <span *ngIf="!isAmountAffordable(amount)" class="insufficient-badge">Insuffisant</span>
+            <span *ngIf="selectedBuyIn === amount" class="selected-indicator">✓</span>
           </button>
         </div>
-        <small class="debug-info">Selected: {{selectedBuyIn.toFixed(2)}}€</small>
+
+        <!-- No Affordable Amounts Warning -->
+        <div *ngIf="!hasAnyAffordableAmount()" class="no-affordable-warning">
+          <span class="warning-icon">⚠️</span>
+          Aucun montant n'est disponible avec votre solde actuel. 
+          <a href="/wallet/recharge" class="recharge-link">Recharger le compte</a>
+        </div>
+
+        <!-- Selected Amount Display -->
+        <div class="selected-amount-display" *ngIf="selectedBuyIn > 0">
+          Montant sélectionné: <strong>{{ selectedBuyIn.toFixed(2) }}€</strong>
+          <span *ngIf="isAmountAffordable(selectedBuyIn)" class="affordable-indicator">✓ Disponible</span>
+          <span *ngIf="!isAmountAffordable(selectedBuyIn)" class="unaffordable-indicator">⚠️ Insuffisant</span>
+        </div>
       </div>
 
       <div class="form-group">
@@ -139,23 +119,24 @@
         <p *ngIf="tiebreakerCount > 0">{{ tiebreakerCount }} tie-break(s) inclus</p>
       </div>
 
+      <!-- Modal Footer -->
       <div class="modal-footer">
         <button type="button" 
                 class="btn btn-secondary" 
                 (click)="closeModal()" 
-                [disabled]="isLoading">
+                [disabled]="isLoading || errorDisplay.show">
           Annuler
         </button>
         <button type="submit"
                 class="btn btn-primary"
-                [disabled]="participationForm.invalid || isLoading || selectedBuyIn <= 0">
+                [disabled]="participationForm.invalid || isLoading || selectedBuyIn <= 0 || !isAmountAffordable(selectedBuyIn) || !hasAnyAffordableAmount()">
           <span *ngIf="isLoading" class="spinner"></span>
           {{ isLoading ? 'Traitement...' : 'Confirmer et Rejoindre' }}
         </button>
       </div>
     </form>
 
-    <!-- ✅ Alternative: Show only error message for non-retryable errors -->
+    <!-- Alternative: Show only error message for non-retryable errors -->
     <div *ngIf="errorDisplay.show && !errorDisplay.canRetry && errorDisplay.type !== 'success'" 
          class="error-only-content">
       <div class="error-only-message">
@@ -168,6 +149,13 @@
         </div>
       </div>
     </div>
+
+    <!-- Loading Overlay -->
+    <div *ngIf="isLoading" class="loading-overlay">
+      <div class="loading-spinner">
+        <div class="spinner-ring"></div>
+        <p>Traitement en cours...</p>
+      </div>
+    </div>
   </div>
 </div>
-

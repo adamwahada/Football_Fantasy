@@ -1,4 +1,4 @@
-// user-gameweek-participation-modal.component.ts - FIXED VERSION
+// user-gameweek-participation-modal.component.ts - Enhanced with Balance Filtering
 import { Component, Input, Output, EventEmitter, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
@@ -52,6 +52,9 @@ export class UserGameweekParticipationModalComponent implements OnInit {
   @Input() currentCompetition: LeagueTheme = 'PREMIER_LEAGUE';
   @Input() predictions: PredictionPayload[] = [];
   
+  // ✅ NEW: Add user balance input to receive from parent
+  @Input() userBalance: number = 0;
+  
   @Output() participationSubmitted = new EventEmitter<{
     sessionData: SessionParticipationData;
     predictions: PredictionPayload[];
@@ -82,68 +85,201 @@ export class UserGameweekParticipationModalComponent implements OnInit {
     });
   }
 
-  ngOnInit() {
-    console.log('[MODAL] 🎬 Modal initialized with:', {
-      gameweekId: this.gameweekId,
-      competition: this.currentCompetition,
-      predictionsCount: this.predictions.length
-    });
+ngOnInit() {
+  console.log('[MODAL] 🎬 Modal initialized with:', {
+    gameweekId: this.gameweekId,
+    competition: this.currentCompetition,
+    predictionsCount: this.predictions.length,
+    userBalance: this.userBalance,
+    userBalanceType: typeof this.userBalance
+  });
 
-    // Watch for private session changes
-    this.participationForm.get('isPrivate')?.valueChanges.subscribe(isPrivate => {
-      const accessKeyControl = this.participationForm.get('accessKey');
-      
-      if (isPrivate) {
-        accessKeyControl?.setValidators([Validators.required]);
-      } else {
-        accessKeyControl?.clearValidators();
-        accessKeyControl?.setValue('');
+  // ✅ CRITICAL FIX: Ensure userBalance is a number
+  this.userBalance = Number(this.userBalance) || 0;
+  console.log('[MODAL] 💰 Converted userBalance:', this.userBalance);
+
+  // Set initial buy-in to highest affordable amount
+  this.setInitialBuyInAmount();
+
+  // Watch for private session changes
+  this.participationForm.get('isPrivate')?.valueChanges.subscribe(isPrivate => {
+    const accessKeyControl = this.participationForm.get('accessKey');
+    
+    if (isPrivate) {
+      accessKeyControl?.setValidators([Validators.required]);
+    } else {
+      accessKeyControl?.clearValidators();
+      accessKeyControl?.setValue('');
+    }
+    accessKeyControl?.updateValueAndValidity();
+  });
+}
+
+  // ✅ NEW: Method to set initial buy-in to highest affordable amount
+  private setInitialBuyInAmount() {
+    const affordableAmounts = this.getAffordableAmounts();
+    if (affordableAmounts.length > 0) {
+      // Set to highest affordable amount, or keep current if it's affordable
+      const currentlyAffordable = affordableAmounts.includes(this.selectedBuyIn);
+      if (!currentlyAffordable) {
+        this.selectedBuyIn = Math.max(...affordableAmounts);
+        console.log('[MODAL] 💰 Set initial buy-in to highest affordable amount:', this.selectedBuyIn);
       }
-      accessKeyControl?.updateValueAndValidity();
-    });
+    } else {
+      // No affordable amounts - keep current selection but user will see they're all disabled
+      console.log('[MODAL] 💸 No affordable amounts available. Current balance:', this.userBalance);
+    }
   }
 
-  // ✅ CRITICAL FIX: Watch for isVisible changes from parent
-  ngOnChanges(changes: any) {
-    if (changes['isVisible']) {
-      console.log('[MODAL] 🔄 isVisible changed:', {
-        from: changes['isVisible'].previousValue,
-        to: changes['isVisible'].currentValue,
-        isFirstChange: changes['isVisible'].isFirstChange,
-        stack: new Error().stack
-      });
-      
-      // If parent wants to hide modal, clear any errors and reset state
-      if (!changes['isVisible'].currentValue) {
-        console.log('[MODAL] 🚪 Parent requested modal close - this should NOT happen for insufficient balance errors!');
-        console.log('[MODAL] 🚪 Current error state:', this.errorDisplay);
-        console.log('[MODAL] 🚪 Stack trace for modal close request:', new Error().stack);
-        
-        // ✅ CRITICAL FIX: Don't allow parent to close modal if there's a retryable error
-        if (this.errorDisplay.show && this.errorDisplay.canRetry) {
-          console.log('[MODAL] 🚫 BLOCKING parent-requested modal close - retryable error is displayed');
-          console.log('[MODAL] 🚫 Error details:', this.errorDisplay);
-          console.log('[MODAL] 🚫 Error message:', this.errorDisplay.message);
-          console.log('[MODAL] 🚫 Error type:', this.errorDisplay.type);
-          console.log('[MODAL] 🚫 Can retry:', this.errorDisplay.canRetry);
-          console.log('[MODAL] 🚫 This should keep the modal open!');
-          return; // Don't process the close request
-        }
-        
-        console.log('[MODAL] 🚪 Processing modal close request - no retryable errors');
+  // ✅ CRITICAL FIX: Watch for input changes including userBalance
+ngOnChanges(changes: any) {
+  console.log('[MODAL] 🔄 ngOnChanges called with:', changes);
+  
+  if (changes['userBalance']) {
+    const oldBalance = changes['userBalance'].previousValue;
+    const newBalance = changes['userBalance'].currentValue;
+    
+    console.log('[MODAL] 💰 Balance change detected:', {
+      from: oldBalance,
+      to: newBalance,
+      type: typeof newBalance
+    });
+    
+    // ✅ CRITICAL: Ensure it's a number
+    this.userBalance = Number(newBalance) || 0;
+    
+    console.log('[MODAL] 💰 Processed balance:', this.userBalance);
+    
+    // Update initial buy-in when balance changes
+    this.setInitialBuyInAmount();
+    
+    // Clear insufficient balance errors if balance increased
+    if (this.errorDisplay.show && this.errorDisplay.details?.isInsufficientBalance) {
+      if (this.userBalance >= this.selectedBuyIn) {
+        console.log('[MODAL] 💰 Balance increased enough to cover selected amount - clearing error');
         this.clearError();
-        this.isLoading = false;
       }
     }
   }
 
-  // ✅ Add lifecycle logging
-  ngOnDestroy() {
-    console.log('[MODAL] 💀 Modal component destroyed');
+  if (changes['isVisible']) {
+    console.log('[MODAL] 🔄 isVisible changed:', {
+      from: changes['isVisible'].previousValue,
+      to: changes['isVisible'].currentValue,
+      currentBalance: this.userBalance
+    });
+    
+    if (!changes['isVisible'].currentValue) {
+      if (this.errorDisplay.show) {
+        console.log('[MODAL] 🚫 BLOCKING parent-requested modal close - error is displayed');
+        return;
+      }
+      this.clearError();
+      this.isLoading = false;
+    }
+  }
+}
+
+  // ✅ NEW: Method to get amounts user can afford
+getAffordableAmounts(): number[] {
+  const affordable = this.buyInOptions.filter(amount => {
+    const canAfford = amount <= this.userBalance;
+    console.log('[MODAL] 💰 Checking amount:', amount, 'vs balance:', this.userBalance, '→', canAfford);
+    return canAfford;
+  });
+  
+  console.log('[MODAL] 💰 Affordable amounts:', affordable);
+  return affordable;
+}
+
+isAmountAffordable(amount: number): boolean {
+  const affordable = amount <= this.userBalance;
+  console.log('[MODAL] 💰 Is', amount, 'affordable with balance', this.userBalance, '?', affordable);
+  return affordable;
+}
+
+
+  // ✅ NEW: Method to get the CSS class for buy-in buttons
+  getBuyInButtonClass(amount: number): string {
+    const baseClass = 'buy-in-option';
+    const isSelected = this.selectedBuyIn === amount;
+    const isAffordable = this.isAmountAffordable(amount);
+    
+    if (!isAffordable) {
+      return `${baseClass} disabled unaffordable`;
+    } else if (isSelected) {
+      return `${baseClass} selected`;
+    } else {
+      return baseClass;
+    }
   }
 
-  ngAfterViewInit() {
-    console.log('[MODAL] 👁️ Modal view initialized');
+  // ✅ NEW: Enhanced method to handle buy-in click with affordability check
+  onBuyInClick(amount: number) {
+    if (!this.isAmountAffordable(amount)) {
+      console.log('[MODAL] 💸 User clicked unaffordable amount:', amount);
+      
+      // Show a helpful message about insufficient balance
+      this.showError(
+        `Solde insuffisant pour ${amount}€. Votre solde actuel: ${this.userBalance.toFixed(2)}€`,
+        'warning',
+        { isInsufficientBalance: true, clickedAmount: amount },
+        [
+          `Choisissez un montant inférieur ou égal à ${this.userBalance.toFixed(2)}€`,
+          'Rechargez votre compte pour accéder à tous les montants'
+        ],
+        true
+      );
+      return;
+    }
+    
+    // Select the affordable amount
+    this.selectBuyIn(amount);
+  }
+
+  // ✅ ENHANCED: Method to handle buy-in selection with affordability validation
+  selectBuyIn(amount: number) {
+    // Double-check affordability
+    if (!this.isAmountAffordable(amount)) {
+      console.log('[MODAL] 💸 Cannot select unaffordable amount:', amount);
+      return;
+    }
+    
+    this.selectedBuyIn = amount;
+    
+    // ✅ CRITICAL FIX: Only clear errors if user is making a change that could fix the error
+    if (this.errorDisplay.show && this.errorDisplay.details?.isInsufficientBalance) {
+      console.log('[MODAL] 💰 User changed to affordable buy-in amount - clearing insufficient balance error');
+      this.clearError();
+    }
+    
+    console.log('[MODAL] 💰 Selected affordable buy-in amount:', amount, typeof amount);
+  }
+
+  // ✅ NEW: Method to get balance status message
+getBalanceStatusMessage(): string | null {
+  console.log('[MODAL] 💰 Getting balance status for:', this.userBalance);
+  
+  if (this.userBalance <= 0) {
+    return 'Aucun solde disponible. Veuillez recharger votre compte.';
+  }
+  
+  const affordableAmounts = this.getAffordableAmounts();
+  if (affordableAmounts.length === 0) {
+    return `Solde insuffisant pour toutes les options. Solde actuel: ${this.userBalance.toFixed(2)}€`;
+  }
+  
+  if (affordableAmounts.length < this.buyInOptions.length) {
+    const maxAffordable = Math.max(...affordableAmounts);
+    return `Montant maximum disponible: ${maxAffordable.toFixed(2)}€`;
+  }
+  
+  return null; // User can afford all amounts
+}
+
+  // ✅ NEW: Method to check if any amount is affordable
+  hasAnyAffordableAmount(): boolean {
+    return this.getAffordableAmounts().length > 0;
   }
 
   get tiebreakerCount(): number {
@@ -151,66 +287,31 @@ export class UserGameweekParticipationModalComponent implements OnInit {
   }
 
   onOverlayClick(event: Event) {
-    console.log('[MODAL] 🖱️ Overlay click detected:', {
-      target: event.target,
-      currentTarget: event.currentTarget,
-      isLoading: this.isLoading,
-      hasError: this.errorDisplay.show,
-      errorCanRetry: this.errorDisplay.canRetry,
-      stack: new Error().stack
-    });
+    console.log('[MODAL] 🖱️ Overlay click detected');
     
     // ✅ CRITICAL FIX: Don't allow closing modal by overlay click when there's a retryable error
     if (event.target === event.currentTarget && !this.isLoading && !this.errorDisplay.show) {
-      console.log('[MODAL] 🚪 Allowing modal close via overlay click');
       this.closeModal();
-    } else if (this.errorDisplay.show) {
-      console.log('[MODAL] 🚫 Blocking modal close via overlay click - error is displayed');
-      console.log('[MODAL] 🚫 Error details:', this.errorDisplay);
-      console.log('[MODAL] 🚫 Error message:', this.errorDisplay.message);
-      console.log('[MODAL] 🚫 Error type:', this.errorDisplay.type);
-      console.log('[MODAL] 🚫 Can retry:', this.errorDisplay.canRetry);
-    } else if (this.isLoading) {
-      console.log('[MODAL] 🚫 Blocking modal close via overlay click - loading in progress');
     }
   }
 
   closeModal() {
-    console.log('[MODAL] 🚪 Close modal requested:', {
-      isLoading: this.isLoading,
-      hasError: this.errorDisplay.show,
-      errorCanRetry: this.errorDisplay.canRetry,
-      stack: new Error().stack
-    });
+    console.log('[MODAL] 🚪 Close modal requested');
     
     if (this.isLoading) {
       console.log('[MODAL] ⏳ Cannot close modal while loading');
       return;
     }
     
-    // ✅ CRITICAL FIX: Don't close modal if there's a retryable error
-    if (this.errorDisplay.show && this.errorDisplay.canRetry) {
-      console.log('[MODAL] 🚫 Blocking modal close - retryable error is displayed');
-      console.log('[MODAL] 🚫 Error details:', this.errorDisplay);
-      console.log('[MODAL] 🚫 Error message:', this.errorDisplay.message);
-      console.log('[MODAL] 🚫 Error type:', this.errorDisplay.type);
-      console.log('[MODAL] 🚫 Can retry:', this.errorDisplay.canRetry);
-      console.log('[MODAL] 🚫 This should prevent the modal from closing!');
+    // ✅ CRITICAL FIX: Don't close modal if there's any error displayed
+    if (this.errorDisplay.show) {
+      console.log('[MODAL] 🚫 Blocking modal close - error is displayed');
       return;
     }
     
-    console.log('[MODAL] 🚪 Allowing modal close - no blocking conditions');
-    this.isVisible = false;
     this.clearError();
     this.isLoading = false;
     this.modalClosed.emit();
-  }
-
-  // Method to handle buy-in selection
-  selectBuyIn(amount: number) {
-    this.selectedBuyIn = amount;
-    this.clearError(); // Clear errors when user makes changes
-    console.log('[MODAL] 💰 Selected buy-in amount:', amount, typeof amount);
   }
 
   // ✅ Enhanced error handling methods
@@ -222,15 +323,6 @@ export class UserGameweekParticipationModalComponent implements OnInit {
     canRetry: boolean = true,
     balanceInfo?: { required: string; current: string; shortage: string }
   ) {
-    console.log('[MODAL] 🚨 showError called with:', {
-      message,
-      type,
-      details,
-      suggestions,
-      canRetry,
-      balanceInfo
-    });
-    
     this.errorDisplay = {
       show: true,
       message,
@@ -240,17 +332,6 @@ export class UserGameweekParticipationModalComponent implements OnInit {
       canRetry,
       balanceInfo
     };
-    
-    console.log('[MODAL] 🚨 Error display set to:', this.errorDisplay);
-    console.log('[MODAL] 🚨 Modal visibility state:', this.isVisible);
-    console.log('[MODAL] 🚨 Error type:', type);
-    console.log('[MODAL] 🚨 Can retry:', canRetry);
-    
-    // ✅ CRITICAL FIX: Ensure modal stays visible when showing errors
-    if (type === 'error' && !this.isVisible) {
-      console.log('[MODAL] 🚨 Modal was not visible, ensuring it stays open for error display');
-      // Don't change isVisible here, let the parent manage it
-    }
     
     // Auto-hide success/info messages after delay
     if (type === 'success' || type === 'info') {
@@ -271,17 +352,10 @@ export class UserGameweekParticipationModalComponent implements OnInit {
     };
   }
 
-  // ✅ MAIN FIX: Enhanced method to handle errors from parent component
+  // ✅ ENHANCED: Updated to work with userBalance input
   handleSubmissionError(error: any) {
     console.log('[MODAL] 💥 Handling submission error:', error);
-    console.log('[MODAL] 💥 Current modal state before error handling:', {
-      isVisible: this.isVisible,
-      isLoading: this.isLoading,
-      errorDisplay: this.errorDisplay
-    });
-    console.log('[MODAL] 💥 Stack trace for error handling:', new Error().stack);
     
-    // ✅ CRITICAL FIX: Always stop loading immediately
     this.isLoading = false;
 
     // ✅ Define errors that should KEEP the modal OPEN for user to fix
@@ -300,14 +374,12 @@ export class UserGameweekParticipationModalComponent implements OnInit {
       'PREDICTIONS_REQUIRED',
       'NETWORK_ERROR',
       'ACCESS_KEY_REQUIRED',
-      // ✅ CRITICAL FIX: Add all validation-related errors
       'PREDICTIONS_MISSING',
       'PREDICTIONS_INCOMPLETE',
       'MATCH_PREDICTIONS_REQUIRED',
       'TIEBREAK_SCORES_REQUIRED'
     ];
 
-    // ✅ CRITICAL FIX: Extract error code from various possible locations
     let errorCode = 'UNKNOWN_ERROR';
     if (error?.errorCode) {
       errorCode = error.errorCode;
@@ -319,93 +391,47 @@ export class UserGameweekParticipationModalComponent implements OnInit {
 
     const shouldKeepModalOpen = KEEP_MODAL_OPEN_ERRORS.includes(errorCode);
 
-    console.log('[MODAL] 🔍 Error analysis:', {
-      errorCode,
-      shouldKeepModalOpen,
-      errorObject: error,
-      extractedErrorCode: errorCode,
-      // ✅ CRITICAL FIX: Add more detailed error analysis
-      errorKeys: Object.keys(error || {}),
-      errorType: typeof error,
-      errorConstructor: error?.constructor?.name
-    });
-
     // Handle insufficient balance with detailed information
     if (errorCode === 'INSUFFICIENT_BALANCE') {
-      console.log('[MODAL] 💸 Insufficient balance error details:', error);
-      console.log('[MODAL] 💸 Error structure analysis:', {
-        hasDetails: !!error.details,
-        detailsKeys: error.details ? Object.keys(error.details) : [],
-        detailsValues: error.details,
-        errorKeys: Object.keys(error)
-      });
-      
-      // ✅ CRITICAL FIX: Handle both error.details and direct properties from prediction service
       const details = error.details || {};
       let balanceMessage = 'Solde insuffisant pour rejoindre cette session';
       let suggestions = ['Veuillez recharger votre compte', 'Ou choisissez un montant inférieur'];
       let balanceInfo = undefined;
       
-      // Check if we have balance info either in details or directly on the error object
-      const required = details?.required || error.required;
-      const current = details?.current || error.current;
-      const shortage = details?.shortage || error.shortage;
+      // ✅ ENHANCED: Use userBalance input as fallback
+      const required = details?.required || this.selectedBuyIn.toString();
+      const current = details?.current || this.userBalance.toString();
+      const shortage = details?.shortage || this.calculateShortage(required, current);
       
-      if (required && current) {
-        balanceMessage = `Solde insuffisant. Vous avez besoin de ${required}€ mais n'avez que ${current}€`;
-        
-        balanceInfo = {
-          required: required,
-          current: current,
-          shortage: shortage || this.calculateShortage(required, current)
-        };
-        
-        if (balanceInfo.shortage && this.parseFloatSafe(balanceInfo.shortage) > 0) {
-          suggestions.unshift(`Il vous manque ${balanceInfo.shortage}€`);
-        }
+      balanceMessage = `Solde insuffisant. Vous avez besoin de ${required}€ mais n'avez que ${current}€`;
+      
+      balanceInfo = {
+        required: required,
+        current: current,
+        shortage: shortage
+      };
+      
+      if (balanceInfo.shortage && this.parseFloatSafe(balanceInfo.shortage) > 0) {
+        suggestions.unshift(`Il vous manque ${balanceInfo.shortage}€`);
       }
       
-      // Show available lower amounts as suggestions
-      const currentAmount = this.parseFloatSafe(details.current || '0');
-      const availableAmounts = this.buyInOptions.filter(amount => amount <= currentAmount);
-      if (availableAmounts.length > 0) {
-        suggestions.push(`Montants disponibles avec votre solde: ${availableAmounts.join('€, ')}€`);
+      // ✅ ENHANCED: Show available amounts based on current balance
+      const affordableAmounts = this.getAffordableAmounts();
+      if (affordableAmounts.length > 0) {
+        suggestions.push(`Montants disponibles: ${affordableAmounts.join('€, ')}€`);
+      } else {
+        suggestions.push('Aucun montant disponible avec votre solde actuel');
       }
 
-      console.log('[MODAL] 💸 Showing insufficient balance error with:', {
-        message: balanceMessage,
-        suggestions,
-        balanceInfo,
-        canRetry: true
-      });
-
-      console.log('[MODAL] 💸 About to show insufficient balance error');
-      
       this.showError(
         balanceMessage, 
         'error', 
         { ...details, isInsufficientBalance: true }, 
         suggestions, 
-        true, // ✅ canRetry = true, keeps modal open
+        true,
         balanceInfo
       );
       
-      console.log('[MODAL] 💸 Error displayed, modal state after showError:', {
-        isVisible: this.isVisible,
-        isLoading: this.isLoading,
-        errorDisplay: this.errorDisplay
-      });
-      
-      // ✅ CRITICAL FIX: Add a small delay to ensure error is fully displayed
-      setTimeout(() => {
-        console.log('[MODAL] 💸 Modal state after delay:', {
-          isVisible: this.isVisible,
-          isLoading: this.isLoading,
-          errorDisplay: this.errorDisplay
-        });
-      }, 100);
-      
-      // ✅ IMPORTANT: Return early to keep modal open
       return;
     }
 
@@ -440,7 +466,6 @@ export class UserGameweekParticipationModalComponent implements OnInit {
         type: 'error',
         suggestions: ['Vérifiez tous les champs', 'Assurez-vous que toutes les prédictions sont complètes']
       },
-      // ✅ CRITICAL FIX: Add specific handling for prediction-related errors
       'PREDICTIONS_REQUIRED': {
         message: 'Aucune prédiction trouvée. Veuillez faire vos prédictions d\'abord.',
         type: 'error',
@@ -485,9 +510,9 @@ export class UserGameweekParticipationModalComponent implements OnInit {
         errorConfig.type, 
         error,
         errorConfig.suggestions, 
-        true // ✅ canRetry = true, keeps modal open
+        true
       );
-      return; // ✅ Keep modal open
+      return;
     }
 
     // ✅ For critical errors that require navigation (authentication, etc.)
@@ -505,12 +530,13 @@ export class UserGameweekParticipationModalComponent implements OnInit {
         'error', 
         error,
         ['Reconnectez-vous à votre compte'],
-        false // ✅ canRetry = false, will close modal
+        false
       );
       
-      // Close modal after a delay for authentication errors
       setTimeout(() => {
-        this.closeModal();
+        if (!this.errorDisplay.show || this.errorDisplay.type === 'error') {
+          this.closeModal();
+        }
       }, 3000);
       return;
     }
@@ -523,24 +549,20 @@ export class UserGameweekParticipationModalComponent implements OnInit {
         'error', 
         error,
         ['Vérifiez vos données et réessayez', 'Contactez le support si le problème persiste'],
-        true // ✅ Keep modal open for user to retry
+        true
       );
       return;
     }
 
-    // ✅ Default case - show error and close modal only for truly unrecoverable errors
+    // ✅ Default case - show error and keep modal open for better UX
     const message = error?.message || 'Une erreur inattendue est survenue';
     this.showError(
       message, 
       'error', 
       error,
-      ['Contactez le support si le problème persiste'],
-      false
+      ['Vérifiez vos données et réessayez', 'Contactez le support si le problème persiste'],
+      true
     );
-
-    setTimeout(() => {
-      this.closeModal();
-    }, 4000);
   }
 
   // ✅ Method to handle successful submission
@@ -559,9 +581,10 @@ export class UserGameweekParticipationModalComponent implements OnInit {
       false
     );
     
-    // Close modal after success delay
     setTimeout(() => {
-      this.closeModal();
+      if (!this.errorDisplay.show || this.errorDisplay.type === 'success') {
+        this.closeModal();
+      }
     }, 2000);
   }
 
@@ -592,6 +615,14 @@ export class UserGameweekParticipationModalComponent implements OnInit {
       };
     }
 
+    // ✅ NEW: Validate selected amount is affordable
+    if (!this.isAmountAffordable(this.selectedBuyIn)) {
+      return {
+        isValid: false,
+        errorMessage: `Solde insuffisant pour ${this.selectedBuyIn}€. Solde disponible: ${this.userBalance.toFixed(2)}€`
+      };
+    }
+
     if (!this.predictions || this.predictions.length === 0) {
       return {
         isValid: false,
@@ -605,8 +636,7 @@ export class UserGameweekParticipationModalComponent implements OnInit {
   // ✅ Enhanced onSubmit method
   onSubmit() {
     console.log('[MODAL] Form submission started');
-    this.clearError();
-
+    
     // Validate form
     const validation = this.validateForm();
     if (!validation.isValid) {
@@ -630,16 +660,6 @@ export class UserGameweekParticipationModalComponent implements OnInit {
       accessKey: (formValue.isPrivate && formValue.accessKey) ? formValue.accessKey.trim() : undefined
     };
 
-    // Enhanced debug logs
-    console.log('[MODAL SUBMIT] ✅ VALID sessionData being emitted:');
-    console.log('- gameweekId:', sessionData.gameweekId, typeof sessionData.gameweekId);
-    console.log('- competition:', sessionData.competition, typeof sessionData.competition);
-    console.log('- sessionType:', sessionData.sessionType, typeof sessionData.sessionType);
-    console.log('- buyInAmount:', sessionData.buyInAmount, typeof sessionData.buyInAmount);
-    console.log('- isPrivate:', sessionData.isPrivate, typeof sessionData.isPrivate);
-    console.log('- accessKey:', sessionData.accessKey);
-    console.log('- Predictions count:', this.predictions.length);
-
     console.log('[MODAL SUBMIT] 🚀 Emitting participation data to parent...');
 
     // Emit the event but DO NOT close the modal here
@@ -647,10 +667,6 @@ export class UserGameweekParticipationModalComponent implements OnInit {
       sessionData,
       predictions: this.predictions
     });
-
-    // ✅ IMPORTANT: The parent component MUST call either:
-    // - this.modalComponent.handleSubmissionSuccess(...) to close modal on success
-    // - this.modalComponent.handleSubmissionError(...) to show error and keep modal open
   }
 
   // ✅ Method to get error icon based on type
@@ -695,14 +711,9 @@ export class UserGameweekParticipationModalComponent implements OnInit {
            this.errorDisplay.details?.error === 'INSUFFICIENT_BALANCE';
   }
 
-  // ✅ Method to suggest alternative buy-in amounts based on user's balance
+  // ✅ ENHANCED: Method to suggest alternative buy-in amounts based on user's balance
   getSuggestedAmounts(): number[] {
-    if (!this.errorDisplay.balanceInfo?.current) {
-      return [];
-    }
-    
-    const currentBalance = parseFloat(this.errorDisplay.balanceInfo.current);
-    return this.buyInOptions.filter(amount => amount <= currentBalance);
+    return this.getAffordableAmounts();
   }
 
   // ✅ Method to handle selecting a suggested amount
@@ -711,5 +722,34 @@ export class UserGameweekParticipationModalComponent implements OnInit {
     this.clearError();
   }
 
+  // ✅ Method to check if modal should stay open
+  shouldModalStayOpen(): boolean {
+    if (!this.isVisible) {
+      return false;
+    }
+    
+    const hasError = this.errorDisplay.show;
+    const isLoading = this.isLoading;
+    
+    return hasError || isLoading;
+  }
 
+  // ✅ Force modal open from parent
+  forceModalOpen(): void {
+    console.log('[MODAL] 🚀 Force modal open called');
+    this.isVisible = true;
+  }
+
+  // ✅ Helper method to log modal state for debugging
+  private logModalState(methodName: string): void {
+    console.log('[MODAL] 🔄 Current Modal State:', {
+      isVisible: this.isVisible,
+      isLoading: this.isLoading,
+      errorDisplay: this.errorDisplay,
+      userBalance: this.userBalance,
+      selectedBuyIn: this.selectedBuyIn,
+      affordableAmounts: this.getAffordableAmounts(),
+      methodCalled: methodName
+    });
+  }
 }

@@ -7,6 +7,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.math.BigDecimal;
 import java.util.Map;
 
 @RestController
@@ -16,8 +17,39 @@ public class UserController {
     @Autowired
     private UserService userService;
 
+    // ✅ Get current user profile (with balance)
+    @GetMapping("/me")
+    public ResponseEntity<UserProfileResponse> getCurrentUser() {
+        try {
+            UserEntity currentUser = userService.getCurrentUser();
+            UserProfileResponse response = new UserProfileResponse(
+                    currentUser.getId(),
+                    currentUser.getUsername(),
+                    currentUser.getEmail(),
+                    currentUser.getFirstName(),
+                    currentUser.getLastName(),
+                    currentUser.getBalance(),
+                    currentUser.getTermsAccepted()
+            );
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
+    }
+
+    // ✅ Get just the balance (useful for quick competition checks)
+    @GetMapping("/user-balance")
+    public ResponseEntity<BalanceResponse> getCurrentUserBalance() {
+        try {
+            UserEntity currentUser = userService.getCurrentUser();
+            return ResponseEntity.ok(new BalanceResponse(currentUser.getBalance()));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
+    }
+
     /**
-     * Get current user profile
+     * Existing endpoints...
      */
     @GetMapping("/profile")
     public ResponseEntity<UserEntity> getCurrentUserProfile() {
@@ -29,9 +61,6 @@ public class UserController {
         }
     }
 
-    /**
-     * Update current user profile
-     */
     @PutMapping("/profile")
     public ResponseEntity<UserEntity> updateProfile(@RequestBody UserService.UserProfileUpdateRequest request) {
         try {
@@ -42,9 +71,6 @@ public class UserController {
         }
     }
 
-    /**
-     * Check if username is available
-     */
     @GetMapping("/check-username/{username}")
     public ResponseEntity<AvailabilityResponse> checkUsername(@PathVariable String username) {
         try {
@@ -55,9 +81,6 @@ public class UserController {
         }
     }
 
-    /**
-     * Check if email is available
-     */
     @GetMapping("/check-email/{email}")
     public ResponseEntity<AvailabilityResponse> checkEmail(@PathVariable String email) {
         try {
@@ -68,9 +91,6 @@ public class UserController {
         }
     }
 
-    /**
-     * Get current user statistics
-     */
     @GetMapping("/stats")
     public ResponseEntity<UserService.UserStatsResponse> getUserStats() {
         try {
@@ -81,9 +101,6 @@ public class UserController {
         }
     }
 
-    /**
-     * Delete current user account
-     */
     @DeleteMapping("/profile")
     public ResponseEntity<Void> deleteAccount() {
         try {
@@ -94,47 +111,27 @@ public class UserController {
         }
     }
 
-    // ===== INNER CLASSES =====
-    public static class AvailabilityResponse {
-        private final boolean available;
-
-        public AvailabilityResponse(boolean available) {
-            this.available = available;
-        }
-
-        public boolean isAvailable() {
-            return available;
-        }
-    }
-
     @PostMapping("/auto-create")
     public ResponseEntity<UserEntity> autoCreateUser() {
         try {
-            // Ensures the current user exists in your app DB
             UserEntity user = userService.ensureCurrentUserFromToken();
             return ResponseEntity.ok(user);
         } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(null);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
         }
     }
 
     @PostMapping("/register")
     public ResponseEntity<?> registerUser(@RequestBody UserService.UserProfileUpdateRequest request) {
         try {
-            // Get Keycloak ID of currently authenticated user
-            Long currentUserId;
             String keycloakId;
             try {
-                currentUserId = userService.getCurrentAppUserId();
                 UserEntity existingUser = userService.getCurrentUser();
                 keycloakId = existingUser.getKeycloakId();
             } catch (Exception e) {
-                // If user does not exist yet, get Keycloak ID from token
                 keycloakId = userService.ensureCurrentUserFromToken().getKeycloakId();
             }
 
-            // Create or update user with Keycloak ID and request data
             UserEntity user = userService.createOrUpdateUser(
                     keycloakId,
                     request.getFirstName(),    // username
@@ -157,4 +154,51 @@ public class UserController {
         }
     }
 
+    // ===== INNER CLASSES =====
+    public static class AvailabilityResponse {
+        private final boolean available;
+        public AvailabilityResponse(boolean available) {
+            this.available = available;
+        }
+        public boolean isAvailable() {
+            return available;
+        }
+    }
+
+    public static class UserProfileResponse {
+        private final Long id;
+        private final String username;
+        private final String email;
+        private final String firstName;
+        private final String lastName;
+        private final BigDecimal balance;
+        private final boolean termsAccepted;
+
+        public UserProfileResponse(Long id, String username, String email, String firstName,
+                                   String lastName, BigDecimal balance, boolean termsAccepted) {
+            this.id = id;
+            this.username = username;
+            this.email = email;
+            this.firstName = firstName;
+            this.lastName = lastName;
+            this.balance = balance;
+            this.termsAccepted = termsAccepted;
+        }
+
+        public Long getId() { return id; }
+        public String getUsername() { return username; }
+        public String getEmail() { return email; }
+        public String getFirstName() { return firstName; }
+        public String getLastName() { return lastName; }
+        public BigDecimal getBalance() { return balance; }
+        public boolean isTermsAccepted() { return termsAccepted; }
+    }
+
+    public static class BalanceResponse {
+        private final BigDecimal balance;
+        public BalanceResponse(BigDecimal balance) {
+            this.balance = balance;
+        }
+        public BigDecimal getBalance() { return balance; }
+    }
 }
