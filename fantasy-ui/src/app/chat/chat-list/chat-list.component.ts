@@ -1,7 +1,8 @@
-import { Component, EventEmitter, OnInit, Output } from '@angular/core';
-import { ChatRoomDTO } from "../chat.models";
+ import { Component, EventEmitter, OnInit, Output } from '@angular/core';
+import { ChatRoomDTO } from "../models/chat.models";
 import { ChatService } from "../service/chat.service";
 import { DatePipe, NgForOf, NgIf } from "@angular/common";
+import { Router } from '@angular/router';
 
 @Component({
   selector: 'app-chat-list',
@@ -21,7 +22,10 @@ export class ChatListComponent implements OnInit {
 
   @Output() roomSelected = new EventEmitter<ChatRoomDTO>();
 
-  constructor(private chatService: ChatService) {}
+  constructor(
+    private chatService: ChatService,
+    private router: Router
+  ) {}
 
   ngOnInit() {
     this.fetchChats();
@@ -73,5 +77,9 @@ export class ChatListComponent implements OnInit {
 
     // Ou pour un texte plus simple:
     // return "Cliquez pour voir les messages";
+  }
+
+  openSupportForm() {
+    this.router.navigate(['/support']);
   }
 }

@@ -1,0 +1,247 @@
+<div class="support-page-container">
+  <!-- Header -->
+  <div class="support-header">
+    <div class="header-content">
+      <div class="header-left">
+        <button class="back-button" (click)="onBackToChat()">
+          <span class="back-icon">←</span>
+          Retour au chat
+        </button>
+      </div>
+      <div class="header-center">
+        <h1>Support Client</h1>
+        <p>Nous sommes là pour vous aider</p>
+      </div>
+      <div class="header-right">
+        <button 
+          *ngIf="!showTicketForm" 
+          class="new-ticket-btn"
+          (click)="onCreateNewTicket()"
+        >
+          <span class="plus-icon">+</span>
+          Nouveau ticket
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Contenu principal -->
+  <div class="support-content">
+    
+    <!-- Formulaire de création de ticket -->
+    <div *ngIf="showTicketForm" class="form-section">
+      <div class="support-ticket-form-container">
+        <div class="form-header">
+          <div class="header-icon">🆘</div>
+          <h2>Créer un ticket de support</h2>
+          <p>Décrivez votre problème et nous vous aiderons rapidement</p>
+        </div>
+
+        <form [formGroup]="supportForm" (ngSubmit)="onSubmit()" class="support-form">
+          
+          <!-- Sélection du type de support -->
+          <div class="form-section">
+            <label class="section-label">Type de problème *</label>
+            <div class="type-selector">
+              <div 
+                *ngFor="let type of supportTypes" 
+                class="type-option"
+                [class.selected]="selectedType === type.value"
+                (click)="onTypeSelect(type.value)"
+              >
+                <div class="type-icon">{{ getSupportTypeIcon(type.value) }}</div>
+                <div class="type-info">
+                  <div class="type-name">{{ type.displayName }}</div>
+                  <div class="type-description">
+                    {{ getTypeDescription(type.value) }}
+                  </div>
+                </div>
+                <div class="type-check" *ngIf="selectedType === type.value">✓</div>
+              </div>
+            </div>
+            <div class="error-message" *ngIf="typeError">{{ typeError }}</div>
+          </div>
+
+          <!-- Sujet du ticket -->
+          <div class="form-section">
+            <label class="section-label" for="subject">Sujet *</label>
+            <input 
+              id="subject"
+              type="text" 
+              formControlName="subject"
+              placeholder="Ex: Problème de paiement avec ma carte"
+              class="form-input"
+              [class.error]="supportForm.get('subject')?.invalid && supportForm.get('subject')?.touched"
+            >
+            <div class="error-message" *ngIf="subjectError">{{ subjectError }}</div>
+            <div class="char-counter">
+              {{ supportForm.get('subject')?.value?.length || 0 }}/100
+            </div>
+          </div>
+
+          <!-- Description détaillée -->
+          <div class="form-section">
+            <label class="section-label" for="description">Description détaillée *</label>
+            <textarea 
+              id="description"
+              formControlName="description"
+              placeholder="Décrivez votre problème en détail. Plus vous donnez d'informations, plus nous pourrons vous aider rapidement..."
+              class="form-textarea"
+              rows="6"
+              [class.error]="supportForm.get('description')?.invalid && supportForm.get('description')?.touched"
+            ></textarea>
+            <div class="error-message" *ngIf="descriptionError">{{ descriptionError }}</div>
+            <div class="char-counter">
+              {{ supportForm.get('description')?.value?.length || 0 }}/1000
+            </div>
+          </div>
+
+          <!-- Conseils d'aide -->
+          <div class="help-tips" *ngIf="selectedType">
+            <div class="tips-header">
+              <span class="tips-icon">💡</span>
+              <span>Conseils pour un ticket efficace</span>
+            </div>
+            <ul class="tips-list">
+              <li *ngIf="selectedType === 'PAYMENT'">
+                Incluez les détails de votre transaction (montant, date, méthode de paiement)
+              </li>
+              <li *ngIf="selectedType === 'TECHNICAL'">
+                Décrivez les étapes qui mènent au problème et votre environnement (navigateur, OS)
+              </li>
+              <li *ngIf="selectedType === 'ACCOUNT'">
+                Précisez si le problème concerne la connexion, les données personnelles ou les paramètres
+              </li>
+              <li *ngIf="selectedType === 'GENERAL'">
+                Soyez aussi précis que possible pour que nous puissions vous orienter vers la bonne équipe
+              </li>
+            </ul>
+          </div>
+
+          <!-- Boutons d'action -->
+          <div class="form-actions">
+            <button 
+              type="button" 
+              class="btn-secondary"
+              (click)="onBackToChat()"
+              [disabled]="isLoading"
+            >
+              Annuler
+            </button>
+            <button 
+              type="submit" 
+              class="btn-primary"
+              [disabled]="supportForm.invalid || isLoading"
+            >
+              <span *ngIf="!isLoading">Créer le ticket</span>
+              <span *ngIf="isLoading" class="loading-spinner">
+                <div class="spinner"></div>
+                Création en cours...
+              </span>
+            </button>
+          </div>
+
+        </form>
+      </div>
+    </div>
+
+    <!-- Liste des tickets existants -->
+    <div *ngIf="!showTicketForm" class="tickets-section">
+      
+      <!-- Header de la section tickets -->
+      <div class="tickets-header">
+        <h2>Mes tickets de support</h2>
+        <p *ngIf="userTickets.length === 0">
+          Vous n'avez pas encore créé de ticket de support.
+        </p>
+      </div>
+
+      <!-- Loading state -->
+      <div *ngIf="isLoading" class="loading-container">
+        <div class="loading-spinner">
+          <div class="spinner"></div>
+          <p>Chargement de vos tickets...</p>
+        </div>
+      </div>
+
+      <!-- Liste des tickets -->
+      <div *ngIf="!isLoading && userTickets.length > 0" class="tickets-list">
+        <div 
+          *ngFor="let ticket of userTickets" 
+          class="ticket-card"
+          (click)="onViewTicket(ticket)"
+        >
+          <div class="ticket-header">
+            <div class="ticket-type">
+              <span class="type-icon">{{ getSupportTypeIcon(ticket.supportType || '') }}</span>
+              <span class="type-name">{{ getSupportTypeDisplayName(ticket.supportType || '') }}</span>
+            </div>
+            <div class="ticket-status">
+              <span 
+                class="status-badge"
+                [style.background-color]="getSupportStatusColor(ticket.supportStatus || '')"
+              >
+                {{ getSupportStatusDisplayName(ticket.supportStatus || '') }}
+              </span>
+            </div>
+          </div>
+
+          <div class="ticket-content">
+            <h3 class="ticket-title">{{ ticket.name }}</h3>
+            <p class="ticket-description">{{ ticket.description }}</p>
+          </div>
+
+          <div class="ticket-footer">
+            <div class="ticket-meta">
+              <span class="ticket-id" *ngIf="ticket.supportTicketId">
+                #{{ ticket.supportTicketId }}
+              </span>
+              <span class="ticket-date">
+                {{ formatDate(ticket.lastActivity) }}
+              </span>
+            </div>
+            <div class="ticket-actions">
+              <span class="unread-count" *ngIf="ticket.unreadCount > 0">
+                {{ ticket.unreadCount }} nouveau(x)
+              </span>
+              <span class="view-ticket">Voir le chat →</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- État vide -->
+      <div *ngIf="!isLoading && userTickets.length === 0" class="empty-state">
+        <div class="empty-icon">📋</div>
+        <h3>Aucun ticket de support</h3>
+        <p>Vous n'avez pas encore créé de ticket de support.</p>
+        <button class="create-first-ticket-btn" (click)="onCreateNewTicket()">
+          Créer mon premier ticket
+        </button>
+      </div>
+
+    </div>
+
+  </div>
+
+  <!-- Footer avec informations -->
+  <div class="support-footer">
+    <div class="footer-content">
+      <div class="footer-info">
+        <h4>Besoin d'aide rapide ?</h4>
+        <p>Notre équipe de support est disponible pour vous aider avec tous vos problèmes.</p>
+      </div>
+      <div class="footer-stats">
+        <div class="stat-item">
+          <span class="stat-number">24/7</span>
+          <span class="stat-label">Support disponible</span>
+        </div>
+        <div class="stat-item">
+          <span class="stat-number">< 2h</span>
+          <span class="stat-label">Temps de réponse</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>

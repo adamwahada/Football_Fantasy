@@ -3,10 +3,7 @@ package FootballFantasy.fantasy.Services.ChatService;
 import FootballFantasy.fantasy.Dto.ChatDto.*;
 import FootballFantasy.fantasy.Entities.Chat.*;
 import FootballFantasy.fantasy.Entities.UserEntity.UserEntity;
-import FootballFantasy.fantasy.Repositories.ChatRepository.ChatMessageRepository;
-import FootballFantasy.fantasy.Repositories.ChatRepository.ChatParticipantRepository;
-import FootballFantasy.fantasy.Repositories.ChatRepository.ChatRoomRepository;
-import FootballFantasy.fantasy.Repositories.ChatRepository.MessageStatusRepository;
+import FootballFantasy.fantasy.Repositories.ChatRepository.*;
 import FootballFantasy.fantasy.Repositories.UserRepository.UserRepository;
 import FootballFantasy.fantasy.Services.Cloudinary.CloudinaryFileService;
 import lombok.RequiredArgsConstructor;
@@ -36,11 +33,14 @@ public class ChatService {
     private final ChatParticipantRepository chatParticipantRepository;
     private final MessageStatusRepository messageStatusRepository;
     private final UserRepository userRepository;
-    private static final Long ADMIN_USER_ID = 1L; // Ton admin fixe
+    private final SupportTicketRepository supportTicketRepository;
+
+    private static final Long ADMIN_USER_ID = 1L;
 
 
     @Autowired
     private CloudinaryFileService cloudinaryFileService;
+
 
     // Créer ou récupérer un chat privé
     public ChatRoomDTO getOrCreatePrivateChat(Long userId1, Long userId2) {
@@ -381,6 +381,7 @@ public class ChatService {
         message.setContent("[Message deleted]");
         chatMessageRepository.save(message);
     }
+
     public void addParticipants(String roomId, List<Long> userIds, Long adminId) {
         ChatRoom chatRoom = chatRoomRepository.findByRoomId(roomId)
                 .orElseThrow(() -> new RuntimeException("Chat room not found"));
@@ -585,9 +586,6 @@ public class ChatService {
     }
 
 
-    //support ticket
-
-    // AJOUTER ces méthodes à ton ChatService existant :
 
 
     /**
@@ -780,5 +778,278 @@ public class ChatService {
                 .stream()
                 .map(room -> convertToDTO(room, adminId))
                 .collect(Collectors.toList());
+    }
+
+    /**
+     * ✅ NOUVELLE MÉTHODE : Créer un ticket de support COMPLET (Ticket + ChatRoom)
+     * Cette méthode remplace l'ancienne createSupportTicket
+     */
+    @Transactional
+    public SupportTicketDTO createSupportTicketComplete(Long userId, SupportType supportType,
+                                                        String subject, String description,
+                                                        TicketPriority priority) {
+
+        // 1️⃣ Vérifier si l'utilisateur a déjà un ticket ouvert du même type
+        Optional<SupportTicket> existingTicket = supportTicketRepository
+                .findActiveTicketByUserIdAndType(userId, supportType);
+
+        if (existingTicket.isPresent()) {
+            // Si un ticket existe déjà, retourner le ticket existant avec son ChatRoom
+            return convertToSupportTicketDTO(existingTicket.get());
+        }
+
+        // 2️⃣ Récupérer les entités utilisateur
+        UserEntity user = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+        UserEntity admin = userRepository.findById(ADMIN_USER_ID)
+                .orElseThrow(() -> new RuntimeException("Admin user not found"));
+
+        // 3️⃣ Générer un ID unique pour le ticket
+        String ticketId = generateTicketId();
+
+        // 4️⃣ Créer d'abord la ChatRoom
+        ChatRoom supportChatRoom = ChatRoom.builder()
+                .roomId(UUID.randomUUID().toString())
+                .type(ChatRoomType.SUPPORT)
+                .name("Support - " + supportType.getDisplayName())
+                .description(subject)
+                .lastActivity(LocalDateTime.now())
+                .isSupportChat(true)
+                .supportTicketId(ticketId)
+                .supportStatus(SupportStatus.OPEN)
+                .supportType(supportType)
+                .build();
+
+        supportChatRoom = chatRoomRepository.save(supportChatRoom);
+
+        // 5️⃣ Créer le SupportTicket lié à la ChatRoom
+        SupportTicket ticket = SupportTicket.builder()
+                .ticketId(ticketId)
+                .subject(subject)
+                .description(description)
+                .supportType(supportType)
+                .status(SupportStatus.OPEN)
+                .priority(priority != null ? priority : TicketPriority.MEDIUM)
+                .user(user)
+                .assignedAdmin(admin) // Auto-assigner à l'admin principal
+                .chatRoom(supportChatRoom) // Lien vers la ChatRoom
+                .build();
+
+        ticket = supportTicketRepository.save(ticket);
+
+        // 6️⃣ Ajouter les participants à la ChatRoom
+        ChatParticipant userParticipant = ChatParticipant.builder()
+                .user(user)
+                .chatRoom(supportChatRoom)
+                .role(ParticipantRole.MEMBER)
+                .lastSeenAt(LocalDateTime.now())
+                .build();
+
+        ChatParticipant adminParticipant = ChatParticipant.builder()
+                .user(admin)
+                .chatRoom(supportChatRoom)
+                .role(ParticipantRole.ADMIN)
+                .lastSeenAt(LocalDateTime.now())
+                .build();
+
+        chatParticipantRepository.save(userParticipant);
+        chatParticipantRepository.save(adminParticipant);
+
+        // 7️⃣ Envoyer le message initial automatique
+        sendInitialSupportMessage(supportChatRoom, user, description);
+
+        // 8️⃣ Message d'accueil de l'admin
+        sendAdminWelcomeMessage(supportChatRoom, admin, ticket);
+
+        log.info("Ticket créé: {} pour l'utilisateur: {}", ticketId, userId);
+
+        return convertToSupportTicketDTO(ticket);
+    }
+
+    /**
+     * ✅ Message d'accueil automatique de l'admin
+     */
+    private void sendAdminWelcomeMessage(ChatRoom chatRoom, UserEntity admin, SupportTicket ticket) {
+        String welcomeMessage = String.format(
+                "Bonjour ! Je suis là pour vous aider avec votre problème de %s. " +
+                        "J'ai bien reçu votre demande concernant : \"%s\". " +
+                        "Je vais examiner votre situation et vous répondre dans les plus brefs délais. " +
+                        "N'hésitez pas à ajouter des détails si nécessaire.",
+                ticket.getSupportType().getDisplayName().toLowerCase(),
+                ticket.getSubject()
+        );
+
+        ChatMessage adminMessage = ChatMessage.builder()
+                .content(welcomeMessage)
+                .type(MessageType.TEXT)
+                .sender(admin)
+                .chatRoom(chatRoom)
+                .isDeleted(false)
+                .isEdited(false)
+                .build();
+
+        chatMessageRepository.save(adminMessage);
+
+        // Créer les statuts pour les participants
+        List<ChatParticipant> participants = chatParticipantRepository.findByChatRoomIdAndIsActiveTrue(chatRoom.getId());
+        for (ChatParticipant participant : participants) {
+            MessageStatusType status = participant.getUser().getId().equals(admin.getId()) ?
+                    MessageStatusType.READ : MessageStatusType.SENT;
+
+            MessageStatus messageStatus = MessageStatus.builder()
+                    .message(adminMessage)
+                    .user(participant.getUser())
+                    .status(status)
+                    .build();
+            messageStatusRepository.save(messageStatus);
+        }
+    }
+
+    /**
+     * ✅ Récupérer tous les tickets avec leurs informations complètes
+     */
+    public List<SupportTicketDTO> getAllSupportTickets(Long adminId) {
+        if (!isUserAdmin(adminId)) {
+            throw new RuntimeException("Access denied - Admin only");
+        }
+
+        List<SupportTicket> tickets = supportTicketRepository.findAllOrderByPriorityAndDate();
+        return tickets.stream()
+                .map(this::convertToSupportTicketDTO)
+                .collect(Collectors.toList());
+    }
+
+    /**
+     * ✅ Récupérer les tickets d'un utilisateur
+     */
+    public List<SupportTicketDTO> getUserSupportTicketsComplete(Long userId) {
+        List<SupportTicket> tickets = supportTicketRepository.findByUserIdOrderByCreatedAtDesc(userId);
+        return tickets.stream()
+                .map(this::convertToSupportTicketDTO)
+                .collect(Collectors.toList());
+    }
+
+    /**
+     * ✅ Résoudre un ticket (MISE À JOUR)
+     */
+    @Transactional
+    public void resolveSupportTicketComplete(String roomId, Long adminId) {
+        ChatRoom chatRoom = chatRoomRepository.findByRoomId(roomId)
+                .orElseThrow(() -> new RuntimeException("Chat room not found"));
+
+        if (!chatRoom.isSupportChat()) {
+            throw new RuntimeException("Not a support ticket");
+        }
+
+        // Trouver le ticket associé
+        SupportTicket ticket = supportTicketRepository.findByChatRoomRoomId(roomId)
+                .orElseThrow(() -> new RuntimeException("Support ticket not found"));
+
+        UserEntity admin = userRepository.findById(adminId).orElseThrow();
+
+        // Marquer le ticket comme résolu
+        ticket.markAsResolved(admin);
+        supportTicketRepository.save(ticket);
+
+        // Mettre à jour aussi la ChatRoom
+        chatRoom.setSupportStatus(SupportStatus.RESOLVED);
+        chatRoom.updateLastActivity();
+        chatRoomRepository.save(chatRoom);
+
+        // Message automatique de résolution
+        ChatMessage resolvedMessage = ChatMessage.builder()
+                .content("✅ Ce ticket a été marqué comme résolu par l'équipe de support. " +
+                        "Si vous avez encore besoin d'aide, n'hésitez pas à créer un nouveau ticket.")
+                .type(MessageType.TEXT)
+                .sender(admin)
+                .chatRoom(chatRoom)
+                .isDeleted(false)
+                .isEdited(false)
+                .build();
+
+        chatMessageRepository.save(resolvedMessage);
+
+        log.info("Ticket résolu: {} par admin: {}", ticket.getTicketId(), adminId);
+    }
+
+    /**
+     * ✅ Obtenir les statistiques du dashboard admin
+     */
+    public SupportDashboardStatsDTO getSupportDashboardStats(Long adminId) {
+        if (!isUserAdmin(adminId)) {
+            throw new RuntimeException("Access denied - Admin only");
+        }
+
+        Object[] stats = supportTicketRepository.getTicketStatistics();
+
+        long totalTickets = supportTicketRepository.count();
+        long myAssignedTickets = supportTicketRepository.countByAssignedAdminId(adminId);
+
+        // Compter les tickets urgents
+        long urgentTickets = supportTicketRepository.countByStatus(SupportStatus.OPEN) +
+                supportTicketRepository.countByStatus(SupportStatus.IN_PROGRESS);
+
+        return SupportDashboardStatsDTO.builder()
+                .totalTickets(totalTickets)
+                .openTickets((Long) stats[0])
+                .inProgressTickets((Long) stats[1])
+                .resolvedTickets((Long) stats[2])
+                .closedTickets((Long) stats[3])
+                .myAssignedTickets(myAssignedTickets)
+                .urgentTickets(urgentTickets)
+                .avgResolutionTimeHours(0.0) // TODO: calculer la moyenne
+
+                .build();
+    }
+
+    /**
+     * ✅ Convertir SupportTicket vers DTO
+     */
+    private SupportTicketDTO convertToSupportTicketDTO(SupportTicket ticket) {
+        // Compter les messages non lus dans le chat associé
+        Long unreadCount = 0L;
+        if (ticket.getChatRoom() != null) {
+            unreadCount = chatMessageRepository.countUnreadMessages(
+                    ticket.getChatRoom().getId(),
+                    ticket.getUser().getId()
+            );
+        }
+
+        return SupportTicketDTO.builder()
+                .id(ticket.getId())
+                .ticketId(ticket.getTicketId())
+                .subject(ticket.getSubject())
+                .description(ticket.getDescription())
+                .supportType(ticket.getSupportType())
+                .status(ticket.getStatus())
+                .priority(ticket.getPriority())
+                .userId(ticket.getUser().getId())
+                .userName(ticket.getUser().getFirstName() + " " + ticket.getUser().getLastName())
+                .userEmail(ticket.getUser().getEmail())
+                .assignedAdminId(ticket.getAssignedAdmin() != null ? ticket.getAssignedAdmin().getId() : null)
+                .assignedAdminName(ticket.getAssignedAdmin() != null ?
+                        ticket.getAssignedAdmin().getFirstName() + " " + ticket.getAssignedAdmin().getLastName() : null)
+                .chatRoomId(ticket.getChatRoom() != null ? ticket.getChatRoom().getRoomId() : null)
+                .unreadMessagesCount(unreadCount)
+                .createdAt(ticket.getCreatedAt())
+                .updatedAt(ticket.getUpdatedAt())
+                .resolvedAt(ticket.getResolvedAt())
+                .closedAt(ticket.getClosedAt())
+                .build();
+    }
+
+    /**
+     * ✅ Obtenir un ticket par son ID
+     */
+    public SupportTicketDTO getSupportTicketById(String ticketId, Long userId) {
+        SupportTicket ticket = supportTicketRepository.findByTicketId(ticketId)
+                .orElseThrow(() -> new RuntimeException("Ticket not found"));
+
+        // Vérifier les permissions
+        if (!ticket.getUser().getId().equals(userId) && !isUserAdmin(userId)) {
+            throw new RuntimeException("Access denied");
+        }
+
+        return convertToSupportTicketDTO(ticket);
     }
 }

@@ -59,6 +59,9 @@
     padding: 12px;
     background: #111b21;
     border-bottom: 1px solid #2a3a44;
+    display: flex;
+    gap: 8px;
+    align-items: center;
 
     .search-container {
       background: #202c33;
@@ -68,6 +71,7 @@
       padding: 8px 12px;
       border: 1px solid #2a3a44;
       transition: border-color 0.3s;
+      flex: 1;
 
       &:focus-within {
         border-color: #4CAF50;
@@ -89,6 +93,32 @@
         &::placeholder {
           color: #8696a0;
         }
+      }
+    }
+
+    .support-btn {
+      background: #4CAF50;
+      border: none;
+      border-radius: 8px;
+      padding: 8px 12px;
+      color: white;
+      font-size: 12px;
+      font-weight: 500;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      transition: all 0.3s;
+      white-space: nowrap;
+
+      &:hover {
+        background: #2E7D32;
+        transform: translateY(-1px);
+      }
+
+      svg {
+        width: 16px;
+        height: 16px;
       }
     }
   }

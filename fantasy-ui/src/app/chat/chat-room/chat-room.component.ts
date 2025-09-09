@@ -1,5 +1,5 @@
 import { Component, ElementRef, Input, OnInit, ViewChild, OnChanges } from '@angular/core';
-import { ChatMessageDTO, ChatParticipantDTO, ChatRoomDTO, SendMessageDTO } from "../chat.models";
+import { ChatMessageDTO, ChatParticipantDTO, ChatRoomDTO, SendMessageDTO } from "../models/chat.models";
 import { ChatService } from "../service/chat.service";
 import { FormsModule } from "@angular/forms";
 import { DatePipe, NgClass, NgForOf, NgIf } from "@angular/common";

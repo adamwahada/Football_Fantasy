@@ -54,4 +54,7 @@ public interface ChatRoomRepository extends JpaRepository<ChatRoom, Long> {
     @Query("SELECT c FROM ChatRoom c WHERE c.type = 'SUPPORT' ORDER BY c.createdAt DESC")
     List<ChatRoom> findSupportChatsOrderByCreatedDesc();
 
+
+
+
 }

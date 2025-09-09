@@ -6,7 +6,7 @@ import { AuthService } from '../../core/services/auth.service';
 import { environment } from '../../../environments/environment';
 import {Client} from "stompjs";
 import {StompSubscription} from "@stomp/stompjs";
-import {ChatMessageDTO, UserStatusDTO} from "../chat.models";
+import {ChatMessageDTO, UserStatusDTO} from "../models/chat.models";
 import {webSocket, WebSocketSubject} from "rxjs/webSocket";
 
 @Injectable({

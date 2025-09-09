@@ -76,6 +76,12 @@ export interface ChatMessageDTO {
     cloudinaryPublicId?: string;
     fileSize?: number;
     mimeType?: string;
+
+    // 🆕 Champs pour le support
+    supportTicketId?: string;
+    supportStatus?: string; // 'OPEN' | 'IN_PROGRESS' | 'RESOLVED' | 'CLOSED'
+    supportType?: string;   // 'PAYMENT' | 'TECHNICAL' | 'ACCOUNT' | 'GENERAL'
+    isSupportChat?: boolean;
 }
 
 
@@ -102,4 +108,31 @@ export interface CreateGroupDTO {
     description: string;
     avatar?: string;
     participantIds: number[];
+}
+
+export enum SupportType {
+    PAYMENT = 'PAYMENT',
+    TECHNICAL = 'TECHNICAL',
+    ACCOUNT = 'ACCOUNT',
+    GENERAL = 'GENERAL'
+}
+
+export enum SupportStatus {
+    OPEN = 'OPEN',
+    IN_PROGRESS = 'IN_PROGRESS',
+    RESOLVED = 'RESOLVED',
+    CLOSED = 'CLOSED'
+}
+
+export interface CreateSupportTicketDTO {
+    supportType: SupportType;
+    subject: string;
+    description: string;
+}
+
+export interface SupportTicketDTO extends ChatRoomDTO {
+    supportTicketId: string;
+    supportStatus: SupportStatus;
+    supportType: SupportType;
+    isSupportChat: boolean;
 }

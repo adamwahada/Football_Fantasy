@@ -1,0 +1,46 @@
+.support-button {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: linear-gradient(135deg, #ff6b6b, #ee5a52);
+  border: none;
+  border-radius: 8px;
+  padding: 0.75rem 1rem;
+  color: white;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-weight: 600;
+  font-size: 0.9rem;
+  box-shadow: 0 2px 8px rgba(255, 107, 107, 0.3);
+
+  &:hover {
+    background: linear-gradient(135deg, #ee5a52, #d63031);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(255, 107, 107, 0.4);
+  }
+
+  &:active {
+    transform: translateY(0);
+  }
+
+  .support-icon {
+    font-size: 1.2rem;
+  }
+
+  .support-text {
+    font-weight: 600;
+  }
+
+  @media (max-width: 768px) {
+    padding: 0.5rem 0.75rem;
+    font-size: 0.8rem;
+
+    .support-text {
+      display: none;
+    }
+
+    .support-icon {
+      font-size: 1.1rem;
+    }
+  }
+}
