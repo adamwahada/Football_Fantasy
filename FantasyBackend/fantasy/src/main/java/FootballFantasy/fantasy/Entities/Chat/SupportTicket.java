@@ -98,6 +98,112 @@ public class SupportTicket {
         this.updatedAt = LocalDateTime.now();
     }
 
+    // ✅ NOUVELLES MÉTHODES POUR LA GESTION DES STATUTS
+
+    /**
+     * Changer le statut du ticket avec validation
+     */
+    public void changeStatus(SupportStatus newStatus, UserEntity admin) {
+        if (admin == null) {
+            throw new RuntimeException("Admin is required to change ticket status");
+        }
+
+        // Validation des transitions de statut
+        if (!isValidStatusTransition(this.status, newStatus)) {
+            throw new RuntimeException("Invalid status transition from " + this.status + " to " + newStatus);
+        }
+
+        this.status = newStatus;
+        this.assignedAdmin = admin;
+        this.updatedAt = LocalDateTime.now();
+
+        // Mettre à jour les dates spécifiques selon le statut
+        switch (newStatus) {
+            case RESOLVED:
+                this.resolvedAt = LocalDateTime.now();
+                break;
+            case CLOSED:
+                this.closedAt = LocalDateTime.now();
+                break;
+            case IN_PROGRESS:
+                // Pas de date spécifique pour IN_PROGRESS
+                break;
+            case OPEN:
+                // Réouverture d'un ticket
+                this.resolvedAt = null;
+                this.closedAt = null;
+                break;
+        }
+    }
+
+    /**
+     * Changer la priorité du ticket
+     */
+    public void changePriority(TicketPriority newPriority, UserEntity admin) {
+        if (admin == null) {
+            throw new RuntimeException("Admin is required to change ticket priority");
+        }
+
+        this.priority = newPriority;
+        this.assignedAdmin = admin;
+        this.updatedAt = LocalDateTime.now();
+    }
+
+    /**
+     * Mettre à jour le ticket avec statut et priorité
+     */
+    public void updateTicket(SupportStatus newStatus, TicketPriority newPriority, UserEntity admin) {
+        if (admin == null) {
+            throw new RuntimeException("Admin is required to update ticket");
+        }
+
+        // Changer le statut si différent
+        if (newStatus != null && !newStatus.equals(this.status)) {
+            changeStatus(newStatus, admin);
+        }
+
+        // Changer la priorité si différente
+        if (newPriority != null && !newPriority.equals(this.priority)) {
+            changePriority(newPriority, admin);
+        }
+    }
+
+    /**
+     * Validation des transitions de statut autorisées
+     */
+    private boolean isValidStatusTransition(SupportStatus currentStatus, SupportStatus newStatus) {
+        return switch (currentStatus) {
+            case OPEN -> newStatus == SupportStatus.IN_PROGRESS || newStatus == SupportStatus.CLOSED;
+            case IN_PROGRESS -> newStatus == SupportStatus.RESOLVED || newStatus == SupportStatus.CLOSED || newStatus == SupportStatus.OPEN;
+            case RESOLVED -> newStatus == SupportStatus.CLOSED || newStatus == SupportStatus.OPEN;
+            case CLOSED -> newStatus == SupportStatus.OPEN; // Réouverture possible
+        };
+    }
+
+    /**
+     * Vérifier si le ticket peut être modifié
+     */
+    public boolean canBeModified() {
+        return status != SupportStatus.CLOSED;
+    }
+
+    /**
+     * Vérifier si le ticket est urgent
+     */
+    public boolean isUrgent() {
+        return priority == TicketPriority.URGENT || priority == TicketPriority.HIGH;
+    }
+
+    /**
+     * Obtenir le temps de résolution en heures
+     */
+    public double getResolutionTimeHours() {
+        if (resolvedAt == null) {
+            return 0.0;
+        }
+        return java.time.Duration.between(createdAt, resolvedAt).toHours();
+    }
+
     public boolean isActive() {
         return status == SupportStatus.OPEN || status == SupportStatus.IN_PROGRESS;
     }

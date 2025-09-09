@@ -1,0 +1,381 @@
+<div class="admin-dashboard">
+  <!-- Header -->
+  <div class="dashboard-header">
+    <h1>Dashboard Support Admin</h1>
+    <div class="header-actions">
+      <button class="btn btn-primary" (click)="refresh()" [disabled]="loading">
+        <i class="icon-refresh"></i> Actualiser
+      </button>
+    </div>
+  </div>
+
+  <!-- Statistiques -->
+  <div class="stats-grid" *ngIf="stats">
+    <div class="stat-card">
+      <div class="stat-icon total">
+        <i class="icon-ticket"></i>
+      </div>
+      <div class="stat-content">
+        <h3>{{ stats.totalTickets }}</h3>
+        <p>Total Tickets</p>
+      </div>
+    </div>
+
+    <div class="stat-card">
+      <div class="stat-icon open">
+        <i class="icon-open"></i>
+      </div>
+      <div class="stat-content">
+        <h3>{{ stats.openTickets }}</h3>
+        <p>Tickets Ouverts</p>
+      </div>
+    </div>
+
+    <div class="stat-card">
+      <div class="stat-icon progress">
+        <i class="icon-progress"></i>
+      </div>
+      <div class="stat-content">
+        <h3>{{ stats.inProgressTickets }}</h3>
+        <p>En Cours</p>
+      </div>
+    </div>
+
+    <div class="stat-card">
+      <div class="stat-icon urgent">
+        <i class="icon-urgent"></i>
+      </div>
+      <div class="stat-content">
+        <h3>{{ stats.urgentTickets }}</h3>
+        <p>Tickets Urgents</p>
+      </div>
+    </div>
+
+    <div class="stat-card">
+      <div class="stat-icon resolved">
+        <i class="icon-check"></i>
+      </div>
+      <div class="stat-content">
+        <h3>{{ stats.resolvedTickets }}</h3>
+        <p>Résolus</p>
+      </div>
+    </div>
+
+    <div class="stat-card">
+      <div class="stat-icon closed">
+        <i class="icon-close"></i>
+      </div>
+      <div class="stat-content">
+        <h3>{{ stats.closedTickets }}</h3>
+        <p>Fermés</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Filtres et Recherche -->
+  <div class="filters-section">
+    <div class="filters-row">
+      <div class="filter-group">
+        <label>Filtre :</label>
+        <select [(ngModel)]="statusFilter" (change)="onFilterChange()">
+          <option *ngFor="let option of filterOptions" [value]="option.value">
+            {{ option.label }}
+          </option>
+        </select>
+      </div>
+
+      <div class="filter-group">
+        <label>Priorité :</label>
+        <select [(ngModel)]="priorityFilter" (change)="onFilterChange()">
+          <option value="all">Toutes les priorités</option>
+          <option *ngFor="let option of priorityOptions" [value]="option.value">
+            {{ option.label }}
+          </option>
+        </select>
+      </div>
+
+      <div class="search-group">
+        <input 
+          type="text" 
+          [(ngModel)]="searchQuery" 
+          (input)="onSearch()"
+          placeholder="Rechercher dans les tickets..."
+          class="search-input">
+        <button class="search-btn" (click)="onSearch()">
+          <i class="icon-search"></i>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Liste des Tickets -->
+  <div class="tickets-section">
+    <div class="section-header">
+      <h2>Tickets de Support ({{ filteredTickets.length }})</h2>
+    </div>
+
+    <div class="tickets-table" *ngIf="!loading && filteredTickets.length > 0">
+      <div class="table-header">
+        <div class="col-id">ID</div>
+        <div class="col-subject">Sujet</div>
+        <div class="col-user">Utilisateur</div>
+        <div class="col-status">Statut</div>
+        <div class="col-priority">Priorité</div>
+        <div class="col-date">Créé</div>
+        <div class="col-actions">Actions</div>
+      </div>
+
+      <div class="table-body">
+        <div class="table-row" *ngFor="let ticket of filteredTickets">
+          <div class="col-id">
+            <span class="ticket-id">{{ ticket.ticketId }}</span>
+          </div>
+          
+          <div class="col-subject">
+            <div class="subject-content">
+              <h4>{{ ticket.subject }}</h4>
+              <p class="description">{{ ticket.description | slice:0:100 }}{{ ticket.description.length > 100 ? '...' : '' }}</p>
+            </div>
+          </div>
+          
+          <div class="col-user">
+            <div class="user-info">
+              <strong>{{ ticket.userName }}</strong>
+              <small>{{ ticket.userEmail }}</small>
+            </div>
+          </div>
+          
+          <div class="col-status">
+            <span class="status-badge" [ngClass]="getStatusClass(ticket.status)">
+              {{ getStatusLabel(ticket.status) }}
+            </span>
+          </div>
+          
+          <div class="col-priority">
+            <span class="priority-badge" [ngClass]="getPriorityClass(ticket.priority)">
+              {{ getPriorityLabel(ticket.priority) }}
+            </span>
+          </div>
+          
+          <div class="col-date">
+            <span class="date">{{ formatDate(ticket.createdAt) }}</span>
+          </div>
+          
+          <div class="col-actions">
+            <div class="action-buttons">
+              <button 
+                class="btn btn-sm btn-primary" 
+                (click)="openTicketChat(ticket)"
+                title="Ouvrir le chat">
+                <i class="icon-chat"></i>
+              </button>
+              
+              <button 
+                class="btn btn-sm btn-info" 
+                (click)="openTicketDetails(ticket)"
+                title="Voir les détails">
+                <i class="icon-eye"></i>
+              </button>
+              
+              <button 
+                class="btn btn-sm btn-warning" 
+                (click)="openStatusModal(ticket)"
+                title="Changer le statut">
+                <i class="icon-edit"></i>
+              </button>
+              
+              <button 
+                *ngIf="!ticket.assignedAdminId" 
+                class="btn btn-sm btn-success" 
+                (click)="assignTicket(ticket)"
+                title="S'assigner le ticket">
+                <i class="icon-assign"></i>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Message si aucun ticket -->
+    <div class="no-tickets" *ngIf="!loading && filteredTickets.length === 0">
+      <div class="no-tickets-content">
+        <i class="icon-ticket"></i>
+        <h3>Aucun ticket trouvé</h3>
+        <p>Il n'y a aucun ticket correspondant à vos critères de recherche.</p>
+      </div>
+    </div>
+
+    <!-- Loading -->
+    <div class="loading" *ngIf="loading">
+      <div class="spinner"></div>
+      <p>Chargement...</p>
+    </div>
+
+    <!-- Error -->
+    <div class="error" *ngIf="error">
+      <div class="error-content">
+        <i class="icon-error"></i>
+        <h3>Erreur</h3>
+        <p>{{ error }}</p>
+        <button class="btn btn-primary" (click)="refresh()">Réessayer</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal de changement de statut -->
+<div class="modal-overlay" *ngIf="showStatusModal" (click)="closeStatusModal()">
+  <div class="modal" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h3>Modifier le statut du ticket</h3>
+      <button class="close-btn" (click)="closeStatusModal()">
+        <i class="icon-close"></i>
+      </button>
+    </div>
+    
+    <div class="modal-body" *ngIf="selectedTicket">
+      <div class="ticket-info">
+        <h4>{{ selectedTicket.ticketId }} - {{ selectedTicket.subject }}</h4>
+        <p><strong>Utilisateur :</strong> {{ selectedTicket.userName }}</p>
+      </div>
+      
+      <form (ngSubmit)="updateTicketStatus()">
+        <div class="form-group">
+          <label>Statut :</label>
+          <select [(ngModel)]="statusUpdate.status" name="status" required>
+            <option *ngFor="let option of statusOptions" [value]="option.value">
+              {{ option.label }}
+            </option>
+          </select>
+        </div>
+        
+        <div class="form-group">
+          <label>Priorité :</label>
+          <select [(ngModel)]="statusUpdate.priority" name="priority">
+            <option *ngFor="let option of priorityOptions" [value]="option.value">
+              {{ option.label }}
+            </option>
+          </select>
+        </div>
+        
+        <div class="form-group">
+          <label>Note de l'admin :</label>
+          <textarea 
+            [(ngModel)]="statusUpdate.adminNote" 
+            name="adminNote"
+            placeholder="Ajouter une note pour l'utilisateur..."
+            rows="3">
+          </textarea>
+        </div>
+        
+        <div class="modal-actions">
+          <button type="button" class="btn btn-secondary" (click)="closeStatusModal()">
+            Annuler
+          </button>
+          <button type="submit" class="btn btn-primary" [disabled]="loading">
+            <span *ngIf="loading">Mise à jour...</span>
+            <span *ngIf="!loading">Mettre à jour</span>
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- Modal de détails du ticket -->
+<div class="modal-overlay" *ngIf="showTicketDetails" (click)="closeTicketDetails()">
+  <div class="modal modal-large" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h3>Détails du ticket</h3>
+      <button class="close-btn" (click)="closeTicketDetails()">
+        <i class="icon-close"></i>
+      </button>
+    </div>
+    
+    <div class="modal-body" *ngIf="selectedTicket">
+      <div class="ticket-details">
+        <div class="detail-row">
+          <label>ID du ticket :</label>
+          <span>{{ selectedTicket.ticketId }}</span>
+        </div>
+        
+        <div class="detail-row">
+          <label>Sujet :</label>
+          <span>{{ selectedTicket.subject }}</span>
+        </div>
+        
+        <div class="detail-row">
+          <label>Description :</label>
+          <p>{{ selectedTicket.description }}</p>
+        </div>
+        
+        <div class="detail-row">
+          <label>Type de support :</label>
+          <span>{{ selectedTicket.supportType }}</span>
+        </div>
+        
+        <div class="detail-row">
+          <label>Statut :</label>
+          <span class="status-badge" [ngClass]="getStatusClass(selectedTicket.status)">
+            {{ getStatusLabel(selectedTicket.status) }}
+          </span>
+        </div>
+        
+        <div class="detail-row">
+          <label>Priorité :</label>
+          <span class="priority-badge" [ngClass]="getPriorityClass(selectedTicket.priority)">
+            {{ getPriorityLabel(selectedTicket.priority) }}
+          </span>
+        </div>
+        
+        <div class="detail-row">
+          <label>Utilisateur :</label>
+          <span>{{ selectedTicket.userName }} ({{ selectedTicket.userEmail }})</span>
+        </div>
+        
+        <div class="detail-row" *ngIf="selectedTicket.assignedAdminName">
+          <label>Admin assigné :</label>
+          <span>{{ selectedTicket.assignedAdminName }}</span>
+        </div>
+        
+        <div class="detail-row">
+          <label>Créé le :</label>
+          <span>{{ formatDate(selectedTicket.createdAt) }}</span>
+        </div>
+        
+        <div class="detail-row" *ngIf="selectedTicket.updatedAt">
+          <label>Mis à jour le :</label>
+          <span>{{ formatDate(selectedTicket.updatedAt) }}</span>
+        </div>
+        
+        <div class="detail-row" *ngIf="selectedTicket.resolvedAt">
+          <label>Résolu le :</label>
+          <span>{{ formatDate(selectedTicket.resolvedAt) }}</span>
+        </div>
+        
+        <div class="detail-row" *ngIf="selectedTicket.closedAt">
+          <label>Fermé le :</label>
+          <span>{{ formatDate(selectedTicket.closedAt) }}</span>
+        </div>
+        
+        <div class="detail-row">
+          <label>Messages non lus :</label>
+          <span>{{ selectedTicket.unreadMessagesCount }}</span>
+        </div>
+      </div>
+      
+      <div class="modal-actions">
+        <button class="btn btn-primary" (click)="openTicketChat(selectedTicket)">
+          <i class="icon-chat"></i> Ouvrir le chat
+        </button>
+        <button class="btn btn-warning" (click)="openStatusModal(selectedTicket)">
+          <i class="icon-edit"></i> Modifier le statut
+        </button>
+        <button class="btn btn-secondary" (click)="closeTicketDetails()">
+          Fermer
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

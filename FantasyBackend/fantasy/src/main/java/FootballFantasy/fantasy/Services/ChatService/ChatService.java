@@ -17,7 +17,9 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.time.LocalDateTime;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -980,26 +982,53 @@ public class ChatService {
             throw new RuntimeException("Access denied - Admin only");
         }
 
-        Object[] stats = supportTicketRepository.getTicketStatistics();
+        try {
+            Object[] stats = supportTicketRepository.getTicketStatistics();
+            
+            // Gérer le cas où il n'y a pas de tickets
+            long openTickets = 0L;
+            long inProgressTickets = 0L;
+            long resolvedTickets = 0L;
+            long closedTickets = 0L;
+            
+            if (stats != null && stats.length >= 4) {
+                openTickets = stats[0] != null ? ((Number) stats[0]).longValue() : 0L;
+                inProgressTickets = stats[1] != null ? ((Number) stats[1]).longValue() : 0L;
+                resolvedTickets = stats[2] != null ? ((Number) stats[2]).longValue() : 0L;
+                closedTickets = stats[3] != null ? ((Number) stats[3]).longValue() : 0L;
+            }
 
-        long totalTickets = supportTicketRepository.count();
-        long myAssignedTickets = supportTicketRepository.countByAssignedAdminId(adminId);
+            long totalTickets = supportTicketRepository.count();
+            long myAssignedTickets = supportTicketRepository.countByAssignedAdminId(adminId);
 
-        // Compter les tickets urgents
-        long urgentTickets = supportTicketRepository.countByStatus(SupportStatus.OPEN) +
-                supportTicketRepository.countByStatus(SupportStatus.IN_PROGRESS);
+            // Compter les tickets urgents (OPEN + IN_PROGRESS)
+            long urgentTickets = openTickets + inProgressTickets;
 
-        return SupportDashboardStatsDTO.builder()
-                .totalTickets(totalTickets)
-                .openTickets((Long) stats[0])
-                .inProgressTickets((Long) stats[1])
-                .resolvedTickets((Long) stats[2])
-                .closedTickets((Long) stats[3])
-                .myAssignedTickets(myAssignedTickets)
-                .urgentTickets(urgentTickets)
-                .avgResolutionTimeHours(0.0) // TODO: calculer la moyenne
-
-                .build();
+            return SupportDashboardStatsDTO.builder()
+                    .totalTickets(totalTickets)
+                    .openTickets(openTickets)
+                    .inProgressTickets(inProgressTickets)
+                    .resolvedTickets(resolvedTickets)
+                    .closedTickets(closedTickets)
+                    .myAssignedTickets(myAssignedTickets)
+                    .urgentTickets(urgentTickets)
+                    .avgResolutionTimeHours(0.0) // TODO: calculer la moyenne
+                    .build();
+                    
+        } catch (Exception e) {
+            log.error("Erreur lors du calcul des statistiques: ", e);
+            // Retourner des statistiques par défaut en cas d'erreur
+            return SupportDashboardStatsDTO.builder()
+                    .totalTickets(0L)
+                    .openTickets(0L)
+                    .inProgressTickets(0L)
+                    .resolvedTickets(0L)
+                    .closedTickets(0L)
+                    .myAssignedTickets(0L)
+                    .urgentTickets(0L)
+                    .avgResolutionTimeHours(0.0)
+                    .build();
+        }
     }
 
     /**
@@ -1050,6 +1079,246 @@ public class ChatService {
             throw new RuntimeException("Access denied");
         }
 
+        return convertToSupportTicketDTO(ticket);
+    }
+
+    // ✅ NOUVELLES MÉTHODES POUR LA GESTION DES STATUTS PAR L'ADMIN
+
+    /**
+     * ✅ Changer le statut d'un ticket (Admin seulement)
+     */
+    @Transactional
+    public SupportTicketDTO updateTicketStatus(String ticketId, SupportStatus newStatus, 
+                                             TicketPriority newPriority, String adminNote, Long adminId) {
+        // Vérifier que c'est bien un admin
+        if (!isUserAdmin(adminId)) {
+            throw new RuntimeException("Access denied - Admin only");
+        }
+
+        // Récupérer le ticket
+        SupportTicket ticket = supportTicketRepository.findByTicketId(ticketId)
+                .orElseThrow(() -> new RuntimeException("Ticket not found"));
+
+        UserEntity admin = userRepository.findById(adminId)
+                .orElseThrow(() -> new RuntimeException("Admin not found"));
+
+        // Mettre à jour le ticket
+        ticket.updateTicket(newStatus, newPriority, admin);
+        ticket = supportTicketRepository.save(ticket);
+
+        // Mettre à jour aussi la ChatRoom associée
+        if (ticket.getChatRoom() != null) {
+            ChatRoom chatRoom = ticket.getChatRoom();
+            chatRoom.setSupportStatus(newStatus);
+            chatRoom.updateLastActivity();
+            chatRoomRepository.save(chatRoom);
+
+            // Envoyer un message automatique dans le chat
+            sendStatusChangeMessage(chatRoom, admin, newStatus, adminNote);
+        }
+
+        log.info("Ticket {} status updated to {} by admin {}", ticketId, newStatus, adminId);
+        return convertToSupportTicketDTO(ticket);
+    }
+
+    /**
+     * ✅ Envoyer un message automatique lors du changement de statut
+     */
+    private void sendStatusChangeMessage(ChatRoom chatRoom, UserEntity admin, SupportStatus newStatus, String adminNote) {
+        String statusMessage = switch (newStatus) {
+            case OPEN -> "🔄 Le ticket a été rouvert.";
+            case IN_PROGRESS -> "⚡ Le ticket est maintenant en cours de traitement.";
+            case RESOLVED -> "✅ Le ticket a été marqué comme résolu.";
+            case CLOSED -> "🔒 Le ticket a été fermé.";
+        };
+
+        String fullMessage = statusMessage;
+        if (adminNote != null && !adminNote.trim().isEmpty()) {
+            fullMessage += "\n\n📝 Note de l'équipe : " + adminNote.trim();
+        }
+
+        ChatMessage statusChangeMessage = ChatMessage.builder()
+                .content(fullMessage)
+                .type(MessageType.TEXT)
+                .sender(admin)
+                .chatRoom(chatRoom)
+                .isDeleted(false)
+                .isEdited(false)
+                .build();
+
+        chatMessageRepository.save(statusChangeMessage);
+
+        // Créer les statuts pour les participants
+        List<ChatParticipant> participants = chatParticipantRepository.findByChatRoomIdAndIsActiveTrue(chatRoom.getId());
+        for (ChatParticipant participant : participants) {
+            MessageStatusType status = participant.getUser().getId().equals(admin.getId()) ?
+                    MessageStatusType.READ : MessageStatusType.SENT;
+
+            MessageStatus messageStatus = MessageStatus.builder()
+                    .message(statusChangeMessage)
+                    .user(participant.getUser())
+                    .status(status)
+                    .build();
+            messageStatusRepository.save(messageStatus);
+        }
+    }
+
+    /**
+     * ✅ Récupérer les tickets par statut (Admin seulement)
+     */
+    public List<SupportTicketDTO> getTicketsByStatus(SupportStatus status, Long adminId) {
+        if (!isUserAdmin(adminId)) {
+            throw new RuntimeException("Access denied - Admin only");
+        }
+
+        List<SupportTicket> tickets = supportTicketRepository.findByStatusOrderByUpdatedAtDesc(status);
+        return tickets.stream()
+                .map(this::convertToSupportTicketDTO)
+                .collect(Collectors.toList());
+    }
+
+    /**
+     * ✅ Récupérer les tickets actifs (OPEN + IN_PROGRESS) (Admin seulement)
+     */
+    public List<SupportTicketDTO> getActiveTickets(Long adminId) {
+        if (!isUserAdmin(adminId)) {
+            throw new RuntimeException("Access denied - Admin only");
+        }
+
+        List<SupportTicket> tickets = supportTicketRepository.findActiveTicketsOrderByPriority();
+        return tickets.stream()
+                .map(this::convertToSupportTicketDTO)
+                .collect(Collectors.toList());
+    }
+
+    /**
+     * ✅ Récupérer les tickets fermés (RESOLVED + CLOSED) (Admin seulement)
+     */
+    public List<SupportTicketDTO> getClosedTickets(Long adminId) {
+        if (!isUserAdmin(adminId)) {
+            throw new RuntimeException("Access denied - Admin only");
+        }
+
+        List<SupportTicket> tickets = supportTicketRepository.findClosedTicketsOrderByUpdatedAtDesc();
+        return tickets.stream()
+                .map(this::convertToSupportTicketDTO)
+                .collect(Collectors.toList());
+    }
+
+    /**
+     * ✅ Récupérer les tickets urgents (Admin seulement)
+     */
+    public List<SupportTicketDTO> getUrgentTickets(Long adminId) {
+        if (!isUserAdmin(adminId)) {
+            throw new RuntimeException("Access denied - Admin only");
+        }
+
+        List<SupportTicket> tickets = supportTicketRepository.findUrgentTickets();
+        return tickets.stream()
+                .map(this::convertToSupportTicketDTO)
+                .collect(Collectors.toList());
+    }
+
+    /**
+     * ✅ Récupérer les tickets par priorité (Admin seulement)
+     */
+    public List<SupportTicketDTO> getTicketsByPriority(TicketPriority priority, Long adminId) {
+        if (!isUserAdmin(adminId)) {
+            throw new RuntimeException("Access denied - Admin only");
+        }
+
+        List<SupportTicket> tickets = supportTicketRepository.findByPriorityOrderByCreatedAtDesc(priority);
+        return tickets.stream()
+                .map(this::convertToSupportTicketDTO)
+                .collect(Collectors.toList());
+    }
+
+    /**
+     * ✅ Rechercher des tickets (Admin seulement)
+     */
+    public List<SupportTicketDTO> searchTickets(String query, Long adminId) {
+        if (!isUserAdmin(adminId)) {
+            throw new RuntimeException("Access denied - Admin only");
+        }
+
+        List<SupportTicket> tickets = supportTicketRepository.searchTickets(query);
+        return tickets.stream()
+                .map(this::convertToSupportTicketDTO)
+                .collect(Collectors.toList());
+    }
+
+    /**
+     * ✅ Obtenir les statistiques détaillées pour l'admin
+     */
+    public Map<String, Object> getDetailedAdminStats(Long adminId) {
+        if (!isUserAdmin(adminId)) {
+            throw new RuntimeException("Access denied - Admin only");
+        }
+
+        // Statistiques de base
+        SupportDashboardStatsDTO basicStats = getSupportDashboardStats(adminId);
+
+        // Statistiques par statut
+        List<Object[]> statusStats = supportTicketRepository.getTicketCountByStatus();
+        Map<String, Long> statusCounts = new HashMap<>();
+        for (Object[] stat : statusStats) {
+            statusCounts.put(stat[0].toString(), (Long) stat[1]);
+        }
+
+        // Statistiques par priorité
+        List<Object[]> priorityStats = supportTicketRepository.getTicketCountByPriority();
+        Map<String, Long> priorityCounts = new HashMap<>();
+        for (Object[] stat : priorityStats) {
+            priorityCounts.put(stat[0].toString(), (Long) stat[1]);
+        }
+
+        // Tickets récents (7 derniers jours)
+        LocalDateTime weekAgo = LocalDateTime.now().minusDays(7);
+        List<SupportTicket> recentTickets = supportTicketRepository.findRecentTickets(weekAgo);
+        List<SupportTicketDTO> recentTicketsDTO = recentTickets.stream()
+                .map(this::convertToSupportTicketDTO)
+                .collect(Collectors.toList());
+
+        return Map.of(
+                "basicStats", basicStats,
+                "statusCounts", statusCounts,
+                "priorityCounts", priorityCounts,
+                "recentTickets", recentTicketsDTO,
+                "generatedAt", LocalDateTime.now()
+        );
+    }
+
+    /**
+     * ✅ Assigner un ticket à l'admin (Admin seulement)
+     */
+    @Transactional
+    public SupportTicketDTO assignTicketToAdmin(String ticketId, Long adminId) {
+        if (!isUserAdmin(adminId)) {
+            throw new RuntimeException("Access denied - Admin only");
+        }
+
+        SupportTicket ticket = supportTicketRepository.findByTicketId(ticketId)
+                .orElseThrow(() -> new RuntimeException("Ticket not found"));
+
+        UserEntity admin = userRepository.findById(adminId)
+                .orElseThrow(() -> new RuntimeException("Admin not found"));
+
+        ticket.assignToAdmin(admin);
+        ticket = supportTicketRepository.save(ticket);
+
+        // Mettre à jour la ChatRoom
+        if (ticket.getChatRoom() != null) {
+            ChatRoom chatRoom = ticket.getChatRoom();
+            chatRoom.setSupportStatus(ticket.getStatus());
+            chatRoom.updateLastActivity();
+            chatRoomRepository.save(chatRoom);
+
+            // Message d'assignation
+            sendStatusChangeMessage(chatRoom, admin, SupportStatus.IN_PROGRESS, 
+                    "Ticket assigné à l'équipe de support");
+        }
+
+        log.info("Ticket {} assigned to admin {}", ticketId, adminId);
         return convertToSupportTicketDTO(ticket);
     }
 }

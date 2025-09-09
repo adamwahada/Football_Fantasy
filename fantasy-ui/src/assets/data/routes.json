@@ -48,6 +48,26 @@
           "submenu": []
         }
       ]
+    },
+    {
+      "path": "",
+      "title": "Support",
+      "iconType": "material-icons-outlined",
+      "icon": "support_agent",
+      "class": "menu-toggle",
+      "groupTitle": false,
+      "role": ["Admin"],
+      "submenu": [
+        {
+          "path": "/admin/dashboard",
+          "title": "Dashboard Support",
+          "iconType": "",
+          "icon": "",
+          "class": "ml-menu",
+          "role": ["Admin"],
+          "submenu": []
+        }
+      ]
     }
 
   ]

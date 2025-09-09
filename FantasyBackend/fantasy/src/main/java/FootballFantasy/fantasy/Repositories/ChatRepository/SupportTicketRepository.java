@@ -3,6 +3,7 @@ package FootballFantasy.fantasy.Repositories.ChatRepository;
 import FootballFantasy.fantasy.Entities.Chat.SupportStatus;
 import FootballFantasy.fantasy.Entities.Chat.SupportTicket;
 import FootballFantasy.fantasy.Entities.Chat.SupportType;
+import FootballFantasy.fantasy.Entities.Chat.TicketPriority;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -66,9 +67,7 @@ public interface SupportTicketRepository extends JpaRepository<SupportTicket, Lo
             "FROM SupportTicket t")
     Object[] getTicketStatistics();
 
-    // Tickets récents (dernières 24h)
-    @Query("SELECT t FROM SupportTicket t WHERE t.createdAt >= :since ORDER BY t.createdAt DESC")
-    List<SupportTicket> findRecentTickets(@Param("since") LocalDateTime since);
+
 
     // Tickets non assignés (pour auto-assignment)
     @Query("SELECT t FROM SupportTicket t WHERE t.assignedAdmin IS NULL AND t.status = 'OPEN' ORDER BY t.createdAt ASC")
@@ -93,4 +92,48 @@ public interface SupportTicketRepository extends JpaRepository<SupportTicket, Lo
     // Compter les tickets assignés à un admin spécifique
     @Query("SELECT COUNT(t) FROM SupportTicket t WHERE t.assignedAdmin.id = :adminId")
     long countByAssignedAdminId(@Param("adminId") Long adminId);
+
+    // ✅ NOUVELLES MÉTHODES POUR LA GESTION DES STATUTS
+
+    // Tickets par statut pour l'admin
+    @Query("SELECT t FROM SupportTicket t WHERE t.status = :status ORDER BY t.updatedAt DESC")
+    List<SupportTicket> findByStatusOrderByUpdatedAtDesc(@Param("status") SupportStatus status);
+
+    // Tickets actifs (OPEN + IN_PROGRESS) pour l'admin
+    @Query("SELECT t FROM SupportTicket t WHERE t.status IN ('OPEN', 'IN_PROGRESS') ORDER BY " +
+            "CASE t.priority " +
+            "  WHEN 'URGENT' THEN 1 " +
+            "  WHEN 'HIGH' THEN 2 " +
+            "  WHEN 'MEDIUM' THEN 3 " +
+            "  WHEN 'LOW' THEN 4 " +
+            "END, t.createdAt ASC")
+    List<SupportTicket> findActiveTicketsOrderByPriority();
+
+    // Tickets fermés (RESOLVED + CLOSED) pour l'admin
+    @Query("SELECT t FROM SupportTicket t WHERE t.status IN ('RESOLVED', 'CLOSED') ORDER BY t.updatedAt DESC")
+    List<SupportTicket> findClosedTicketsOrderByUpdatedAtDesc();
+
+    // Tickets par priorité
+    @Query("SELECT t FROM SupportTicket t WHERE t.priority = :priority ORDER BY t.createdAt DESC")
+    List<SupportTicket> findByPriorityOrderByCreatedAtDesc(@Param("priority") TicketPriority priority);
+
+    // Tickets urgents (URGENT + HIGH priority)
+    @Query("SELECT t FROM SupportTicket t WHERE t.priority IN ('URGENT', 'HIGH') AND t.status IN ('OPEN', 'IN_PROGRESS') ORDER BY t.createdAt ASC")
+    List<SupportTicket> findUrgentTickets();
+
+    // Statistiques par statut pour l'admin
+    @Query("SELECT t.status, COUNT(t) FROM SupportTicket t GROUP BY t.status")
+    List<Object[]> getTicketCountByStatus();
+
+    // Statistiques par priorité pour l'admin
+    @Query("SELECT t.priority, COUNT(t) FROM SupportTicket t GROUP BY t.priority")
+    List<Object[]> getTicketCountByPriority();
+
+    // Tickets récents (dernières 7 jours)
+    @Query("SELECT t FROM SupportTicket t WHERE t.createdAt >= :since ORDER BY t.createdAt DESC")
+    List<SupportTicket> findRecentTickets(@Param("since") LocalDateTime since);
+
+    // Tickets par période (pour les statistiques)
+    @Query("SELECT t FROM SupportTicket t WHERE t.createdAt BETWEEN :startDate AND :endDate ORDER BY t.createdAt DESC")
+    List<SupportTicket> findTicketsByDateRange(@Param("startDate") LocalDateTime startDate, @Param("endDate") LocalDateTime endDate);
 }
