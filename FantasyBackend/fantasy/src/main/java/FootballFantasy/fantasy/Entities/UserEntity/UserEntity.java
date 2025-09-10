@@ -33,10 +33,18 @@ public class UserEntity {
     private String referralCode;
     private Boolean termsAccepted;
 
+    private boolean active = true;
+    // Optional field for temporary bans
+    private LocalDate bannedUntil;
+
     @Column(precision = 10, scale = 2, nullable = false)
     private BigDecimal balance = BigDecimal.ZERO;
 
     @JsonIgnore
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<SessionParticipation> sessionParticipations = new ArrayList<>();
+
+    public boolean isBanned() {
+        return !active || (bannedUntil != null && bannedUntil.isAfter(LocalDate.now()));
+    }
 }

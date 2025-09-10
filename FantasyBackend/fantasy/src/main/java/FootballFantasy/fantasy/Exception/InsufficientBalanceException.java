@@ -1,6 +1,9 @@
 package FootballFantasy.fantasy.Exception;
 
+import lombok.Getter;
+
 // Create custom exception for insufficient balance
+@Getter
 public class InsufficientBalanceException extends RuntimeException {
     private final String userId;
     private final String requiredAmount;
@@ -14,8 +17,5 @@ public class InsufficientBalanceException extends RuntimeException {
         this.currentBalance = currentBalance;
     }
 
-    public String getUserId() { return userId; }
-    public String getRequiredAmount() { return requiredAmount; }
-    public String getCurrentBalance() { return currentBalance; }
 }
 

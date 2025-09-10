@@ -1,6 +1,7 @@
 package FootballFantasy.fantasy.Services.UserService;
 
 import FootballFantasy.fantasy.Entities.UserEntity.UserEntity;
+import FootballFantasy.fantasy.Exception.InsufficientBalanceException;
 import FootballFantasy.fantasy.Repositories.UserRepository.UserRepository;
 import FootballFantasy.fantasy.Services.GameweekService.SessionParticipationService;
 import jakarta.transaction.Transactional;
@@ -223,6 +224,28 @@ public class UserService {
 
         System.out.println("💰 Admin credited " + amount + " to user " + userId + "; new balance: " + user.getBalance());
     }
+    @Transactional
+    public void debitBalance(Long userId, BigDecimal amount) {
+        if (amount == null || amount.compareTo(BigDecimal.ZERO) <= 0) {
+            throw new IllegalArgumentException("Amount must be positive");
+        }
+
+        UserEntity user = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        if (user.getBalance().compareTo(amount) < 0) {
+            throw new InsufficientBalanceException(
+                    String.valueOf(userId),
+                    amount.toString(),
+                    user.getBalance().toString()
+            );
+        }
+
+        user.setBalance(user.getBalance().subtract(amount));
+        userRepository.save(user);
+
+        System.out.println("💸 Admin debited " + amount + " from user " + userId + "; new balance: " + user.getBalance());
+    }
 
     // ======== Inner DTO classes ========
     public static class UserProfileUpdateRequest {
@@ -289,6 +312,39 @@ public class UserService {
         public BigDecimal getTotalSpent() { return totalSpent; }
         public BigDecimal getNetProfit() { return netProfit; }
         public double getAverageAccuracy() { return averageAccuracy; }
+    }
+
+    @Transactional
+    public void banUserTemporarily(Long userId, int days) {
+        UserEntity user = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+        user.setBannedUntil(LocalDate.now().plusDays(days));
+        userRepository.save(user);
+    }
+
+    @Transactional
+    public void banUserPermanently(Long userId) {
+        UserEntity user = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+        user.setActive(false);
+        userRepository.save(user);
+    }
+
+    @Transactional
+    public void unbanUser(Long userId) {
+        UserEntity user = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+        user.setActive(true);
+        user.setBannedUntil(null);
+        userRepository.save(user);
+    }
+    public String getUserBanStatus(Long userId) {
+        UserEntity user = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+        if (!user.isActive()) return "permanently banned";
+        if (user.getBannedUntil() != null && user.getBannedUntil().isAfter(LocalDate.now()))
+            return "temporarily banned until " + user.getBannedUntil();
+        return "active";
     }
 
 }

@@ -29,6 +29,15 @@ public class AdminController {
         return ResponseEntity.ok("Balance updated");
     }
 
+    // ✅ Debit user balance
+//    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
+    @PostMapping("/users/{userId}/debit")
+    public ResponseEntity<String> debit(@PathVariable Long userId,
+                                        @RequestParam BigDecimal amount) {
+        userService.debitBalance(userId, amount);
+        return ResponseEntity.ok("Balance debited");
+    }
+
     // ✅ Manual trigger for match updates
 //    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
     @PostMapping("/matches/update-now")
@@ -75,6 +84,38 @@ public class AdminController {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body("Error updating matches for " + competition + " week " + weekNumber + ": " + e.getMessage());
         }
+    }
+
+    // =================== USER BAN MANAGEMENT ===================
+
+    @PostMapping("/users/{userId}/ban-temporary")
+    public ResponseEntity<String> banUserTemporarily(
+            @PathVariable Long userId,
+            @RequestParam int days) {
+
+        userService.banUserTemporarily(userId, days);
+        return ResponseEntity.ok("User temporarily banned for " + days + " day(s)");
+    }
+
+    @PostMapping("/users/{userId}/ban-permanent")
+    public ResponseEntity<String> banUserPermanently(@PathVariable Long userId) {
+
+        userService.banUserPermanently(userId);
+        return ResponseEntity.ok("User permanently banned");
+    }
+
+    @PostMapping("/users/{userId}/unban")
+    public ResponseEntity<String> unbanUser(@PathVariable Long userId) {
+
+        userService.unbanUser(userId);
+        return ResponseEntity.ok("User unbanned successfully");
+    }
+
+    @GetMapping("/users/{userId}/ban-status")
+    public ResponseEntity<String> getUserBanStatus(@PathVariable Long userId) {
+
+        String status = userService.getUserBanStatus(userId);
+        return ResponseEntity.ok("User status: " + status);
     }
 
 }

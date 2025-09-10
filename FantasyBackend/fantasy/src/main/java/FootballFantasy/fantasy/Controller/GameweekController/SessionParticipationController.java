@@ -4,6 +4,7 @@ import FootballFantasy.fantasy.Dto.UserSessionStats;
 import FootballFantasy.fantasy.Entities.GameweekEntity.LeagueTheme;
 import FootballFantasy.fantasy.Entities.GameweekEntity.SessionParticipation;
 import FootballFantasy.fantasy.Entities.GameweekEntity.SessionType;
+import FootballFantasy.fantasy.Exception.UserBannedException;
 import FootballFantasy.fantasy.Services.GameweekService.SessionParticipationService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -36,6 +37,7 @@ public class SessionParticipationController {
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Successfully joined competition"),
             @ApiResponse(responseCode = "400", description = "Invalid request parameters"),
+            @ApiResponse(responseCode = "403", description = "User is banned"),
             @ApiResponse(responseCode = "409", description = "User already in session or session full"),
             @ApiResponse(responseCode = "500", description = "Internal server error")
     })
@@ -47,20 +49,15 @@ public class SessionParticipationController {
             @Parameter(description = "Is private session") @RequestParam(defaultValue = "false") boolean isPrivate,
             @Parameter(description = "Access key for private sessions") @RequestParam(required = false) String accessKey) {
 
-        try {
-            String keycloakId = getCurrentUserKeycloakId();
+        String keycloakId = getCurrentUserKeycloakId();
 
-            SessionParticipation participation = sessionParticipationService.joinCompetitionByKeycloakId(
-                    gameweekId, competition, sessionType, buyInAmount, isPrivate, accessKey, keycloakId);
+        SessionParticipation participation = sessionParticipationService.joinCompetitionByKeycloakId(
+                gameweekId, competition, sessionType, buyInAmount, isPrivate, accessKey, keycloakId);
 
-            return ResponseEntity.ok(participation);
-        } catch (RuntimeException e) {
-            return ResponseEntity.status(HttpStatus.CONFLICT).body(e.getMessage());
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body("Failed to join competition: " + e.getMessage());
-        }
+        return ResponseEntity.ok(participation);
     }
+
+
 
     @PostMapping("/join-session/{sessionId}")
     @Operation(summary = "Join an existing session")

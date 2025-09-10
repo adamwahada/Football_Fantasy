@@ -63,8 +63,11 @@ export const AuthInterceptor: HttpInterceptorFn = (req: HttpRequest<unknown>, ne
       );
     }),
     catchError(error => {
-
-      keycloakService.login();
+      // Only redirect to login on 401/403
+      if (error.status === 401 || error.status === 403) {
+        keycloakService.login();
+      }
+      // For all other errors, just propagate them
       return throwError(() => error);
     })
   );

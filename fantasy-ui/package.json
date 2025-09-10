@@ -10,6 +10,7 @@
   },
   "private": true,
   "dependencies": {
+    "@angular/animations": "^19.2.14",
     "@angular/cdk": "^19.2.18",
     "@angular/common": "^19.2.0",
     "@angular/compiler": "^19.2.0",
@@ -22,6 +23,7 @@
     "google-libphonenumber": "^3.2.42",
     "intl-tel-input": "^19.5.7",
     "keycloak-js": "^26.2.0",
+    "luxon": "^3.7.2",
     "ngx-intl-tel-input": "^17.0.0",
     "ngx-mat-intl-tel-input": "^5.0.0",
     "ngx-material-timepicker": "^13.1.1",

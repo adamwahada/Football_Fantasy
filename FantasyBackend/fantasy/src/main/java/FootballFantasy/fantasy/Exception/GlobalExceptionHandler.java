@@ -205,4 +205,20 @@ public class GlobalExceptionHandler {
             return "0.00";
         }
     }
+
+    @ExceptionHandler(UserBannedException.class)
+    public ResponseEntity<Map<String, Object>> handleUserBannedException(
+            UserBannedException ex, WebRequest request) {
+
+        Map<String, Object> errorResponse = createBaseErrorResponse(
+                "USER_BANNED",
+                ex.getMessage(),
+                request
+        );
+
+        System.out.println("❌ [EXCEPTION_HANDLER] Banned user attempted action: " + ex.getMessage());
+
+        return ResponseEntity.status(HttpStatus.FORBIDDEN).body(errorResponse);
+    }
+
 }

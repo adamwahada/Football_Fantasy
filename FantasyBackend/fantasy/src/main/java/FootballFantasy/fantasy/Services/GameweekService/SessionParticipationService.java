@@ -17,6 +17,7 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
@@ -408,15 +409,29 @@ public class SessionParticipationService {
      * Validate user eligibility to join sessions
      */
     private void validateUserEligibility(UserEntity user) {
-        // Check if user has accepted terms and conditions
+        // Terms & conditions check
         if (!Boolean.TRUE.equals(user.getTermsAccepted())) {
             throw new BusinessLogicException(
                     "User must accept terms and conditions before joining sessions",
                     "TERMS_NOT_ACCEPTED"
             );
         }
-        // Add any other eligibility checks here
-        // For example: age verification, profile completion, etc.
+
+        // Permanent ban
+        if (!Boolean.TRUE.equals(user.isActive())) {
+            throw new BusinessLogicException(
+                    "User is permanently banned",
+                    "USER_PERMANENTLY_BANNED"
+            );
+        }
+
+        // Temporary ban
+        if (user.getBannedUntil() != null && user.getBannedUntil().isAfter(LocalDate.now())) {
+            throw new BusinessLogicException(
+                    "User is temporarily banned until " + user.getBannedUntil(),
+                    "USER_TEMPORARILY_BANNED"
+            );
+        }
     }
 
     private SessionParticipation createParticipation(CompetitionSession session, UserEntity user) {

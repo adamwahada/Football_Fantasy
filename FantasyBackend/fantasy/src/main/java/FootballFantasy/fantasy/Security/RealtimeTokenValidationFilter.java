@@ -1,4 +1,4 @@
-package FootballFantasy.fantasy.security;
+package FootballFantasy.fantasy.Security;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.beans.factory.annotation.Value;

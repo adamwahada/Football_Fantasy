@@ -1,0 +1,46 @@
+<div class="admin-dashboard">
+  <h2>⚙️ Admin Dashboard</h2>
+
+  <!-- User ID Input -->
+  <div>
+    <label>User ID:</label>
+    <input type="number" [(ngModel)]="userId" placeholder="Enter user ID" />
+  </div>
+
+  <!-- Credit Balance -->
+  <div>
+    <label>Amount:</label>
+    <input type="number" [(ngModel)]="amount" placeholder="Enter amount" />
+    <button (click)="creditBalance()">💰 Credit Balance</button>
+    <button (click)="debitBalance()">💸 Debit</button>
+  </div>
+
+
+  <!-- Temporary Ban -->
+  <div>
+    <label>Ban Days:</label>
+    <input type="number" [(ngModel)]="days" placeholder="Enter days" />
+    <button (click)="banUserTemporarily()">⏳ Ban Temporarily</button>
+  </div>
+
+  <!-- Permanent Ban -->
+  <div>
+    <button (click)="banUserPermanently()">🚫 Ban Permanently</button>
+  </div>
+
+  <!-- Unban -->
+  <div>
+    <button (click)="unbanUser()">✅ Unban User</button>
+  </div>
+
+  <!-- Ban Status -->
+  <div>
+    <button (click)="getBanStatus()">📋 Get Ban Status</button>
+    <p><strong>Status:</strong> {{ banStatus }}</p>
+  </div>
+
+  <!-- Message -->
+  <div *ngIf="message">
+    <p><strong>Response:</strong> {{ message }}</p>
+  </div>
+</div>
