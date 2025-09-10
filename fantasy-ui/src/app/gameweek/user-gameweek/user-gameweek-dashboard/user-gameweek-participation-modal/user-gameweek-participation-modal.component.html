@@ -67,28 +67,19 @@
           <button 
             *ngFor="let amount of buyInOptions" 
             type="button"
-            [class]="getBuyInButtonClass(amount)"
-            [disabled]="!isAmountAffordable(amount) || isLoading"
+            [ngClass]="{'active': selectedBuyIn === amount}"
+            [disabled]="isLoading || !isAmountAffordable(amount)"
             (click)="onBuyInClick(amount)"
             [attr.title]="!isAmountAffordable(amount) ? 'Solde insuffisant pour ce montant' : ''">
             <span class="amount">{{ amount.toFixed(2) }}€</span>
-            <span *ngIf="!isAmountAffordable(amount)" class="insufficient-badge">Insuffisant</span>
             <span *ngIf="selectedBuyIn === amount" class="selected-indicator">✓</span>
           </button>
-        </div>
-
-        <!-- No Affordable Amounts Warning -->
-        <div *ngIf="!hasAnyAffordableAmount()" class="no-affordable-warning">
-          <span class="warning-icon">⚠️</span>
-          Aucun montant n'est disponible avec votre solde actuel. 
-          <a href="/wallet/recharge" class="recharge-link">Recharger le compte</a>
         </div>
 
         <!-- Selected Amount Display -->
         <div class="selected-amount-display" *ngIf="selectedBuyIn > 0">
           Montant sélectionné: <strong>{{ selectedBuyIn.toFixed(2) }}€</strong>
-          <span *ngIf="isAmountAffordable(selectedBuyIn)" class="affordable-indicator">✓ Disponible</span>
-          <span *ngIf="!isAmountAffordable(selectedBuyIn)" class="unaffordable-indicator">⚠️ Insuffisant</span>
+          <span *ngIf="!isAmountAffordable(selectedBuyIn)" class="unaffordable-indicator">⚠️ Solde insuffisant</span>
         </div>
       </div>
 
@@ -112,13 +103,6 @@
           La clé d'accès est requise pour les sessions privées
         </div>
       </div>
-
-      <div class="prediction-summary" *ngIf="predictions.length > 0">
-        <h4>Résumé de vos prédictions:</h4>
-        <p>{{ predictions.length }} match(es) prédit(s)</p>
-        <p *ngIf="tiebreakerCount > 0">{{ tiebreakerCount }} tie-break(s) inclus</p>
-      </div>
-
       <!-- Modal Footer -->
       <div class="modal-footer">
         <button type="button" 

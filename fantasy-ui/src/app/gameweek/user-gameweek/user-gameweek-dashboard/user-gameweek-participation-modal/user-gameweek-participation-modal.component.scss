@@ -396,6 +396,11 @@ form {
   border-color: #007bff;
   background: #f8f9fa;
 }
+.buy-in-options button.disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  pointer-events: auto; /* keep hover events so tooltip works */
+}
 
 .buy-in-options button.active {
   border-color: #007bff;
@@ -432,27 +437,6 @@ form {
 .checkbox-container input[type="checkbox"]:disabled {
   opacity: 0.6;
   cursor: not-allowed;
-}
-
-.prediction-summary {
-  background: #e8f4f8;
-  padding: 15px;
-  border-radius: 6px;
-  border-left: 4px solid #3498db;
-  margin-bottom: 20px;
-}
-
-.prediction-summary h4 {
-  margin: 0 0 8px 0;
-  color: #2980b9;
-  font-size: 14px;
-  font-weight: 600;
-}
-
-.prediction-summary p {
-  margin: 4px 0;
-  color: #34495e;
-  font-size: 13px;
 }
 
 .modal-footer {
@@ -525,27 +509,38 @@ form {
   margin-top: 4px;
   font-weight: 500;
 }
-.buy-in-options {
-  .buy-in-option {
-    &.disabled {
-      opacity: 0.5;
-      cursor: not-allowed;
-      background-color: #f5f5f5;
-      border-color: #ddd;
-      
-      .insufficient-badge {
-        font-size: 0.75rem;
-        color: #dc3545;
-        font-weight: 500;
-      }
-    }
-    
-    &.unaffordable {
-      background-color: #fff5f5;
-      border-color: #fecaca;
-      color: #dc2626;
-    }
-  }
+.buy-in-options button {
+  padding: 12px 16px;
+  border: 2px solid #dee2e6;
+  background: white;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 14px;
+  transition: all 0.2s ease;
+  color: #495057;
+}
+
+.buy-in-options button:hover:not(:disabled) {
+  border-color: #007bff;
+  background: #f8f9fa;
+}
+
+/* Selected amount */
+.buy-in-options button.active {
+  border-color: #007bff;
+  background-color: #007bff;
+  color: white;
+  box-shadow: 0 2px 6px rgba(0, 123, 255, 0.3);
+}
+
+/* Disabled due to insufficient balance */
+.buy-in-options button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  background-color: white; /* Keep card looking normal */
+  border-color: #dee2e6;
+  color: #495057;
 }
 
 .balance-status-info {
