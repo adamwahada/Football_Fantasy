@@ -29,13 +29,14 @@ public class UserController {
                     currentUser.getFirstName(),
                     currentUser.getLastName(),
                     currentUser.getBalance(),
-                    currentUser.getTermsAccepted()
+                    currentUser.isTermsAccepted()  // fixed here
             );
             return ResponseEntity.ok(response);
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
     }
+
 
     // ✅ Get just the balance (useful for quick competition checks)
     @GetMapping("/user-balance")
@@ -134,16 +135,22 @@ public class UserController {
 
             UserEntity user = userService.createOrUpdateUser(
                     keycloakId,
-                    request.getFirstName(),    // username
-                    request.getEmail(),        // email
-                    request.getFirstName(),    // firstName
-                    request.getLastName(),     // lastName
+                    request.getFirstName(),      // username
+                    request.getEmail(),
+                    request.getFirstName(),
+                    request.getLastName(),
                     request.getPhone(),
                     request.getCountry(),
                     request.getAddress(),
                     request.getPostalNumber(),
-                    request.getBirthDate()
+                    request.getBirthDate(),
+                    true,
+                    true,                       // active
+                    BigDecimal.ZERO,            // balance
+                    null                        // bannedUntil
             );
+
+
 
             return ResponseEntity.ok(Map.of(
                     "message", "User created/updated successfully",

@@ -1,6 +1,7 @@
 package FootballFantasy.fantasy.Controller.ControllerUser;
 
 import FootballFantasy.fantasy.Entities.GameweekEntity.LeagueTheme;
+import FootballFantasy.fantasy.Entities.UserEntity.UserEntity;
 import FootballFantasy.fantasy.Services.UserService.UserService;
 import FootballFantasy.fantasy.Services.DataService.MatchUpdateService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -9,6 +10,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.math.BigDecimal;
+import java.util.List;
 
 @RestController
 @RequestMapping("/api/admin")
@@ -19,6 +21,13 @@ public class AdminController {
 
     @Autowired
     private MatchUpdateService matchUpdateService;
+
+//    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
+    @GetMapping("/users")
+    public ResponseEntity<List<UserEntity>> getAllUsers() {
+        List<UserEntity> users = userService.getAllUsers();
+        return ResponseEntity.ok(users);
+    }
 
     // ✅ Credit user balance
 //    @PreAuthorize("hasAuthority('ROLE_ADMIN')")

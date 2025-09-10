@@ -1,109 +1,120 @@
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
+import { AdminService } from '../admin.service';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { AdminService } from '../admin.service';
+import { UserEntity } from '../user.model';
 
 @Component({
   selector: 'app-admin-dashboard',
-  standalone: true,
-  imports: [CommonModule, FormsModule],
   templateUrl: './admin-dashboard.component.html',
-  styleUrls: ['./admin-dashboard.component.scss']
+  styleUrls: ['./admin-dashboard.component.scss'],
+  imports: [CommonModule, FormsModule],
+
 })
-export class AdminDashboardComponent {
+export class AdminDashboardComponent implements OnInit {
 
-  userId!: number;
-  amount!: number;
-  days!: number;
-  banStatus: string = '';
+  users: any[] = [];
+  filteredUsers: any[] = [];
+  searchQuery: string = '';
+  amount: number = 0;
+  days: number = 0;
   message: string = '';
-
   constructor(private adminService: AdminService) {}
 
-  // ---------------- USER BALANCE ----------------
-  creditBalance(): void {
-    if (!this.userId || !this.amount) {
-      this.message = '⚠️ Please enter user ID and amount.';
-      return;
-    }
-    this.adminService.creditUserBalance(this.userId, this.amount).subscribe({
-      next: res => this.message = res,
-      error: err => this.message = '❌ Error: ' + err.message
+  ngOnInit(): void {
+    this.loadUsers();
+  }
+
+  loadUsers(): void {
+    this.adminService.getAllUsers().subscribe({
+      next: data => {
+        this.users = data;
+        this.filteredUsers = data;
+      },
+      error: err => this.message = '❌ Error loading users: ' + err.message
     });
   }
-debitBalance(): void {
-  if (!this.userId || !this.amount) {
-    this.message = '⚠️ Please enter user ID and amount.';
-    return;
-  }
+isTemporarilyBanned(user: UserEntity): boolean {
+  if (!user.bannedUntil) return false;
 
-  this.adminService.debitUserBalance(this.userId, this.amount).subscribe({
-    next: res => this.message = res,
-    error: err => {
-      let backendError: any;
-
-      // Try parsing err.error safely
-      try {
-        backendError = typeof err.error === 'string' ? JSON.parse(err.error) : err.error;
-      } catch {
-        backendError = err.error;
-      }
-
-      if (backendError?.error === 'INSUFFICIENT_BALANCE' && backendError.details) {
-        const details = backendError.details;
-        this.message = `❌ Insufficient balance. Required: ${details.required}, Current: ${details.current}, Shortage: ${details.shortage}`;
-      } else if (backendError?.message) {
-        this.message = `❌ ${backendError.message}`;
-      } else {
-        this.message = '❌ Something went wrong';
-      }
-    }
-  });
+  const bannedDate = new Date(user.bannedUntil); 
+  return bannedDate > new Date();
 }
 
+  searchUsers(): void {
+    const query = this.searchQuery.toLowerCase();
+    this.filteredUsers = this.users.filter(u =>
+      u.username.toLowerCase().includes(query) || 
+      String(u.id).includes(query)
+    );
+  }
 
-  // ---------------- BAN MANAGEMENT ----------------
-  banUserTemporarily(): void {
-    if (!this.userId || !this.days) {
-      this.message = '⚠️ Please enter user ID and number of days.';
+  creditBalance(userId: number): void {
+    if (!this.amount || this.amount <= 0) {
+      this.message = '⚠️ Enter a valid amount.';
       return;
     }
-    this.adminService.banUserTemporarily(this.userId, this.days).subscribe({
-      next: res => this.message = res,
+    this.adminService.creditUserBalance(userId, this.amount).subscribe({
+      next: () => {
+        this.message = `💰 Credited ${this.amount} to user ${userId}`;
+        this.loadUsers();
+      },
       error: err => this.message = '❌ Error: ' + err.message
     });
   }
 
-  banUserPermanently(): void {
-    if (!this.userId) {
-      this.message = '⚠️ Please enter user ID.';
+  debitBalance(userId: number): void {
+    if (!this.amount || this.amount <= 0) {
+      this.message = '⚠️ Enter a valid amount.';
       return;
     }
-    this.adminService.banUserPermanently(this.userId).subscribe({
-      next: res => this.message = res,
-      error: err => this.message = '❌ Error: ' + err.message
+    this.adminService.debitUserBalance(userId, this.amount).subscribe({
+      next: () => {
+        this.message = `💸 Debited ${this.amount} from user ${userId}`;
+        this.loadUsers();
+      },
+      error: err => {
+        let backendError: any;
+        try {
+          backendError = typeof err.error === 'string' ? JSON.parse(err.error) : err.error;
+        } catch {
+          backendError = err.error;
+        }
+
+        if (backendError?.error === 'INSUFFICIENT_BALANCE' && backendError.details) {
+          const details = backendError.details;
+          this.message = `❌ Insufficient balance. Required: ${details.required}, Current: ${details.current}, Shortage: ${details.shortage}`;
+        } else if (backendError?.message) {
+          this.message = `❌ ${backendError.message}`;
+        } else {
+          this.message = '❌ Something went wrong';
+        }
+      }
     });
   }
 
-  unbanUser(): void {
-    if (!this.userId) {
-      this.message = '⚠️ Please enter user ID.';
-      return;
+  banUser(userId: number, days?: number): void {
+    if (days && days > 0) {
+      this.adminService.banUserTemporarily(userId, days).subscribe({
+        next: () => this.message = `⏳ User ${userId} banned for ${days} days.`,
+        error: err => this.message = '❌ Error: ' + err.message
+      });
+    } else {
+      this.adminService.banUserPermanently(userId).subscribe({
+        next: () => this.message = `🚫 User ${userId} banned permanently.`,
+        error: err => this.message = '❌ Error: ' + err.message
+      });
     }
-    this.adminService.unbanUser(this.userId).subscribe({
-      next: res => this.message = res,
-      error: err => this.message = '❌ Error: ' + err.message
-    });
+    this.loadUsers();
   }
 
-  getBanStatus(): void {
-    if (!this.userId) {
-      this.message = '⚠️ Please enter user ID.';
-      return;
-    }
-    this.adminService.getUserBanStatus(this.userId).subscribe({
-      next: res => this.banStatus = res,
-      error: err => this.banStatus = '❌ Error: ' + err.message
+  unbanUser(userId: number): void {
+    this.adminService.unbanUser(userId).subscribe({
+      next: () => {
+        this.message = `✅ User ${userId} unbanned.`;
+        this.loadUsers();
+      },
+      error: err => this.message = '❌ Error: ' + err.message
     });
   }
 }

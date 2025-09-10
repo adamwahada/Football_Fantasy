@@ -7,6 +7,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.format.DateTimeParseException;
 
@@ -65,11 +66,11 @@ public class RegistrationService {
             String keycloakId = keycloakService.createUser(request);  // ✅ Capture the returned ID
             log.info("✅ User created in Keycloak successfully with ID: {}", keycloakId);
 
-            // ✅ STEP 6: Create user in application database
+// ✅ STEP 6: Create user in application database
             log.info("📝 Creating user in application database...");
             try {
                 userService.createOrUpdateUser(
-                        keycloakId,  // ✅ Pass the actual Keycloak ID instead of null
+                        keycloakId,              // Keycloak ID
                         request.getUsername(),
                         request.getEmail(),
                         request.getFirstName(),
@@ -78,14 +79,19 @@ public class RegistrationService {
                         request.getCountry(),
                         request.getAddress(),
                         request.getPostalNumber(),
-                        birthDate // Now properly parsed LocalDate
+                        birthDate,
+                        true,
+                        true,                     // active by default
+                        BigDecimal.ZERO,          // default balance
+                        null                      // bannedUntil initially null
                 );
                 log.info("✅ User created in application database successfully with Keycloak ID: {}", keycloakId);
             } catch (Exception e) {
                 log.error("❌ Failed to create user in application database: {}", e.getMessage(), e);
-                // Since Keycloak user was created, we should clean it up or let it be handled on first login
                 throw new RuntimeException("Erreur lors de la création du profil utilisateur: " + e.getMessage());
             }
+
+
 
             // ✅ STEP 7: Mark referral code as used
             if (request.getReferralCode() != null && !request.getReferralCode().trim().isEmpty()) {

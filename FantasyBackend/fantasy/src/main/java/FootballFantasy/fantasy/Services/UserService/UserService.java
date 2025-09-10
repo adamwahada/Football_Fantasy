@@ -48,24 +48,51 @@ public class UserService {
                 .orElseThrow(() -> new RuntimeException("App user not found for Keycloak ID: " + keycloakId));
     }
 
-    @Transactional
     public UserEntity ensureCurrentUserFromToken() {
         Jwt jwt = getJwt();
 
         String keycloakId = jwt.getSubject();
-        String username    = (String) jwt.getClaims().getOrDefault("preferred_username", "");
-        String email       = (String) jwt.getClaims().getOrDefault("email", "");
-        String firstName   = (String) jwt.getClaims().getOrDefault("given_name", "");
-        String lastName    = (String) jwt.getClaims().getOrDefault("family_name", "");
+        String username = (String) jwt.getClaims().getOrDefault("preferred_username", "");
+        String email = (String) jwt.getClaims().getOrDefault("email", "");
+        String firstName = (String) jwt.getClaims().getOrDefault("given_name", "");
+        String lastName = (String) jwt.getClaims().getOrDefault("family_name", "");
 
-        // These are app-specific and may not be in the token
-        String phone = null, country = null, address = null, postalNumber = null;
+        // App-specific fields
+        String phone = null;
+        String country = null;
+        String address = null;
+        String postalNumber = null;
         LocalDate birthDate = null;
+        boolean termsAccepted = true;
+        // Defaults for new fields
+        boolean active = true;
+        BigDecimal balance = BigDecimal.ZERO;
+        LocalDate bannedUntil = null;
 
-        return createOrUpdateUser(
-                keycloakId, username, email, firstName, lastName,
-                phone, country, address, postalNumber, birthDate
+
+        // Call createOrUpdateUser
+        UserEntity user = createOrUpdateUser(
+                keycloakId,
+                username,
+                email,
+                firstName,
+                lastName,
+                phone,
+                country,
+                address,
+                postalNumber,
+                birthDate,
+                termsAccepted,                active,
+                balance,
+                bannedUntil
         );
+
+        // Ensure defaults are set for existing users
+        user.setActive(true);
+        if (user.getBalance() == null) user.setBalance(BigDecimal.ZERO);
+        if (user.getBannedUntil() == null) user.setBannedUntil(null);
+
+        return user;
     }
 
     @Transactional
@@ -92,44 +119,41 @@ public class UserService {
     }
 
     // ======== User Operations (internal / reused) ========
+    public UserEntity createOrUpdateUser(
+            String keycloakId,
+            String username,
+            String email,
+            String firstName,
+            String lastName,
+            String phone,
+            String country,
+            String address,
+            String postalNumber,
+            LocalDate birthDate,
+            boolean termsAccepted,
+            boolean active,
+            BigDecimal balance,
+            LocalDate bannedUntil
+    ) {
+        UserEntity user = userRepository.findByKeycloakId(keycloakId).orElse(new UserEntity());
+        user.setKeycloakId(keycloakId);
+        user.setUsername(username);
+        user.setEmail(email);
+        user.setFirstName(firstName);
+        user.setLastName(lastName);
+        user.setPhone(phone);
+        user.setCountry(country);
+        user.setAddress(address);
+        user.setPostalNumber(postalNumber);
+        user.setBirthDate(birthDate);
+        user.setTermsAccepted(true);
+        user.setActive(active);
+        user.setBalance(balance);
+        user.setBannedUntil(bannedUntil);
 
-    @Transactional
-    public UserEntity createOrUpdateUser(String keycloakId, String username, String email,
-                                            String firstName, String lastName,
-                                            String phone, String country, String address,
-                                            String postalNumber, LocalDate birthDate) {
-
-        Optional<UserEntity> existingUser = userRepository.findByKeycloakId(keycloakId);
-
-        if (existingUser.isPresent()) {
-            UserEntity user = existingUser.get();
-            user.setUsername(username);
-            user.setEmail(email);
-            user.setFirstName(firstName);
-            user.setLastName(lastName);
-            user.setPhone(phone);
-            user.setCountry(country);
-            user.setAddress(address);
-            user.setPostalNumber(postalNumber);
-            user.setBirthDate(birthDate);
-            return userRepository.save(user);
-        } else {
-            UserEntity newUser = new UserEntity();
-            newUser.setKeycloakId(keycloakId);
-            newUser.setUsername(username);
-            newUser.setEmail(email);
-            newUser.setFirstName(firstName);
-            newUser.setLastName(lastName);
-            newUser.setPhone(phone);
-            newUser.setCountry(country);
-            newUser.setAddress(address);
-            newUser.setPostalNumber(postalNumber);
-            newUser.setBirthDate(birthDate);
-            newUser.setTermsAccepted(true);
-            newUser.setReferralCode(generateReferralCode());
-            return userRepository.save(newUser);
-        }
+        return userRepository.save(user);
     }
+
 
     @Transactional
     public UserEntity updateUserProfile(Long userId, UserProfileUpdateRequest request) {

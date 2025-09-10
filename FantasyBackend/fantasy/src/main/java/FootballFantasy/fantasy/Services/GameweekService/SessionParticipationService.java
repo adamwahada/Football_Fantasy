@@ -410,12 +410,13 @@ public class SessionParticipationService {
      */
     private void validateUserEligibility(UserEntity user) {
         // Terms & conditions check
-        if (!Boolean.TRUE.equals(user.getTermsAccepted())) {
+        if (!user.isTermsAccepted()) {
             throw new BusinessLogicException(
                     "User must accept terms and conditions before joining sessions",
                     "TERMS_NOT_ACCEPTED"
             );
         }
+
 
         // Permanent ban
         if (!Boolean.TRUE.equals(user.isActive())) {

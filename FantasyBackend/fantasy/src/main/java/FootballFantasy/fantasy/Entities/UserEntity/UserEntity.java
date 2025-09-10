@@ -31,7 +31,7 @@ public class UserEntity {
     private String postalNumber;
     private LocalDate birthDate;
     private String referralCode;
-    private Boolean termsAccepted;
+    private boolean termsAccepted;
 
     private boolean active = true;
     // Optional field for temporary bans
@@ -47,4 +47,5 @@ public class UserEntity {
     public boolean isBanned() {
         return !active || (bannedUntil != null && bannedUntil.isAfter(LocalDate.now()));
     }
+
 }
