@@ -561,3 +561,137 @@ form {
   font-size: 0.9rem;
   color: #059669;
 }
+
+/* ✅ Private key generation UI */
+.generated-key-box {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 14px;
+  background: #f8fafc;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+}
+
+.generated-key-input {
+  width: 100%;
+  max-width: 360px;
+  padding: 12px 14px;
+  text-align: center;
+  font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+  font-size: 16px;
+  letter-spacing: 2px;
+  border: 2px solid #93c5fd;
+  border-radius: 8px;
+  background: #ffffff;
+  color: #1f2937;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+}
+
+.generated-key-input:focus {
+  outline: none;
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
+}
+
+.key-actions {
+  width: 100%;
+  max-width: 360px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+}
+
+.btn.btn-light {
+  background: #ffffff;
+  color: #374151;
+  border: 1px solid #d1d5db;
+}
+
+.btn.btn-light:hover:not(:disabled) {
+  background: #f3f4f6;
+  border-color: #cbd5e1;
+}
+
+/* Small helper to center the label above */
+.form-group label + .generated-key-box {
+  margin-top: 6px;
+}
+
+/* ✅ Private session card */
+.private-session-card {
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 16px;
+  background: #f9fafb;
+  margin-top: 12px;
+}
+
+.private-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.private-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.lock-icon {
+  font-size: 18px;
+}
+
+.title-text {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.2;
+}
+
+.title-text strong {
+  font-size: 15px;
+  color: #111827;
+}
+
+.title-text small {
+  color: #6b7280;
+}
+
+.switch-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  color: #374151;
+}
+
+.private-body {
+  margin-top: 8px;
+  padding-top: 12px;
+  border-top: 1px dashed #e5e7eb;
+}
+
+/* Radios inline */
+.radio-group.inline {
+  display: flex;
+  gap: 16px;
+}
+
+.radio-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  padding: 8px 12px;
+  border-radius: 8px;
+}
+
+.radio-item input[type="radio"] {
+  transform: scale(1.1);
+}

@@ -54,7 +54,10 @@ export class UserGameweekParticipationModalComponent implements OnInit {
   
   // ✅ NEW: Add user balance input to receive from parent
   @Input() userBalance: number = 0;
-  
+
+  // Remove createdAccessKey (backend-generated) in favor of client-provided key
+  // @Input() createdAccessKey: string = '';
+
   @Output() participationSubmitted = new EventEmitter<{
     sessionData: SessionParticipationData;
     predictions: PredictionPayload[];
@@ -77,10 +80,18 @@ export class UserGameweekParticipationModalComponent implements OnInit {
   readonly buyInOptions = PRECONFIGURED_BUY_IN_AMOUNTS;
   selectedBuyIn: number = 10.00; // Use decimal default
 
+  // ✅ NEW: Private session mode management
+  // 'CREATE' → backend generates and returns a key; 'JOIN' → enter an existing key
+  readonly privateModes = ['CREATE', 'JOIN'] as const;
+
+  // ✅ Bring back client-generated key for CREATE mode
+  generatedAccessKey: string = '';
+
   constructor(private fb: FormBuilder) {
     this.participationForm = this.fb.group({
       sessionType: ['', Validators.required],
       isPrivate: [false],
+      privateMode: ['CREATE'],
       accessKey: ['']
     });
   }
@@ -103,19 +114,78 @@ ngOnInit() {
 
   // Watch for private session changes
   this.participationForm.get('isPrivate')?.valueChanges.subscribe(isPrivate => {
+    this.configurePrivateValidators(isPrivate, this.participationForm.get('privateMode')?.value);
+  });
+
+  // Watch for private mode changes
+  this.participationForm.get('privateMode')?.valueChanges.subscribe(mode => {
+    const isPrivate = this.participationForm.get('isPrivate')?.value === true;
+    this.configurePrivateValidators(isPrivate, mode);
+  });
+
+  // Initial configuration for private validators
+  this.configurePrivateValidators(this.participationForm.get('isPrivate')?.value, this.participationForm.get('privateMode')?.value);
+}
+
+  // ✅ Configure validators based on private mode
+  private configurePrivateValidators(isPrivate: boolean, mode: 'CREATE' | 'JOIN') {
     const accessKeyControl = this.participationForm.get('accessKey');
-    
-    if (isPrivate) {
+
+    if (isPrivate && mode === 'JOIN') {
       accessKeyControl?.setValidators([Validators.required]);
     } else {
       accessKeyControl?.clearValidators();
       accessKeyControl?.setValue('');
     }
     accessKeyControl?.updateValueAndValidity();
-  });
-}
 
-  // ✅ NEW: Method to set initial buy-in to highest affordable amount
+    // Generate a key for CREATE mode for user preview and submission
+    if (isPrivate && mode === 'CREATE') {
+      if (!this.generatedAccessKey) {
+        this.generatedAccessKey = this.generateAccessKey();
+      }
+    } else {
+      this.generatedAccessKey = '';
+    }
+  }
+
+  // ✅ Generate 8-char key similar to backend default
+  private generateAccessKey(): string {
+    const alphabet = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+    let key = '';
+    for (let i = 0; i < 8; i++) {
+      key += alphabet.charAt(Math.floor(Math.random() * alphabet.length));
+    }
+    return key;
+  }
+
+  // ✅ Public wrapper to regenerate key for template usage
+  regenerateAccessKey(): void {
+    this.generatedAccessKey = this.generateAccessKey();
+  }
+
+  // ✅ Select the generated key input content (for UX)
+  selectGeneratedKey(inputEl: HTMLInputElement): void {
+    try {
+      inputEl.select();
+    } catch {}
+  }
+
+  // ✅ Copy client-generated key
+  copyGeneratedKeyToClipboard(): void {
+    if (!this.generatedAccessKey) return;
+    navigator.clipboard?.writeText(this.generatedAccessKey)
+      .then(() => {
+        this.showError('Clé copiée dans le presse-papiers', 'info', undefined, [], false);
+        setTimeout(() => this.clearError(), 1200);
+      })
+      .catch(() => {
+        this.showError('Impossible de copier la clé. Copiez-la manuellement.', 'warning', undefined, [], false);
+        setTimeout(() => this.clearError(), 2000);
+      });
+  }
+
+  // ✅ Method to set initial buy-in to highest affordable amount
   private setInitialBuyInAmount() {
     const affordableAmounts = this.getAffordableAmounts();
     if (affordableAmounts.length > 0) {
@@ -171,7 +241,7 @@ ngOnChanges(changes: any) {
     
     if (!changes['isVisible'].currentValue) {
       if (this.errorDisplay.show) {
-        console.log('[MODAL] 🚫 BLOCKING parent-requested modal close - error is displayed');
+        console.log('[MODAL] 🚫 Blocking parent-requested modal close - error is displayed');
         return;
       }
       this.clearError();
@@ -180,7 +250,7 @@ ngOnChanges(changes: any) {
   }
 }
 
-  // ✅ NEW: Method to get amounts user can afford
+  // ✅ Method to get amounts user can afford
 getAffordableAmounts(): number[] {
   const affordable = this.buyInOptions.filter(amount => {
     const canAfford = amount <= this.userBalance;
@@ -591,15 +661,16 @@ getBalanceStatusMessage(): string | null {
   // ✅ Enhanced form validation
   private validateForm(): { isValid: boolean; errorMessage?: string } {
     if (!this.participationForm.valid) {
-      const errors = [];
+      const errors: string[] = [];
       
       if (this.participationForm.get('sessionType')?.hasError('required')) {
         errors.push('Veuillez sélectionner un type de session');
       }
       
       if (this.participationForm.get('isPrivate')?.value && 
+          this.participationForm.get('privateMode')?.value === 'JOIN' &&
           this.participationForm.get('accessKey')?.hasError('required')) {
-        errors.push('Veuillez entrer une clé d\'accès pour une session privée');
+        errors.push('Veuillez entrer une clé d\'accès pour rejoindre une session privée');
       }
       
       return {
@@ -615,7 +686,7 @@ getBalanceStatusMessage(): string | null {
       };
     }
 
-    // ✅ NEW: Validate selected amount is affordable
+    // ✅ Validate selected amount is affordable
     if (!this.isAmountAffordable(this.selectedBuyIn)) {
       return {
         isValid: false,
@@ -651,16 +722,32 @@ getBalanceStatusMessage(): string | null {
     const cleanBuyInAmount = Number(this.selectedBuyIn);
     const sessionType = formValue.sessionType?.trim();
 
+    // Resolve access key depending on mode
+    let resolvedAccessKey: string | undefined = undefined;
+    if (formValue.isPrivate === true) {
+      if (formValue.privateMode === 'CREATE') {
+        // Send the key generated on the client; backend will persist it
+        resolvedAccessKey = this.generatedAccessKey || this.generateAccessKey();
+      } else if (formValue.privateMode === 'JOIN') {
+        const key = (formValue.accessKey || '').trim();
+        resolvedAccessKey = key.length > 0 ? key : undefined;
+      }
+    }
+
     const sessionData: SessionParticipationData = {
       gameweekId: this.gameweekId,
       competition: this.currentCompetition,
       sessionType: sessionType as SessionType,
       buyInAmount: cleanBuyInAmount,
       isPrivate: formValue.isPrivate || false,
-      accessKey: (formValue.isPrivate && formValue.accessKey) ? formValue.accessKey.trim() : undefined
+      accessKey: resolvedAccessKey
     };
 
-    console.log('[MODAL SUBMIT] 🚀 Emitting participation data to parent...');
+    console.log('[MODAL SUBMIT] 🚀 Emitting participation data to parent...', {
+      isPrivate: sessionData.isPrivate,
+      privateMode: formValue.privateMode,
+      accessKeyIncluded: Boolean(sessionData.accessKey)
+    });
 
     // Emit the event but DO NOT close the modal here
     this.participationSubmitted.emit({

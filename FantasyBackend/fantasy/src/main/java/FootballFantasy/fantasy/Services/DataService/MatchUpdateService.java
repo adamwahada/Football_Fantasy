@@ -786,6 +786,7 @@ public class MatchUpdateService {
                 Map.entry("strasbourg", "Strasbourg"),
                 Map.entry("toulouse", "Toulouse"),
 
+
                 //serie A
                 Map.entry("ac milan", "AC Milan"),
                 Map.entry("atalanta", "Atalanta"),
@@ -825,7 +826,9 @@ public class MatchUpdateService {
                 Map.entry("werder bremen", "Werder Bremen"),
                 Map.entry("wolfsburg", "Wolfsburg"),
                 Map.entry("hamburg", "Hamburg"),
-                Map.entry("st. pauli 1910", "St Pauli")
+                Map.entry("st. pauli 1910", "St Pauli"),
+
+                Map.entry("psv", "PSV Eindhoven")
         );
 
         if (teamMappings.containsKey(normalized)) {

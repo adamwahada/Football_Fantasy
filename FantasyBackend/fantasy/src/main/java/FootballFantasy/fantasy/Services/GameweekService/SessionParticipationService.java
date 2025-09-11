@@ -10,7 +10,6 @@ import FootballFantasy.fantasy.Repositories.GameweekRepository.GameWeekRepositor
 import FootballFantasy.fantasy.Repositories.GameweekRepository.PredictionRepository;
 import FootballFantasy.fantasy.Repositories.GameweekRepository.SessionParticipationRepository;
 import FootballFantasy.fantasy.Repositories.UserRepository.UserRepository;
-import FootballFantasy.fantasy.Services.UserService.UserService;
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
@@ -123,7 +122,7 @@ public class SessionParticipationService {
 
         // Check if user already joined this session
         if (sessionParticipationRepository.existsByUserIdAndSessionId(userId, sessionId)) {
-            throw new BusinessLogicException("User already joined this session", "ALREADY_JOINED");
+            throw new BusinessLogicException("You already joined this session", "ALREADY_JOINED");
         }
 
         // Check if session is full

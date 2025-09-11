@@ -40,9 +40,8 @@ public interface CompetitionSessionRepository extends JpaRepository<CompetitionS
 
     // 🔒 Find and lock private session by access key (for actual joining)
     @Lock(LockModeType.PESSIMISTIC_WRITE)
-    @Query("SELECT s FROM CompetitionSession s WHERE s.accessKey = :accessKey AND s.competition = :competition AND s.status = 'OPEN' AND s.currentParticipants < s.maxParticipants")
-    Optional<CompetitionSession> findPrivateSessionByAccessKeyWithLock(@Param("accessKey") String accessKey,
-                                                                       @Param("competition") LeagueTheme competition);
+    @Query("SELECT s FROM CompetitionSession s WHERE s.accessKey = :accessKey AND s.competition = :competition AND s.gameweek.id = :gameweekId AND s.status = 'OPEN' AND s.currentParticipants < s.maxParticipants")
+    Optional<CompetitionSession> findPrivateSessionByAccessKeyWithLock(@Param("accessKey") String accessKey, @Param("competition") LeagueTheme competition, @Param("gameweekId") Long gameweekId);
 
     // 🔍 Check if user can join this specific session type/amount for gameweek
     @Query("SELECT COUNT(sp) > 0 FROM SessionParticipation sp WHERE sp.user.id = :userId AND sp.session.gameweek.id = :gameweekId AND sp.session.sessionType = :sessionType AND sp.session.buyInAmount = :buyInAmount AND sp.session.competition = :competition")

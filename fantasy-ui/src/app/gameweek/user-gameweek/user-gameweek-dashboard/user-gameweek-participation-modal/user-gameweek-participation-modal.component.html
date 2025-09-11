@@ -83,26 +83,67 @@
         </div>
       </div>
 
-      <div class="form-group">
-        <label class="checkbox-container">
-          <input type="checkbox" formControlName="isPrivate" [disabled]="isLoading">
-          <span class="checkmark"></span>
-          Session privée
-        </label>
-      </div>
+      <!-- Private session section (always visible) -->
+      <div class="private-session-card">
+        <div class="private-header">
+          <div class="private-title">
+            <span class="lock-icon">🔒</span>
+            <div class="title-text">
+              <strong>Session privée</strong>
+              <small>Invitez des amis avec une clé d'accès</small>
+            </div>
+          </div>
+          <label class="switch-label">
+            <input type="checkbox" formControlName="isPrivate" [disabled]="isLoading">
+            <span>Activer</span>
+          </label>
+        </div>
 
-      <div class="form-group" *ngIf="participationForm.get('isPrivate')?.value">
-        <label for="accessKey">Clé d'accès:</label>
-        <input type="text"
-               id="accessKey"
-               formControlName="accessKey"
-               class="form-control"
-               [disabled]="isLoading"
-               placeholder="Entrez la clé d'accès">
-        <div class="error-message" *ngIf="participationForm.get('accessKey')?.invalid && participationForm.get('accessKey')?.touched">
-          La clé d'accès est requise pour les sessions privées
+        <div class="private-body" *ngIf="participationForm.get('isPrivate')?.value">
+          <!-- Private mode radios inline -->
+          <div class="form-group">
+            <label>Mode privé:</label>
+            <div class="radio-group inline">
+              <label class="radio-item">
+                <input type="radio" formControlName="privateMode" value="CREATE" name="privateMode" [disabled]="isLoading">
+                <span>Créer une clé et inviter</span>
+              </label>
+              <label class="radio-item">
+                <input type="radio" formControlName="privateMode" value="JOIN" name="privateMode" [disabled]="isLoading">
+                <span>Rejoindre avec une clé</span>
+              </label>
+            </div>
+          </div>
+
+          <!-- CREATE mode: show client-generated key and actions -->
+          <div class="form-group" *ngIf="participationForm.get('privateMode')?.value === 'CREATE'">
+            <label>Clé d'accès:</label>
+            <div class="generated-key-box">
+              <input #generatedKeyInput type="text" class="generated-key-input" [value]="generatedAccessKey" readonly (click)="selectGeneratedKey(generatedKeyInput)">
+              <div class="key-actions">
+                <button type="button" class="btn btn-light" (click)="regenerateAccessKey()" [disabled]="isLoading">Régénérer</button>
+                <button type="button" class="btn btn-light" (click)="copyGeneratedKeyToClipboard()" [disabled]="isLoading">Copier</button>
+              </div>
+            </div>
+            <small>Cette clé sera utilisée pour créer la session privée.</small>
+          </div>
+
+          <!-- JOIN mode: input for access key -->
+          <div class="form-group" *ngIf="participationForm.get('privateMode')?.value === 'JOIN'">
+            <label for="accessKey">Clé d'accès:</label>
+            <input type="text"
+                   id="accessKey"
+                   formControlName="accessKey"
+                   class="form-control"
+                   [disabled]="isLoading"
+                   placeholder="Entrez la clé d'accès">
+            <div class="error-message" *ngIf="participationForm.get('accessKey')?.invalid && participationForm.get('accessKey')?.touched">
+              La clé d'accès est requise pour rejoindre une session privée
+            </div>
+          </div>
         </div>
       </div>
+
       <!-- Modal Footer -->
       <div class="modal-footer">
         <button type="button" 
