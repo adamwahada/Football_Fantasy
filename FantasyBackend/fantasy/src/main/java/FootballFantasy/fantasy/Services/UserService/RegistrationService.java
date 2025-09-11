@@ -81,9 +81,9 @@ public class RegistrationService {
                         request.getPostalNumber(),
                         birthDate,
                         true,
-                        true,                     // active by default
-                        BigDecimal.ZERO,          // default balance
-                        null                      // bannedUntil initially null
+                        true,
+                        BigDecimal.ZERO,
+                        null
                 );
                 log.info("✅ User created in application database successfully with Keycloak ID: {}", keycloakId);
             } catch (Exception e) {

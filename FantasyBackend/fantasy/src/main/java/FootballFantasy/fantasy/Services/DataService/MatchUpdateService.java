@@ -15,6 +15,7 @@ import java.text.Normalizer;
 import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
 import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 public class MatchUpdateService {
@@ -40,7 +41,7 @@ public class MatchUpdateService {
     // ✅ Update all leagues - ADD @Transactional
     @Transactional
     public void updateMatches() {
-        System.out.println("🚀 Starting match update for all leagues...");
+        System.out.println("🚀 Starting match update for all leagues (FINISHED only)...");
         int successCount = 0;
         int errorCount = 0;
 
@@ -51,13 +52,14 @@ public class MatchUpdateService {
                     continue;
                 }
 
-                System.out.println("➡️ Starting update for competition: " + league.name());
+                System.out.println("➡️ Starting update for competition: " + league.name() + " (FINISHED only)");
                 long startTime = System.currentTimeMillis();
 
-                fetchAndUpdateMatches(league, 2025);
+                fetchAndUpdateMatches(league, 2025, GameweekStatus.FINISHED);
 
                 long endTime = System.currentTimeMillis();
-                System.out.println("✅ Successfully updated " + league.name() + " in " + (endTime - startTime) + "ms");
+                System.out.println("✅ Successfully updated FINISHED matches for "
+                        + league.name() + " in " + (endTime - startTime) + "ms");
                 successCount++;
 
             } catch (Exception e) {
@@ -67,22 +69,23 @@ public class MatchUpdateService {
             }
         }
 
-        System.out.println("📊 Update complete - Success: " + successCount + ", Errors: " + errorCount);
+        System.out.println("📊 Update complete (FINISHED only) - Success: "
+                + successCount + ", Errors: " + errorCount);
     }
 
-    // ✅ Update specific league manually - ADD @Transactional
     @Transactional
     public void updateMatchesManually(String competition) {
-        System.out.println("🎯 Manual update triggered for: " + competition);
+        System.out.println("🎯 Manual update triggered for: " + competition + " (FINISHED only)");
 
         try {
             LeagueTheme league = LeagueTheme.valueOf(competition);
             long startTime = System.currentTimeMillis();
 
-            fetchAndUpdateMatches(league, 2025);
+            fetchAndUpdateMatches(league, 2025, GameweekStatus.FINISHED);
 
             long endTime = System.currentTimeMillis();
-            System.out.println("✅ Manual update completed for " + competition + " in " + (endTime - startTime) + "ms");
+            System.out.println("✅ Manual update completed for " + competition
+                    + " (FINISHED only) in " + (endTime - startTime) + "ms");
 
         } catch (IllegalArgumentException e) {
             System.out.println("❌ Invalid competition: " + competition);
@@ -93,6 +96,7 @@ public class MatchUpdateService {
             throw new RuntimeException("Failed to update matches for " + competition, e);
         }
     }
+
 
     // ✅ NEW: Filter matches to only include current, past, and next 3 weeks
     private List<Map<String, Object>> filterMatchesByRelevantWeeks(List<Map<String, Object>> matches, LeagueTheme league) {
@@ -241,7 +245,7 @@ public class MatchUpdateService {
         return 1;
     }
 
-    private void fetchAndUpdateMatches(LeagueTheme league, int season) {
+    private void fetchAndUpdateMatches(LeagueTheme league, int season, GameweekStatus status) {
         try {
             String apiUrl = apiUrlTemplate
                     .replace("{competition}", league.getApiCode())
@@ -257,7 +261,6 @@ public class MatchUpdateService {
             ResponseEntity<Map> response = restTemplate.exchange(apiUrl, HttpMethod.GET, entity, Map.class);
 
             if (!response.getStatusCode().is2xxSuccessful() || response.getBody() == null) {
-                System.out.println("⚠️ API call failed for " + league + " with status: " + response.getStatusCode());
                 throw new RuntimeException("API call failed for " + league + " - Status: " + response.getStatusCode());
             }
 
@@ -269,40 +272,55 @@ public class MatchUpdateService {
 
             System.out.println("📥 " + matches.size() + " matches received from " + league);
 
-            // ✅ Filter matches to only include relevant weeks
+            // Filter matches to relevant weeks
             List<Map<String, Object>> filteredMatches = filterMatchesByRelevantWeeks(matches, league);
-            System.out.println("🔍 " + filteredMatches.size() + " relevant matches after filtering");
 
-            // Keep track of affected GameWeeks
+            // Group matches by gameweek
+            Map<Integer, List<Map<String, Object>>> matchesByGameweek =
+                    filteredMatches.stream().collect(Collectors.groupingBy(m -> (Integer) m.get("matchday")));
+
             Set<GameWeek> affectedGameWeeks = new HashSet<>();
             int processedCount = 0;
 
-            for (Map<String, Object> matchData : filteredMatches) {
-                try {
-                    processMatchData(matchData, league, affectedGameWeeks);
-                    processedCount++;
-                } catch (Exception e) {
-                    System.out.println("⚠️ Error processing match data: " + e.getMessage());
-                    // Continue with other matches
+            for (Map.Entry<Integer, List<Map<String, Object>>> entry : matchesByGameweek.entrySet()) {
+                Integer gameweekNumber = entry.getKey();
+                List<Map<String, Object>> matchesForWeek = entry.getValue();
+
+                // Only process gameweeks matching the requested status
+                boolean isFinished = matchesForWeek.stream()
+                        .allMatch(m -> "FINISHED".equalsIgnoreCase((String) m.get("status")));
+
+                if (status == GameweekStatus.FINISHED && !isFinished) {
+                    System.out.println("⏭️ Skipping Gameweek " + gameweekNumber + " because it's not finished yet.");
+                    continue;
+                }
+
+                // You can add similar checks for ONGOING or UPCOMING if needed
+
+                System.out.println("🎯 Processing Gameweek " + gameweekNumber + " with status " + status);
+
+                for (Map<String, Object> matchData : matchesForWeek) {
+                    try {
+                        processMatchData(matchData, league, affectedGameWeeks);
+                        processedCount++;
+                    } catch (Exception e) {
+                        System.out.println("⚠️ Error processing match data: " + e.getMessage());
+                    }
                 }
             }
 
-            System.out.println("📝 Processed " + processedCount + "/" + filteredMatches.size() + " matches for " + league);
+            System.out.println("📝 Processed " + processedCount + " matches for " + league + " with status " + status);
 
-            // 🔹 Step 3: Update GameWeek timings only once per GameWeek
+            // Update gameweek timings + status
             for (GameWeek gw : affectedGameWeeks) {
                 try {
                     updateGameWeekTimings(gw);
-                    System.out.println("⏰ Updated timings for GameWeek " + gw.getWeekNumber());
+                    gw.setStatus(status); // ✅ set the desired GameweekStatus
+                    System.out.println("✅ Updated GameWeek " + gw.getWeekNumber() + " as " + status);
                 } catch (Exception e) {
-                    System.out.println("⚠️ Error updating GameWeek timings: " + e.getMessage());
+                    System.out.println("⚠️ Error updating GameWeek " + gw.getWeekNumber() + ": " + e.getMessage());
                 }
             }
-
-            // Update GameWeek statuses (UPCOMING, ONGOING, FINISHED)
-            updateGameweeks(affectedGameWeeks);
-
-            System.out.println("✅ Successfully updated " + affectedGameWeeks.size() + " gameweeks for " + league);
 
         } catch (Exception e) {
             System.out.println("❌ Error fetching " + league + ": " + e.getMessage());
@@ -312,7 +330,7 @@ public class MatchUpdateService {
     }
 
     @Transactional
-    private void processMatchData(Map<String, Object> matchData, LeagueTheme league, Set<GameWeek> affectedGameWeeks) {
+    protected void processMatchData(Map<String, Object> matchData, LeagueTheme league, Set<GameWeek> affectedGameWeeks) {
         try {
             Map<String, Object> homeTeamMap = (Map<String, Object>) matchData.get("homeTeam");
             Map<String, Object> awayTeamMap = (Map<String, Object>) matchData.get("awayTeam");
@@ -384,8 +402,18 @@ public class MatchUpdateService {
                 dbMatch.setHomeTeam(homeTeamName);
                 dbMatch.setAwayTeam(awayTeamName);
                 dbMatch.setGameweeks(new ArrayList<>());
+
+                // ✅ FIX: Marquer le nouveau match comme actif
+                dbMatch.setActive(true);
+                System.out.println("✅ New match marked as ACTIVE");
             } else {
                 System.out.println("🔄 Updating existing match: " + homeTeamName + " vs " + awayTeamName);
+
+                // ✅ FIX: S'assurer que les matchs de l'API sont actifs
+                if (!dbMatch.isActive()) {
+                    dbMatch.setActive(true);
+                    System.out.println("✅ Existing match reactivated");
+                }
             }
 
             // Update match data
@@ -452,7 +480,6 @@ public class MatchUpdateService {
             // ✅ Consider ONLY active matches (and only SCHEDULED or LIVE)
             List<Match> activeMatches = allMatches.stream()
                     .filter(Match::isActive) // <<--- the key line
-                    .filter(m -> m.getStatus() == MatchStatus.SCHEDULED || m.getStatus() == MatchStatus.LIVE)
                     .filter(m -> m.getMatchDate() != null)
                     .toList();
 
