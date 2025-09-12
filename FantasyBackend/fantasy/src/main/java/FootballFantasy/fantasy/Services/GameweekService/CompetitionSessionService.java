@@ -2,19 +2,21 @@ package FootballFantasy.fantasy.Services.GameweekService;
 
 import FootballFantasy.fantasy.Entities.GameweekEntity.*;
 import FootballFantasy.fantasy.Entities.UserEntity.UserEntity;
+import FootballFantasy.fantasy.Exception.BusinessLogicException;
 import FootballFantasy.fantasy.Repositories.GameweekRepository.*;
 import FootballFantasy.fantasy.Repositories.UserRepository.UserRepository;
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.dao.DataIntegrityViolationException;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDateTime;
 import java.util.Comparator;
 import java.util.List;
-
-import static java.util.UUID.randomUUID;
+import java.util.Optional;
+import java.util.UUID;
 
 @Service
 public class CompetitionSessionService {
@@ -45,49 +47,97 @@ public class CompetitionSessionService {
                                                   SessionType sessionType,
                                                   BigDecimal buyInAmount,
                                                   boolean isPrivate,
+                                                  boolean isCreatingPrivateSession,
                                                   String accessKeyFromUser,
                                                   LeagueTheme competition) {
-        GameWeek gameWeek = gameWeekRepository.findById(gameweekId)
-                .orElseThrow(() -> new RuntimeException("GameWeek not found"));
 
+        // 1️⃣ Load GameWeek
+        GameWeek gameWeek = gameWeekRepository.findById(gameweekId)
+                .orElseThrow(() -> new BusinessLogicException(
+                        "GameWeek not found",
+                        "GAMEWEEK_NOT_FOUND"
+                ));
+
+        // 2️⃣ Load active template for this competition/type/amount/privacy
         SessionTemplate template = sessionTemplateRepository
                 .findActiveTemplateByCompetitionTypeAmountAndPrivacy(
                         competition, sessionType, buyInAmount, isPrivate)
-                .orElseThrow(() -> new RuntimeException("No active template for that competition/type/amount/private"));
+                .orElseThrow(() -> new BusinessLogicException(
+                        "No active template for that competition/type/amount/private",
+                        "SESSION_TEMPLATE_NOT_FOUND"
+                ));
 
         CompetitionSession session;
 
         if (isPrivate) {
-            if (accessKeyFromUser != null && !accessKeyFromUser.isBlank()) {
-                // Try to JOIN existing private session by access key first
-                session = competitionSessionRepository.findPrivateSessionByAccessKeyWithLock(accessKeyFromUser, competition,gameweekId)
-                        .orElse(null);
 
-                if (session != null) {
-                    // Found existing session - check if it's joinable
-                    if (session.getStatus() != CompetitionSessionStatus.OPEN ||
-                            session.getCurrentParticipants() >= session.getMaxParticipants()) {
-                        throw new RuntimeException("Private session is full or no longer accepting participants");
+            if (isCreatingPrivateSession) {
+                // 3️⃣ Determine key to use for new private session
+                String keyToUse;
+
+                if (accessKeyFromUser != null && !accessKeyFromUser.trim().isEmpty()) {
+                    // Check if key already exists anywhere for same competition
+                    Optional<CompetitionSession> existing = competitionSessionRepository
+                            .findPrivateSessionByAccessKeyAnyGameweek(accessKeyFromUser.trim(), competition);
+
+                    if (existing.isPresent()) {
+                        // Key exists → generate new unique key
+                        System.out.println("⚠️ Frontend key already exists, generating new backend key");
+                        keyToUse = ensureUniqueAccessKeyForCompetition(competition);
+                    } else {
+                        // Safe to use frontend key
+                        keyToUse = accessKeyFromUser.trim();
                     }
-                    // Session found and joinable - return it
                 } else {
-                    // No existing session found - CREATE new one with the provided access key
-                    session = createNewSessionFromTemplate(gameWeek, template, true, competition, accessKeyFromUser);
+                    // No frontend key → generate backend key
+                    keyToUse = ensureUniqueAccessKeyForCompetition(competition);
                 }
+
+                // 4️⃣ Create the private session
+                session = createNewSessionFromTemplate(gameWeek, template, true, competition, keyToUse);
+
             } else {
-                // CREATE a new private session with a randomly generated access key
-                session = createNewSessionFromTemplate(gameWeek, template, true, competition);
+                // 5️⃣ Join existing private session by access key
+                System.out.println("🔗 Joining existing private session with key: " + accessKeyFromUser);
+                session = competitionSessionRepository
+                        .findPrivateSessionByAccessKeyWithLock(accessKeyFromUser.trim(), competition, gameweekId)
+                        .orElseThrow(() -> new BusinessLogicException(
+                                "Private session not found with the given access key for this gameweek/competition",
+                                "PRIVATE_SESSION_NOT_FOUND"
+                        ));
             }
+
         } else {
-            // Public session logic (unchanged)
-            session = competitionSessionRepository.findAvailableSessionWithLock(gameweekId, competition, sessionType, buyInAmount)
-                    .orElse(null);
-            if (session == null) {
-                session = createNewSessionFromTemplate(gameWeek, template, false, competition);
-            }
+            // 6️⃣ Public session: try to join existing, otherwise create new
+            session = competitionSessionRepository
+                    .findAvailableSessionWithLock(gameweekId, competition, sessionType, buyInAmount)
+                    .orElseGet(() -> createNewSessionFromTemplate(gameWeek, template, false, competition));
         }
 
         return session;
+    }
+
+    private String generateUniqueAccessKey() {
+        // Basic token; prefer ensureUniqueAccessKeyForCompetition when competition is known
+        return UUID.randomUUID().toString().replace("-", "").substring(0, 8).toUpperCase();
+    }
+
+    private String generateAccessKeyToken() {
+        return UUID.randomUUID().toString().replace("-", "").substring(0, 8).toUpperCase();
+    }
+
+    private String ensureUniqueAccessKeyForCompetition(LeagueTheme competition) {
+        // Try a few candidates to avoid SQL unique constraint violations
+        for (int i = 0; i < 5; i++) {
+            String candidate = generateAccessKeyToken();
+            Optional<CompetitionSession> existing = competitionSessionRepository
+                    .findPrivateSessionByAccessKeyAnyGameweek(candidate, competition);
+            if (existing.isEmpty()) {
+                return candidate;
+            }
+        }
+        // As a last resort, return a token; DB constraint will still protect
+        return generateAccessKeyToken();
     }
 
 
@@ -98,39 +148,20 @@ public class CompetitionSessionService {
                                                            SessionTemplate template,
                                                            boolean isPrivate,
                                                            LeagueTheme competition) {
-        if (gameWeek.getJoinDeadline() == null) {
-            throw new RuntimeException("GameWeek join deadline not set");
-        }
-
-        CompetitionSession session = new CompetitionSession();
-        session.setGameweek(gameWeek);
-        session.setCompetition(competition);
-        session.setSessionName(template.getTemplateName());
-        session.setSessionType(template.getSessionType());
-        session.setBuyInAmount(template.getBuyInAmount());
-        session.setMaxParticipants(template.getMaxParticipants());
-        session.setCurrentParticipants(0);
-        session.setStatus(CompetitionSessionStatus.OPEN);
-        session.setCreatedAt(LocalDateTime.now());
-        session.setJoinDeadline(gameWeek.getJoinDeadline());
-        session.setTotalPrizePool(BigDecimal.ZERO);
-
-        if (isPrivate && session.getAccessKey() == null) {
-            // Only generate random key if one wasn't already set
-            session.setAccessKey(randomUUID().toString().substring(0,8));
-        }
-
-        return competitionSessionRepository.save(session);
+        return createNewSessionFromTemplate(gameWeek, template, isPrivate, competition, null);
     }
 
-    // ✅ New overload: allow providing a desired access key from frontend
+    // ✅ Single source of truth
     public CompetitionSession createNewSessionFromTemplate(GameWeek gameWeek,
                                                            SessionTemplate template,
                                                            boolean isPrivate,
                                                            LeagueTheme competition,
                                                            String desiredAccessKey) {
         if (gameWeek.getJoinDeadline() == null) {
-            throw new RuntimeException("GameWeek join deadline not set");
+            throw new BusinessLogicException(
+                    "GameWeek join deadline not set",
+                    "JOIN_DEADLINE_NOT_SET"
+            );
         }
 
         CompetitionSession session = new CompetitionSession();
@@ -147,22 +178,49 @@ public class CompetitionSessionService {
         session.setTotalPrizePool(BigDecimal.ZERO);
 
         if (isPrivate) {
+            String accessKey;
             if (desiredAccessKey != null && !desiredAccessKey.isBlank()) {
-                // Normalize to 8 chars max like backend default behavior
-                String normalized = desiredAccessKey.trim();
-                if (normalized.length() > 8) {
-                    normalized = normalized.substring(0, 8);
+                accessKey = desiredAccessKey.trim();
+                // Ensure uniqueness across competition
+                Optional<CompetitionSession> existing = competitionSessionRepository
+                        .findPrivateSessionByAccessKeyAnyGameweek(accessKey, competition);
+                if (existing.isPresent()) {
+                    System.out.println("⚠️ Desired access key already exists for competition. Generating unique key.");
+                    accessKey = ensureUniqueAccessKeyForCompetition(competition);
                 }
-                session.setAccessKey(normalized);
-            } else if (session.getAccessKey() == null) {
-                session.setAccessKey(randomUUID().toString().substring(0,8));
+            } else {
+                accessKey = ensureUniqueAccessKeyForCompetition(competition);
             }
+
+            // Enforce max 8 chars
+            if (accessKey.length() > 8) {
+                accessKey = accessKey.substring(0, 8).toUpperCase();
+            }
+
+            session.setAccessKey(accessKey);
         }
 
-        return competitionSessionRepository.save(session);
+        try {
+            return competitionSessionRepository.save(session);
+        } catch (DataIntegrityViolationException ex) {
+            // Handle rare race or key used in another competition/gameweek (global unique index)
+            if (isPrivate && session.getAccessKey() != null) {
+                System.out.println("⚠️ Unique constraint hit for access key '" + session.getAccessKey() + "'. Retrying with a new key.");
+                // Retry once with a fresh unique key
+                String newKey = ensureUniqueAccessKeyForCompetition(session.getCompetition());
+                session.setAccessKey(newKey);
+                try {
+                    return competitionSessionRepository.save(session);
+                } catch (DataIntegrityViolationException ex2) {
+                    throw new BusinessLogicException(
+                            "Access key is already taken. Please try again.",
+                            "ACCESS_KEY_CONFLICT"
+                    );
+                }
+            }
+            throw ex;
+        }
     }
-
-    // 🏆 Determine Winner and Assign Ranks with Balance Update
 
     // 🏆 Determine Winner and Assign Ranks with Balance Update
     @Transactional
@@ -403,4 +461,6 @@ public class CompetitionSessionService {
 
         System.out.println("🚫 Cancelled empty session: " + sessionId);
     }
+
+
 }

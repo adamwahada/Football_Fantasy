@@ -451,7 +451,8 @@ private async getCurrentUserBalance(): Promise<number> {
           sessionData.sessionType,
           buyInAmount,
           sessionData.isPrivate,
-          sessionData.accessKey
+          sessionData.accessKey,
+          sessionData.privateMode
         )
         .subscribe({
           next: (response: SubmitPredictionResponse) => {

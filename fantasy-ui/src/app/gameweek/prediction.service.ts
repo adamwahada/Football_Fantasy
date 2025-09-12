@@ -86,7 +86,8 @@ export class PredictionService {
     sessionType: string,
     buyInAmount: number,
     isPrivate: boolean,
-    accessKey?: string
+    accessKey?: string,
+    privateMode?: 'CREATE' | 'JOIN'
   ): Observable<SubmitPredictionResponse> {
 
     console.log('[PREDICTION SERVICE] 🚀 Starting submission process...');
@@ -118,6 +119,10 @@ export class PredictionService {
 
     if (accessKey?.trim()) {
       params = params.set('accessKey', accessKey.trim());
+    }
+
+    if (privateMode) {
+      params = params.set('privateMode', privateMode);
     }
 
     // Build request body

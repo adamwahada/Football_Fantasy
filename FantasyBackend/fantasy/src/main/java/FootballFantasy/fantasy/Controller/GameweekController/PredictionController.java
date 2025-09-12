@@ -36,12 +36,14 @@ public class PredictionController {
             @RequestParam SessionType sessionType,
             @RequestParam BigDecimal buyInAmount,
             @RequestParam boolean isPrivate,
-            @RequestParam(required = false) String accessKey) {
+            @RequestParam(required = false) String accessKey,
+            @RequestParam(required = false) String privateMode) {
 
         System.out.println("🔍 [CONTROLLER] Received submission for user: " + submissionDTO.getUserId());
         System.out.println("- Gameweek: " + submissionDTO.getGameweekId());
         System.out.println("- Buy-in: " + buyInAmount);
         System.out.println("- Session type: " + sessionType);
+        System.out.println("- isPrivate: " + isPrivate + ", accessKey='" + accessKey + "', privateMode='" + privateMode + "'");
 
         try {
             // Basic validation
@@ -49,7 +51,7 @@ public class PredictionController {
 
             // Call service to submit predictions and join session
             Map<String, Object> result = predictionService.submitPredictionsAndJoinSession(
-                    submissionDTO, sessionType, buyInAmount, isPrivate, accessKey);
+                    submissionDTO, sessionType, buyInAmount, isPrivate, accessKey, privateMode);
 
             // Return success response
             Map<String, Object> successResponse = new HashMap<>();

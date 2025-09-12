@@ -33,15 +33,29 @@ public interface CompetitionSessionRepository extends JpaRepository<CompetitionS
                                                               @Param("sessionType") SessionType sessionType,
                                                               @Param("buyInAmount") BigDecimal buyInAmount);
 
-    // 🔍 Find private session by access key (not locked - for preview)
-    @Query("SELECT s FROM CompetitionSession s WHERE s.accessKey = :accessKey AND s.competition = :competition AND s.status = 'OPEN'")
-    Optional<CompetitionSession> findPrivateSessionByAccessKey(@Param("accessKey") String accessKey,
-                                                               @Param("competition") LeagueTheme competition);
+    // 🔍 UPDATED: Find private session by access key for specific gameweek (not locked - for preview)
+    @Query("SELECT s FROM CompetitionSession s WHERE s.accessKey = :accessKey AND s.competition = :competition AND s.gameweek.id = :gameweekId AND s.status = 'OPEN'")
+    Optional<CompetitionSession> findPrivateSessionByAccessKeyAndGameweek(@Param("accessKey") String accessKey,
+                                                                          @Param("competition") LeagueTheme competition,
+                                                                          @Param("gameweekId") Long gameweekId);
 
-    // 🔒 Find and lock private session by access key (for actual joining)
+    // 🔒 UPDATED: Find and lock private session by access key for specific gameweek (for actual joining)
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("SELECT s FROM CompetitionSession s WHERE s.accessKey = :accessKey AND s.competition = :competition AND s.gameweek.id = :gameweekId AND s.status = 'OPEN' AND s.currentParticipants < s.maxParticipants")
-    Optional<CompetitionSession> findPrivateSessionByAccessKeyWithLock(@Param("accessKey") String accessKey, @Param("competition") LeagueTheme competition, @Param("gameweekId") Long gameweekId);
+    Optional<CompetitionSession> findPrivateSessionByAccessKeyWithLock(@Param("accessKey") String accessKey,
+                                                                       @Param("competition") LeagueTheme competition,
+                                                                       @Param("gameweekId") Long gameweekId);
+
+    // 🆕 NEW: Check if private session exists for access key and gameweek (regardless of status/availability)
+    @Query("SELECT s FROM CompetitionSession s WHERE s.accessKey = :accessKey AND s.competition = :competition AND s.gameweek.id = :gameweekId")
+    Optional<CompetitionSession> findPrivateSessionByAccessKeyAndGameweekAnyStatus(@Param("accessKey") String accessKey,
+                                                                                   @Param("competition") LeagueTheme competition,
+                                                                                   @Param("gameweekId") Long gameweekId);
+
+    // 🆕 NEW: Check if access key exists for any gameweek (to differentiate between "doesn't exist" vs "wrong gameweek")
+    @Query("SELECT s FROM CompetitionSession s WHERE s.accessKey = :accessKey AND s.competition = :competition")
+    Optional<CompetitionSession> findPrivateSessionByAccessKeyAnyGameweek(@Param("accessKey") String accessKey,
+                                                                          @Param("competition") LeagueTheme competition);
 
     // 🔍 Check if user can join this specific session type/amount for gameweek
     @Query("SELECT COUNT(sp) > 0 FROM SessionParticipation sp WHERE sp.user.id = :userId AND sp.session.gameweek.id = :gameweekId AND sp.session.sessionType = :sessionType AND sp.session.buyInAmount = :buyInAmount AND sp.session.competition = :competition")
@@ -57,6 +71,7 @@ public interface CompetitionSessionRepository extends JpaRepository<CompetitionS
             int maxParticipants,
             LocalDateTime deadline
     );
+
     @Query("SELECT cs FROM CompetitionSession cs WHERE cs.status = :status AND cs.joinDeadline < :deadline")
     List<CompetitionSession> findByStatusAndJoinDeadlineBefore(
             @Param("status") CompetitionSessionStatus status,

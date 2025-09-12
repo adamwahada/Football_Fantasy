@@ -3,8 +3,7 @@ package FootballFantasy.fantasy.Services.GameweekService;
 import FootballFantasy.fantasy.Dto.UserSessionStats;
 import FootballFantasy.fantasy.Entities.GameweekEntity.*;
 import FootballFantasy.fantasy.Entities.UserEntity.UserEntity;
-import FootballFantasy.fantasy.Exception.BusinessLogicException;
-import FootballFantasy.fantasy.Exception.InsufficientBalanceException;
+import FootballFantasy.fantasy.Exception.*;
 import FootballFantasy.fantasy.Repositories.GameweekRepository.CompetitionSessionRepository;
 import FootballFantasy.fantasy.Repositories.GameweekRepository.GameWeekRepository;
 import FootballFantasy.fantasy.Repositories.GameweekRepository.PredictionRepository;
@@ -48,45 +47,189 @@ public class SessionParticipationService {
      */
     @Transactional
     public SessionParticipation joinCompetition(Long gameweekId,
-                                                LeagueTheme competitionFromFrontend, // still keep this param if needed for validation
+                                                LeagueTheme competitionFromFrontend,
                                                 SessionType sessionType,
                                                 BigDecimal buyInAmount,
                                                 boolean isPrivate,
                                                 String accessKeyFromUser,
-                                                Long userId) {
+                                                Long userId,
+                                                String privateMode) {
 
+        // 1️⃣ Load user and check balance
         UserEntity user = userRepository.findById(userId)
                 .orElseThrow(() -> new BusinessLogicException("User not found", "USER_NOT_FOUND"));
 
         validateUserHasBalance(user, buyInAmount);
 
-        // ✅ Get the actual GameWeek and real competition from DB
+        // 2️⃣ Get the actual GameWeek and its competition
         GameWeek gameWeek = gameWeekRepository.findById(gameweekId)
                 .orElseThrow(() -> new BusinessLogicException("GameWeek not found", "GAMEWEEK_NOT_FOUND"));
 
         LeagueTheme actualCompetition = gameWeek.getCompetition();
 
-        // ❌ Optional validation (but recommended)
+        // 3️⃣ Validate competition matches frontend input
         if (!actualCompetition.equals(competitionFromFrontend)) {
             throw new BusinessLogicException("Mismatch between GameWeek's competition and provided competition", "COMPETITION_MISMATCH");
         }
 
-        // ✅ Always use the correct competition from GameWeek
-        CompetitionSession session = competitionSessionService
-                .joinOrCreateSession(gameweekId, sessionType, buyInAmount, isPrivate, accessKeyFromUser, actualCompetition);
+        // 4️⃣ Decide CREATE vs JOIN using privateMode if provided
+        boolean isCreatingPrivateSession = false;
+        boolean isJoiningExistingPrivateSession = false;
 
+        System.out.println("🔍 [DEBUG] privateMode received: '" + privateMode + "', isPrivate: " + isPrivate + ", accessKey: '" + accessKeyFromUser + "'");
+
+        if (isPrivate) {
+            if (privateMode != null) {
+                String mode = privateMode.trim().toUpperCase();
+                System.out.println("🔍 [DEBUG] Processing privateMode: '" + mode + "'");
+                if ("CREATE".equals(mode)) {
+                    isCreatingPrivateSession = true;
+                    System.out.println("✅ [FLOW] CREATE selected explicitly via privateMode");
+                } else if ("JOIN".equals(mode)) {
+                    isJoiningExistingPrivateSession = true;
+                    System.out.println("🔐 [FLOW] JOIN selected explicitly via privateMode with key: " + accessKeyFromUser);
+                    if (accessKeyFromUser == null || accessKeyFromUser.trim().isEmpty()) {
+                        throw new BusinessLogicException("Access key is required for joining a private session", "ACCESS_KEY_REQUIRED");
+                    }
+                } else {
+                    System.out.println("ℹ️ Unknown privateMode '" + privateMode + "' - falling back to heuristic");
+                }
+            }
+
+            // Fallback STRICT when no/unknown privateMode
+            if (!isCreatingPrivateSession && !isJoiningExistingPrivateSession) {
+                if (accessKeyFromUser == null || accessKeyFromUser.trim().isEmpty()) {
+                    // No key → CREATE
+                    isCreatingPrivateSession = true;
+                    System.out.println("✅ [FLOW] CREATE fallback (no access key provided)");
+                } else {
+                    // Key provided but no explicit mode → FORCE JOIN (no auto-create)
+                    isJoiningExistingPrivateSession = true;
+                    System.out.println("🔐 [FLOW] JOIN fallback (access key provided without privateMode)");
+                }
+            }
+        }
+
+        // 5️⃣ Validate access key ONLY if joining an existing private session
+        if (isJoiningExistingPrivateSession) {
+            System.out.println("🔍 Validating existing private session access...");
+            validatePrivateSessionAccess(accessKeyFromUser.trim(), gameweekId, actualCompetition, sessionType, buyInAmount);
+        } else if (isCreatingPrivateSession) {
+            System.out.println("🆕 Skipping validation - creating new private session");
+        }
+
+        // 6️⃣ Join or create the session
+        CompetitionSession session = competitionSessionService
+                .joinOrCreateSession(
+                        gameweekId,
+                        sessionType,
+                        buyInAmount,
+                        isPrivate,
+                        isCreatingPrivateSession,
+                        accessKeyFromUser,
+                        actualCompetition
+                );
+
+        // 7️⃣ Join the session as the user
         return joinSession(session.getId(), userId);
+    }
+    /**
+     * Backward-compatible overload (without privateMode)
+     */
+    @Transactional
+    public SessionParticipation joinCompetition(Long gameweekId,
+                                                LeagueTheme competitionFromFrontend,
+                                                SessionType sessionType,
+                                                BigDecimal buyInAmount,
+                                                boolean isPrivate,
+                                                String accessKeyFromUser,
+                                                Long userId) {
+        return joinCompetition(gameweekId, competitionFromFrontend, sessionType, buyInAmount,
+                isPrivate, accessKeyFromUser, userId, null);
+    }
+    /**
+     * 🆕 NEW: Comprehensive private session validation
+     */
+    private void validatePrivateSessionAccess(String accessKey, Long gameweekId, LeagueTheme competition,
+                                              SessionType sessionType, BigDecimal buyInAmount) {
+
+        // 1️⃣ First check: Does this access key exist at all?
+        Optional<CompetitionSession> sessionAnyGameweek = competitionSessionRepository
+                .findPrivateSessionByAccessKeyAnyGameweek(accessKey, competition);
+
+        if (sessionAnyGameweek.isEmpty()) {
+            throw new PrivateSessionNotFoundException(
+                    accessKey,
+                    "PRIVATE_SESSION_NOT_FOUND",
+                    "No private session found with access key: " + accessKey
+            );
+        }
+
+        // 2️⃣ Second check: Does it exist for the requested gameweek?
+        Optional<CompetitionSession> sessionForGameweek = competitionSessionRepository
+                .findPrivateSessionByAccessKeyAndGameweekAnyStatus(accessKey, competition, gameweekId);
+
+        if (sessionForGameweek.isEmpty()) {
+            // Access key exists but for different gameweek
+            CompetitionSession existingSession = sessionAnyGameweek.get();
+            throw new PrivateSessionGameweekMismatchException(
+                    accessKey,
+                    gameweekId,
+                    existingSession.getGameweek().getId()
+            );
+        }
+
+        // 3️⃣ Third check: Is the session available (not full, still open)?
+        CompetitionSession session = sessionForGameweek.get();
+
+        // Check if session is closed
+        if (session.getStatus() != CompetitionSessionStatus.OPEN) {
+            throw new BusinessLogicException(
+                    "Private session with access key '" + accessKey + "' is no longer accepting participants (Status: " + session.getStatus() + ")",
+                    "PRIVATE_SESSION_CLOSED"
+            );
+        }
+
+        // Check if session is full
+        if (session.getCurrentParticipants() >= session.getMaxParticipants()) {
+            throw new PrivateSessionFullException(
+                    accessKey,
+                    session.getId(),
+                    session.getCurrentParticipants(),
+                    session.getMaxParticipants()
+            );
+        }
+
+        // 4️⃣ Fourth check: Session parameters match (session type, buy-in amount)
+        if (!session.getSessionType().equals(sessionType)) {
+            throw new BusinessLogicException(
+                    String.format("Private session has different session type. Expected: %s, Found: %s",
+                            sessionType, session.getSessionType()),
+                    "PRIVATE_SESSION_TYPE_MISMATCH"
+            );
+        }
+
+        if (session.getBuyInAmount().compareTo(buyInAmount) != 0) {
+            throw new BusinessLogicException(
+                    String.format("Private session has different buy-in amount. Expected: %s, Found: %s",
+                            buyInAmount, session.getBuyInAmount()),
+                    "PRIVATE_SESSION_BUYIN_MISMATCH"
+            );
+        }
+
+        System.out.println("✅ Private session validation passed for access key: " + accessKey);
     }
 
 
     /**
-     * Complete flow: Find/Create session and join it (using Keycloak ID)
+     * Complete flow: Find/Create session and join it (using Keycloak ID) with explicit privateMode
      */
     @Transactional
     public SessionParticipation joinCompetitionByKeycloakId(Long gameweekId, LeagueTheme competitionFromFrontend,
                                                             SessionType sessionType,
                                                             BigDecimal buyInAmount,
-                                                            boolean isPrivate, String accessKeyFromUser, String keycloakId) {
+                                                            boolean isPrivate, String accessKeyFromUser, String keycloakId,
+                                                            String privateMode) {
         if (keycloakId == null || keycloakId.isBlank()) {
             throw new BusinessLogicException("Keycloak ID is required", "KEYCLOAK_ID_REQUIRED");
         }
@@ -96,7 +239,7 @@ public class SessionParticipationService {
         validateUserHasBalance(user, buyInAmount);
 
         return joinCompetition(gameweekId, competitionFromFrontend, sessionType, buyInAmount,
-                isPrivate, accessKeyFromUser, user.getId()
+                isPrivate, accessKeyFromUser, user.getId(), privateMode
         );
     }
 

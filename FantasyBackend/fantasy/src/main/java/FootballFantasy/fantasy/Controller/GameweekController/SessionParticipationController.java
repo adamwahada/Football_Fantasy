@@ -20,6 +20,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 @RestController
@@ -47,14 +48,44 @@ public class SessionParticipationController {
             @Parameter(description = "Session type") @RequestParam SessionType sessionType,
             @Parameter(description = "Buy-in amount") @RequestParam BigDecimal buyInAmount,
             @Parameter(description = "Is private session") @RequestParam(defaultValue = "false") boolean isPrivate,
-            @Parameter(description = "Access key for private sessions") @RequestParam(required = false) String accessKey) {
+            @Parameter(description = "Access key for private sessions") @RequestParam(required = false) String accessKey,
+            @Parameter(description = "Private mode: CREATE or JOIN") @RequestParam(required = false) String privateMode) {
 
-        String keycloakId = getCurrentUserKeycloakId();
+        try {
+            String keycloakId = getCurrentUserKeycloakId();
 
-        SessionParticipation participation = sessionParticipationService.joinCompetitionByKeycloakId(
-                gameweekId, competition, sessionType, buyInAmount, isPrivate, accessKey, keycloakId);
+            System.out.println("🔍 [JOIN-COMP CONTROLLER] Received params:" +
+                    "\n- keycloakId: " + keycloakId +
+                    "\n- gameweekId: " + gameweekId +
+                    "\n- competition: " + competition +
+                    "\n- sessionType: " + sessionType +
+                    "\n- buyInAmount: " + buyInAmount +
+                    "\n- isPrivate: " + isPrivate +
+                    "\n- accessKey: '" + accessKey + "'" +
+                    "\n- privateMode: '" + privateMode + "'");
 
-        return ResponseEntity.ok(participation);
+            SessionParticipation participation = sessionParticipationService.joinCompetitionByKeycloakId(
+                    gameweekId, competition, sessionType, buyInAmount, isPrivate, accessKey, keycloakId, privateMode);
+
+            return ResponseEntity.ok(participation);
+        } catch (Exception e) {
+            System.err.println("❌ [CONTROLLER] Error joining competition: " + e.getMessage());
+            
+            // Return proper error message instead of "Unexpected error"
+            if (e.getMessage() != null && e.getMessage().contains("No private session found")) {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                        .body(Map.of("error", "PRIVATE_SESSION_NOT_FOUND", "message", "Aucune session privée trouvée avec cette clé d'accès"));
+            } else if (e.getMessage() != null && e.getMessage().contains("Access key is required")) {
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                        .body(Map.of("error", "ACCESS_KEY_REQUIRED", "message", "Clé d'accès requise pour rejoindre une session privée"));
+            } else if (e.getMessage() != null && e.getMessage().contains("Mismatch between GameWeek")) {
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                        .body(Map.of("error", "COMPETITION_MISMATCH", "message", "La compétition ne correspond pas à cette gameweek"));
+            } else {
+                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                        .body(Map.of("error", "INTERNAL_ERROR", "message", "Erreur interne: " + e.getMessage()));
+            }
+        }
     }
 
 

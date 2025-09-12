@@ -15,6 +15,7 @@ export interface SessionParticipationData {
   buyInAmount: number;
   isPrivate: boolean;
   accessKey?: string;
+  privateMode?: 'CREATE' | 'JOIN';
 }
 
 export interface PredictionPayload {
@@ -254,17 +255,14 @@ ngOnChanges(changes: any) {
 getAffordableAmounts(): number[] {
   const affordable = this.buyInOptions.filter(amount => {
     const canAfford = amount <= this.userBalance;
-    console.log('[MODAL] 💰 Checking amount:', amount, 'vs balance:', this.userBalance, '→', canAfford);
     return canAfford;
   });
   
-  console.log('[MODAL] 💰 Affordable amounts:', affordable);
   return affordable;
 }
 
 isAmountAffordable(amount: number): boolean {
   const affordable = amount <= this.userBalance;
-  console.log('[MODAL] 💰 Is', amount, 'affordable with balance', this.userBalance, '?', affordable);
   return affordable;
 }
 
@@ -319,16 +317,13 @@ isAmountAffordable(amount: number): boolean {
     
     // ✅ CRITICAL FIX: Only clear errors if user is making a change that could fix the error
     if (this.errorDisplay.show && this.errorDisplay.details?.isInsufficientBalance) {
-      console.log('[MODAL] 💰 User changed to affordable buy-in amount - clearing insufficient balance error');
       this.clearError();
     }
     
-    console.log('[MODAL] 💰 Selected affordable buy-in amount:', amount, typeof amount);
   }
 
   // ✅ NEW: Method to get balance status message
 getBalanceStatusMessage(): string | null {
-  console.log('[MODAL] 💰 Getting balance status for:', this.userBalance);
   
   if (this.userBalance <= 0) {
     return 'Aucun solde disponible. Veuillez recharger votre compte.';
@@ -357,7 +352,6 @@ getBalanceStatusMessage(): string | null {
   }
 
   onOverlayClick(event: Event) {
-    console.log('[MODAL] 🖱️ Overlay click detected');
     
     // ✅ CRITICAL FIX: Don't allow closing modal by overlay click when there's a retryable error
     if (event.target === event.currentTarget && !this.isLoading && !this.errorDisplay.show) {
@@ -366,16 +360,13 @@ getBalanceStatusMessage(): string | null {
   }
 
   closeModal() {
-    console.log('[MODAL] 🚪 Close modal requested');
     
     if (this.isLoading) {
-      console.log('[MODAL] ⏳ Cannot close modal while loading');
       return;
     }
     
     // ✅ CRITICAL FIX: Don't close modal if there's any error displayed
     if (this.errorDisplay.show) {
-      console.log('[MODAL] 🚫 Blocking modal close - error is displayed');
       return;
     }
     
@@ -412,7 +403,6 @@ getBalanceStatusMessage(): string | null {
   }
 
   public clearError() {
-    console.log('[MODAL] 🧹 Clearing error');
     this.errorDisplay = {
       show: false,
       message: '',
@@ -424,7 +414,6 @@ getBalanceStatusMessage(): string | null {
 
   // ✅ ENHANCED: Updated to work with userBalance input
   handleSubmissionError(error: any) {
-    console.log('[MODAL] 💥 Handling submission error:', error);
     
     this.isLoading = false;
 
@@ -734,13 +723,21 @@ getBalanceStatusMessage(): string | null {
       }
     }
 
+    // Extra guard: JOIN must have a key
+    if (formValue.isPrivate === true && formValue.privateMode === 'JOIN' && !resolvedAccessKey) {
+      this.isLoading = false;
+      this.showError('Clé d\'accès requise pour rejoindre une session privée', 'error', undefined, undefined, true);
+      return;
+    }
+
     const sessionData: SessionParticipationData = {
       gameweekId: this.gameweekId,
       competition: this.currentCompetition,
       sessionType: sessionType as SessionType,
       buyInAmount: cleanBuyInAmount,
       isPrivate: formValue.isPrivate || false,
-      accessKey: resolvedAccessKey
+      accessKey: resolvedAccessKey,
+      privateMode: formValue.privateMode
     };
 
     console.log('[MODAL SUBMIT] 🚀 Emitting participation data to parent...', {

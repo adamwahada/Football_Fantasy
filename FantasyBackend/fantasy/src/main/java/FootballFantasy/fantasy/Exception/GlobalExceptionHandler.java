@@ -220,6 +220,102 @@ public class GlobalExceptionHandler {
 
         return ResponseEntity.status(HttpStatus.FORBIDDEN).body(errorResponse);
     }
+    /**
+     * Handle PrivateSessionNotFoundException
+     */
+    @ExceptionHandler(PrivateSessionNotFoundException.class)
+    public ResponseEntity<Map<String, Object>> handlePrivateSessionNotFound(
+            PrivateSessionNotFoundException ex, WebRequest request) {
 
+        Map<String, Object> errorResponse = createBaseErrorResponse(
+                ex.getErrorCode(),
+                ex.getMessage(),
+                request
+        );
+
+        // Add specific details for private session not found
+        errorResponse.put("details", Map.of(
+                "accessKey", ex.getAccessKey(),
+                "action", "Please check your access key and try again"
+        ));
+
+        errorResponse.put("suggestions", Map.of(
+                "message", "Make sure you have the correct access key from the session creator",
+                "contact", "Contact the person who shared this access key with you"
+        ));
+
+        System.out.println("❌ [EXCEPTION_HANDLER] Private session not found with access key: " + ex.getAccessKey());
+
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(errorResponse);
+    }
+
+    /**
+     * Handle PrivateSessionGameweekMismatchException
+     */
+    @ExceptionHandler(PrivateSessionGameweekMismatchException.class)
+    public ResponseEntity<Map<String, Object>> handlePrivateSessionGameweekMismatch(
+            PrivateSessionGameweekMismatchException ex, WebRequest request) {
+
+        Map<String, Object> errorResponse = createBaseErrorResponse(
+                ex.getErrorCode(),
+                ex.getMessage(),
+                request
+        );
+
+        // Add specific details for gameweek mismatch
+        errorResponse.put("details", Map.of(
+                "accessKey", ex.getAccessKey(),
+                "requestedGameweek", ex.getRequestedGameweekId(),
+                "actualGameweek", ex.getActualGameweekId(),
+                "action", "This access key is for a different gameweek"
+        ));
+
+        errorResponse.put("suggestions", Map.of(
+                "message", "Please use this access key for gameweek " + ex.getActualGameweekId(),
+                "alternativeAction", "Get the correct access key for gameweek " + ex.getRequestedGameweekId()
+        ));
+
+        System.out.println("❌ [EXCEPTION_HANDLER] Private session gameweek mismatch: " +
+                "requested=" + ex.getRequestedGameweekId() +
+                ", actual=" + ex.getActualGameweekId() +
+                ", accessKey=" + ex.getAccessKey());
+
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(errorResponse);
+    }
+
+    /**
+     * Handle PrivateSessionFullException
+     */
+    @ExceptionHandler(PrivateSessionFullException.class)
+    public ResponseEntity<Map<String, Object>> handlePrivateSessionFull(
+            PrivateSessionFullException ex, WebRequest request) {
+
+        Map<String, Object> errorResponse = createBaseErrorResponse(
+                ex.getErrorCode(),
+                ex.getMessage(),
+                request
+        );
+
+        // Add specific details for full session
+        errorResponse.put("details", Map.of(
+                "accessKey", ex.getAccessKey(),
+                "sessionId", ex.getSessionId(),
+                "currentParticipants", ex.getCurrentParticipants(),
+                "maxParticipants", ex.getMaxParticipants(),
+                "action", "This private session is full"
+        ));
+
+        errorResponse.put("suggestions", Map.of(
+                "message", "Contact the session creator to see if they can create a new session",
+                "alternativeAction", "Try joining a public session instead"
+        ));
+
+        System.out.println("❌ [EXCEPTION_HANDLER] Private session full: " +
+                "sessionId=" + ex.getSessionId() +
+                ", participants=" + ex.getCurrentParticipants() + "/" + ex.getMaxParticipants() +
+                ", accessKey=" + ex.getAccessKey());
+
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(errorResponse);
+    }
 
 }

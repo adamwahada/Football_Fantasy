@@ -72,7 +72,8 @@ public class PredictionService {
                                                                SessionType sessionType,
                                                                BigDecimal buyInAmount,
                                                                boolean isPrivate,
-                                                               String accessKey) {
+                                                               String accessKey,
+                                                               String privateMode) {
 
         // ✅ STEP 1: Join or create session
         SessionParticipation participation = sessionParticipationService.joinCompetition(
@@ -82,7 +83,8 @@ public class PredictionService {
                 buyInAmount,
                 isPrivate,
                 accessKey,
-                submissionDTO.getUserId()
+                submissionDTO.getUserId(),
+                privateMode
         );
 
         // ✅ STEP 2: Save predictions with participation
@@ -92,6 +94,18 @@ public class PredictionService {
                 "predictions", savedPredictions,
                 "sessionParticipation", participation
         );
+    }
+
+    /**
+     * Backward-compatible overload (without privateMode)
+     */
+    @Transactional
+    public Map<String, Object> submitPredictionsAndJoinSession(GameweekPredictionSubmissionDTO submissionDTO,
+                                                               SessionType sessionType,
+                                                               BigDecimal buyInAmount,
+                                                               boolean isPrivate,
+                                                               String accessKey) {
+        return submitPredictionsAndJoinSession(submissionDTO, sessionType, buyInAmount, isPrivate, accessKey, null);
     }
 
     @Transactional

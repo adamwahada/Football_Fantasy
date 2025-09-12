@@ -65,7 +65,8 @@ export class SessionParticipationService {
     sessionType: SessionType,
     buyInAmount: number,
     isPrivate: boolean = false,
-    accessKey?: string
+    accessKey?: string,
+    privateMode?: 'CREATE' | 'JOIN'
   ): Observable<SessionParticipation> {
     let params = new HttpParams()
       .set('gameweekId', gameweekId.toString())
@@ -76,6 +77,10 @@ export class SessionParticipationService {
 
     if (accessKey) {
       params = params.set('accessKey', accessKey);
+    }
+
+    if (privateMode) {
+      params = params.set('privateMode', privateMode);
     }
 
     return this.http.post<SessionParticipation>(`${this.apiUrl}/join-competition`, null, { params });
