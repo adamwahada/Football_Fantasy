@@ -7,7 +7,7 @@ public class PrivateSessionNotFoundException extends RuntimeException {
     private final String errorCode;
 
     public PrivateSessionNotFoundException(String accessKey, String errorCode, String message) {
-        super(message);
+        super("Aucune session privée trouvée avec cette clé d'accès: " + accessKey);
         this.accessKey = accessKey;
         this.errorCode = errorCode;
     }

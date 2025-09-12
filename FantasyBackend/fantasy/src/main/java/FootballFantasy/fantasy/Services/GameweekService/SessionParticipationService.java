@@ -190,6 +190,14 @@ public class SessionParticipationService {
             );
         }
 
+        // Check if join deadline has passed
+        if (session.getJoinDeadline() != null && LocalDateTime.now().isAfter(session.getJoinDeadline())) {
+            throw new BusinessLogicException(
+                    "Join deadline has passed for this private session",
+                    "DEADLINE_PASSED"
+            );
+        }
+
         // Check if session is full
         if (session.getCurrentParticipants() >= session.getMaxParticipants()) {
             throw new PrivateSessionFullException(

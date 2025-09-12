@@ -72,7 +72,7 @@ public class SessionParticipationController {
             System.err.println("❌ [CONTROLLER] Error joining competition: " + e.getMessage());
             
             // Return proper error message instead of "Unexpected error"
-            if (e.getMessage() != null && e.getMessage().contains("No private session found")) {
+            if (e.getMessage() != null && e.getMessage().contains("Aucune session privée trouvée")) {
                 return ResponseEntity.status(HttpStatus.NOT_FOUND)
                         .body(Map.of("error", "PRIVATE_SESSION_NOT_FOUND", "message", "Aucune session privée trouvée avec cette clé d'accès"));
             } else if (e.getMessage() != null && e.getMessage().contains("Access key is required")) {
@@ -81,6 +81,9 @@ public class SessionParticipationController {
             } else if (e.getMessage() != null && e.getMessage().contains("Mismatch between GameWeek")) {
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                         .body(Map.of("error", "COMPETITION_MISMATCH", "message", "La compétition ne correspond pas à cette gameweek"));
+            } else if (e.getMessage() != null && e.getMessage().contains("Cette clé d'accès est pour")) {
+                return ResponseEntity.status(HttpStatus.CONFLICT)
+                        .body(Map.of("error", "PRIVATE_SESSION_GAMEWEEK_MISMATCH", "message", e.getMessage()));
             } else {
                 return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                         .body(Map.of("error", "INTERNAL_ERROR", "message", "Erreur interne: " + e.getMessage()));

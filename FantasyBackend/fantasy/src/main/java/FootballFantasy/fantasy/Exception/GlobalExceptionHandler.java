@@ -81,6 +81,15 @@ public class GlobalExceptionHandler {
                 request
         );
 
+        // Add specific handling for deadline passed
+        if ("DEADLINE_PASSED".equals(ex.getErrorCode())) {
+            errorResponse.put("message", "La date limite d'inscription est dépassée");
+            errorResponse.put("suggestions", Map.of(
+                    "message", "Cette session n'accepte plus de nouveaux participants",
+                    "alternativeAction", "Consultez d'autres sessions disponibles"
+            ));
+        }
+
         System.out.println("❌ [EXCEPTION_HANDLER] Business logic error: " + ex.getMessage() +
                 " (Code: " + ex.getErrorCode() + ")");
 
@@ -229,19 +238,19 @@ public class GlobalExceptionHandler {
 
         Map<String, Object> errorResponse = createBaseErrorResponse(
                 ex.getErrorCode(),
-                ex.getMessage(),
+                "Aucune session privée trouvée avec cette clé d'accès",
                 request
         );
 
         // Add specific details for private session not found
         errorResponse.put("details", Map.of(
                 "accessKey", ex.getAccessKey(),
-                "action", "Please check your access key and try again"
+                "action", "Vérifiez votre clé d'accès et réessayez"
         ));
 
         errorResponse.put("suggestions", Map.of(
-                "message", "Make sure you have the correct access key from the session creator",
-                "contact", "Contact the person who shared this access key with you"
+                "message", "Assurez-vous d'avoir la bonne clé d'accès du créateur de la session",
+                "contact", "Contactez la personne qui vous a partagé cette clé d'accès"
         ));
 
         System.out.println("❌ [EXCEPTION_HANDLER] Private session not found with access key: " + ex.getAccessKey());
@@ -258,7 +267,7 @@ public class GlobalExceptionHandler {
 
         Map<String, Object> errorResponse = createBaseErrorResponse(
                 ex.getErrorCode(),
-                ex.getMessage(),
+                "Cette clé d'accès est pour une gameweek différente",
                 request
         );
 
@@ -267,12 +276,12 @@ public class GlobalExceptionHandler {
                 "accessKey", ex.getAccessKey(),
                 "requestedGameweek", ex.getRequestedGameweekId(),
                 "actualGameweek", ex.getActualGameweekId(),
-                "action", "This access key is for a different gameweek"
+                "action", "Cette clé d'accès est pour la gameweek " + ex.getActualGameweekId()
         ));
 
         errorResponse.put("suggestions", Map.of(
-                "message", "Please use this access key for gameweek " + ex.getActualGameweekId(),
-                "alternativeAction", "Get the correct access key for gameweek " + ex.getRequestedGameweekId()
+                "message", "Utilisez cette clé d'accès pour la gameweek " + ex.getActualGameweekId(),
+                "alternativeAction", "Demandez la bonne clé d'accès pour la gameweek " + ex.getRequestedGameweekId()
         ));
 
         System.out.println("❌ [EXCEPTION_HANDLER] Private session gameweek mismatch: " +

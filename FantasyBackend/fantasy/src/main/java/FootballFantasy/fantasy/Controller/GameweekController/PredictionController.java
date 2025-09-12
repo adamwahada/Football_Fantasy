@@ -4,10 +4,12 @@ import FootballFantasy.fantasy.Dto.GameweekPredictionSubmissionDTO;
 import FootballFantasy.fantasy.Entities.GameweekEntity.*;
 import FootballFantasy.fantasy.Exception.BusinessLogicException;
 import FootballFantasy.fantasy.Exception.InsufficientBalanceException;
+import FootballFantasy.fantasy.Exception.PrivateSessionNotFoundException;
+import FootballFantasy.fantasy.Exception.PrivateSessionGameweekMismatchException;
+import FootballFantasy.fantasy.Exception.PrivateSessionFullException;
 import FootballFantasy.fantasy.Services.GameweekService.*;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -73,11 +75,26 @@ public class PredictionController {
             // Re-throw to let GlobalExceptionHandler handle it with proper error structure
             throw ex;
 
+        } catch (PrivateSessionNotFoundException ex) {
+            System.out.println("❌ [CONTROLLER] Private session not found: " + ex.getMessage());
+            // Re-throw to let GlobalExceptionHandler handle it with proper error structure
+            throw ex;
+
+        } catch (PrivateSessionGameweekMismatchException ex) {
+            System.out.println("❌ [CONTROLLER] Private session gameweek mismatch: " + ex.getMessage());
+            // Re-throw to let GlobalExceptionHandler handle it with proper error structure
+            throw ex;
+
+        } catch (PrivateSessionFullException ex) {
+            System.out.println("❌ [CONTROLLER] Private session full: " + ex.getMessage());
+            // Re-throw to let GlobalExceptionHandler handle it with proper error structure
+            throw ex;
+
         } catch (Exception ex) {
             System.err.println("❌ [CONTROLLER] Unexpected error: " + ex.getMessage());
             ex.printStackTrace();
             // Re-throw as BusinessLogicException to ensure consistent error handling
-            throw new BusinessLogicException("An unexpected error occurred while processing your request", "UNEXPECTED_ERROR");
+            throw new BusinessLogicException("Une erreur inattendue s'est produite lors du traitement de votre demande", "UNEXPECTED_ERROR");
         }
     }
 

@@ -436,7 +436,8 @@ getBalanceStatusMessage(): string | null {
       'PREDICTIONS_MISSING',
       'PREDICTIONS_INCOMPLETE',
       'MATCH_PREDICTIONS_REQUIRED',
-      'TIEBREAK_SCORES_REQUIRED'
+      'TIEBREAK_SCORES_REQUIRED',
+      'DEADLINE_PASSED'
     ];
 
     let errorCode = 'UNKNOWN_ERROR';
@@ -559,6 +560,11 @@ getBalanceStatusMessage(): string | null {
         message: 'Clé d\'accès requise pour cette session privée',
         type: 'error',
         suggestions: ['Veuillez entrer la clé d\'accès fournie par l\'organisateur']
+      },
+      'DEADLINE_PASSED': {
+        message: 'La date limite d\'inscription est dépassée',
+        type: 'error',
+        suggestions: ['Cette session n\'accepte plus de nouveaux participants', 'Consultez d\'autres sessions disponibles']
       }
     };
 

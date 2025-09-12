@@ -7,7 +7,7 @@ public class PrivateSessionGameweekMismatchException extends RuntimeException {
     private final String errorCode;
 
     public PrivateSessionGameweekMismatchException(String accessKey, Long requestedGameweekId, Long actualGameweekId) {
-        super(String.format("Private session with access key '%s' exists for gameweek %d, but you're trying to join gameweek %d",
+        super(String.format("Cette clé d'accès '%s' est pour la gameweek %d, mais vous essayez de rejoindre la gameweek %d",
                 accessKey, actualGameweekId, requestedGameweekId));
         this.accessKey = accessKey;
         this.requestedGameweekId = requestedGameweekId;
