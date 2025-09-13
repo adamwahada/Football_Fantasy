@@ -14,6 +14,7 @@ import FootballFantasy.fantasy.Dto.UserSessionStats;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -67,7 +68,7 @@ public class UserService {
         // Defaults for new fields
         boolean active = true;
         BigDecimal balance = BigDecimal.ZERO;
-        LocalDate bannedUntil = null;
+        LocalDateTime bannedUntil = null;
 
 
         // Call createOrUpdateUser
@@ -133,7 +134,7 @@ public class UserService {
             boolean termsAccepted,
             boolean active,
             BigDecimal balance,
-            LocalDate bannedUntil
+            LocalDateTime bannedUntil
     ) {
         UserEntity user = userRepository.findByKeycloakId(keycloakId).orElse(new UserEntity());
         user.setKeycloakId(keycloakId);
@@ -342,9 +343,10 @@ public class UserService {
     public void banUserTemporarily(Long userId, int days) {
         UserEntity user = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("User not found"));
-        user.setBannedUntil(LocalDate.now().plusDays(days));
+        user.setBannedUntil(LocalDateTime.now().plusDays(days));
         userRepository.save(user);
     }
+
 
     @Transactional
     public void banUserPermanently(Long userId) {
@@ -366,7 +368,7 @@ public class UserService {
         UserEntity user = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("User not found"));
         if (!user.isActive()) return "permanently banned";
-        if (user.getBannedUntil() != null && user.getBannedUntil().isAfter(LocalDate.now()))
+        if (user.getBannedUntil() != null && user.getBannedUntil().isAfter(LocalDateTime.now()))
             return "temporarily banned until " + user.getBannedUntil();
         return "active";
     }

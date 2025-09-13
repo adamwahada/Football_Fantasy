@@ -15,8 +15,10 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
+import java.time.Duration;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Optional;
 
@@ -577,9 +579,28 @@ public class SessionParticipationService {
         }
 
         // Temporary ban
-        if (user.getBannedUntil() != null && user.getBannedUntil().isAfter(LocalDate.now())) {
+        if (user.getBannedUntil() != null && user.getBannedUntil().isAfter(LocalDateTime.now())) {
+            LocalDateTime now = LocalDateTime.now();
+            LocalDateTime unbanTime = user.getBannedUntil();
+
+            Duration duration = Duration.between(now, unbanTime);
+            long totalMinutes = duration.toMinutes();
+            long days = totalMinutes / (24 * 60);
+            long hours = (totalMinutes % (24 * 60)) / 60;
+            long minutes = totalMinutes % 60;
+
+            String timeLeft;
+            if (days > 0) {
+                timeLeft = String.format("%d days %d hours %d minutes", days, hours, minutes);
+            } else {
+                timeLeft = String.format("%d hours %d minutes", hours, minutes);
+            }
+
+            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");
+            String formattedDate = unbanTime.format(formatter);
+
             throw new BusinessLogicException(
-                    "User is temporarily banned until " + user.getBannedUntil(),
+                    "User is temporarily banned until " + formattedDate + " (" + timeLeft + " left)",
                     "USER_TEMPORARILY_BANNED"
             );
         }

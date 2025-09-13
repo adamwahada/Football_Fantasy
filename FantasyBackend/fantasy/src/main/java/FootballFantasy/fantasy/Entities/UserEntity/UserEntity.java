@@ -7,6 +7,7 @@ import lombok.*;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 @Entity
@@ -35,7 +36,7 @@ public class UserEntity {
 
     private boolean active = true;
     // Optional field for temporary bans
-    private LocalDate bannedUntil;
+    private LocalDateTime bannedUntil;
 
     @Column(precision = 10, scale = 2, nullable = false)
     private BigDecimal balance = BigDecimal.ZERO;
@@ -45,7 +46,7 @@ public class UserEntity {
     private List<SessionParticipation> sessionParticipations = new ArrayList<>();
 
     public boolean isBanned() {
-        return !active || (bannedUntil != null && bannedUntil.isAfter(LocalDate.now()));
+        return !active || (bannedUntil != null && bannedUntil.isAfter(LocalDateTime.now()));
     }
 
 }

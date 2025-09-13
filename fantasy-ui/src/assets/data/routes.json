@@ -70,6 +70,24 @@
     },
     {
       "path": "",
+      "title": "Funds",
+      "iconType": "material-icons-outlined",
+      "icon": "money",
+      "class": "menu-toggle",
+      "groupTitle": false,
+      "role": ["ADMIN"],
+      "submenu": [
+        {
+          "path": "/admin/funds",
+          "title": "Deposits/Withdrawals",
+          "class": "ml-menu",
+          "role": ["ADMIN"],
+          "submenu": []
+        }
+      ]
+    },
+    {
+      "path": "",
       "title": "Competitions",
       "iconType": "material-icons-outlined",
       "icon": "sports_soccer",

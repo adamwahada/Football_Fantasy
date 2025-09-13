@@ -53,6 +53,8 @@ export interface WinningsResponse {
 })
 export class SessionParticipationService {
   private apiUrl = 'http://localhost:9090/fantasy/api/session-participation';
+  private adminApiUrl = 'http://localhost:9090/fantasy/api/admin';
+
 
   constructor(private http: HttpClient) {}
 
@@ -200,4 +202,22 @@ export class SessionParticipationService {
   getUserSessionStatsAdmin(userId: number): Observable<UserSessionStats> {
     return this.http.get<UserSessionStats>(`${this.apiUrl}/admin/user-stats/${userId}`);
   }
+  // ===================== CANCEL SESSION WITH AUTOMATIC REFUNDS =====================
+  cancelSessionWithRefunds(sessionId: number): Observable<string> {
+    const url = `${this.adminApiUrl}/sessions/${sessionId}/cancel-with-refunds`;
+    return this.http.post(url, '', { responseType: 'text' });
+  }
+
+  // ===================== CANCEL SESSION MANUALLY =====================
+  cancelSessionManually(sessionId: number): Observable<string> {
+    const url = `${this.adminApiUrl}/sessions/${sessionId}/cancel-manually`;
+    return this.http.post(url, '', { responseType: 'text' });
+  }
+
+  // ===================== REFUND CANCELLED SESSION LATER =====================
+  refundCancelledSession(sessionId: number): Observable<string> {
+    const url = `${this.adminApiUrl}/sessions/${sessionId}/refund-cancelled`;
+    return this.http.post(url, '', { responseType: 'text' });
+  }
+
 }

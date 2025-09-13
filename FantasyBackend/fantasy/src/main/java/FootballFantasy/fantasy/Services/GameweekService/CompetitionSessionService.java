@@ -461,6 +461,69 @@ public class CompetitionSessionService {
 
         System.out.println("🚫 Cancelled empty session: " + sessionId);
     }
+    @Transactional
+    public void cancelSessionWithAutomaticRefund(Long sessionId) {
+        CompetitionSession session = competitionSessionRepository.findById(sessionId)
+                .orElseThrow(() -> new RuntimeException("Session not found"));
+
+        List<SessionParticipation> participations = session.getParticipations();
+
+        for (SessionParticipation p : participations) {
+            BigDecimal refundAmount = p.getAmountPaid();
+
+            // Refund user balance
+            UserEntity user = p.getUser();
+            user.setBalance(user.getBalance().add(refundAmount));
+            userRepository.save(user);
+
+            // Update participation
+            p.setPrizeWon(refundAmount);
+            p.setIsWinner(false);
+            sessionParticipationRepository.save(p);
+
+            System.out.println("💰 Refunded " + refundAmount + " to user " + user.getId());
+        }
+
+        // Mark session as cancelled
+        session.setStatus(CompetitionSessionStatus.CANCELLED);
+        competitionSessionRepository.save(session);
+
+        System.out.println("🚫 Session " + sessionId + " cancelled with automatic refunds");
+    }
+
+    @Transactional
+    public void cancelSessionManually(Long sessionId) {
+        CompetitionSession session = competitionSessionRepository.findById(sessionId)
+                .orElseThrow(() -> new RuntimeException("Session not found"));
+
+        session.setStatus(CompetitionSessionStatus.CANCELLED);
+        competitionSessionRepository.save(session);
+
+        System.out.println("⚠️ Session " + sessionId + " cancelled manually (refunds not processed)");
+    }
+    @Transactional
+    public void refundCancelledSession(Long sessionId) {
+        CompetitionSession session = competitionSessionRepository.findById(sessionId)
+                .orElseThrow(() -> new RuntimeException("Session not found"));
+
+        if (session.getStatus() != CompetitionSessionStatus.CANCELLED) {
+            throw new RuntimeException("Session is not cancelled, cannot refund");
+        }
+
+        for (SessionParticipation p : session.getParticipations()) {
+            BigDecimal refundAmount = p.getAmountPaid();
+            UserEntity user = p.getUser();
+            user.setBalance(user.getBalance().add(refundAmount));
+            userRepository.save(user);
+
+            p.setPrizeWon(refundAmount);
+            sessionParticipationRepository.save(p);
+
+            System.out.println("💰 Refunded " + refundAmount + " to user " + user.getId());
+        }
+    }
+
+
 
 
 }
