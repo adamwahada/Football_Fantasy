@@ -29,6 +29,9 @@ public class UserManagementAudit {
     @Column(length = 100)
     private String details;
 
+    @Enumerated(EnumType.STRING)
+    private BanCause reason;
+
     // Timestamp of the action
     private LocalDateTime timestamp = LocalDateTime.now();
 }

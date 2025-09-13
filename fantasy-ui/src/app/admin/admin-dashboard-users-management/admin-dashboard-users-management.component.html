@@ -89,11 +89,44 @@
             </span>
           </td>
           <td class="actions">
-            <button class="btn-action btn-temp-ban" (click)="banUser(user.id, 1)" title="Bannir temporairement 1 jour">⏳ Ban 1j</button>
-            <button class="btn-action btn-temp-ban" (click)="banUser(user.id, 3)" title="Bannir temporairement 3 jours">⏳ Ban 3j</button>
-            <button class="btn-action btn-temp-ban" (click)="banUser(user.id, 7)" title="Bannir temporairement 7 jours">⏳ Ban 7j</button>
-            <button class="btn-action btn-perm-ban" (click)="banUser(user.id)" title="Bannir définitivement">🚫 Ban définitif</button>
-            <button class="btn-action btn-unban" (click)="unbanUser(user.id)" title="Débannir l'utilisateur">✅ Débannir</button>
+            <button mat-icon-button class="btn-icon red" (click)="openBanDropdown(user.id, undefined, $event)" matTooltip="Bannir" aria-label="Bannir">
+              <mat-icon>gavel</mat-icon>
+            </button>
+            <button mat-icon-button class="btn-icon red" (click)="openBanDropdown(user.id, null!, $event)" matTooltip="Bannir définitivement" aria-label="Bannir définitivement">
+              <mat-icon>block</mat-icon>
+            </button>
+            <button mat-icon-button class="btn-icon green" (click)="unbanUser(user.id)" matTooltip="Débannir" aria-label="Débannir">
+              <mat-icon>check_circle</mat-icon>
+            </button>
+            <!-- Modern dropdown for ban reason and days -->
+            <div *ngIf="banDropdownUserId === user.id" class="ban-dropdown-card">
+              <div class="ban-dropdown-content">
+                <label for="ban-days">Durée du bannissement :</label>
+                <select id="ban-days" [(ngModel)]="banDropdownDays" [disabled]="banDropdownDays === null">
+                  <option [ngValue]="null">Permanent</option>
+                  <option [ngValue]="1">1 jour</option>
+                  <option [ngValue]="3">3 jours</option>
+                  <option [ngValue]="7">7 jours</option>
+                </select>
+                <label for="ban-reason">Raison du bannissement :</label>
+                <select id="ban-reason" [(ngModel)]="selectedBanReason">
+                  <option [ngValue]="null">-- Sélectionner --</option>
+                  <option [ngValue]="BanCause.CHEATING">Triche</option>
+                  <option [ngValue]="BanCause.SPAM">Spam</option>
+                  <option [ngValue]="BanCause.HARASSMENT">Harcèlement</option>
+                  <option [ngValue]="BanCause.INAPPROPRIATE_CONTENT">Contenu inapproprié</option>
+                  <option [ngValue]="BanCause.MULTIPLE_ACCOUNTS">Multi-comptes</option>
+                  <option [ngValue]="BanCause.PAYMENT_FRAUD">Fraude de paiement</option>
+                  <option [ngValue]="BanCause.SECURITY_THREAT">Menace sécurité</option>
+                  <option [ngValue]="BanCause.VIOLATION_OF_RULES">Violation des règles</option>
+                  <option [ngValue]="BanCause.OTHER">Autre</option>
+                </select>
+                <div style="margin-top: 1rem; display: flex; gap: 1rem;">
+                  <button class="btn-primary" (click)="confirmBanDropdown()" [disabled]="(!banDropdownDays && banDropdownDays !== null) || !selectedBanReason">Confirmer</button>
+                  <button class="btn-secondary" (click)="closeBanDropdown()">Annuler</button>
+                </div>
+              </div>
+            </div>
           </td>
         </tr>
       </tbody>
@@ -109,11 +142,36 @@
     showFirstLastButtons>
   </mat-paginator>
 
-  <!-- Message -->
-  <div *ngIf="message" class="message-container"
-       [class.success]="message.includes('débanni')"
-       [class.error]="message.includes('Erreur') || message.includes('❌')"
-       [class.warning]="message.includes('⚠️')">
-    <p><strong>Réponse:</strong> {{ message }}</p>
-  </div>
 </div>
+
+<style>
+.ban-dropdown-card {
+  position: absolute;
+  z-index: 100;
+  background: #fff;
+  border-radius: 8px;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.15);
+  padding: 1rem;
+  min-width: 220px;
+  animation: fadeIn 0.2s;
+}
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(-10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.ban-dropdown-content label {
+  font-weight: bold;
+  margin-bottom: 0.5rem;
+  display: block;
+}
+.ban-dropdown-content select {
+  width: 100%;
+  padding: 0.5rem;
+  margin-bottom: 1rem;
+  border-radius: 4px;
+  border: 1px solid #ccc;
+}
+.ban-dropdown-content button {
+  min-width: 90px;
+}
+</style>

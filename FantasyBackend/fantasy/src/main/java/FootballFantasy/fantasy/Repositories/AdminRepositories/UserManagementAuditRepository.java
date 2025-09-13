@@ -1,5 +1,6 @@
 package FootballFantasy.fantasy.Repositories.AdminRepositories;
 
+import FootballFantasy.fantasy.Entities.AdminEntities.BanCause;
 import FootballFantasy.fantasy.Entities.AdminEntities.UserManagementAudit;
 import FootballFantasy.fantasy.Entities.AdminEntities.UserAction;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -18,4 +19,9 @@ public interface UserManagementAuditRepository extends JpaRepository<UserManagem
 
     // Fetch all actions of a specific type performed by an admin
     List<UserManagementAudit> findByAdminIdAndAction(Long adminId, UserAction action);
+
+    List<UserManagementAudit> findByReason(BanCause reason);
+
+    List<UserManagementAudit> findByUserIdAndReason(Long userId, BanCause reason);
+
 }

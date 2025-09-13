@@ -1,5 +1,6 @@
 package FootballFantasy.fantasy.Controller.ControllerUser;
 
+import FootballFantasy.fantasy.Entities.AdminEntities.BanCause;
 import FootballFantasy.fantasy.Entities.GameweekEntities.LeagueTheme;
 import FootballFantasy.fantasy.Entities.UserEntities.UserEntity;
 import FootballFantasy.fantasy.Services.GameweekService.CompetitionSessionService;
@@ -109,16 +110,16 @@ public class AdminController {
     @PostMapping("/users/{userId}/ban-temporary/{adminId}")
     public ResponseEntity<String> banUserTemporarily(
             @PathVariable Long userId,
-            @RequestParam int days,@PathVariable Long adminId) {
+            @RequestParam int days,@PathVariable Long adminId,@RequestBody BanCause reason) {
 
-        userService.banUserTemporarily(userId, days,adminId);
+        userService.banUserTemporarily(userId, days,adminId,reason);
         return ResponseEntity.ok("User temporarily banned for " + days + " day(s)");
     }
 
     @PostMapping("/users/{userId}/ban-permanent/{adminId}")
-    public ResponseEntity<String> banUserPermanently(@PathVariable Long userId,@PathVariable Long adminId) {
+    public ResponseEntity<String> banUserPermanently(@PathVariable Long userId,@PathVariable Long adminId,@RequestBody BanCause reason) {
 
-        userService.banUserPermanently(userId,adminId);
+        userService.banUserPermanently(userId,adminId,reason);
         return ResponseEntity.ok("User permanently banned");
     }
 

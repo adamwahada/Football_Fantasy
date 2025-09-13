@@ -1,5 +1,6 @@
 package FootballFantasy.fantasy.Services.UserService;
 
+import FootballFantasy.fantasy.Entities.AdminEntities.BanCause;
 import FootballFantasy.fantasy.Entities.AdminEntities.UserAction;
 import FootballFantasy.fantasy.Entities.AdminEntities.UserManagementAudit;
 import FootballFantasy.fantasy.Entities.UserEntities.UserEntity;
@@ -363,7 +364,7 @@ public class UserService {
     }
 
     @Transactional
-    public void banUserTemporarily(Long userId, int days, Long adminId) {
+    public void banUserTemporarily(Long userId, int days, Long adminId, BanCause reason) {
         UserEntity user = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
@@ -375,11 +376,13 @@ public class UserService {
         audit.setAdminId(adminId);
         audit.setAction(UserAction.TEMP_BAN);
         audit.setDetails("Banned for " + days + " day(s)");
+        audit.setReason(reason); // ✅ Add the reason
         audit.setTimestamp(LocalDateTime.now());
         auditRepository.save(audit);
     }
+
     @Transactional
-    public void banUserPermanently(Long userId, Long adminId) {
+    public void banUserPermanently(Long userId, Long adminId, BanCause reason) {
         UserEntity user = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
@@ -391,6 +394,7 @@ public class UserService {
         audit.setAdminId(adminId);
         audit.setAction(UserAction.PERMANENT_BAN);
         audit.setDetails("User permanently banned");
+        audit.setReason(reason); // ✅ Add the reason
         audit.setTimestamp(LocalDateTime.now());
         auditRepository.save(audit);
     }
