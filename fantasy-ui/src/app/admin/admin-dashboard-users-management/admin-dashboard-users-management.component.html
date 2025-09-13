@@ -1,17 +1,17 @@
 <div class="admin-dashboard">
-  <h2>⚙️ Admin Dashboard - Funds Management</h2>
+  <h2>👥 Admin Dashboard - Gestion des Utilisateurs</h2>
 
-  <!-- Search, Filter and Refresh -->
+  <!-- Search and Filter -->
   <div class="search-container" style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 10px;">
-    
+
     <!-- Search Input -->
     <div class="search-input-container" style="flex: 1; display: flex; align-items: center; gap: 5px;">
       <input type="text" 
-            placeholder="Rechercher par nom, email, ID ou solde..." 
-            [(ngModel)]="searchQuery" 
-            (input)="searchUsers()"
-            (keyup)="searchUsers()" 
-            style="flex: 1; padding: 5px;" />
+             placeholder="Rechercher par nom, email, ID ou solde..." 
+             [(ngModel)]="searchQuery" 
+             (input)="searchUsers()"
+             (keyup)="searchUsers()" 
+             style="flex: 1; padding: 5px;" />
       <button class="btn-refresh" 
               (click)="refreshUsers()" 
               [disabled]="refreshing"
@@ -30,33 +30,32 @@
                 class="status-filter"
                 style="margin-left: 5px; padding: 5px;">
           <option value="all">Tous les utilisateurs</option>
-          <option value="active">Actif</option>
-          <option value="temp-banned">Ban temporaire</option>
-          <option value="permanently-banned">Ban définitif</option>
+          <option value="active">Actifs uniquement</option>
+          <option value="temp-banned">Bannis temporairement</option>
+          <option value="permanently-banned">Bannis définitivement</option>
         </select>
       </label>
     </div>
 
   </div>
 
-<!-- Active filters -->
-<div class="active-filters" *ngIf="searchQuery || selectedStatus !== 'all'" style="margin-bottom: 10px; display: flex; flex-wrap: wrap; gap: 5px;">
-  <span *ngIf="searchQuery && searchQuery.trim() !== ''" class="filter-chip">
-    🔍 Recherche: "{{ searchQuery }}"
-    <button type="button" class="remove-filter" (click)="clearSearch()">✖</button>
-  </span>
+  <!-- Active filters -->
+  <div class="active-filters" *ngIf="searchQuery || selectedStatus !== 'all'" style="margin-bottom: 10px; display: flex; flex-wrap: wrap; gap: 5px;">
+    <span *ngIf="searchQuery && searchQuery.trim() !== ''" class="filter-chip">
+      🔍 Recherche: "{{ searchQuery }}"
+      <button type="button" class="remove-filter" (click)="clearSearch()">✖</button>
+    </span>
 
-  <span *ngIf="selectedStatus && selectedStatus !== 'all'" class="filter-chip">
-    ⚡ Statut: {{ getStatusLabel(selectedStatus) }}
-    <button type="button" class="remove-filter" (click)="clearStatus()">✖</button>
-  </span>
-</div>
+    <span *ngIf="selectedStatus && selectedStatus !== 'all'" class="filter-chip">
+      ⚡ Statut: {{ getStatusLabel(selectedStatus) }}
+      <button type="button" class="remove-filter" (click)="clearStatus()">✖</button>
+    </span>
+  </div>
 
-<!-- Search results info -->
-<div *ngIf="isSearchActive() || selectedStatus !== 'all'" class="search-results-info" style="margin-bottom: 10px; font-style: italic;">
-  {{ getSearchResultsCount() }} résultat(s) trouvé(s)
-</div>
-
+  <!-- Search results info -->
+  <div *ngIf="isSearchActive() || selectedStatus !== 'all'" class="search-results-info" style="margin-bottom: 10px; font-style: italic;">
+    {{ getSearchResultsCount() }} résultat(s) trouvé(s)
+  </div>
 
   <!-- Users Table -->
   <div class="users-table-container">
@@ -90,23 +89,11 @@
             </span>
           </td>
           <td class="actions">
-            <input type="number" 
-                   [ngModel]="getUserAmount(user.id)" 
-                   (ngModelChange)="updateUserAmount(user.id, $event)"
-                   placeholder="Montant" 
-                   class="amount-input"
-                   min="0"
-                   step="0.01" />
-            <button class="btn-action btn-credit" 
-                    (click)="creditBalance(user.id)"
-                    title="Créditer le solde">
-              💰 Créditer
-            </button>
-            <button class="btn-action btn-debit" 
-                    (click)="debitBalance(user.id)"
-                    title="Débiter le solde">
-              💸 Débiter
-            </button>
+            <button class="btn-action btn-temp-ban" (click)="banUser(user.id, 1)" title="Bannir temporairement 1 jour">⏳ Ban 1j</button>
+            <button class="btn-action btn-temp-ban" (click)="banUser(user.id, 3)" title="Bannir temporairement 3 jours">⏳ Ban 3j</button>
+            <button class="btn-action btn-temp-ban" (click)="banUser(user.id, 7)" title="Bannir temporairement 7 jours">⏳ Ban 7j</button>
+            <button class="btn-action btn-perm-ban" (click)="banUser(user.id)" title="Bannir définitivement">🚫 Ban définitif</button>
+            <button class="btn-action btn-unban" (click)="unbanUser(user.id)" title="Débannir l'utilisateur">✅ Débannir</button>
           </td>
         </tr>
       </tbody>
@@ -114,10 +101,9 @@
   </div>
 
   <!-- Message -->
-  <div *ngIf="message" 
-       class="message-container"
-       [class.success]="message.includes('Credited') || message.includes('Debited') || message.includes('unbanned')"
-       [class.error]="message.includes('Error') || message.includes('❌')"
+  <div *ngIf="message" class="message-container"
+       [class.success]="message.includes('débanni')"
+       [class.error]="message.includes('Erreur') || message.includes('❌')"
        [class.warning]="message.includes('⚠️')">
     <p><strong>Réponse:</strong> {{ message }}</p>
   </div>

@@ -83,6 +83,13 @@
           "class": "ml-menu",
           "role": ["ADMIN"],
           "submenu": []
+        },
+        {
+          "path": "/admin/management",
+          "title": "Ban/Unban Users",
+          "class": "ml-menu",
+          "role": ["ADMIN"],
+          "submenu": []
         }
       ]
     },

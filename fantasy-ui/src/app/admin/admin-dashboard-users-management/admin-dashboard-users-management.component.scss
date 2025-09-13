@@ -1,4 +1,4 @@
-// Admin Dashboard Funds - Styles cohérents avec all-admin-gameweek
+// Admin Dashboard Users Management - Styles cohérents avec admin-dashboard-funds
 .admin-dashboard {
   padding: 1.5rem;
   max-width: 1200px;
@@ -163,36 +163,81 @@
   }
 }
 .active-filters {
-  font-size: 14px;
-
-  .filter-chip {
-    background-color: #f0f0f0;
-    border-radius: 15px;
-    padding: 3px 8px;
-    display: inline-flex;
-    align-items: center;
-    font-weight: 500;
+    font-size: 14px;
+  
+    .filter-chip {
+      background-color: #f0f0f0;
+      border-radius: 15px;
+      padding: 3px 8px;
+      display: inline-flex;
+      align-items: center;
+      font-weight: 500;
+    }
+  
+    .remove-filter {
+      background: transparent;
+      border: none;
+      cursor: pointer;
+      margin-left: 5px;
+      font-weight: bold;
+      color: #ff4d4f;
+    }
+  
+    .remove-filter:hover {
+      color: #d9363e;
+    }
   }
-
-  .remove-filter {
-    background: transparent;
-    border: none;
-    cursor: pointer;
-    margin-left: 5px;
-    font-weight: bold;
-    color: #ff4d4f;
+  
+  .search-results-info {
+    font-size: 13px;
+    color: #555;
   }
-
-  .remove-filter:hover {
-    color: #d9363e;
+  iltre de statut
+  .filter-container {
+    display: flex;
+    justify-content: center;
+    margin-top: 0.5rem;
+  
+    .filter-label {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      background: white;
+      padding: 0.75rem 1rem;
+      border-radius: 0.5rem;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+      border: 1px solid #e5e7eb;
+  
+      .filter-text {
+        font-weight: 600;
+        color: #374151;
+        font-size: 0.95rem;
+      }
+  
+      .status-filter {
+        padding: 0.5rem 0.75rem;
+        border: 2px solid #d1d5db;
+        border-radius: 0.375rem;
+        font-size: 0.95rem;
+        background: white;
+        color: #374151;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        min-width: 200px;
+  
+        &:focus {
+          outline: none;
+          border-color: #3b82f6;
+          box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+        }
+  
+        &:hover {
+          border-color: #9ca3af;
+        }
+      }
+    }
   }
-}
-
-.search-results-info {
-  font-size: 13px;
-  color: #555;
-}
-iltre de statut
+// Filtre de statut
 .filter-container {
   display: flex;
   justify-content: center;
@@ -310,42 +355,34 @@ iltre de statut
   font-weight: 500;
   margin: 0.125rem;
 
-  &.btn-credit {
-    background-color: #10b981;
+  &.btn-temp-ban {
+    background-color: #f59e0b;
     color: white;
 
     &:hover {
-      background-color: #059669;
+      background-color: #d97706;
       transform: scale(1.05);
     }
   }
 
-  &.btn-debit {
-    background-color: #ef4444;
+  &.btn-perm-ban {
+    background-color: #dc2626;
     color: white;
 
     &:hover {
-      background-color: #dc2626;
+      background-color: #b91c1c;
       transform: scale(1.05);
     }
   }
 
-}
+  &.btn-unban {
+    background-color: #3b82f6;
+    color: white;
 
-// Input pour le montant
-.amount-input {
-  width: 80px;
-  padding: 0.375rem 0.5rem;
-  border: 1px solid #d1d5db;
-  border-radius: 0.25rem;
-  font-size: 0.9rem;
-  text-align: center;
-  margin: 0 0.25rem;
-
-  &:focus {
-    outline: none;
-    border-color: #3b82f6;
-    box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1);
+    &:hover {
+      background-color: #2563eb;
+      transform: scale(1.05);
+    }
   }
 }
 
@@ -433,11 +470,6 @@ iltre de statut
     min-width: 60px;
     height: 28px;
   }
-
-  .amount-input {
-    width: 60px;
-    font-size: 0.8rem;
-  }
 }
 
 @media (max-width: 480px) {
@@ -473,11 +505,6 @@ iltre de statut
 
 // Amélioration de l'accessibilité
 .btn-action:focus {
-  outline: 2px solid #3b82f6;
-  outline-offset: 2px;
-}
-
-.amount-input:focus {
   outline: 2px solid #3b82f6;
   outline-offset: 2px;
 }
