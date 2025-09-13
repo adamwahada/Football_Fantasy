@@ -298,4 +298,82 @@ export class ShowGameweekMatchesComponent implements OnChanges {
       }
     });
   }
+  bulkDeleteSelectedMatches(): void {
+    if (!this.gameweek?.id) return;
+  
+    const selectedIds = Array.from(this.selectedMatches);
+    if (selectedIds.length === 0) {
+      alert('Veuillez sélectionner au moins un match à supprimer.');
+      return;
+    }
+  
+    if (!confirm(`Voulez-vous vraiment supprimer ${selectedIds.length} match(es) ?`)) return;
+  
+    this.gameweekService.deleteSelectedMatches(this.gameweek.id, selectedIds).subscribe({
+      next: () => {
+        // Remove from local arrays
+        this._matches = this._matches.filter(m => !selectedIds.includes(m.id!));
+        this.matches = this.matches.filter(m => !selectedIds.includes(m.id!));
+  
+        this.selectedMatches.clear();
+        this.isSelectionMode = false;
+  
+        this.matchesUpdated.emit({
+          gameweek: this.gameweek,
+          matches: this.matches.filter(m => m.active)
+        });
+      },
+      error: err => {
+        console.error('Erreur lors de la suppression multiple :', err);
+        alert('Erreur lors de la suppression multiple.');
+      }
+    });
+  }
+  
+  bulkToggleActiveSelectedMatches(newStatus: boolean): void {
+    if (!this.gameweek?.id) return;
+  
+    const selectedIds = Array.from(this.selectedMatches);
+    if (selectedIds.length === 0) {
+      alert('Veuillez sélectionner au moins un match.');
+      return;
+    }
+  
+    if (!confirm(`Voulez-vous ${newStatus ? 'activer' : 'désactiver'} ${selectedIds.length} match(es) ?`)) return;
+  
+    // We can call matchService.setMatchActiveStatus for each ID
+    const requests = selectedIds.map(id => 
+      this.matchService.setMatchActiveStatus(id, newStatus)
+    );
+  
+    // Run them all in parallel
+    Promise.all(requests.map(req => req.toPromise()))
+      .then(() => {
+        this._matches.forEach(m => {
+          if (selectedIds.includes(m.id!)) {
+            m.active = newStatus;
+          }
+        });
+        this.matches.forEach(m => {
+          if (selectedIds.includes(m.id!)) {
+            m.active = newStatus;
+          }
+        });
+  
+        this.selectedMatches.clear();
+        this.isSelectionMode = false;
+  
+        this.updateMatchesWithTiebreakers();
+  
+        this.matchesUpdated.emit({
+          gameweek: this.gameweek,
+          matches: this.matches
+        });
+      })
+      .catch(err => {
+        console.error('Erreur lors de la mise à jour multiple :', err);
+        alert('Erreur lors de la mise à jour multiple.');
+      });
+  }
+  
 }

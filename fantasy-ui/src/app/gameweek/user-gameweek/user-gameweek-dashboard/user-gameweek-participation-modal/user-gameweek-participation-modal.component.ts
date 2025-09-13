@@ -360,16 +360,11 @@ getBalanceStatusMessage(): string | null {
   }
 
   closeModal() {
-    
     if (this.isLoading) {
-      return;
+      return; // only block during an ongoing submission
     }
-    
-    // ✅ CRITICAL FIX: Don't close modal if there's any error displayed
-    if (this.errorDisplay.show) {
-      return;
-    }
-    
+  
+    // ✅ Always allow closing even if an error is visible
     this.clearError();
     this.isLoading = false;
     this.modalClosed.emit();

@@ -10,7 +10,7 @@
         <ng-container *ngIf="!isSelectionMode">
           <!-- Boutons normaux -->
           <button (click)="startTiebreakerSelection()" class="btn-select-tiebreaker" title="Sélectionner manuellement les TieBreakers">
-            Sélectionner TieBreakers
+            Sélectionner Matches
           </button>
           <button (click)="randomSelectThreeTiebreakers()" class="btn-random-tiebreaker" title="Sélection aléatoire de 3 TieBreakers">
             Sélection aléatoire (3)
@@ -20,8 +20,19 @@
         <ng-container *ngIf="isSelectionMode">
           <!-- Boutons en mode sélection -->
           <button (click)="confirmTiebreakerSelection()" class="btn-confirm-selection" title="Confirmer la sélection" [disabled]="selectedMatches.size === 0">
-            Confirmer ({{ selectedMatches.size }})
+            TieBreakers ({{ selectedMatches.size }})
           </button>
+          <!-- 🔥 Nouveaux boutons bulk actions -->
+          <button (click)="bulkDeleteSelectedMatches()" class="btn-bulk-delete" [disabled]="selectedMatches.size === 0">
+            🗑 Supprimer ({{ selectedMatches.size }})
+          </button>
+          <button (click)="bulkToggleActiveSelectedMatches(false)" class="btn-bulk-deactivate" [disabled]="selectedMatches.size === 0">
+            🚫 Désactiver ({{ selectedMatches.size }})
+          </button>
+          <button (click)="bulkToggleActiveSelectedMatches(true)" class="btn-bulk-activate" [disabled]="selectedMatches.size === 0">
+            ✅ Activer ({{ selectedMatches.size }})
+          </button>
+          
           <button (click)="cancelSelection()" class="btn-cancel-selection" title="Annuler la sélection">
             Annuler
           </button>
@@ -33,7 +44,10 @@
 
     <!-- Message d'aide en mode sélection -->
     <div *ngIf="isSelectionMode" class="selection-help">
-      <p>📌 Cliquez sur les matchs que vous souhaitez ajouter comme tiebreakers</p>
+      <p>
+        📌 Cliquez sur les matchs que vous souhaitez sélectionner
+        (tiebreakers, suppression ou activation).
+      </p>
     </div>
 
     <div *ngIf="matches.length === 0" class="no-matches">

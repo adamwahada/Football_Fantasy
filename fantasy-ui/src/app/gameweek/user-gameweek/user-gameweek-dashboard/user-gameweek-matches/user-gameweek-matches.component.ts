@@ -1,5 +1,5 @@
 // user-gameweek-matches.component.ts
-import { Component, OnInit, OnDestroy, ViewChild } from '@angular/core';
+import { Component, OnInit, OnDestroy, ViewChild, HostListener } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, ParamMap, Router } from '@angular/router';
@@ -155,6 +155,11 @@ export class UserGameweekMatchesComponent implements OnInit, OnDestroy {
   leagueDisplayName = '';
   leagueIconUrl = '';
   leagueIcons: Record<string, string> = {};
+
+  errorMessage: string | null = null;
+  highlightedErrorId: number | null = null;
+  isClosingPopup = false;
+  private pendingErrorMatchId: number | null = null;
 
   private leagueConfigs: Record<LeagueTheme, LeagueConfig> = {
     'PREMIER_LEAGUE': { displayName: 'Premier League', iconKey: 'Premier League', theme: 'premier-league' },
@@ -361,31 +366,136 @@ private async getCurrentUserBalance(): Promise<number> {
   submitPredictions(): void {
     const missingPicks = this.matches.filter(m => !m.pick);
     if (missingPicks.length) {
-      this.showErrorMessage(`Veuillez choisir 1/X/2 pour tous les matches.`);
+      this.showErrorAndFocus(`Veuillez choisir 1/X/2 pour tous les matches.`, missingPicks[0].id);
       return;
     }
-
+  
     const invalidTiebreaks = this.matches.filter(m => m.isTiebreak && (m.scoreHome === null || m.scoreAway === null));
     if (invalidTiebreaks.length) {
-      this.showErrorMessage('Veuillez renseigner les scores pour les tie-breaks.');
+      this.showErrorAndFocus('Veuillez renseigner les scores pour les tie-breaks.', invalidTiebreaks[0].id);
       return;
     }
-
+  
+    const inconsistentTiebreaks = this.matches.filter(m => 
+      m.isTiebreak &&
+      m.scoreHome !== null &&
+      m.scoreAway !== null &&
+      (
+        (m.pick === 'HOME_WIN' && m.scoreHome <= m.scoreAway) ||
+        (m.pick === 'AWAY_WIN' && m.scoreAway <= m.scoreHome) ||
+        (m.pick === 'DRAW' && m.scoreHome !== m.scoreAway)
+      )
+    );
+  
+    if (inconsistentTiebreaks.length) {
+      const match = inconsistentTiebreaks[0];
+      let errorMessage = '';
+      
+      if (match.pick === 'HOME_WIN' && match.scoreHome !== null && match.scoreAway !== null) {
+        if (match.scoreHome < match.scoreAway) {
+          errorMessage = `Score irréaliste : Vous avez choisi ${match.homeTeam} gagnant mais le score indique ${match.awayTeam} gagnant (${match.scoreHome}-${match.scoreAway}).`;
+        } else if (match.scoreHome === match.scoreAway) {
+          errorMessage = `Score incohérent : Vous avez choisi ${match.homeTeam} gagnant mais le score indique un match nul (${match.scoreHome}-${match.scoreAway}).`;
+        }
+      } else if (match.pick === 'AWAY_WIN' && match.scoreHome !== null && match.scoreAway !== null) {
+        if (match.scoreAway < match.scoreHome) {
+          errorMessage = `Score irréaliste : Vous avez choisi ${match.awayTeam} gagnant mais le score indique ${match.homeTeam} gagnant (${match.scoreHome}-${match.scoreAway}).`;
+        } else if (match.scoreHome === match.scoreAway) {
+          errorMessage = `Score incohérent : Vous avez choisi ${match.awayTeam} gagnant mais le score indique un match nul (${match.scoreHome}-${match.scoreAway}).`;
+        }
+      } else if (match.pick === 'DRAW' && match.scoreHome !== null && match.scoreAway !== null) {
+        errorMessage = `Score incohérent : Vous avez choisi un match nul mais le score indique un gagnant (${match.scoreHome}-${match.scoreAway}).`;
+      }
+      
+      // Message par défaut si aucun cas spécifique n'est détecté
+      if (!errorMessage) {
+        errorMessage = 'Résultat incohérent : le choix (1/X/2) ne correspond pas au score entré.';
+      }
+      
+      this.showErrorAndFocus(errorMessage, match.id);
+      return;
+    }
+  
     if (!this.selectedCompetition || !(this.selectedCompetition in this.leagueConfigs)) {
       this.showErrorMessage('Competition is not valid. Please reload the page.');
       return;
     }
-
+  
     this.preparedPredictions = this.matches.map(m => ({
       matchId: Number((m as any).id),
       pick: m.pick || '',
       scoreHome: m.isTiebreak ? (m.scoreHome ?? null) : null,
       scoreAway: m.isTiebreak ? (m.scoreAway ?? null) : null
     }));
-
+  
     this.showParticipationModal = true;
   }
+  private showErrorAndFocus(msg: string, matchId: number | undefined): void {
+    this.errorMessage = msg;
+    this.highlightedErrorId = matchId ?? null;
+    this.pendingErrorMatchId = matchId ?? null;
+  
+    if (matchId !== undefined) {
+      const el = document.querySelector(`#match-${matchId}`) as HTMLElement;
+      if (el) {
+        el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        // Don't remove highlight immediately - wait for popup close
+      }
+    }
+  
+    // Auto-clear popup after 8s (longer for popup)
+    setTimeout(() => this.errorMessage = null, 8000);
+  }
 
+  // ✅ New method to close error popup with animation and redirect to error
+  closeErrorPopup(): void {
+    this.isClosingPopup = true;
+    // Wait for animation to complete before removing from DOM
+    setTimeout(() => {
+      this.errorMessage = null;
+      this.isClosingPopup = false;
+      
+      // ✅ Keep the error highlighted and redirect to it
+      if (this.pendingErrorMatchId !== null) {
+        this.highlightedErrorId = this.pendingErrorMatchId;
+        this.redirectToErrorMatch(this.pendingErrorMatchId);
+        
+        // Remove highlight after 3 seconds
+        setTimeout(() => {
+          this.highlightedErrorId = null;
+          this.pendingErrorMatchId = null;
+        }, 3000);
+      }
+    }, 300);
+  }
+
+  // ✅ Method to redirect to error match
+  private redirectToErrorMatch(matchId: number): void {
+    const el = document.querySelector(`#match-${matchId}`) as HTMLElement;
+    if (el) {
+      // Smooth scroll to the error match
+      el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      
+      // Add a subtle pulse effect to draw attention
+      el.classList.add('error-pulse');
+      setTimeout(() => {
+        el.classList.remove('error-pulse');
+      }, 2000);
+      
+      // Ensure the error state is maintained
+      console.log(`[ERROR REDIRECT] 🎯 Redirecting to match ${matchId} with error highlighting`);
+    }
+  }
+
+  // ✅ Handle escape key to close popup
+  @HostListener('document:keydown.escape', ['$event'])
+  onEscapeKey(event: KeyboardEvent): void {
+    if (this.errorMessage && !this.isClosingPopup) {
+      this.closeErrorPopup();
+    }
+  }
+  
+  
   ngOnDestroy(): void {
     this.destroy$.next();
     this.destroy$.complete();
@@ -585,6 +695,21 @@ private async getCurrentUserBalance(): Promise<number> {
     }
     this.logModalState('forceModalOpen');
   }
+
+  // ✅ TEST METHOD: Test error popup with redirect
+  testErrorPopupWithRedirect(): void {
+    console.log('[TEST] 🧪 Testing error popup with redirect...');
+    
+    // Simulate an error with a specific match ID
+    const testMatchId = 123;
+    const testMessage = 'Score irréaliste : Vous avez choisi Team A gagnant mais le score indique Team B gagnant (1-2).';
+    
+    this.showErrorAndFocus(testMessage, testMatchId);
+    
+    console.log('[TEST] 🧪 Error popup should be visible now');
+    console.log('[TEST] 🧪 After closing popup, should redirect to match', testMatchId);
+  }
+
 
   // ✅ CRITICAL FIX: Enhanced method to check if modal should stay open
   shouldModalStayOpen(): boolean {

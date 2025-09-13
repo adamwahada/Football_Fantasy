@@ -4,30 +4,65 @@
       <div class="max-w-6xl mx-auto">
         
         <header class="flex justify-between items-center mb-5 pt-6">
-        <!-- Left side: icon + league name + gameweek inline -->
-        <div class="flex items-center gap-3 flex-1">
+          <!-- Left side: icon + league name + gameweek inline -->
+          <div class="flex items-center gap-3 flex-1">
             <img *ngIf="leagueIconUrl" [src]="leagueIconUrl" [alt]="leagueDisplayName" class="h-8 w-8 object-contain" />
             <h1 class="league-title">
-            {{ leagueDisplayName }} - {{ selectedWeekNumber }}
+              {{ leagueDisplayName }} - {{ selectedWeekNumber }}
             </h1>
-        </div>
+          </div>
         </header>
 
         <!-- Subtitle and deadline below -->
         <div class="text-center mt-1 mb-0">
-                    <p *ngIf="deadlineCountdown" class="text-xs text-yellow-300 mt-1 mb-0">
+          <p *ngIf="deadlineCountdown" class="text-xs text-yellow-300 mt-1 mb-0">
             Deadline: <span>{{ deadlineCountdown }}</span>
-        </p>
-        <p class="text-sm text-white/30">
+          </p>
+          <p class="text-sm text-white/30">
             Click on teams to predict winners or draw. Tiebreak matches require exact score predictions.
-        </p>
+          </p>
+        </div>
 
+        <!-- 🔴 Modern Error Popup -->
+        <div *ngIf="errorMessage" class="error-popup-overlay" 
+             [class.closing]="isClosingPopup"
+             (click)="closeErrorPopup()">
+          <div class="error-popup" 
+               [class.closing]="isClosingPopup"
+               (click)="$event.stopPropagation()">
+            <div class="error-popup-header">
+              <div class="error-popup-icon">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M12 9V13M12 17H12.01M21 12C21 16.9706 16.9706 21 12 21C7.02944 21 3 16.9706 3 12C3 7.02944 7.02944 3 12 3C16.9706 3 21 7.02944 21 12Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+              </div>
+              <button class="error-popup-close" (click)="closeErrorPopup()">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M18 6L6 18M6 6L18 18" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+              </button>
+            </div>
+            <div class="error-popup-content">
+              <h3 class="error-popup-title">Erreur de validation</h3>
+              <p class="error-popup-message">{{ errorMessage }}</p>
+            </div>
+            <div class="error-popup-footer">
+              <button class="error-popup-btn error-popup-btn-primary" (click)="closeErrorPopup()">
+                Compris
+              </button>
+            </div>
+          </div>
         </div>
 
         <!-- Matches Grid -->
         <main>
           <section>
-            <article *ngFor="let match of matches" class="match-card" [class.tiebreaker]="match.isTiebreak">
+            <article *ngFor="let match of matches"
+                     class="match-card"
+                     [class.tiebreaker]="match.isTiebreak"
+                     [id]="'match-' + match.id"
+                     [class.error]="match.id === highlightedErrorId">
+
               <!-- Tiebreak badge -->
               <div *ngIf="match.isTiebreak" class="tiebreak-badge">
                 Tie-break
@@ -84,34 +119,31 @@
             </article>
           </section>
         </main>
+
         <!-- Session Participation Modal -->
-      <app-session-participation-modal
-        [isVisible]="showParticipationModal"
-        [gameweekId]="gameweekId"
-        [currentCompetition]="selectedCompetition"
-        [predictions]="preparedPredictions"
-        [userBalance]="userBalance"
-        (participationSubmitted)="onParticipationSubmitted($event)"
-        (modalClosed)="onModalClosed()"
-      ></app-session-participation-modal>
+        <app-session-participation-modal
+          [isVisible]="showParticipationModal"
+          [gameweekId]="gameweekId"
+          [currentCompetition]="selectedCompetition"
+          [predictions]="preparedPredictions"
+          [userBalance]="userBalance"
+          (participationSubmitted)="onParticipationSubmitted($event)"
+          (modalClosed)="onModalClosed()"
+        ></app-session-participation-modal>
 
         <!-- Footer -->
         <footer class="flex justify-between items-center mt-5 text-white/30 text-sm">
-            <div class="submit-btn-container">
-                <button
-                (click)="submitPredictions()"
-                class="action-btn submit-btn">
-                Confirm
-                </button>
-                <button
-                (click)="cancelPredictions()"
-                class="action-btn cancel-btn">
-                Cancel
-                </button>
-                <button (click)="resetPredictions()" class="action-btn reset-btn">
-                    Reset
-                </button>
-            </div>
+          <div class="submit-btn-container">
+            <button (click)="submitPredictions()" class="action-btn submit-btn">
+              Confirm
+            </button>
+            <button (click)="cancelPredictions()" class="action-btn cancel-btn">
+              Cancel
+            </button>
+            <button (click)="resetPredictions()" class="action-btn reset-btn">
+              Reset
+            </button>
+          </div>
         </footer>
 
       </div>

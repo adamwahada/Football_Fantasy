@@ -3,7 +3,7 @@
   <div class="modal-content" (click)="$event.stopPropagation()">
     <div class="modal-header">
       <h2>Rejoindre une Compétition</h2>
-      <button class="close-btn" (click)="closeModal()" [disabled]="isLoading || errorDisplay.show">&times;</button>
+      <button class="close-btn" (click)="closeModal()" [disabled]="isLoading">&times;</button>
     </div>
 
     <!-- Error Display Section -->
@@ -149,7 +149,7 @@
         <button type="button" 
                 class="btn btn-secondary" 
                 (click)="closeModal()" 
-                [disabled]="isLoading || errorDisplay.show">
+                [disabled]="isLoading">
           Annuler
         </button>
         <button type="submit"
