@@ -1,7 +1,7 @@
 package FootballFantasy.fantasy.Dto;
 
-import FootballFantasy.fantasy.Entities.GameweekEntity.LeagueTheme;
-import FootballFantasy.fantasy.Entities.GameweekEntity.SessionType;
+import FootballFantasy.fantasy.Entities.GameweekEntities.LeagueTheme;
+import FootballFantasy.fantasy.Entities.GameweekEntities.SessionType;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;

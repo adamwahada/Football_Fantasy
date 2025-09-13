@@ -2,11 +2,9 @@ package FootballFantasy.fantasy.Listeners;
 
 import FootballFantasy.fantasy.Events.MatchCompletedEvent;
 import FootballFantasy.fantasy.Events.MatchRescheduledEvent;
-import FootballFantasy.fantasy.Repositories.GameweekRepository.PredictionRepository;
 import FootballFantasy.fantasy.Services.GameweekService.GameWeekService;
-import FootballFantasy.fantasy.Repositories.GameweekRepository.MatchRepository;
-import FootballFantasy.fantasy.Entities.GameweekEntity.Match;
-import FootballFantasy.fantasy.Services.GameweekService.PredictionService;
+import FootballFantasy.fantasy.Repositories.GameweekRepositories.MatchRepository;
+import FootballFantasy.fantasy.Entities.GameweekEntities.Match;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 

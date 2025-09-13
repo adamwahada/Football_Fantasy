@@ -1,7 +1,6 @@
-package FootballFantasy.fantasy.Repositories.GameweekRepository;
+package FootballFantasy.fantasy.Repositories.GameweekRepositories;
 
-import FootballFantasy.fantasy.Entities.GameweekEntity.LeagueTheme;
-import FootballFantasy.fantasy.Entities.GameweekEntity.Match;
+import FootballFantasy.fantasy.Entities.GameweekEntities.Match;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;

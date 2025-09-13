@@ -1,10 +1,10 @@
 package FootballFantasy.fantasy.Services.GameweekService;
 
-import FootballFantasy.fantasy.Entities.GameweekEntity.*;
-import FootballFantasy.fantasy.Entities.UserEntity.UserEntity;
+import FootballFantasy.fantasy.Entities.GameweekEntities.*;
+import FootballFantasy.fantasy.Entities.UserEntities.UserEntity;
 import FootballFantasy.fantasy.Exception.BusinessLogicException;
-import FootballFantasy.fantasy.Repositories.GameweekRepository.*;
-import FootballFantasy.fantasy.Repositories.UserRepository.UserRepository;
+import FootballFantasy.fantasy.Repositories.GameweekRepositories.*;
+import FootballFantasy.fantasy.Repositories.UserRepositories.UserRepository;
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;

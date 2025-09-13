@@ -1,7 +1,7 @@
-package FootballFantasy.fantasy.Repositories.UserRepository;
+package FootballFantasy.fantasy.Repositories.UserRepositories;
 
 
-import FootballFantasy.fantasy.Entities.UserEntity.ReferralCode;
+import FootballFantasy.fantasy.Entities.UserEntities.ReferralCode;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.Optional;

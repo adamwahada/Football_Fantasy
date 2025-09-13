@@ -1,12 +1,10 @@
 package FootballFantasy.fantasy.Services.GameweekService;
 
 import FootballFantasy.fantasy.Dto.MatchWithIconsDTO;
-import FootballFantasy.fantasy.Entities.GameweekEntity.GameweekStatus;
-import FootballFantasy.fantasy.Entities.GameweekEntity.*;
-import FootballFantasy.fantasy.Events.MatchCompletedEvent;
-import FootballFantasy.fantasy.Events.MatchRescheduledEvent;
-import FootballFantasy.fantasy.Repositories.GameweekRepository.GameWeekRepository;
-import FootballFantasy.fantasy.Repositories.GameweekRepository.MatchRepository;
+import FootballFantasy.fantasy.Entities.GameweekEntities.GameweekStatus;
+import FootballFantasy.fantasy.Entities.GameweekEntities.*;
+import FootballFantasy.fantasy.Repositories.GameweekRepositories.GameWeekRepository;
+import FootballFantasy.fantasy.Repositories.GameweekRepositories.MatchRepository;
 import FootballFantasy.fantasy.Services.DataService.TeamIconService;
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;

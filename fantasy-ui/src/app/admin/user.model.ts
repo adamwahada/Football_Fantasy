@@ -9,10 +9,10 @@ export interface UserEntity {
   country?: string;
   address?: string;
   postalNumber?: string;
-  birthDate?: string;  // Use string because backend returns JSON date
+  birthDate?: string;  
   referralCode?: string;
   termsAccepted?: boolean;
   active: boolean;
-  bannedUntil?: string; // Use string here, can parse to Date if needed
+  bannedUntil?: string; 
   balance: number;
 }

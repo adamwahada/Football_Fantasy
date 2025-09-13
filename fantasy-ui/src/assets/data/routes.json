@@ -70,7 +70,7 @@
     },
     {
       "path": "",
-      "title": "Funds",
+      "title": "Management",
       "iconType": "material-icons-outlined",
       "icon": "money",
       "class": "menu-toggle",

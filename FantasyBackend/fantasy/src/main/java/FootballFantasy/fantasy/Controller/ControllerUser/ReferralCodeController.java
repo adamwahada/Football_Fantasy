@@ -1,6 +1,6 @@
 package FootballFantasy.fantasy.Controller.ControllerUser;
 
-import FootballFantasy.fantasy.Entities.UserEntity.ReferralCode;
+import FootballFantasy.fantasy.Entities.UserEntities.ReferralCode;
 import FootballFantasy.fantasy.Services.UserService.ReferralCodeService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.format.annotation.DateTimeFormat;

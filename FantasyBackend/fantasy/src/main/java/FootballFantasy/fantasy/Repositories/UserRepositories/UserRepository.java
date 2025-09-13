@@ -1,6 +1,6 @@
-package FootballFantasy.fantasy.Repositories.UserRepository;
+package FootballFantasy.fantasy.Repositories.UserRepositories;
 
-import FootballFantasy.fantasy.Entities.UserEntity.UserEntity;
+import FootballFantasy.fantasy.Entities.UserEntities.UserEntity;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 

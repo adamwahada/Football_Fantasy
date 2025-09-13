@@ -29,10 +29,10 @@
                 (change)="onStatusFilterChange()"
                 class="status-filter"
                 style="margin-left: 5px; padding: 5px;">
-          <option value="all">Tous les utilisateurs</option>
-          <option value="active">Actif</option>
-          <option value="temp-banned">Ban temporaire</option>
-          <option value="permanently-banned">Ban définitif</option>
+                <option value="all">Tous les utilisateurs</option>
+                <option value="active">Actif</option>
+                <option value="temp-banned">Ban temporaire</option>
+                <option value="permanently-banned">Ban définitif</option>
         </select>
       </label>
     </div>
@@ -72,7 +72,7 @@
         </tr>
       </thead>
       <tbody>
-        <tr *ngFor="let user of filteredUsers" 
+        <tr *ngFor="let user of pagedUsers" 
             [class.row-banned]="!user.active"
             [class.row-temp-banned]="user.active && isTemporarilyBanned(user)"
             [class.row-active]="user.active && !isTemporarilyBanned(user)">
@@ -112,6 +112,15 @@
       </tbody>
     </table>
   </div>
+
+  <!-- Paginator -->
+  <mat-paginator
+    [length]="filteredUsers.length"
+    [pageSize]="pageSize"
+    [pageSizeOptions]="[25, 50, 100]"
+    (page)="onPageChange($event)"
+    showFirstLastButtons>
+  </mat-paginator>
 
   <!-- Message -->
   <div *ngIf="message" 

@@ -1,8 +1,8 @@
 package FootballFantasy.fantasy.Services.GameweekService;
 
-import FootballFantasy.fantasy.Entities.GameweekEntity.*;
-import FootballFantasy.fantasy.Repositories.GameweekRepository.CompetitionSessionRepository;
-import FootballFantasy.fantasy.Repositories.GameweekRepository.SessionParticipationRepository;
+import FootballFantasy.fantasy.Entities.GameweekEntities.*;
+import FootballFantasy.fantasy.Repositories.GameweekRepositories.CompetitionSessionRepository;
+import FootballFantasy.fantasy.Repositories.GameweekRepositories.SessionParticipationRepository;
 import FootballFantasy.fantasy.Services.UserService.UserService;
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;

@@ -1,8 +1,8 @@
 package FootballFantasy.fantasy.Services.DataService;
 
 
-import FootballFantasy.fantasy.Entities.GameweekEntity.SessionTemplate;
-import FootballFantasy.fantasy.Repositories.GameweekRepository.SessionTemplateRepository;
+import FootballFantasy.fantasy.Entities.GameweekEntities.SessionTemplate;
+import FootballFantasy.fantasy.Repositories.GameweekRepositories.SessionTemplateRepository;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.annotation.PostConstruct;

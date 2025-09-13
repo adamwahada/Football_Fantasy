@@ -1,8 +1,8 @@
 package FootballFantasy.fantasy.Dto;
 
-import FootballFantasy.fantasy.Entities.GameweekEntity.LeagueTheme;
-import FootballFantasy.fantasy.Entities.GameweekEntity.Match;
-import FootballFantasy.fantasy.Entities.GameweekEntity.SessionType;
+import FootballFantasy.fantasy.Entities.GameweekEntities.LeagueTheme;
+import FootballFantasy.fantasy.Entities.GameweekEntities.Match;
+import FootballFantasy.fantasy.Entities.GameweekEntities.SessionType;
 import lombok.Data;
 
 import java.math.BigDecimal;

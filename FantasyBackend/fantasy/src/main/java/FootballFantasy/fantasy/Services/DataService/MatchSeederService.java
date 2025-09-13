@@ -2,9 +2,9 @@ package FootballFantasy.fantasy.Services.DataService;
 
 import FootballFantasy.fantasy.Dto.MatchResultDTO;
 import FootballFantasy.fantasy.Dto.MatchSeedDTO;
-import FootballFantasy.fantasy.Entities.GameweekEntity.*;
-import FootballFantasy.fantasy.Repositories.GameweekRepository.GameWeekRepository;
-import FootballFantasy.fantasy.Repositories.GameweekRepository.MatchRepository;
+import FootballFantasy.fantasy.Entities.GameweekEntities.*;
+import FootballFantasy.fantasy.Repositories.GameweekRepositories.GameWeekRepository;
+import FootballFantasy.fantasy.Repositories.GameweekRepositories.MatchRepository;
 import FootballFantasy.fantasy.Services.GameweekService.CompetitionSessionService;
 import FootballFantasy.fantasy.Services.GameweekService.GameWeekService;
 import FootballFantasy.fantasy.Services.GameweekService.MatchService;

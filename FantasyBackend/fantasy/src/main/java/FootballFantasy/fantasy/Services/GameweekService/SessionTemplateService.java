@@ -1,15 +1,14 @@
 package FootballFantasy.fantasy.Services.GameweekService;
 
-import FootballFantasy.fantasy.Entities.GameweekEntity.LeagueTheme;
-import FootballFantasy.fantasy.Entities.GameweekEntity.SessionTemplate;
-import FootballFantasy.fantasy.Entities.GameweekEntity.SessionType;
-import FootballFantasy.fantasy.Repositories.GameweekRepository.SessionTemplateRepository;
+import FootballFantasy.fantasy.Entities.GameweekEntities.LeagueTheme;
+import FootballFantasy.fantasy.Entities.GameweekEntities.SessionTemplate;
+import FootballFantasy.fantasy.Entities.GameweekEntities.SessionType;
+import FootballFantasy.fantasy.Repositories.GameweekRepositories.SessionTemplateRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
 import java.util.List;
-import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service

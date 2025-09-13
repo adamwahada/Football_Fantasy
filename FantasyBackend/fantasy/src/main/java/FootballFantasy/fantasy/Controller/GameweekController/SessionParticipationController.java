@@ -1,10 +1,9 @@
 package FootballFantasy.fantasy.Controller.GameweekController;
 
 import FootballFantasy.fantasy.Dto.UserSessionStats;
-import FootballFantasy.fantasy.Entities.GameweekEntity.LeagueTheme;
-import FootballFantasy.fantasy.Entities.GameweekEntity.SessionParticipation;
-import FootballFantasy.fantasy.Entities.GameweekEntity.SessionType;
-import FootballFantasy.fantasy.Exception.UserBannedException;
+import FootballFantasy.fantasy.Entities.GameweekEntities.LeagueTheme;
+import FootballFantasy.fantasy.Entities.GameweekEntities.SessionParticipation;
+import FootballFantasy.fantasy.Entities.GameweekEntities.SessionType;
 import FootballFantasy.fantasy.Services.GameweekService.SessionParticipationService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;

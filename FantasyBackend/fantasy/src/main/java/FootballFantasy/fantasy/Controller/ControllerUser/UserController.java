@@ -1,6 +1,6 @@
 package FootballFantasy.fantasy.Controller.ControllerUser;
 
-import FootballFantasy.fantasy.Entities.UserEntity.UserEntity;
+import FootballFantasy.fantasy.Entities.UserEntities.UserEntity;
 import FootballFantasy.fantasy.Services.UserService.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;

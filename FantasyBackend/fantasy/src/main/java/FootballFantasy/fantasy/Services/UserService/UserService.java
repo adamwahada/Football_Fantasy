@@ -1,8 +1,11 @@
 package FootballFantasy.fantasy.Services.UserService;
 
-import FootballFantasy.fantasy.Entities.UserEntity.UserEntity;
+import FootballFantasy.fantasy.Entities.AdminEntities.UserAction;
+import FootballFantasy.fantasy.Entities.AdminEntities.UserManagementAudit;
+import FootballFantasy.fantasy.Entities.UserEntities.UserEntity;
 import FootballFantasy.fantasy.Exception.InsufficientBalanceException;
-import FootballFantasy.fantasy.Repositories.UserRepository.UserRepository;
+import FootballFantasy.fantasy.Repositories.AdminRepositories.UserManagementAuditRepository;
+import FootballFantasy.fantasy.Repositories.UserRepositories.UserRepository;
 import FootballFantasy.fantasy.Services.GameweekService.SessionParticipationService;
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -16,7 +19,6 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Optional;
 import java.util.UUID;
 
 @Service
@@ -27,6 +29,9 @@ public class UserService {
 
     @Autowired
     private SessionParticipationService sessionParticipationService;
+
+    @Autowired
+    private UserManagementAuditRepository auditRepository;
 
     // ======== Keycloak / Current User Helpers ========
 
@@ -237,20 +242,29 @@ public class UserService {
     }
 
     @Transactional
-    public void creditBalance(Long userId, BigDecimal amount) {
+    public void creditBalance(Long userId, BigDecimal amount, Long adminId) {
         if (amount == null || amount.compareTo(BigDecimal.ZERO) <= 0) {
             throw new IllegalArgumentException("Amount must be positive");
         }
 
         UserEntity user = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("User not found"));
+        BigDecimal oldBalance = user.getBalance();
         user.setBalance(user.getBalance().add(amount));
         userRepository.save(user);
 
-        System.out.println("💰 Admin credited " + amount + " to user " + userId + "; new balance: " + user.getBalance());
+        // Save audit
+        UserManagementAudit audit = new UserManagementAudit();
+        audit.setUserId(userId);
+        audit.setAdminId(adminId);
+        audit.setAction(UserAction.CREDIT);
+        audit.setDetails("Credited " + amount + " | Previous balance: " + oldBalance + " | New balance: " + user.getBalance());
+        audit.setTimestamp(LocalDateTime.now());
+        auditRepository.save(audit);
     }
+
     @Transactional
-    public void debitBalance(Long userId, BigDecimal amount) {
+    public void debitBalance(Long userId, BigDecimal amount, Long adminId) {
         if (amount == null || amount.compareTo(BigDecimal.ZERO) <= 0) {
             throw new IllegalArgumentException("Amount must be positive");
         }
@@ -266,11 +280,20 @@ public class UserService {
             );
         }
 
+        BigDecimal oldBalance = user.getBalance();
         user.setBalance(user.getBalance().subtract(amount));
         userRepository.save(user);
 
-        System.out.println("💸 Admin debited " + amount + " from user " + userId + "; new balance: " + user.getBalance());
+        // Save audit
+        UserManagementAudit audit = new UserManagementAudit();
+        audit.setUserId(userId);
+        audit.setAdminId(adminId);
+        audit.setAction(UserAction.DEBIT);
+        audit.setDetails("Debited " + amount + " | Previous balance: " + oldBalance + " | New balance: " + user.getBalance());
+        audit.setTimestamp(LocalDateTime.now());
+        auditRepository.save(audit);
     }
+
 
     // ======== Inner DTO classes ========
     public static class UserProfileUpdateRequest {
@@ -340,30 +363,55 @@ public class UserService {
     }
 
     @Transactional
-    public void banUserTemporarily(Long userId, int days) {
+    public void banUserTemporarily(Long userId, int days, Long adminId) {
         UserEntity user = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("User not found"));
+
         user.setBannedUntil(LocalDateTime.now().plusDays(days));
         userRepository.save(user);
+
+        UserManagementAudit audit = new UserManagementAudit();
+        audit.setUserId(userId);
+        audit.setAdminId(adminId);
+        audit.setAction(UserAction.TEMP_BAN);
+        audit.setDetails("Banned for " + days + " day(s)");
+        audit.setTimestamp(LocalDateTime.now());
+        auditRepository.save(audit);
     }
-
-
     @Transactional
-    public void banUserPermanently(Long userId) {
+    public void banUserPermanently(Long userId, Long adminId) {
         UserEntity user = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("User not found"));
+
         user.setActive(false);
         userRepository.save(user);
-    }
 
+        UserManagementAudit audit = new UserManagementAudit();
+        audit.setUserId(userId);
+        audit.setAdminId(adminId);
+        audit.setAction(UserAction.PERMANENT_BAN);
+        audit.setDetails("User permanently banned");
+        audit.setTimestamp(LocalDateTime.now());
+        auditRepository.save(audit);
+    }
     @Transactional
-    public void unbanUser(Long userId) {
+    public void unbanUser(Long userId, Long adminId) {
         UserEntity user = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("User not found"));
+
         user.setActive(true);
         user.setBannedUntil(null);
         userRepository.save(user);
+
+        UserManagementAudit audit = new UserManagementAudit();
+        audit.setUserId(userId);
+        audit.setAdminId(adminId);
+        audit.setAction(UserAction.UNBAN);
+        audit.setDetails("Ban removed");
+        audit.setTimestamp(LocalDateTime.now());
+        auditRepository.save(audit);
     }
+
     public String getUserBanStatus(Long userId) {
         UserEntity user = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("User not found"));

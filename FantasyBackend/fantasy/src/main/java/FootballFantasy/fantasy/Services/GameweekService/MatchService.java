@@ -1,12 +1,11 @@
 package FootballFantasy.fantasy.Services.GameweekService;
 
-import FootballFantasy.fantasy.Dto.MatchSeedDTO;
-import FootballFantasy.fantasy.Entities.GameweekEntity.GameWeek;
-import FootballFantasy.fantasy.Entities.GameweekEntity.Match;
-import FootballFantasy.fantasy.Entities.GameweekEntity.MatchStatus;
+import FootballFantasy.fantasy.Entities.GameweekEntities.GameWeek;
+import FootballFantasy.fantasy.Entities.GameweekEntities.Match;
+import FootballFantasy.fantasy.Entities.GameweekEntities.MatchStatus;
 import FootballFantasy.fantasy.Events.MatchCompletedEvent;
-import FootballFantasy.fantasy.Repositories.GameweekRepository.GameWeekRepository;
-import FootballFantasy.fantasy.Repositories.GameweekRepository.MatchRepository;
+import FootballFantasy.fantasy.Repositories.GameweekRepositories.GameWeekRepository;
+import FootballFantasy.fantasy.Repositories.GameweekRepositories.MatchRepository;
 import FootballFantasy.fantasy.Services.DataService.MatchUpdateService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.transaction.Transactional;
@@ -16,7 +15,6 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 import java.util.List;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 @Service
 public class MatchService {

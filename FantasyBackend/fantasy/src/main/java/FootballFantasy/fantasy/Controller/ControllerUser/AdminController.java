@@ -1,8 +1,7 @@
 package FootballFantasy.fantasy.Controller.ControllerUser;
 
-import FootballFantasy.fantasy.Entities.GameweekEntity.LeagueTheme;
-import FootballFantasy.fantasy.Entities.UserEntity.UserEntity;
-import FootballFantasy.fantasy.Repositories.GameweekRepository.CompetitionSessionRepository;
+import FootballFantasy.fantasy.Entities.GameweekEntities.LeagueTheme;
+import FootballFantasy.fantasy.Entities.UserEntities.UserEntity;
 import FootballFantasy.fantasy.Services.GameweekService.CompetitionSessionService;
 import FootballFantasy.fantasy.Services.UserService.UserService;
 import FootballFantasy.fantasy.Services.DataService.MatchUpdateService;
@@ -36,19 +35,24 @@ public class AdminController {
 
     // ✅ Credit user balance
 //    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
-    @PostMapping("/users/{userId}/credit")
-    public ResponseEntity<String> credit(@PathVariable Long userId,
-                                         @RequestParam BigDecimal amount) {
-        userService.creditBalance(userId, amount);
+    @PostMapping("/users/{userId}/credit/{adminId}")
+    public ResponseEntity<String> credit(
+            @PathVariable Long userId,
+            @RequestParam BigDecimal amount,
+            @PathVariable Long adminId
+    ) {
+        userService.creditBalance(userId, amount, adminId);
         return ResponseEntity.ok("Balance updated");
     }
 
+
     // ✅ Debit user balance
 //    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
-    @PostMapping("/users/{userId}/debit")
+    @PostMapping("/users/{userId}/debit/{adminId}")
     public ResponseEntity<String> debit(@PathVariable Long userId,
-                                        @RequestParam BigDecimal amount) {
-        userService.debitBalance(userId, amount);
+                                        @RequestParam BigDecimal amount,
+    @PathVariable Long adminId) {
+        userService.debitBalance(userId, amount,adminId);
         return ResponseEntity.ok("Balance debited");
     }
 
@@ -102,26 +106,26 @@ public class AdminController {
 
     // =================== USER BAN MANAGEMENT ===================
 
-    @PostMapping("/users/{userId}/ban-temporary")
+    @PostMapping("/users/{userId}/ban-temporary/{adminId}")
     public ResponseEntity<String> banUserTemporarily(
             @PathVariable Long userId,
-            @RequestParam int days) {
+            @RequestParam int days,@PathVariable Long adminId) {
 
-        userService.banUserTemporarily(userId, days);
+        userService.banUserTemporarily(userId, days,adminId);
         return ResponseEntity.ok("User temporarily banned for " + days + " day(s)");
     }
 
-    @PostMapping("/users/{userId}/ban-permanent")
-    public ResponseEntity<String> banUserPermanently(@PathVariable Long userId) {
+    @PostMapping("/users/{userId}/ban-permanent/{adminId}")
+    public ResponseEntity<String> banUserPermanently(@PathVariable Long userId,@PathVariable Long adminId) {
 
-        userService.banUserPermanently(userId);
+        userService.banUserPermanently(userId,adminId);
         return ResponseEntity.ok("User permanently banned");
     }
 
-    @PostMapping("/users/{userId}/unban")
-    public ResponseEntity<String> unbanUser(@PathVariable Long userId) {
+    @PostMapping("/users/{userId}/unban/{adminId}")
+    public ResponseEntity<String> unbanUser(@PathVariable Long userId,@PathVariable Long adminId) {
 
-        userService.unbanUser(userId);
+        userService.unbanUser(userId,adminId);
         return ResponseEntity.ok("User unbanned successfully");
     }
 

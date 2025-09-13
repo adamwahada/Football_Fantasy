@@ -1,11 +1,9 @@
-package FootballFantasy.fantasy.Entities.GameweekEntity;
+package FootballFantasy.fantasy.Entities.GameweekEntities;
 
-import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
 import lombok.*;
-import java.time.LocalDate;
+
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;

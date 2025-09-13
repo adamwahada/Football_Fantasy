@@ -1,6 +1,6 @@
-package FootballFantasy.fantasy.Entities.GameweekEntity;
+package FootballFantasy.fantasy.Entities.GameweekEntities;
 
-import FootballFantasy.fantasy.Entities.UserEntity.UserEntity;
+import FootballFantasy.fantasy.Entities.UserEntities.UserEntity;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.*;

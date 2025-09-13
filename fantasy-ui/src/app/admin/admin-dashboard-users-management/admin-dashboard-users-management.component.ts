@@ -1,23 +1,40 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ViewChild, AfterViewInit, inject } from '@angular/core';
 import { AdminService } from '../admin.service';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { UserEntity } from '../user.model';
+import { MatPaginator } from '@angular/material/paginator';
+import { MatPaginatorModule } from '@angular/material/paginator';
+import { AuthService } from '../../core/services/auth.service';
+
+interface User {
+  id: number;
+  username: string;
+  email: string;
+  balance: number;
+  active: boolean;
+  bannedUntil?: Date;
+}
 
 @Component({
   selector: 'app-admin-dashboard-users-management',
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, MatPaginatorModule],
   templateUrl: './admin-dashboard-users-management.component.html',
   styleUrl: './admin-dashboard-users-management.component.scss'
 })
-export class AdminDashboardUsersManagementComponent implements OnInit {
+export class AdminDashboardUsersManagementComponent implements OnInit, AfterViewInit {
 
-  users: any[] = [];
-  filteredUsers: any[] = [];
+  users: User[] = [];
+  filteredUsers: User[] = [];
   searchQuery: string = '';
   message: string = '';
   refreshing = false;
-  selectedStatus: string = 'all'; // Filtre par statut
+  selectedStatus: string = 'all';
+  @ViewChild(MatPaginator) paginator!: MatPaginator;
+  pageSize = 10;
+  pageIndex = 0;
+  pagedUsers: User[] = [];
+
+  private authService = inject(AuthService);
 
   constructor(private adminService: AdminService) {}
 
@@ -25,12 +42,29 @@ export class AdminDashboardUsersManagementComponent implements OnInit {
     this.loadUsers();
   }
 
+  ngAfterViewInit() {
+    this.updatePagedUsers();
+  }
+
+  private getAdminId(): number | null {
+    return this.authService.getCurrentUserId(); 
+  }
+
+  // ================= USERS =================
   loadUsers(): void {
     this.refreshing = true;
     this.adminService.getAllUsers().subscribe({
       next: data => {
-        this.users = data;
-        this.applyFilters();  // Reapply search + status filters
+        this.users = data.map((u: any) => ({
+          id: u.id,
+          username: u.username ?? '',
+          email: u.email ?? '',
+          balance: u.balance ?? 0,
+          active: u.active ?? false,
+          bannedUntil: u.bannedUntil ? new Date(u.bannedUntil) : undefined
+        }));
+        this.applyFilters();
+        this.updatePagedUsers();
         this.refreshing = false;
       },
       error: err => {
@@ -40,60 +74,63 @@ export class AdminDashboardUsersManagementComponent implements OnInit {
     });
   }
 
-  // Méthode pour rafraîchir manuellement
   refreshUsers(): void {
-    this.message = ''; // Clear any existing messages
+    this.message = '';
     this.loadUsers();
   }
 
-  // Obtenir le nombre de résultats de recherche
+  // ================= PAGINATION =================
   getSearchResultsCount(): number {
     return this.filteredUsers.length;
   }
 
-  // Vérifier si une recherche est active
   isSearchActive(): boolean {
     return !!(this.searchQuery && this.searchQuery.trim() !== '');
   }
 
-  isTemporarilyBanned(user: UserEntity): boolean {
+  isTemporarilyBanned(user: User): boolean {
     if (!user.bannedUntil) return false;
-
-    const bannedDate = new Date(user.bannedUntil); 
-    return bannedDate > new Date();
+    return new Date(user.bannedUntil) > new Date();
   }
 
+  updatePagedUsers() {
+    const start = this.pageIndex * this.pageSize;
+    const end = start + this.pageSize;
+    this.pagedUsers = this.filteredUsers.slice(start, end);
+  }
+
+  onPageChange(event: any) {
+    this.pageIndex = event.pageIndex;
+    this.pageSize = event.pageSize;
+    this.updatePagedUsers();
+  }
+
+  // ================= FILTERS =================
   searchUsers(): void {
     this.applyFilters();
+    this.updatePagedUsers();
   }
 
-  // Appliquer les filtres de recherche et de statut
   applyFilters(): void {
     let filtered = [...this.users];
 
-    // Filtre par recherche
     if (this.searchQuery && this.searchQuery.trim() !== '') {
       const query = this.searchQuery.toLowerCase().trim();
       filtered = filtered.filter(u =>
-        u.username.toLowerCase().includes(query) || 
+        u.username.toLowerCase().includes(query) ||
         u.email.toLowerCase().includes(query) ||
         String(u.id).includes(query) ||
         String(u.balance).includes(query)
       );
     }
 
-    // Filtre par statut
     if (this.selectedStatus !== 'all') {
       filtered = filtered.filter(u => {
         switch (this.selectedStatus) {
-          case 'active':
-            return u.active && !this.isTemporarilyBanned(u);
-          case 'temp-banned':
-            return u.active && this.isTemporarilyBanned(u);
-          case 'permanently-banned':
-            return !u.active;
-          default:
-            return true;
+          case 'active': return u.active && !this.isTemporarilyBanned(u);
+          case 'temp-banned': return u.active && this.isTemporarilyBanned(u);
+          case 'permanently-banned': return !u.active;
+          default: return true;
         }
       });
     }
@@ -101,15 +138,27 @@ export class AdminDashboardUsersManagementComponent implements OnInit {
     this.filteredUsers = filtered;
   }
 
-  // Changer le filtre de statut
   onStatusFilterChange(): void {
     this.applyFilters();
+    this.updatePagedUsers();
   }
 
+  // ================= ADMIN ACTIONS =================
+  private requireAdminId(): number | null {
+    const adminId = this.getAdminId();
+    if (!adminId) {
+      this.message = '❌ Impossible de récupérer l’ID de l’admin connecté.';
+      return null;
+    }
+    return adminId;
+  }
 
   banUser(userId: number, days?: number): void {
+    const adminId = this.requireAdminId();
+    if (!adminId) return;
+
     if (days && days > 0) {
-      this.adminService.banUserTemporarily(userId, days).subscribe({
+      this.adminService.banUserTemporarily(userId, days, adminId).subscribe({
         next: () => {
           this.message = `⏳ Utilisateur ${userId} banni pour ${days} jour(s).`;
           this.loadUsers();
@@ -117,7 +166,7 @@ export class AdminDashboardUsersManagementComponent implements OnInit {
         error: err => this.message = '❌ Erreur: ' + err.message
       });
     } else {
-      this.adminService.banUserPermanently(userId).subscribe({
+      this.adminService.banUserPermanently(userId, adminId).subscribe({
         next: () => {
           this.message = `🚫 Utilisateur ${userId} banni définitivement.`;
           this.loadUsers();
@@ -128,7 +177,10 @@ export class AdminDashboardUsersManagementComponent implements OnInit {
   }
 
   unbanUser(userId: number): void {
-    this.adminService.unbanUser(userId).subscribe({
+    const adminId = this.requireAdminId();
+    if (!adminId) return;
+
+    this.adminService.unbanUser(userId, adminId).subscribe({
       next: () => {
         this.message = `✅ Utilisateur ${userId} débanni.`;
         this.loadUsers();
@@ -136,39 +188,64 @@ export class AdminDashboardUsersManagementComponent implements OnInit {
       error: err => this.message = '❌ Erreur: ' + err.message
     });
   }
+
+  creditUser(userId: number, amount: number): void {
+    const adminId = this.requireAdminId();
+    if (!adminId) return;
+
+    this.adminService.creditUserBalance(userId, amount, adminId).subscribe({
+      next: () => {
+        this.message = `💰 Utilisateur ${userId} crédité de ${amount}.`;
+        this.loadUsers();
+      },
+      error: err => this.message = '❌ Erreur: ' + err.message
+    });
+  }
+
+  debitUser(userId: number, amount: number): void {
+    const adminId = this.requireAdminId();
+    if (!adminId) return;
+
+    this.adminService.debitUserBalance(userId, amount, adminId).subscribe({
+      next: () => {
+        this.message = `💸 Utilisateur ${userId} débité de ${amount}.`;
+        this.loadUsers();
+      },
+      error: err => this.message = '❌ Erreur: ' + err.message
+    });
+  }
+
+  // ================= FILTER DISPLAY =================
   getActiveFilters(): string {
     const filters: string[] = [];
-  
+
     if (this.searchQuery && this.searchQuery.trim() !== '') {
       filters.push(`Recherche: "${this.searchQuery.trim()}"`);
     }
-  
+
     if (this.selectedStatus && this.selectedStatus !== 'all') {
       switch (this.selectedStatus) {
-        case 'active':
-          filters.push('Statut: Actif');
-          break;
-        case 'temp-banned':
-          filters.push('Statut: Temporairement banni');
-          break;
-        case 'permanently-banned':
-          filters.push('Statut: Définitivement banni');
-          break;
+        case 'active': filters.push('Statut: Actif'); break;
+        case 'temp-banned': filters.push('Statut: Temporairement banni'); break;
+        case 'permanently-banned': filters.push('Statut: Définitivement banni'); break;
       }
     }
-  
+
     return filters.join(' | ');
   }
+
   clearSearch(): void {
     this.searchQuery = '';
     this.applyFilters();
+    this.updatePagedUsers();
   }
-  
+
   clearStatus(): void {
     this.selectedStatus = 'all';
     this.applyFilters();
+    this.updatePagedUsers();
   }
-  
+
   getStatusLabel(status: string): string {
     switch (status) {
       case 'active': return 'Actif';

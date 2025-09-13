@@ -1,10 +1,10 @@
 package FootballFantasy.fantasy.Controller.GameweekController;
 
 import FootballFantasy.fantasy.Dto.MatchWithIconsDTO;
-import FootballFantasy.fantasy.Entities.GameweekEntity.GameWeek;
-import FootballFantasy.fantasy.Entities.GameweekEntity.LeagueTheme;
-import FootballFantasy.fantasy.Entities.GameweekEntity.Match;
-import FootballFantasy.fantasy.Repositories.GameweekRepository.GameWeekRepository;
+import FootballFantasy.fantasy.Entities.GameweekEntities.GameWeek;
+import FootballFantasy.fantasy.Entities.GameweekEntities.LeagueTheme;
+import FootballFantasy.fantasy.Entities.GameweekEntities.Match;
+import FootballFantasy.fantasy.Repositories.GameweekRepositories.GameWeekRepository;
 import FootballFantasy.fantasy.Services.GameweekService.GameWeekService;
 import FootballFantasy.fantasy.Services.DataService.TeamIconService;
 import org.springframework.beans.factory.annotation.Autowired;

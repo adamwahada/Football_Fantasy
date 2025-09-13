@@ -1,11 +1,11 @@
 package FootballFantasy.fantasy.Services.DataService;
 
-import FootballFantasy.fantasy.Entities.GameweekEntity.GameWeek;
-import FootballFantasy.fantasy.Entities.GameweekEntity.GameweekStatus;
-import FootballFantasy.fantasy.Entities.GameweekEntity.LeagueTheme;
-import FootballFantasy.fantasy.Entities.GameweekEntity.Match;
-import FootballFantasy.fantasy.Repositories.GameweekRepository.GameWeekRepository;
-import FootballFantasy.fantasy.Repositories.GameweekRepository.MatchRepository;
+import FootballFantasy.fantasy.Entities.GameweekEntities.GameWeek;
+import FootballFantasy.fantasy.Entities.GameweekEntities.GameweekStatus;
+import FootballFantasy.fantasy.Entities.GameweekEntities.LeagueTheme;
+import FootballFantasy.fantasy.Entities.GameweekEntities.Match;
+import FootballFantasy.fantasy.Repositories.GameweekRepositories.GameWeekRepository;
+import FootballFantasy.fantasy.Repositories.GameweekRepositories.MatchRepository;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.boot.CommandLineRunner;

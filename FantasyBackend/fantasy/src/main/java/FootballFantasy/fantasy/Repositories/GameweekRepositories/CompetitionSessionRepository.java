@@ -1,9 +1,9 @@
-package FootballFantasy.fantasy.Repositories.GameweekRepository;
+package FootballFantasy.fantasy.Repositories.GameweekRepositories;
 
-import FootballFantasy.fantasy.Entities.GameweekEntity.CompetitionSession;
-import FootballFantasy.fantasy.Entities.GameweekEntity.CompetitionSessionStatus;
-import FootballFantasy.fantasy.Entities.GameweekEntity.LeagueTheme;
-import FootballFantasy.fantasy.Entities.GameweekEntity.SessionType;
+import FootballFantasy.fantasy.Entities.GameweekEntities.CompetitionSession;
+import FootballFantasy.fantasy.Entities.GameweekEntities.CompetitionSessionStatus;
+import FootballFantasy.fantasy.Entities.GameweekEntities.LeagueTheme;
+import FootballFantasy.fantasy.Entities.GameweekEntities.SessionType;
 import jakarta.persistence.LockModeType;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Lock;

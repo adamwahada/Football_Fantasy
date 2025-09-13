@@ -1,14 +1,14 @@
 package FootballFantasy.fantasy.Services.GameweekService;
 
 import FootballFantasy.fantasy.Dto.UserSessionStats;
-import FootballFantasy.fantasy.Entities.GameweekEntity.*;
-import FootballFantasy.fantasy.Entities.UserEntity.UserEntity;
+import FootballFantasy.fantasy.Entities.GameweekEntities.*;
+import FootballFantasy.fantasy.Entities.UserEntities.UserEntity;
 import FootballFantasy.fantasy.Exception.*;
-import FootballFantasy.fantasy.Repositories.GameweekRepository.CompetitionSessionRepository;
-import FootballFantasy.fantasy.Repositories.GameweekRepository.GameWeekRepository;
-import FootballFantasy.fantasy.Repositories.GameweekRepository.PredictionRepository;
-import FootballFantasy.fantasy.Repositories.GameweekRepository.SessionParticipationRepository;
-import FootballFantasy.fantasy.Repositories.UserRepository.UserRepository;
+import FootballFantasy.fantasy.Repositories.GameweekRepositories.CompetitionSessionRepository;
+import FootballFantasy.fantasy.Repositories.GameweekRepositories.GameWeekRepository;
+import FootballFantasy.fantasy.Repositories.GameweekRepositories.PredictionRepository;
+import FootballFantasy.fantasy.Repositories.GameweekRepositories.SessionParticipationRepository;
+import FootballFantasy.fantasy.Repositories.UserRepositories.UserRepository;
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
@@ -16,7 +16,6 @@ import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
 import java.time.Duration;
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;

@@ -1,7 +1,7 @@
 package FootballFantasy.fantasy.Controller.GameweekController;
 
 import FootballFantasy.fantasy.Dto.GameweekPredictionSubmissionDTO;
-import FootballFantasy.fantasy.Entities.GameweekEntity.*;
+import FootballFantasy.fantasy.Entities.GameweekEntities.*;
 import FootballFantasy.fantasy.Exception.BusinessLogicException;
 import FootballFantasy.fantasy.Exception.InsufficientBalanceException;
 import FootballFantasy.fantasy.Exception.PrivateSessionNotFoundException;

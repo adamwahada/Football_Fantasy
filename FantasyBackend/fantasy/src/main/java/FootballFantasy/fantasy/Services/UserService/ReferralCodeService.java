@@ -1,7 +1,7 @@
 package FootballFantasy.fantasy.Services.UserService;
 
-import FootballFantasy.fantasy.Entities.UserEntity.ReferralCode;
-import FootballFantasy.fantasy.Repositories.UserRepository.ReferralCodeRepository;
+import FootballFantasy.fantasy.Entities.UserEntities.ReferralCode;
+import FootballFantasy.fantasy.Repositories.UserRepositories.ReferralCodeRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 

@@ -1,6 +1,6 @@
 package FootballFantasy.fantasy.Dto;
 
-import FootballFantasy.fantasy.Entities.GameweekEntity.PredictionResult;
+import FootballFantasy.fantasy.Entities.GameweekEntities.PredictionResult;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;

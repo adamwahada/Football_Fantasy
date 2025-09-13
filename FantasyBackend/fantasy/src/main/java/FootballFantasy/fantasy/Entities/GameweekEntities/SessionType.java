@@ -1,4 +1,4 @@
-package FootballFantasy.fantasy.Entities.GameweekEntity;
+package FootballFantasy.fantasy.Entities.GameweekEntities;
 
 public enum SessionType {
     ONE_VS_ONE,      // 1v1

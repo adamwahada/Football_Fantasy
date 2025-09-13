@@ -1,9 +1,9 @@
 package FootballFantasy.fantasy.Controller.GameweekController;
 
-import FootballFantasy.fantasy.Entities.GameweekEntity.CompetitionSession;
-import FootballFantasy.fantasy.Entities.GameweekEntity.LeagueTheme;
-import FootballFantasy.fantasy.Entities.GameweekEntity.SessionParticipation;
-import FootballFantasy.fantasy.Entities.GameweekEntity.SessionType;
+import FootballFantasy.fantasy.Entities.GameweekEntities.CompetitionSession;
+import FootballFantasy.fantasy.Entities.GameweekEntities.LeagueTheme;
+import FootballFantasy.fantasy.Entities.GameweekEntities.SessionParticipation;
+import FootballFantasy.fantasy.Entities.GameweekEntities.SessionType;
 import FootballFantasy.fantasy.Services.GameweekService.CompetitionSessionService;
 import FootballFantasy.fantasy.Services.GameweekService.SessionParticipationService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -12,7 +12,6 @@ import org.springframework.web.bind.annotation.*;
 
 import java.math.BigDecimal;
 import java.util.List;
-import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/competition-sessions")

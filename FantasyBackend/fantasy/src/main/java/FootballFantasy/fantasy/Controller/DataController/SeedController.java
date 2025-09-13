@@ -1,7 +1,6 @@
 package FootballFantasy.fantasy.Controller.DataController;
 
-import FootballFantasy.fantasy.Entities.GameweekEntity.LeagueTheme;
-import FootballFantasy.fantasy.Repositories.GameweekRepository.GameWeekRepository;
+import FootballFantasy.fantasy.Entities.GameweekEntities.LeagueTheme;
 import FootballFantasy.fantasy.Services.DataService.MatchSeederService;
 import FootballFantasy.fantasy.Services.GameweekService.GameWeekService;
 import FootballFantasy.fantasy.Services.GameweekService.MatchService;

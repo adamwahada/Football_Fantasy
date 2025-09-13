@@ -1,4 +1,4 @@
-package FootballFantasy.fantasy.Entities.GameweekEntity;
+package FootballFantasy.fantasy.Entities.GameweekEntities;
 
 public enum ParticipationStatus {
     ACTIVE, COMPLETED, DISQUALIFIED,REFUNDED

@@ -1,11 +1,11 @@
-package FootballFantasy.fantasy.Repositories.GameweekRepository;
+package FootballFantasy.fantasy.Repositories.GameweekRepositories;
 
-import FootballFantasy.fantasy.Entities.GameweekEntity.Prediction;
-import FootballFantasy.fantasy.Entities.GameweekEntity.PredictionResult;
-import FootballFantasy.fantasy.Entities.GameweekEntity.SessionParticipation;
-import FootballFantasy.fantasy.Entities.GameweekEntity.SessionType;
-import FootballFantasy.fantasy.Entities.GameweekEntity.LeagueTheme;
-import FootballFantasy.fantasy.Entities.UserEntity.UserEntity;
+import FootballFantasy.fantasy.Entities.GameweekEntities.Prediction;
+import FootballFantasy.fantasy.Entities.GameweekEntities.PredictionResult;
+import FootballFantasy.fantasy.Entities.GameweekEntities.SessionParticipation;
+import FootballFantasy.fantasy.Entities.GameweekEntities.SessionType;
+import FootballFantasy.fantasy.Entities.GameweekEntities.LeagueTheme;
+import FootballFantasy.fantasy.Entities.UserEntities.UserEntity;
 import java.math.BigDecimal;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;

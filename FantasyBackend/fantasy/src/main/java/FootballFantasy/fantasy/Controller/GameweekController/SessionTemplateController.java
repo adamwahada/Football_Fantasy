@@ -1,8 +1,8 @@
 package FootballFantasy.fantasy.Controller.GameweekController;
 
-import FootballFantasy.fantasy.Entities.GameweekEntity.LeagueTheme;
-import FootballFantasy.fantasy.Entities.GameweekEntity.SessionTemplate;
-import FootballFantasy.fantasy.Entities.GameweekEntity.SessionType;
+import FootballFantasy.fantasy.Entities.GameweekEntities.LeagueTheme;
+import FootballFantasy.fantasy.Entities.GameweekEntities.SessionTemplate;
+import FootballFantasy.fantasy.Entities.GameweekEntities.SessionType;
 import FootballFantasy.fantasy.Services.GameweekService.SessionTemplateService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
