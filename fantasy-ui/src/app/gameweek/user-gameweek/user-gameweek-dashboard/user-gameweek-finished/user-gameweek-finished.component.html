@@ -1,0 +1,28 @@
+<div class="finished-gameweek-container">
+  <h1>Gameweek Terminée</h1>
+  
+  <div *ngIf="loading" class="loading">
+    <p>Chargement des matchs pour {{ competition }} - Gameweek {{ weekNumber }}...</p>
+  </div>
+  
+  <div *ngIf="error" class="error">
+    <p>{{ error }}</p>
+  </div>
+
+  <div *ngIf="!loading && !error && matches.length > 0" class="matches-container">
+    <h2>{{ competition }} - Gameweek {{ weekNumber }} - Résultats</h2>
+
+    <div *ngFor="let match of matches" class="match-card">
+      <div class="match-info">
+        <span class="home-team">{{ match.homeTeam }}</span>
+        <span class="score">{{ match.homeScore }} - {{ match.awayScore }}</span>
+        <span class="away-team">{{ match.awayTeam }}</span>
+      </div>
+      <div class="winner">Vainqueur: {{ getWinner(match) }}</div>
+    </div>
+  </div>
+
+  <div *ngIf="!loading && !error && matches.length === 0" class="no-matches">
+    <p>Aucun match trouvé pour cette gameweek.</p>
+  </div>
+</div>

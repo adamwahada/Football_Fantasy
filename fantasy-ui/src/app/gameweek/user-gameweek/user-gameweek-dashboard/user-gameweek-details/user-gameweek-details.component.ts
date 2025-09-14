@@ -559,5 +559,12 @@ getFormattedDeadline(gameweek: Gameweek): string {
   goBack(): void {
   this.location.back();
 }
+openFinishedGameweek(gameweek: Gameweek): void {
+  if (this.getGameweekStatus(gameweek) === 'FINISHED') {
+    this.router.navigate(
+      ['/user', 'user-gameweek-list', this.competition, gameweek.weekNumber, 'finished']
+    );
+  }
+}
 
 }

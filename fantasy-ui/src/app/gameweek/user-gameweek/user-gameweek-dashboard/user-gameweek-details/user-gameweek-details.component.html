@@ -82,7 +82,7 @@
           [class.finished]="getGameweekStatus(gw) === 'FINISHED'"
           [class.upcoming]="getGameweekStatus(gw) === 'UPCOMING' && !isNextUpcomingGameweek(gw)"
           [disabled]="isLockedGameweek(gw.weekNumber)"
-          (click)="!isLockedGameweek(gw.weekNumber) && openGameweekMatches(gw.weekNumber)"
+          (click)="!isLockedGameweek(gw.weekNumber) && (getGameweekStatus(gw) === 'FINISHED' ? openFinishedGameweek(gw) : openGameweekMatches(gw.weekNumber))"
           [attr.aria-label]="'Open matches for gameweek ' + gw.weekNumber + (isLockedGameweek(gw.weekNumber) ? ', locked' : '')"
           (mouseenter)="showDeadlineMessage(gw)"
           (mouseleave)="hideDeadlineMessage()"
