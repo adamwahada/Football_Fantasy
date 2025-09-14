@@ -32,7 +32,7 @@ public class UserService {
     private SessionParticipationService sessionParticipationService;
 
     @Autowired
-    private UserManagementAuditRepository auditRepository;
+    private UserManagementAuditRepository userManagementAuditRepository;
 
     // ======== Keycloak / Current User Helpers ========
 
@@ -261,7 +261,7 @@ public class UserService {
         audit.setAction(UserAction.CREDIT);
         audit.setDetails("Credited " + amount + " | Previous balance: " + oldBalance + " | New balance: " + user.getBalance());
         audit.setTimestamp(LocalDateTime.now());
-        auditRepository.save(audit);
+        userManagementAuditRepository.save(audit);
     }
 
     @Transactional
@@ -292,7 +292,7 @@ public class UserService {
         audit.setAction(UserAction.DEBIT);
         audit.setDetails("Debited " + amount + " | Previous balance: " + oldBalance + " | New balance: " + user.getBalance());
         audit.setTimestamp(LocalDateTime.now());
-        auditRepository.save(audit);
+        userManagementAuditRepository.save(audit);
     }
 
 
@@ -378,7 +378,7 @@ public class UserService {
         audit.setDetails("Banned for " + days + " day(s)");
         audit.setReason(reason); // ✅ Add the reason
         audit.setTimestamp(LocalDateTime.now());
-        auditRepository.save(audit);
+        userManagementAuditRepository.save(audit);
     }
 
     @Transactional
@@ -396,25 +396,38 @@ public class UserService {
         audit.setDetails("User permanently banned");
         audit.setReason(reason); // ✅ Add the reason
         audit.setTimestamp(LocalDateTime.now());
-        auditRepository.save(audit);
+        userManagementAuditRepository.save(audit);
     }
     @Transactional
     public void unbanUser(Long userId, Long adminId) {
         UserEntity user = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
+        // Check if the user is actually banned
+        boolean isBanned = !user.isActive() ||
+                (user.getBannedUntil() != null && user.getBannedUntil().isAfter(LocalDateTime.now()));
+
+        if (!isBanned) {
+            // User is not banned, nothing to do
+            return;
+        }
+
+        // Unban the user
         user.setActive(true);
         user.setBannedUntil(null);
         userRepository.save(user);
 
+        // Log audit
         UserManagementAudit audit = new UserManagementAudit();
         audit.setUserId(userId);
         audit.setAdminId(adminId);
         audit.setAction(UserAction.UNBAN);
         audit.setDetails("Ban removed");
         audit.setTimestamp(LocalDateTime.now());
-        auditRepository.save(audit);
+        userManagementAuditRepository.save(audit);
     }
+
+
 
     public String getUserBanStatus(Long userId) {
         UserEntity user = userRepository.findById(userId)

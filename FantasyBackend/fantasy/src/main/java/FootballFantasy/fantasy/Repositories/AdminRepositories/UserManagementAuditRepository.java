@@ -11,7 +11,7 @@ public interface UserManagementAuditRepository extends JpaRepository<UserManagem
     // Fetch all for a specific user
     List<UserManagementAudit> findByUserId(Long userId);
 
-    // Fetch all  performed by a specific admin
+    // Fetch all performed by a specific admin
     List<UserManagementAudit> findByAdminId(Long adminId);
 
     // Fetch all audit entries of a specific type/action for a user

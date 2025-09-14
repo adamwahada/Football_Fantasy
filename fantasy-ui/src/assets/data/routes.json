@@ -90,6 +90,13 @@
           "class": "ml-menu",
           "role": ["ADMIN"],
           "submenu": []
+        },
+        {
+          "path": "/admin/admin-dashboard-history",
+          "title": "Admin/User History",
+          "class": "ml-menu",
+          "role": ["ADMIN"],
+          "submenu": []
         }
       ]
     },

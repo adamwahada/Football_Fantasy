@@ -10,6 +10,7 @@ import { AllAdminGameweekComponent } from "../gameweek/admin-gameweek/all-admin-
 import { EditAdminGameweekComponent } from "../gameweek/admin-gameweek/edit-admin-gameweek/edit-admin-gameweek.component";
 import { AdminDashboardFundsComponent } from "./admin-dashboard-funds/admin-dashboard-funds.component";
 import { AdminDashboardUsersManagementComponent } from "./admin-dashboard-users-management/admin-dashboard-users-management.component";
+import { AdminDashboardHistoryComponent } from "./admin-dashboard-history/admin-dashboard-history.component";
 
 export const adminRoutes: Routes = [
   {
@@ -28,7 +29,7 @@ export const adminRoutes: Routes = [
       { path: 'gameweek/Editgameweek/:id', component: EditAdminGameweekComponent },
       {path: 'funds', component: AdminDashboardFundsComponent },
       {path: 'management', component: AdminDashboardUsersManagementComponent },
-
+      {path: 'admin-dashboard-history', component: AdminDashboardHistoryComponent },
       { path: '', redirectTo: 'referral', pathMatch: 'full' },
 
     ]

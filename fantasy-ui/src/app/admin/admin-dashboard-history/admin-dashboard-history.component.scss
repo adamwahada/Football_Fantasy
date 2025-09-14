@@ -1,0 +1,935 @@
+// Admin Dashboard History - Styles cohérents avec admin-dashboard-users
+.admin-dashboard {
+  padding: 1.5rem;
+  max-width: 1400px;
+  margin: 0 auto;
+  background: #f8fafc;
+  min-height: 100vh;
+
+  h2 {
+    color: #1e3a8a;
+    font-size: 2rem;
+    font-weight: 700;
+    margin-bottom: 1.5rem;
+    text-align: center;
+    border-bottom: 3px solid #1e3a8a;
+    padding-bottom: 0.5rem;
+  }
+}
+
+// Search and Filter Section
+.search-container {
+  margin-bottom: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+
+  .search-input-container {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    justify-content: center;
+
+    input[type="text"] {
+      flex: 1;
+      max-width: 500px;
+      padding: 0.75rem 1rem;
+      border: 2px solid #e5e7eb;
+      border-radius: 0.5rem;
+      font-size: 1rem;
+      transition: all 0.2s ease;
+
+      &:focus {
+        outline: none;
+        border-color: #3b82f6;
+        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+      }
+
+      &::placeholder {
+        color: #9ca3af;
+      }
+    }
+  }
+
+  .filters-row {
+    display: flex;
+    gap: 1rem;
+    justify-content: center;
+    flex-wrap: wrap;
+
+    .filter-container {
+      .filter-label {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        background: white;
+        padding: 0.75rem 1rem;
+        border-radius: 0.5rem;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+        border: 1px solid #e5e7eb;
+
+        .filter-text {
+          font-weight: 600;
+          color: #374151;
+          font-size: 0.9rem;
+          white-space: nowrap;
+        }
+
+        .filter-select {
+          padding: 0.5rem;
+          border: 2px solid #d1d5db;
+          border-radius: 0.375rem;
+          font-size: 0.9rem;
+          background: white;
+          color: #374151;
+          cursor: pointer;
+          transition: all 0.2s ease;
+          min-width: 150px;
+
+          &:focus {
+            outline: none;
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1);
+          }
+
+          &:hover {
+            border-color: #9ca3af;
+          }
+        }
+      }
+    }
+  }
+}
+
+// Refresh Button
+.btn-refresh {
+  background: linear-gradient(135deg, #3b82f6, #2563eb);
+  color: white;
+  border: none;
+  border-radius: 0.5rem;
+  padding: 0.75rem;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  min-width: 48px;
+  height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 4px rgba(59, 130, 246, 0.2);
+
+  &:hover:not(:disabled) {
+    background: linear-gradient(135deg, #2563eb, #1d4ed8);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(59, 130, 246, 0.3);
+  }
+
+  &:disabled {
+    background: #9ca3af;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+  }
+
+  .refresh-icon {
+    font-size: 1.2rem;
+    transition: transform 0.3s ease;
+
+    &.spinning {
+      animation: spin 1s linear infinite;
+    }
+  }
+}
+
+// Active Filters
+.active-filters {
+  margin-bottom: 1rem;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: center;
+
+  .filter-chip {
+    background: linear-gradient(135deg, #e0f2fe, #b3e5fc);
+    border-radius: 20px;
+    padding: 0.375rem 0.75rem;
+    display: inline-flex;
+    align-items: center;
+    font-weight: 500;
+    font-size: 0.85rem;
+    color: #0277bd;
+    border: 1px solid #81d4fa;
+
+    .remove-filter {
+      background: transparent;
+      border: none;
+      cursor: pointer;
+      margin-left: 0.5rem;
+      font-weight: bold;
+      color: #d32f2f;
+      padding: 0;
+      line-height: 1;
+
+      &:hover {
+        color: #b71c1c;
+      }
+    }
+  }
+
+  .clear-all-filters {
+    background: #f44336;
+    color: white;
+    border: none;
+    border-radius: 15px;
+    padding: 0.375rem 0.75rem;
+    font-size: 0.8rem;
+    cursor: pointer;
+    transition: background 0.2s;
+
+    &:hover {
+      background: #d32f2f;
+    }
+  }
+}
+
+// Search Results Info
+.search-results-info {
+  margin-bottom: 1rem;
+  font-size: 0.9rem;
+  color: #6b7280;
+  font-weight: 500;
+  background: #f3f4f6;
+  padding: 0.5rem 1rem;
+  border-radius: 0.375rem;
+  border: 1px solid #d1d5db;
+  text-align: center;
+}
+
+// Loading State
+.loading {
+  text-align: center;
+  padding: 3rem;
+  color: #6b7280;
+  font-size: 1.1rem;
+
+  p {
+    margin: 0;
+  }
+}
+
+// Actions Table
+.actions-table-container {
+  overflow-x: auto;
+  margin: 1rem 0;
+  border-radius: 0.5rem;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+  background: #fff;
+
+  .no-results {
+    text-align: center;
+    padding: 3rem;
+    color: #6b7280;
+    font-size: 1.1rem;
+
+    p {
+      margin: 0;
+    }
+  }
+}
+
+.actions-table {
+  width: 100%;
+  min-width: 1000px;
+  border-collapse: collapse;
+  font-size: 0.95rem;
+  background-color: #fff;
+  table-layout: fixed;
+
+  th,
+  td {
+    padding: 0.5rem 0.3rem;
+    text-align: center;
+    border-bottom: 1px solid #f1f5f9;
+    vertical-align: middle;
+  }
+
+  th {
+    background: #f3f4f6;
+    font-weight: 600;
+    color: #374151;
+    font-size: 0.9rem;
+    white-space: nowrap;
+    text-align: center;
+    vertical-align: middle;
+    padding: 0.5rem 0.3rem;
+    
+    // Optimized column widths for better distribution
+    &:nth-child(1) { width: 10%; } // Date
+    &:nth-child(2) { width: 12%; } // Action
+    &:nth-child(3) { width: 16%; } // Utilisateur
+    &:nth-child(4) { width: 12%; } // Admin
+    &:nth-child(5) { width: 12%; } // Avant/Raison
+    &:nth-child(6) { width: 16%; } // Montant/Détails
+    &:nth-child(7) { width: 8%; }  // Après (only for financial table)
+  }
+  
+  // Specific alignment for each column type
+  th:nth-child(3), th:nth-child(4) {
+    text-align: left;
+  }
+
+  .date-cell {
+    min-width: 100px;
+    text-align: center;
+    
+    .date-container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 40px;
+    }
+
+    .date-primary {
+      font-weight: 600;
+      font-size: 0.9rem;
+      line-height: 1.2;
+      color: #1f2937;
+    }
+
+    .time-secondary {
+      color: #64748b;
+      font-size: 0.8rem;
+      line-height: 1.2;
+      margin-top: 2px;
+    }
+  }
+
+  .action-cell {
+    text-align: center;
+    
+    .action-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.3rem;
+      padding: 0.3rem 0.6rem;
+      border-radius: 0.8rem;
+      font-weight: 500;
+      font-size: 0.85rem;
+      background: #e0e7ff;
+      color: #3730a3;
+      white-space: nowrap;
+      justify-content: center;
+      min-width: 80px;
+
+      &.badge-success {
+        background: #dcfce7;
+        color: #166534;
+      }
+
+      &.badge-error {
+        background: #fee2e2;
+        color: #b91c1c;
+      }
+
+      &.badge-warning {
+        background: #fef9c3;
+        color: #92400e;
+      }
+
+      &.badge-info {
+        background: #e0e7ff;
+        color: #3730a3;
+      }
+    }
+
+    .action-icon {
+      font-size: 1.1rem;
+      vertical-align: middle;
+    }
+    
+    .action-text {
+      font-size: 0.85rem;
+      white-space: nowrap;
+    }
+  }
+
+  .user-cell,
+  .admin-cell {
+    text-align: left !important;
+    padding: 0.5rem 0.3rem !important;
+    vertical-align: middle !important;
+    
+    .user-info,
+    .admin-info {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+      line-height: 1.2;
+      justify-content: center;
+      align-items: flex-start;
+      min-height: 50px;
+      padding: 0.2rem 0;
+
+      .username,
+      .admin-username {
+        font-weight: 600;
+        font-size: 0.85rem;
+        color: #1f2937;
+        margin: 0;
+      }
+
+      .user-id,
+      .admin-id {
+        color: #64748b;
+        font-size: 0.75rem;
+        margin: 0;
+      }
+
+      .email {
+        color: #2563eb;
+        font-size: 0.75rem;
+        word-break: break-all;
+        margin: 0;
+      }
+    }
+  }
+
+  .reason-cell {
+    text-align: center;
+    
+    .reason-badge {
+      background: #f3f4f6;
+      color: #2563eb;
+      border-radius: 0.8rem;
+      padding: 0.3rem 0.6rem;
+      font-size: 0.8rem;
+      font-weight: 500;
+      white-space: nowrap;
+      display: inline-block;
+    }
+
+    .no-reason {
+      color: #64748b;
+      font-size: 0.9rem;
+    }
+  }
+
+  .details-cell {
+    text-align: left !important;
+    padding: 0.4rem 0.2rem !important;
+    vertical-align: middle !important;
+    
+    .details-text {
+      color: #374151;
+      font-size: 0.8rem;
+      font-weight: 500;
+      line-height: 1.3;
+    }
+
+    .no-details {
+      color: #64748b;
+      font-size: 0.85rem;
+    }
+  }
+}
+
+.filter-chip {
+  display: inline-flex;
+  align-items: center;
+  background: #e0e7ff;
+  color: #3730a3;
+  border-radius: 1rem;
+  padding: 0.25rem 0.75rem;
+  margin-right: 0.5rem;
+  font-size: 0.97em;
+  font-weight: 500;
+
+  .remove-filter {
+    background: none;
+    border: none;
+    color: #b91c1c;
+    font-size: 1.1em;
+    margin-left: 0.5rem;
+    cursor: pointer;
+    border-radius: 50%;
+    transition: background 0.2s;
+
+    &:hover {
+      background: #fee2e2;
+    }
+  }
+}
+
+.clear-all-filters {
+  background: #2563eb;
+  color: #fff;
+  border: none;
+  border-radius: 1rem;
+  padding: 0.25rem 1rem;
+  font-size: 0.97em;
+  font-weight: 500;
+  margin-left: 0.5rem;
+  cursor: pointer;
+  transition: background 0.2s;
+
+  &:hover {
+    background: #1e40af;
+  }
+}
+
+.no-results {
+  text-align: center;
+  color: #64748b;
+  font-size: 1.1em;
+  margin: 2rem 0;
+}
+
+.loading {
+  text-align: center;
+  color: #2563eb;
+  font-size: 1.1em;
+  margin: 2rem 0;
+}
+
+@media (max-width: 600px) {
+  .admin-dashboard {
+    padding: 1rem;
+  }
+  
+  .search-container {
+    .search-input-container {
+      flex-direction: column;
+      gap: 0.5rem;
+      
+      input[type="text"] {
+        max-width: 100%;
+        width: 100%;
+      }
+    }
+    
+    .filters-row {
+      flex-direction: column;
+      align-items: center;
+      gap: 0.5rem;
+    }
+  }
+  
+  .actions-table {
+    min-width: 700px;
+    font-size: 0.8rem;
+  }
+
+  .actions-table th,
+  .actions-table td {
+    padding: 0.3rem 0.15rem;
+  }
+
+  .filter-chip,
+  .clear-all-filters {
+    font-size: 0.85rem;
+  }
+  
+  .table-filters {
+    flex-direction: column;
+    gap: 0.5rem;
+    align-items: center;
+  }
+}
+
+// Action Badge Colors
+.badge-red {
+  background: #fee2e2 !important;
+  color: #b91c1c !important;
+  border: 1px solid #fca5a5;
+}
+
+.badge-orange {
+  background: #fed7aa !important;
+  color: #c2410c !important;
+  border: 1px solid #fdba74;
+}
+
+.badge-dark-red {
+  background: #fecaca !important;
+  color: #991b1b !important;
+  border: 1px solid #f87171;
+}
+
+.badge-green {
+  background: #dcfce7 !important;
+  color: #166534 !important;
+  border: 1px solid #86efac;
+}
+
+.badge-purple {
+  background: #e9d5ff !important;
+  color: #581c87 !important;
+  border: 1px solid #a78bfa;
+}
+
+.badge-light-green {
+  background: #dcfce7 !important;
+  color: #166534 !important;
+  border: 1px solid #86efac;
+}
+
+// Row Colors
+.row-red {
+  border-left: 4px solid #dc2626;
+  background: #fef2f2;
+}
+
+.row-orange {
+  border-left: 4px solid #ea580c;
+  background: #fff7ed;
+}
+
+.row-dark-red {
+  border-left: 4px solid #991b1b;
+  background: #fef2f2;
+}
+
+.row-teal {
+  border-left: 4px solid #0d9488;
+  background: #f0fdfa;
+}
+
+.row-purple {
+  border-left: 4px solid #7c3aed;
+  background: #faf5ff;
+}
+
+.row-light-green {
+  border-left: 4px solid #16a34a;
+  background: #f0fdf4;
+}
+
+// Table Sections
+.table-section {
+  margin-bottom: 2rem;
+  background: white;
+  border-radius: 0.75rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+  
+  .table-title {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    margin: 0;
+    padding: 1rem 1.5rem;
+    font-size: 1.25rem;
+    font-weight: 600;
+    border-bottom: none;
+    
+    &.financial-title {
+      background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+    }
+    
+    &.moderation-title {
+      background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
+    }
+  }
+  
+  // Table-specific filters
+  .table-filters {
+    background: #f8fafc;
+    padding: 1rem 1.5rem;
+    border-bottom: 1px solid #e5e7eb;
+    display: flex;
+    gap: 1rem;
+    align-items: center;
+    
+    .filter-container {
+      .filter-label {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        
+        .filter-text {
+          font-weight: 500;
+          color: #374151;
+          font-size: 0.9rem;
+        }
+        
+        .filter-select {
+          padding: 0.5rem 0.75rem;
+          border: 1px solid #d1d5db;
+          border-radius: 0.375rem;
+          background: white;
+          font-size: 0.9rem;
+          color: #374151;
+          transition: all 0.2s ease;
+          
+          &:focus {
+            outline: none;
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1);
+          }
+        }
+      }
+    }
+  }
+}
+
+// Financial Table Specific Styles
+.financial-table {
+  .amount-cell {
+    text-align: center;
+    font-weight: 600;
+    padding: 0.4rem 0.2rem !important;
+    
+    .amount-display {
+      padding: 0.3rem 0.6rem;
+      border-radius: 0.4rem;
+      font-family: 'Courier New', monospace;
+      font-size: 0.85rem;
+      font-weight: 600;
+      white-space: nowrap;
+      display: inline-block;
+      min-width: 60px;
+      
+      // Green for credit (deposit)
+      &.credit-amount {
+        background: #dcfce7;
+        color: #166534;
+        border: 1px solid #86efac;
+      }
+      
+      // Red for debit (withdraw)
+      &.debit-amount {
+        background: #fee2e2;
+        color: #b91c1c;
+        border: 1px solid #fca5a5;
+      }
+    }
+  }
+  
+  .balance-cell {
+    text-align: center;
+    font-weight: 500;
+    padding: 0.5rem 0.3rem !important;
+    
+    .balance-display {
+      padding: 0.3rem 0.6rem;
+      border-radius: 0.3rem;
+      background: #f8fafc;
+      color: #475569;
+      border: 1px solid #e2e8f0;
+      font-family: 'Courier New', monospace;
+      font-size: 0.85rem;
+      min-width: 60px;
+      display: inline-block;
+      white-space: nowrap;
+    }
+  }
+  
+  // Clean table rows without background colors
+  tbody tr {
+    background: white;
+    
+    &:hover {
+      background: #f8fafc;
+    }
+  }
+}
+
+// Moderation Table Specific Styles
+.moderation-table {
+  .reason-cell {
+    text-align: center;
+    padding: 0.3rem 0.2rem !important;
+    vertical-align: middle !important;
+    
+    .reason-badge {
+      padding: 0.25rem 0.5rem;
+      border-radius: 0.6rem;
+      font-size: 0.75rem;
+      font-weight: 500;
+      background: #fef3c7;
+      color: #92400e;
+      border: 1px solid #fde68a;
+      white-space: nowrap;
+      display: inline-block;
+      max-width: 100%;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+  }
+  
+  .details-cell {
+    text-align: left !important;
+    padding: 0.3rem 0.2rem !important;
+    vertical-align: middle !important;
+    
+    .details-text {
+      padding: 0.25rem 0.5rem;
+      border-radius: 0.3rem;
+      background: #f3f4f6;
+      color: #374151;
+      font-size: 0.75rem;
+      font-family: 'Courier New', monospace;
+      font-weight: 500;
+      white-space: nowrap;
+      display: inline-block;
+      max-width: 100%;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+  }
+  
+  // Clean table rows without background colors
+  tbody tr {
+    background: white;
+    
+    &:hover {
+      background: #f8fafc;
+    }
+  }
+}
+
+// Paginator styles
+.table-section mat-paginator {
+  background: #f8fafc;
+  border-top: 1px solid #e5e7eb;
+  margin-top: 0;
+}
+
+// Responsive adjustments for two-table layout
+@media (max-width: 1200px) {
+  .actions-table {
+    min-width: 900px;
+    font-size: 0.9rem;
+    
+    th, td {
+      padding: 0.4rem 0.2rem;
+    }
+    
+    th {
+      font-size: 0.8rem;
+      padding: 0.4rem 0.2rem;
+      text-align: center;
+      vertical-align: middle;
+      
+      &:nth-child(3), &:nth-child(4) {
+        text-align: left;
+      }
+    }
+    
+    .date-cell {
+      min-width: 85px;
+      
+      .date-primary {
+        font-size: 0.8rem;
+      }
+      
+      .time-secondary {
+        font-size: 0.7rem;
+      }
+    }
+    
+    .action-badge {
+      font-size: 0.75rem;
+      padding: 0.2rem 0.4rem;
+      min-width: 65px;
+    }
+    
+    .user-info, .admin-info {
+      min-height: 40px;
+      gap: 1px;
+      
+      .username, .admin-username {
+        font-size: 0.75rem;
+      }
+      
+      .user-id, .admin-id, .email {
+        font-size: 0.65rem;
+      }
+    }
+    
+    .amount-display {
+      font-size: 0.8rem;
+      padding: 0.25rem 0.5rem;
+      min-width: 55px;
+    }
+    
+    .balance-display {
+      font-size: 0.75rem;
+      padding: 0.2rem 0.4rem;
+      min-width: 50px;
+    }
+  }
+}
+
+@media (max-width: 768px) {
+  .table-section {
+    margin-bottom: 1rem;
+    
+    .table-title {
+      font-size: 1.1rem;
+      padding: 0.75rem 1rem;
+    }
+  }
+  
+  .actions-table {
+    min-width: 750px;
+    font-size: 0.8rem;
+    
+    th, td {
+      padding: 0.3rem 0.15rem;
+    }
+    
+    th {
+      font-size: 0.75rem;
+      padding: 0.3rem 0.15rem;
+      text-align: center;
+      vertical-align: middle;
+      
+      &:nth-child(3), &:nth-child(4) {
+        text-align: left;
+      }
+    }
+    
+    .date-cell {
+      min-width: 75px;
+      
+      .date-primary {
+        font-size: 0.75rem;
+      }
+      
+      .time-secondary {
+        font-size: 0.65rem;
+      }
+    }
+    
+    .action-badge {
+      font-size: 0.7rem;
+      padding: 0.15rem 0.3rem;
+      min-width: 55px;
+    }
+    
+    .user-info, .admin-info {
+      min-height: 35px;
+      gap: 1px;
+      
+      .username, .admin-username {
+        font-size: 0.7rem;
+      }
+      
+      .user-id, .admin-id, .email {
+        font-size: 0.6rem;
+      }
+    }
+    
+    .amount-display, .balance-display {
+      font-size: 0.75rem;
+      padding: 0.2rem 0.3rem;
+      min-width: 45px;
+    }
+    
+    .details-text, .reason-badge {
+      font-size: 0.7rem;
+      padding: 0.15rem 0.3rem;
+    }
+  }
+}

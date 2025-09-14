@@ -1,0 +1,287 @@
+<div class="admin-dashboard">
+  <h2>📋 Historique des Actions - Gestion Administrative</h2>
+
+  <!-- Search and Filter -->
+  <div class="search-container">
+    
+    <!-- Search Input -->
+    <div class="search-input-container">
+      <input type="text" 
+             placeholder="Rechercher par nom d'utilisateur, email, ID utilisateur, admin..." 
+             [(ngModel)]="searchQuery" 
+             (input)="searchActions()"
+             (keyup)="searchActions()" />
+      <button class="btn-refresh" 
+              (click)="refreshActions()" 
+              [disabled]="refreshing"
+              title="Rafraîchir l'historique">
+        <span *ngIf="!refreshing" class="refresh-icon">🔄</span>
+        <span *ngIf="refreshing" class="refresh-icon spinning">⏳</span>
+      </button>
+    </div>
+
+    <!-- Global Filters Row -->
+    <div class="filters-row">
+      
+      <!-- Date Range Filter (applies to both tables) -->
+      <div class="filter-container">
+        <label class="filter-label">
+          <span class="filter-text">Période :</span>
+          <select [(ngModel)]="selectedDateRange" 
+                  (change)="onDateRangeChange()"
+                  class="filter-select">
+            <option value="all">Toutes les dates</option>
+            <option value="today">Aujourd'hui</option>
+            <option value="week">7 derniers jours</option>
+            <option value="month">30 derniers jours</option>
+          </select>
+        </label>
+      </div>
+
+    </div>
+
+  </div>
+
+  <!-- Active filters -->
+  <div class="active-filters" *ngIf="hasActiveFilters()">
+    <span *ngIf="isSearchActive()" class="filter-chip">
+      🔍 Recherche: "{{ searchQuery }}"
+      <button type="button" class="remove-filter" (click)="clearSearch()">✖</button>
+    </span>
+
+    <span *ngIf="selectedDateRange !== 'all'" class="filter-chip">
+      📅 Période: {{ getDateRangeLabel(selectedDateRange) }}
+      <button type="button" class="remove-filter" (click)="clearDateFilter()">✖</button>
+    </span>
+
+    <span *ngIf="selectedFinancialAction !== 'all'" class="filter-chip">
+      💰 Financier: {{ getActionLabel(selectedFinancialAction) }}
+      <button type="button" class="remove-filter" (click)="clearFinancialFilter()">✖</button>
+    </span>
+
+    <span *ngIf="selectedModerationAction !== 'all'" class="filter-chip">
+      🛡️ Modération: {{ getActionLabel(selectedModerationAction) }}
+      <button type="button" class="remove-filter" (click)="clearModerationActionFilter()">✖</button>
+    </span>
+
+    <span *ngIf="selectedModerationReason !== 'all'" class="filter-chip">
+      🏷️ Raison: {{ getReasonLabel(selectedModerationReason) }}
+      <button type="button" class="remove-filter" (click)="clearModerationReasonFilter()">✖</button>
+    </span>
+
+    <button type="button" class="clear-all-filters" (click)="clearAllFilters()">
+      Effacer tous les filtres
+    </button>
+  </div>
+
+  <!-- Search results info -->
+  <div *ngIf="hasActiveFilters()" class="search-results-info">
+    {{ getSearchResultsCount() }} action(s) trouvée(s)
+  </div>
+
+  <!-- Loading state -->
+  <div *ngIf="loading" class="loading">
+    <p>⏳ Chargement de l'historique...</p>
+  </div>
+
+  <!-- Financial Operations Table -->
+  <div class="table-section" *ngIf="!loading">
+    <h3 class="table-title financial-title">💰 Opérations Financières</h3>
+    
+    <!-- Financial Table Filters -->
+    <div class="table-filters">
+      <div class="filter-container">
+        <label class="filter-label">
+          <span class="filter-text">Type :</span>
+          <select [(ngModel)]="selectedFinancialAction" 
+                  (change)="onFinancialActionFilterChange()"
+                  class="filter-select">
+            <option value="all">Toutes les opérations</option>
+            <option [value]="UserAction.CREDIT">Deposit</option>
+            <option [value]="UserAction.DEBIT">Withdraw</option>
+          </select>
+        </label>
+      </div>
+    </div>
+    
+    <div class="actions-table-container">
+      <table class="actions-table financial-table">
+        <thead>
+          <tr>
+            <th>Date</th>
+            <th>Action</th>
+            <th>Utilisateur</th>
+            <th>Admin</th>
+            <th>Avant</th>
+            <th>Montant</th>
+            <th>Après</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let action of pagedFinancialActions">
+            <td class="date-cell">
+              <div class="date-container">
+                <span class="date-primary">{{ action.formattedDate.split(' ')[0] }}</span>
+                <span class="time-secondary">{{ action.formattedDate.split(' ')[1] }}</span>
+              </div>
+            </td>
+            <td class="action-cell">
+              <div class="action-badge badge-{{ getActionColor(action.action) }}">
+                <mat-icon class="action-icon">{{ getActionIcon(action.action) }}</mat-icon>
+                <span class="action-text">{{ getActionLabel(action.action) }}</span>
+              </div>
+            </td>
+            <td class="user-cell">
+              <div class="user-info">
+                <span class="user-id">ID: {{ action.userId }}</span>
+                <span class="username">Username: {{ action.username }}</span>
+                <span class="email">{{ action.email }}</span>
+              </div>
+            </td>
+            <td class="admin-cell">
+              <div class="admin-info">
+                <span class="admin-id">ID: {{ action.adminId }}</span>
+                <span class="admin-username">Username: {{ action.adminUsername }}</span>
+              </div>
+            </td>
+            <td class="balance-cell">
+              <span class="balance-display">{{ getBalanceBefore(action) }}€</span>
+            </td>
+            <td class="amount-cell">
+              <span class="amount-display" [ngClass]="{
+                'credit-amount': action.action === 'CREDIT',
+                'debit-amount': action.action === 'DEBIT'
+              }">{{ formatActionDetails(action) }}</span>
+            </td>
+            <td class="balance-cell">
+              <span class="balance-display">{{ getBalanceAfter(action) }}€</span>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+      <div *ngIf="pagedFinancialActions.length === 0" class="no-results">
+        <p>💰 Aucune opération financière trouvée.</p>
+      </div>
+    </div>
+  </div>
+    <!-- Financial Operations Paginator -->
+    <div class="table-section" *ngIf="!loading && financialActions.length > 0">
+      <mat-paginator
+        [length]="financialActions.length"
+        [pageSize]="financialPageSize"
+        [pageSizeOptions]="[10, 25, 50]"
+        (page)="onFinancialPageChange($event)"
+        showFirstLastButtons>
+      </mat-paginator>
+    </div>
+
+  <!-- Moderation Actions Table -->
+  <div class="table-section" *ngIf="!loading">
+    <h3 class="table-title moderation-title">🛡️ Actions de Modération</h3>
+    
+    <!-- Moderation Table Filters -->
+    <div class="table-filters">
+      <div class="filter-container">
+        <label class="filter-label">
+          <span class="filter-text">Type d'action :</span>
+          <select [(ngModel)]="selectedModerationAction" 
+                  (change)="onModerationActionFilterChange()"
+                  class="filter-select">
+            <option value="all">Toutes les actions</option>
+            <option [value]="UserAction.TEMP_BAN">Ban temporaire</option>
+            <option [value]="UserAction.PERMANENT_BAN">Ban définitif</option>
+            <option [value]="UserAction.UNBAN">Unban</option>
+          </select>
+        </label>
+      </div>
+      
+      <div class="filter-container">
+        <label class="filter-label">
+          <span class="filter-text">Raison :</span>
+          <select [(ngModel)]="selectedModerationReason" 
+                  (change)="onModerationReasonFilterChange()"
+                  class="filter-select">
+            <option value="all">Toutes les raisons</option>
+            <option [value]="BanCause.CHEATING">Triche</option>
+            <option [value]="BanCause.SPAM">Spam</option>
+            <option [value]="BanCause.HARASSMENT">Harcèlement</option>
+            <option [value]="BanCause.INAPPROPRIATE_CONTENT">Contenu inapproprié</option>
+            <option [value]="BanCause.MULTIPLE_ACCOUNTS">Multi-comptes</option>
+            <option [value]="BanCause.PAYMENT_FRAUD">Fraude de paiement</option>
+            <option [value]="BanCause.SECURITY_THREAT">Menace sécurité</option>
+            <option [value]="BanCause.VIOLATION_OF_RULES">Violation des règles</option>
+            <option [value]="BanCause.OTHER">Autre</option>
+          </select>
+        </label>
+      </div>
+    </div>
+    
+    <div class="actions-table-container">
+      <table class="actions-table moderation-table">
+        <thead>
+          <tr>
+            <th>Date</th>
+            <th>Action</th>
+            <th>Utilisateur</th>
+            <th>Admin</th>
+            <th>Raison</th>
+            <th>Détails</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let action of pagedModerationActions">
+            <td class="date-cell">
+              <div class="date-container">
+                <span class="date-primary">{{ action.formattedDate.split(' ')[0] }}</span>
+                <span class="time-secondary">{{ action.formattedDate.split(' ')[1] }}</span>
+              </div>
+            </td>
+            <td class="action-cell">
+              <div class="action-badge badge-{{ getActionColor(action.action) }}">
+                <mat-icon class="action-icon">{{ getActionIcon(action.action) }}</mat-icon>
+                <span class="action-text">{{ getActionLabel(action.action) }}</span>
+              </div>
+            </td>
+            <td class="user-cell">
+              <div class="user-info">
+                <span class="user-id">ID: {{ action.userId }}</span>
+                <span class="username">Username: {{ action.username }}</span>
+                <span class="email">{{ action.email }}</span>
+              </div>
+            </td>
+            <td class="admin-cell">
+              <div class="admin-info">
+                <span class="admin-id">ID: {{ action.adminId }}</span>
+                <span class="admin-username">Username: {{ action.adminUsername }}</span>
+              </div>
+            </td>
+            <td class="reason-cell">
+              <span *ngIf="action.reason" class="reason-badge">{{ getReasonLabel(action.reason) }}</span>
+              <span *ngIf="!action.reason" class="no-reason">-</span>
+            </td>
+            <td class="details-cell">
+              <span *ngIf="formatActionDetails(action)" class="details-text">{{ formatActionDetails(action) }}</span>
+              <span *ngIf="!formatActionDetails(action)" class="no-details">-</span>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+      <div *ngIf="pagedModerationActions.length === 0" class="no-results">
+        <p>🛡️ Aucune action de modération trouvée.</p>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- Moderation Actions Paginator -->
+  <div class="table-section" *ngIf="!loading && moderationActions.length > 0">
+    <mat-paginator
+      [length]="moderationActions.length"
+      [pageSize]="moderationPageSize"
+      [pageSizeOptions]="[10, 25, 50]"
+      (page)="onModerationPageChange($event)"
+      showFirstLastButtons>
+    </mat-paginator>
+  </div>
+
+</div>
