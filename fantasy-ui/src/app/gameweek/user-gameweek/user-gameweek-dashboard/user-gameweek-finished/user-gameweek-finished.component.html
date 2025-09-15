@@ -1,28 +1,92 @@
-<div class="finished-gameweek-container">
-  <h1>Gameweek Terminée</h1>
-  
-  <div *ngIf="loading" class="loading">
-    <p>Chargement des matchs pour {{ competition }} - Gameweek {{ weekNumber }}...</p>
-  </div>
-  
-  <div *ngIf="error" class="error">
-    <p>{{ error }}</p>
-  </div>
+<div class="gameweek-list-container">
+  <div class="content-wrapper">
+    <div class="min-h-screen bg-gradient-to-b from-green-900/95 via-gray-900 to-black p-7 pt-20 text-green-50">
+      <div class="max-w-6xl mx-auto">
+        
+        <header class="flex justify-between items-center mb-5 pt-6">
+          <!-- Left side: icon + league name + gameweek inline -->
+          <div class="flex items-center gap-3 flex-1">
+            <img *ngIf="leagueIconUrl" [src]="leagueIconUrl" [alt]="leagueDisplayName" class="h-8 w-8 object-contain" />
+            <h1 class="league-title">
+              {{ leagueDisplayName }} - {{ weekNumber }} (Terminé)
+            </h1>
+          </div>
+        </header>
 
-  <div *ngIf="!loading && !error && matches.length > 0" class="matches-container">
-    <h2>{{ competition }} - Gameweek {{ weekNumber }} - Résultats</h2>
+        <!-- Loading State -->
+        <div *ngIf="loading" class="loading">
+          <p>Chargement des matchs pour {{ competition }} - Gameweek {{ weekNumber }}...</p>
+        </div>
+        
+        <!-- Error State -->
+        <div *ngIf="error" class="error">
+          <p>{{ error }}</p>
+        </div>
 
-    <div *ngFor="let match of matches" class="match-card">
-      <div class="match-info">
-        <span class="home-team">{{ match.homeTeam }}</span>
-        <span class="score">{{ match.homeScore }} - {{ match.awayScore }}</span>
-        <span class="away-team">{{ match.awayTeam }}</span>
+        <!-- Matches Grid -->
+        <main *ngIf="!loading && !error && matches.length > 0">
+          <section>
+            <article *ngFor="let match of matches"
+                     class="match-card"
+                     [class.tiebreaker]="isTiebreakerMatch(match)"
+                     [id]="'match-' + match.id">
+
+              <!-- Tiebreak badge -->
+              <div *ngIf="isTiebreakerMatch(match)" class="tiebreak-badge">
+                Tie-break
+              </div>
+
+              <!-- Main match content with three columns -->
+              <div class="match-content">
+                <!-- Home Team -->
+                <div class="team home" 
+                     [class.winner]="isWinner(match, 'home')"
+                     [class.loser]="isLoser(match, 'home')">
+                  <img *ngIf="hasTeamIcon(match.homeTeam)" 
+                       [src]="getTeamIcon(match.homeTeam)" 
+                       [alt]="match.homeTeam" 
+                       class="team-icon" />
+                  <span class="team-name">{{ match.homeTeam }}</span>
+                </div>
+
+                <!-- Score Display -->
+                <div class="score-display">
+                  <div class="score-container">
+                    <span class="score home-score" 
+                          [class.winner-score]="isWinner(match, 'home')"
+                          [class.loser-score]="isLoser(match, 'home')">
+                      {{ match.homeScore || 0 }}
+                    </span>
+                    <span class="score-separator">-</span>
+                    <span class="score away-score" 
+                          [class.winner-score]="isWinner(match, 'away')"
+                          [class.loser-score]="isLoser(match, 'away')">
+                      {{ match.awayScore || 0 }}
+                    </span>
+                  </div>
+                </div>
+
+                <!-- Away Team -->
+                <div class="team away" 
+                     [class.winner]="isWinner(match, 'away')"
+                     [class.loser]="isLoser(match, 'away')">
+                  <img *ngIf="hasTeamIcon(match.awayTeam)" 
+                       [src]="getTeamIcon(match.awayTeam)" 
+                       [alt]="match.awayTeam" 
+                       class="team-icon" />
+                  <span class="team-name">{{ match.awayTeam }}</span>
+                </div>
+              </div>
+            </article>
+          </section>
+        </main>
+
+        <!-- No matches -->
+        <div *ngIf="!loading && !error && matches.length === 0" class="no-matches">
+          <p>Aucun match trouvé pour cette gameweek.</p>
+        </div>
+
       </div>
-      <div class="winner">Vainqueur: {{ getWinner(match) }}</div>
     </div>
-  </div>
-
-  <div *ngIf="!loading && !error && matches.length === 0" class="no-matches">
-    <p>Aucun match trouvé pour cette gameweek.</p>
   </div>
 </div>

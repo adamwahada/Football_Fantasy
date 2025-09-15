@@ -481,8 +481,9 @@ private loadGameweekCounts(gameweeks: Gameweek[]): Promise<void> {
           // Charger le nombre de matchs
           this.gameweekService.getMatchesByGameweek(gameweek.id).subscribe({
             next: (matches) => {
-              // ✅ Attacher dynamiquement les propriétés
-              (gameweek as any).matchesCount = matches.length;
+              // ✅ Compter uniquement les matchs actifs
+              const activeCount = matches.filter((m: any) => m && (m.active === true || m.active === undefined)).length;
+              (gameweek as any).matchesCount = activeCount;
               
               // Calculer les tiebreakers à partir de tiebreakerMatchIds
               if (gameweek.tiebreakerMatchIds) {
@@ -548,8 +549,9 @@ onMatchesUpdated(data: {gameweek: Gameweek, matches: MatchWithIconsDTO[]}): void
 
 // Helper method to update counts for a single gameweek
 private updateSingleGameweekCounts(gameweek: Gameweek, matches: MatchWithIconsDTO[]): void {
-  // Update matches count
-  (gameweek as any).matchesCount = matches.length;
+  // Update matches count (only active ones)
+  const activeCount = matches.filter((m: any) => m && (m.active === true || m.active === undefined)).length;
+  (gameweek as any).matchesCount = activeCount;
   
   // Update tiebreaker count
   if (gameweek.tiebreakerMatchIds) {
@@ -636,8 +638,11 @@ validateGameweek(gameweek: Gameweek): void {
       // Update the gameweek in the local array
       const index = this.gameweeks.findIndex(gw => gw.id === gameweek.id);
       if (index !== -1) {
-        this.gameweeks[index] = updatedGameweek;
+        // Conserver les champs dynamiques (matchesCount, tiebreakerCount), puis rafraîchir
+        const prev = this.gameweeks[index] as any;
+        this.gameweeks[index] = { ...(updatedGameweek as any), matchesCount: prev.matchesCount, tiebreakerCount: prev.tiebreakerCount } as Gameweek;
         this.dataSource.data = this.gameweeks;
+        this.refreshCountsForGameweek(gameweek.id);
       }
       
       this.snackBar.open(`✅ Gameweek ${gameweek.weekNumber} validée avec succès!`, 'Fermer', {
@@ -666,8 +671,11 @@ unvalidateGameweek(gameweek: Gameweek): void {
       // Update the gameweek in the local array
       const index = this.gameweeks.findIndex(gw => gw.id === gameweek.id);
       if (index !== -1) {
-        this.gameweeks[index] = updatedGameweek;
+        // Conserver les champs dynamiques (matchesCount, tiebreakerCount), puis rafraîchir
+        const prev = this.gameweeks[index] as any;
+        this.gameweeks[index] = { ...(updatedGameweek as any), matchesCount: prev.matchesCount, tiebreakerCount: prev.tiebreakerCount } as Gameweek;
         this.dataSource.data = this.gameweeks;
+        this.refreshCountsForGameweek(gameweek.id);
       }
       
       this.snackBar.open(`✅ Gameweek ${gameweek.weekNumber} invalidée avec succès!`, 'Fermer', {
@@ -690,6 +698,31 @@ unvalidateGameweek(gameweek: Gameweek): void {
 // ✅ Check if gameweek is validated (boolean flag from backend)
 isGameweekValidated(gameweek: Gameweek): boolean {
   return !!(gameweek as any).validated;
+}
+
+// 🔄 Recharger le nombre de matchs pour une gameweek spécifique
+private refreshCountsForGameweek(gameweekId?: number): void {
+  if (!gameweekId) return;
+  this.gameweekService.getMatchesByGameweek(gameweekId).subscribe({
+    next: (matches) => {
+      const idx = this.gameweeks.findIndex(gw => gw.id === gameweekId);
+      if (idx !== -1) {
+        const activeCount = matches.filter((m: any) => m && (m.active === true || m.active === undefined)).length;
+        (this.gameweeks[idx] as any).matchesCount = activeCount;
+        // tiebreakers: recalculer à partir du champ string si présent
+        const tbIds = (this.gameweeks[idx] as any).tiebreakerMatchIds as string | undefined;
+        (this.gameweeks[idx] as any).tiebreakerCount = tbIds ? tbIds.split(',').filter(id => id.trim()).length : 0;
+        this.dataSource.data = [...this.gameweeks];
+      }
+    },
+    error: () => {
+      const idx = this.gameweeks.findIndex(gw => gw.id === gameweekId);
+      if (idx !== -1) {
+        (this.gameweeks[idx] as any).matchesCount = 0;
+        this.dataSource.data = [...this.gameweeks];
+      }
+    }
+  });
 }
 
 }

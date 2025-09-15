@@ -81,10 +81,10 @@
           [class.ongoing]="getGameweekStatus(gw) === 'ONGOING'"
           [class.finished]="getGameweekStatus(gw) === 'FINISHED'"
           [class.upcoming]="getGameweekStatus(gw) === 'UPCOMING' && !isNextUpcomingGameweek(gw)"
-          [disabled]="isLockedGameweek(gw.weekNumber) || !gw.validated"
-          (click)="(!isLockedGameweek(gw.weekNumber) && gw.validated) && (getGameweekStatus(gw) === 'FINISHED' ? openFinishedGameweek(gw) : openGameweekMatches(gw.weekNumber))"
-          [matTooltip]="!gw.validated ? 'Not available yet' : (isLockedGameweek(gw.weekNumber) ? 'Locked' : 'Open')"
-          [attr.aria-label]="'Open matches for gameweek ' + gw.weekNumber + (!gw.validated ? ', not available' : (isLockedGameweek(gw.weekNumber) ? ', locked' : ''))"
+          [disabled]="isLockedGameweek(gw.weekNumber) || (getGameweekStatus(gw) === 'UPCOMING' && !gw.validated)"
+          (click)="(!isLockedGameweek(gw.weekNumber) && (getGameweekStatus(gw) !== 'UPCOMING' || gw.validated)) && (getGameweekStatus(gw) === 'FINISHED' ? openFinishedGameweek(gw) : openGameweekMatches(gw.weekNumber))"
+          [matTooltip]="(getGameweekStatus(gw) === 'UPCOMING' && !gw.validated) ? 'Not available yet' : (isLockedGameweek(gw.weekNumber) ? 'Locked' : 'Open')"
+          [attr.aria-label]="'Open matches for gameweek ' + gw.weekNumber + ((getGameweekStatus(gw) === 'UPCOMING' && !gw.validated) ? ', not available' : (isLockedGameweek(gw.weekNumber) ? ', locked' : ''))"
           (mouseenter)="showDeadlineMessage(gw)"
           (mouseleave)="hideDeadlineMessage()"
           (focus)="showDeadlineMessage(gw)"
@@ -104,7 +104,7 @@
 
           <!-- Status Text -->
           <div class="status-text">
-            {{ !gw.validated ? 'Not available' : (isLockedGameweek(gw.weekNumber) ? 'Locked' : getGameweekDisplayStatus(gw)) }}
+            {{ (getGameweekStatus(gw) === 'UPCOMING' && !gw.validated) ? 'Not available' : (isLockedGameweek(gw.weekNumber) ? 'Locked' : getGameweekDisplayStatus(gw)) }}
           </div>
 
           <!-- Deadline Tooltip inside the button -->

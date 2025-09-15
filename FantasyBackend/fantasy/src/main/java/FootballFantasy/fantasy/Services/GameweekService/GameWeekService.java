@@ -657,6 +657,8 @@ public class GameWeekService {
         }
 
         gameWeek.setTiebreakerMatchIdList(matchIds);
+        // Auto-validate when 3 tiebreakers are configured
+        gameWeek.setValidated(true);
         gameWeekRepository.save(gameWeek);
     }
     public void updateTiebreakers(Long gameweekId, List<Long> newMatchIds) {
@@ -665,6 +667,8 @@ public class GameWeekService {
 
         if (newMatchIds == null || newMatchIds.isEmpty()) {
             gameWeek.setTiebreakerMatchIdList(Collections.emptyList());
+            // No tiebreakers -> auto-unvalidate
+            gameWeek.setValidated(false);
             gameWeekRepository.save(gameWeek);
             return;
         }
@@ -684,6 +688,8 @@ public class GameWeekService {
         }
 
         gameWeek.setTiebreakerMatchIdList(newMatchIds);
+        // Exactly 3 tiebreakers -> auto-validate, otherwise unvalidate
+        gameWeek.setValidated(newMatchIds.size() == 3);
         gameWeekRepository.save(gameWeek);
     }
 
@@ -830,6 +836,8 @@ public class GameWeekService {
 
         if (modified) {
             gameWeek.setTiebreakerMatchIdList(modifiableTiebreakers);
+            // Maintain validation based on count (3 => true, else false)
+            gameWeek.setValidated(modifiableTiebreakers.size() == 3);
             gameWeekRepository.save(gameWeek);
             System.out.println("Tiebreakers mis à jour avec succès.");
         }
