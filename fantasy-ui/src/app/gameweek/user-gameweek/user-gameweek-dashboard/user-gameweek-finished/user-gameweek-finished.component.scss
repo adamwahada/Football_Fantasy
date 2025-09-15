@@ -50,10 +50,27 @@ header > div {
 }
 
 .match-card.tiebreaker {
-  min-height: 140px;
-  border: 2px solid rgba(255, 214, 0, 0.3);
-  background: linear-gradient(135deg, rgba(255,214,0,0.10) 0%, rgba(255,152,0,0.08) 100%);
+  min-height: 110px;   /* same as normal */
+  padding: 2.2rem 1.5rem 1.5rem; /* extra top padding for badge */
+  border-radius: 18px;
+  position: relative;
+
+  /* Gilded background */
+  background: linear-gradient(
+    135deg,
+    rgba(255, 255, 255, 0.08) 0%,
+    rgba(255, 215, 0, 0.08) 50%,
+    rgba(255, 255, 255, 0.08) 100%
+  );
+
+  /* Subtle gradient border that follows corners */
+  border: 2px solid;
+  border-image-slice: 1;
+  border-image-source: linear-gradient(135deg, silver, gold, silver);
+
+  box-shadow: 0 4px 18px rgba(255, 215, 0, 0.2);
 }
+
 
 .match-card:hover {
   box-shadow: 0 8px 32px rgba(13,253,134,0.22), 0 2px 0 rgba(0,180,216,0.10);
@@ -188,8 +205,8 @@ header > div {
 .tiebreak-badge {
   position: absolute;
   top: 5px;
-  left: 7%;
-  transform: translateX(-50%);
+  left: 50%;
+    transform: translateX(-50%);
   background: linear-gradient(90deg, #ffd600 0%, #ff9800 100%);
   color: #222;
   font-size: 0.85rem;
