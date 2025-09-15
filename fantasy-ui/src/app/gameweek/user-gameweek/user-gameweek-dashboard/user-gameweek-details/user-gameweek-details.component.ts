@@ -194,7 +194,7 @@ export class UserGameweekDetailsComponent implements OnInit, OnDestroy {
       .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: (data) => {
-          // Sort gameweeks by weekNumber ascending
+          // Afficher toutes les gameweeks, triées par numéro croissant
           this.gameweeks = data.sort((a, b) => a.weekNumber - b.weekNumber);
           this.determineCurrentGameweek();
           this.loading = false;

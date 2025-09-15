@@ -207,7 +207,7 @@ public class MatchService {
                 gameWeekService.updateStatusIfComplete(gw.getId());
 
                 // 2) Recalculate timings based on only active matches
-                matchUpdateService.updateGameWeekTimings(gw); // ✅ use the instance
+                matchUpdateService.updateGameWeekTimings(gw);
             }
         }
 

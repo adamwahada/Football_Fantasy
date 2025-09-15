@@ -42,6 +42,10 @@ public class GameWeek {
     @Column(name = "tiebreaker_match_ids", length = 100)
     private String tiebreakerMatchIds;
 
+    //before it's posted to the users
+    @Column(nullable = false)
+    private boolean validated = false;
+
     @JsonIgnore
     @ManyToMany(mappedBy = "gameweeks")
     private List<Match> matches = new ArrayList<>();

@@ -12,6 +12,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
 import java.text.Normalizer;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
 import java.util.*;
@@ -35,10 +36,301 @@ public class MatchUpdateService {
     // ✅ Automatic update every 2 hours
     @Scheduled(cron = "0 0 */2 * * *")
     public void updateMatchesAutomatically() {
-        updateMatches();
+        System.out.println("⏰ AUTOMATIC UPDATE: Updating today's matches...");
+        updateTodaysMatches();
+        System.out.println("⏰ AUTOMATIC UPDATE: Completed");
     }
 
-    // ✅ Update all leagues - ADD @Transactional
+    // ✅ Simplified method for today's matches - removes complex timing checks
+    @Transactional
+    public void updateTodaysMatches() {
+        System.out.println("📅 Starting update for TODAY's matches across all competitions...");
+
+        LocalDate today = LocalDate.now();
+        System.out.println("📅 Today's date: " + today);
+
+        int totalUpdated = 0;
+
+        for (LeagueTheme league : LeagueTheme.values()) {
+            try {
+                if (!league.isApiAvailable()) {
+                    continue;
+                }
+
+                // Find which gameweeks have matches today for this league
+                Set<Integer> gameweeksWithTodaysMatches = findGameweeksWithMatchesToday(league, today);
+
+                if (gameweeksWithTodaysMatches.isEmpty()) {
+                    System.out.println("📅 No matches today for " + league);
+                    continue;
+                }
+
+                System.out.println("📅 " + league + " has matches today in gameweeks: " + gameweeksWithTodaysMatches);
+
+                // Update each gameweek that has matches today
+                for (Integer weekNumber : gameweeksWithTodaysMatches) {
+                    try {
+                        System.out.println("🔄 Updating " + league + " gameweek " + weekNumber);
+                        updateMatchesForGameweek(league.name(), weekNumber);
+                        totalUpdated++;
+                    } catch (Exception e) {
+                        System.out.println("❌ Error updating " + league + " week " + weekNumber + ": " + e.getMessage());
+                    }
+                }
+
+            } catch (Exception e) {
+                System.out.println("❌ Error checking " + league + ": " + e.getMessage());
+            }
+        }
+
+        System.out.println("📊 TODAY's matches update complete - Updated " + totalUpdated + " gameweeks");
+    }
+
+    // ✅ Helper method to find which gameweeks have matches today
+    private Set<Integer> findGameweeksWithMatchesToday(LeagueTheme league, LocalDate targetDate) {
+        try {
+            // Fetch all matches from API (same as your existing method)
+            String apiUrl = apiUrlTemplate
+                    .replace("{competition}", league.getApiCode())
+                    .replace("{season}", "2025");
+
+            RestTemplate restTemplate = new RestTemplate();
+            HttpHeaders headers = new HttpHeaders();
+            headers.set("X-Auth-Token", apiKey);
+            HttpEntity<String> entity = new HttpEntity<>(headers);
+
+            ResponseEntity<Map> response = restTemplate.exchange(apiUrl, HttpMethod.GET, entity, Map.class);
+
+            if (!response.getStatusCode().is2xxSuccessful() || response.getBody() == null) {
+                System.out.println("⚠️ API call failed for " + league);
+                return new HashSet<>();
+            }
+
+            List<Map<String, Object>> matches = (List<Map<String, Object>>) response.getBody().get("matches");
+            if (matches == null || matches.isEmpty()) {
+                return new HashSet<>();
+            }
+
+            // Find gameweeks that have matches today
+            Set<Integer> gameweeksWithTodaysMatches = new HashSet<>();
+
+            for (Map<String, Object> match : matches) {
+                String dateStr = (String) match.get("utcDate");
+                Integer matchday = (Integer) match.get("matchday");
+
+                if (dateStr == null || matchday == null) continue;
+
+                LocalDate matchDate = OffsetDateTime.parse(dateStr).toLocalDate();
+
+                if (matchDate.equals(targetDate)) {
+                    gameweeksWithTodaysMatches.add(matchday);
+                }
+            }
+
+            return gameweeksWithTodaysMatches;
+
+        } catch (Exception e) {
+            System.out.println("❌ Error finding today's gameweeks for " + league + ": " + e.getMessage());
+            return new HashSet<>();
+        }
+    }
+
+    // ✅ New streamlined method that processes matches for a specific gameweek without timing restrictions
+    @Transactional
+    public void updateMatchesForGameweek(String competition, int weekNumber) {
+        try {
+            System.out.println("🔍 Updating competition: '" + competition + "', weekNumber: " + weekNumber);
+
+            LeagueTheme league = mapToLeagueTheme(competition);
+            if (league == null) {
+                System.out.println("❌ Invalid competition: " + competition);
+                throw new IllegalArgumentException("Invalid competition: " + competition);
+            }
+
+            String apiUrl = apiUrlTemplate
+                    .replace("{competition}", league.getApiCode())
+                    .replace("{season}", "2025");
+
+            System.out.println("🔍 API URL: " + apiUrl);
+
+            RestTemplate restTemplate = new RestTemplate();
+            HttpHeaders headers = new HttpHeaders();
+            headers.set("X-Auth-Token", apiKey);
+            HttpEntity<String> entity = new HttpEntity<>(headers);
+
+            ResponseEntity<Map> response = restTemplate.exchange(apiUrl, HttpMethod.GET, entity, Map.class);
+
+            if (!response.getStatusCode().is2xxSuccessful() || response.getBody() == null) {
+                throw new RuntimeException("API call failed for " + league + " with status: " + response.getStatusCode());
+            }
+
+            List<Map<String, Object>> matches = (List<Map<String, Object>>) response.getBody().get("matches");
+            if (matches == null || matches.isEmpty()) {
+                System.out.println("⚠️ No matches found in API response");
+                return;
+            }
+
+            // Filter only matches from the requested week - no timing restrictions
+            List<Map<String, Object>> filteredMatches = matches.stream()
+                    .filter(m -> Objects.equals((Integer) m.get("matchday"), weekNumber))
+                    .toList();
+
+            System.out.println("➡️ " + filteredMatches.size() + " matches found for " + league + " week " + weekNumber);
+
+            if (filteredMatches.isEmpty()) {
+                System.out.println("⚠️ No matches found for week " + weekNumber + " in " + league);
+                return;
+            }
+
+            Set<GameWeek> affectedGameWeeks = new HashSet<>();
+
+            for (Map<String, Object> matchData : filteredMatches) {
+                try {
+                    processMatchDataSimplified(matchData, league, affectedGameWeeks);
+                } catch (Exception e) {
+                    System.out.println("⚠️ Error processing match: " + e.getMessage());
+                }
+            }
+
+            // Update GameWeek timings & statuses
+            for (GameWeek gw : affectedGameWeeks) {
+                updateGameWeekTimings(gw);
+            }
+            updateGameweeks(affectedGameWeeks);
+
+            System.out.println("✅ Successfully updated " + affectedGameWeeks.size() + " gameweek(s)");
+
+        } catch (Exception e) {
+            System.out.println("❌ Error updating " + competition + " week " + weekNumber + ": " + e.getMessage());
+            e.printStackTrace();
+            throw new RuntimeException("Failed to update matches for " + competition + " week " + weekNumber, e);
+        }
+    }
+
+    // ✅ Simplified match processing without complex timing validations
+    @Transactional
+    protected void processMatchDataSimplified(Map<String, Object> matchData, LeagueTheme league, Set<GameWeek> affectedGameWeeks) {
+        try {
+            Map<String, Object> homeTeamMap = (Map<String, Object>) matchData.get("homeTeam");
+            Map<String, Object> awayTeamMap = (Map<String, Object>) matchData.get("awayTeam");
+
+            if (homeTeamMap == null || awayTeamMap == null) {
+                System.out.println("⚠️ Missing team data in match");
+                return;
+            }
+
+            String homeTeamName = normalizeTeamName((String) homeTeamMap.get("name"));
+            String awayTeamName = normalizeTeamName((String) awayTeamMap.get("name"));
+            String apiStatus = (String) matchData.get("status");
+
+            String dateStr = (String) matchData.get("utcDate");
+            if (dateStr == null) {
+                System.out.println("⚠️ No date found for match: " + homeTeamName + " vs " + awayTeamName);
+                return;
+            }
+
+            LocalDateTime matchDateUtc = OffsetDateTime.parse(dateStr).toLocalDateTime();
+            Integer matchday = (Integer) matchData.get("matchday");
+
+            if (matchday == null) {
+                System.out.println("⚠️ No matchday found for " + homeTeamName + " vs " + awayTeamName);
+                return;
+            }
+
+            // Find or create GameWeek
+            GameWeek gameWeek = gameweekRepository.findByWeekNumberAndCompetition(matchday, league)
+                    .orElse(null);
+
+            if (gameWeek == null) {
+                System.out.println("🆕 Creating new GameWeek for " + league + " week " + matchday);
+                gameWeek = new GameWeek();
+                gameWeek.setWeekNumber(matchday);
+                gameWeek.setCompetition(league);
+                gameWeek.setStatus(GameweekStatus.UPCOMING);
+                gameWeek.setStartDate(matchDateUtc.minusDays(3));
+                gameWeek.setEndDate(matchDateUtc.plusDays(3));
+                gameWeek.setJoinDeadline(matchDateUtc.minusHours(2));
+                gameWeek = gameweekRepository.save(gameWeek);
+            }
+
+            // Parse score
+            Integer homeGoals = null;
+            Integer awayGoals = null;
+            Map<String, Object> scoreMap = (Map<String, Object>) matchData.get("score");
+            if (scoreMap != null) {
+                Map<String, Object> fullTime = (Map<String, Object>) scoreMap.get("fullTime");
+                if (fullTime != null) {
+                    homeGoals = fullTime.get("home") != null ? (Integer) fullTime.get("home") : null;
+                    awayGoals = fullTime.get("away") != null ? (Integer) fullTime.get("away") : null;
+                }
+            }
+
+            // Find existing match or create new one
+            Match dbMatch = matchRepository.findWithGameweeks(
+                    homeTeamName, awayTeamName,
+                    matchDateUtc.minusHours(2), matchDateUtc.plusHours(2)
+            );
+
+            if (dbMatch == null) {
+                System.out.println("🆕 Creating new match: " + homeTeamName + " vs " + awayTeamName);
+                dbMatch = new Match();
+                dbMatch.setHomeTeam(homeTeamName);
+                dbMatch.setAwayTeam(awayTeamName);
+                dbMatch.setGameweeks(new ArrayList<>());
+                dbMatch.setActive(true);
+            } else {
+                System.out.println("🔄 Updating existing match: " + homeTeamName + " vs " + awayTeamName);
+                if (!dbMatch.isActive()) {
+                    dbMatch.setActive(true);
+                    System.out.println("✅ Match reactivated");
+                }
+            }
+
+            // Update match data
+            dbMatch.setMatchDate(matchDateUtc);
+            dbMatch.setPredictionDeadline(matchDateUtc.minusMinutes(30));
+            dbMatch.setHomeScore(homeGoals);
+            dbMatch.setAwayScore(awayGoals);
+
+            // Map API status to internal status
+            switch (apiStatus) {
+                case "FINISHED" -> {
+                    dbMatch.setFinished(true);
+                    dbMatch.setStatus(MatchStatus.COMPLETED);
+                }
+                case "IN_PLAY", "PAUSED" -> {
+                    dbMatch.setFinished(false);
+                    dbMatch.setStatus(MatchStatus.LIVE);
+                }
+                case "SCHEDULED", "TIMED", "POSTPONED" -> {
+                    dbMatch.setFinished(false);
+                    dbMatch.setStatus(MatchStatus.SCHEDULED);
+                }
+                default -> {
+                    System.out.println("⚠️ Unknown match status: " + apiStatus);
+                    dbMatch.setFinished(false);
+                    dbMatch.setStatus(MatchStatus.SCHEDULED);
+                }
+            }
+
+            // Link to GameWeek
+            if (!dbMatch.getGameweeks().contains(gameWeek)) {
+                dbMatch.getGameweeks().add(gameWeek);
+            }
+
+            // Save the match
+            dbMatch = matchRepository.save(dbMatch);
+            System.out.println("💾 Saved match: " + homeTeamName + " vs " + awayTeamName + " (Status: " + dbMatch.getStatus() + ")");
+
+            affectedGameWeeks.add(gameWeek);
+
+        } catch (Exception e) {
+            System.out.println("❌ Error processing match data: " + e.getMessage());
+            throw e;
+        }
+    }
+
+    // ✅ Keep the old method for backward compatibility (manual finished-only updates)
     @Transactional
     public void updateMatches() {
         System.out.println("🚀 Starting match update for all leagues (FINISHED only)...");
@@ -97,8 +389,83 @@ public class MatchUpdateService {
         }
     }
 
+    // ✅ Dynamic fetch method that updates all matches and calculates gameweek status
+    private void fetchAndUpdateMatchesDynamic(LeagueTheme league, int season) {
+        try {
+            String apiUrl = apiUrlTemplate
+                    .replace("{competition}", league.getApiCode())
+                    .replace("{season}", String.valueOf(season));
 
-    // ✅ NEW: Filter matches to only include current, past, and next 3 weeks
+            System.out.println("🔗 API URL: " + apiUrl);
+
+            RestTemplate restTemplate = new RestTemplate();
+            HttpHeaders headers = new HttpHeaders();
+            headers.set("X-Auth-Token", apiKey);
+            HttpEntity<String> entity = new HttpEntity<>(headers);
+
+            ResponseEntity<Map> response = restTemplate.exchange(apiUrl, HttpMethod.GET, entity, Map.class);
+
+            if (!response.getStatusCode().is2xxSuccessful() || response.getBody() == null) {
+                throw new RuntimeException("API call failed for " + league + " - Status: " + response.getStatusCode());
+            }
+
+            List<Map<String, Object>> matches = (List<Map<String, Object>>) response.getBody().get("matches");
+            if (matches == null || matches.isEmpty()) {
+                System.out.println("⚠️ No matches found for " + league);
+                return;
+            }
+
+            System.out.println("📥 " + matches.size() + " matches received from " + league);
+
+            // Filter matches to relevant weeks
+            List<Map<String, Object>> filteredMatches = filterMatchesByRelevantWeeks(matches, league);
+
+            // Group matches by gameweek
+            Map<Integer, List<Map<String, Object>>> matchesByGameweek =
+                    filteredMatches.stream().collect(Collectors.groupingBy(m -> (Integer) m.get("matchday")));
+
+            Set<GameWeek> affectedGameWeeks = new HashSet<>();
+            int processedCount = 0;
+
+            for (Map.Entry<Integer, List<Map<String, Object>>> entry : matchesByGameweek.entrySet()) {
+                Integer gameweekNumber = entry.getKey();
+                List<Map<String, Object>> matchesForWeek = entry.getValue();
+
+                System.out.println("🎯 Processing Gameweek " + gameweekNumber + " (ALL MATCHES)");
+
+                for (Map<String, Object> matchData : matchesForWeek) {
+                    try {
+                        processMatchData(matchData, league, affectedGameWeeks);
+                        processedCount++;
+                    } catch (Exception e) {
+                        System.out.println("⚠️ Error processing match data: " + e.getMessage());
+                    }
+                }
+            }
+
+            System.out.println("📝 Processed " + processedCount + " matches for " + league);
+
+            // Update gameweek timings and calculate status dynamically
+            for (GameWeek gw : affectedGameWeeks) {
+                try {
+                    updateGameWeekTimings(gw);
+                    // Don't set status here - let updateGameweeks calculate it based on matches
+                } catch (Exception e) {
+                    System.out.println("⚠️ Error updating GameWeek " + gw.getWeekNumber() + ": " + e.getMessage());
+                }
+            }
+
+            // ✅ Calculate gameweek status based on actual match statuses
+            updateGameweeks(affectedGameWeeks);
+
+        } catch (Exception e) {
+            System.out.println("❌ Error fetching " + league + ": " + e.getMessage());
+            e.printStackTrace();
+            throw new RuntimeException("Failed to fetch and update matches for " + league, e);
+        }
+    }
+
+    // ✅ Filter matches to only include current, past, and next 3 weeks
     private List<Map<String, Object>> filterMatchesByRelevantWeeks(List<Map<String, Object>> matches, LeagueTheme league) {
         // Get current gameweek for this league
         Integer currentWeek = getCurrentGameweek(league);
@@ -171,7 +538,7 @@ public class MatchUpdateService {
         return validMatches;
     }
 
-    // ✅ NEW: Check if a match is being played at the wrong time for prediction purposes
+    // ✅ Check if a match is being played at the wrong time for prediction purposes
     private boolean isMatchPlayedAtWrongTime(int matchday, LocalDateTime matchDate, int currentWeek, LocalDateTime now) {
         LocalDateTime expectedWeekStart = calculateExpectedGameweekStart(matchday);
         LocalDateTime expectedWeekEnd = expectedWeekStart.plusDays(7);
@@ -199,7 +566,7 @@ public class MatchUpdateService {
         return false; // Match timing is acceptable
     }
 
-    // ✅ NEW: Calculate expected gameweek start based on season pattern and week number
+    // ✅ Calculate expected gameweek start based on season pattern and week number
     private LocalDateTime calculateExpectedGameweekStart(int weekNumber) {
         // Season start dates for 2024-2025 season
         LocalDateTime seasonStart = LocalDateTime.of(2024, 8, 17, 15, 0); // Mid August
@@ -208,7 +575,7 @@ public class MatchUpdateService {
         return seasonStart.plusDays((weekNumber - 1) * 7L);
     }
 
-    // ✅ NEW: Determine current gameweek based on today's date and existing gameweeks
+    // ✅ Determine current gameweek based on today's date and existing gameweeks
     private Integer getCurrentGameweek(LeagueTheme league) {
         LocalDateTime now = LocalDateTime.now();
 
@@ -316,11 +683,13 @@ public class MatchUpdateService {
                 try {
                     updateGameWeekTimings(gw);
                     gw.setStatus(status); // ✅ set the desired GameweekStatus
-                    System.out.println("✅ Updated GameWeek " + gw.getWeekNumber() + " as " + status);
+                    System.out.println("✅ Updated GameWeek " + gw.getWeekNumber() + " with status " + status);
                 } catch (Exception e) {
                     System.out.println("⚠️ Error updating GameWeek " + gw.getWeekNumber() + ": " + e.getMessage());
                 }
             }
+
+            updateGameweeks(affectedGameWeeks);
 
         } catch (Exception e) {
             System.out.println("❌ Error fetching " + league + ": " + e.getMessage());
@@ -328,7 +697,7 @@ public class MatchUpdateService {
             throw new RuntimeException("Failed to fetch and update matches for " + league, e);
         }
     }
-
+    // ✅ Process match data (full version with timing validations)
     @Transactional
     protected void processMatchData(Map<String, Object> matchData, LeagueTheme league, Set<GameWeek> affectedGameWeeks) {
         try {
@@ -351,14 +720,14 @@ public class MatchUpdateService {
             }
 
             LocalDateTime matchDateUtc = OffsetDateTime.parse(dateStr).toLocalDateTime();
-
             Integer matchday = (Integer) matchData.get("matchday");
+
             if (matchday == null) {
                 System.out.println("⚠️ No matchday found for " + homeTeamName + " vs " + awayTeamName);
                 return;
             }
 
-            // ✅ Find or create GameWeek (safe way)
+            // Find or create GameWeek
             GameWeek gameWeek = gameweekRepository.findByWeekNumberAndCompetition(matchday, league)
                     .orElse(null);
 
@@ -368,17 +737,15 @@ public class MatchUpdateService {
                 gameWeek.setWeekNumber(matchday);
                 gameWeek.setCompetition(league);
                 gameWeek.setStatus(GameweekStatus.UPCOMING);
-                // Initial timing setup (will be updated later in batch)
                 gameWeek.setStartDate(matchDateUtc.minusDays(3));
                 gameWeek.setEndDate(matchDateUtc.plusDays(3));
                 gameWeek.setJoinDeadline(matchDateUtc.minusHours(2));
-                gameWeek = gameweekRepository.save(gameWeek); // save only once
+                gameWeek = gameweekRepository.save(gameWeek);
             }
 
-            // Parse score safely
+            // Parse score
             Integer homeGoals = null;
             Integer awayGoals = null;
-
             Map<String, Object> scoreMap = (Map<String, Object>) matchData.get("score");
             if (scoreMap != null) {
                 Map<String, Object> fullTime = (Map<String, Object>) scoreMap.get("fullTime");
@@ -388,13 +755,11 @@ public class MatchUpdateService {
                 }
             }
 
-            // ✅ Find existing match or create new one
+            // Find existing match or create new one
             Match dbMatch = matchRepository.findWithGameweeks(
                     homeTeamName, awayTeamName,
                     matchDateUtc.minusHours(2), matchDateUtc.plusHours(2)
             );
-
-            boolean isNewMatch = (dbMatch == null);
 
             if (dbMatch == null) {
                 System.out.println("🆕 Creating new match: " + homeTeamName + " vs " + awayTeamName);
@@ -402,17 +767,12 @@ public class MatchUpdateService {
                 dbMatch.setHomeTeam(homeTeamName);
                 dbMatch.setAwayTeam(awayTeamName);
                 dbMatch.setGameweeks(new ArrayList<>());
-
-                // ✅ FIX: Marquer le nouveau match comme actif
                 dbMatch.setActive(true);
-                System.out.println("✅ New match marked as ACTIVE");
             } else {
                 System.out.println("🔄 Updating existing match: " + homeTeamName + " vs " + awayTeamName);
-
-                // ✅ FIX: S'assurer que les matchs de l'API sont actifs
                 if (!dbMatch.isActive()) {
                     dbMatch.setActive(true);
-                    System.out.println("✅ Existing match reactivated");
+                    System.out.println("✅ Match reactivated");
                 }
             }
 
@@ -422,8 +782,7 @@ public class MatchUpdateService {
             dbMatch.setHomeScore(homeGoals);
             dbMatch.setAwayScore(awayGoals);
 
-            // Map API status → internal status
-            MatchStatus oldStatus = dbMatch.getStatus();
+            // Map API status to internal status
             switch (apiStatus) {
                 case "FINISHED" -> {
                     dbMatch.setFinished(true);
@@ -438,248 +797,108 @@ public class MatchUpdateService {
                     dbMatch.setStatus(MatchStatus.SCHEDULED);
                 }
                 default -> {
-                    System.out.println("⚠️ Unknown match status: " + apiStatus + " for " + homeTeamName + " vs " + awayTeamName);
+                    System.out.println("⚠️ Unknown match status: " + apiStatus);
                     dbMatch.setFinished(false);
                     dbMatch.setStatus(MatchStatus.SCHEDULED);
                 }
             }
 
-            if (oldStatus != dbMatch.getStatus()) {
-                System.out.println("📊 Status changed from " + oldStatus + " to " + dbMatch.getStatus() +
-                        " for " + homeTeamName + " vs " + awayTeamName);
-            }
-
-            // 🔹 Ensure GameWeek association without triggering lazy errors
+            // Link to GameWeek
             if (!dbMatch.getGameweeks().contains(gameWeek)) {
-                System.out.println("🔗 Linking match to GameWeek " + gameWeek.getWeekNumber());
                 dbMatch.getGameweeks().add(gameWeek);
             }
 
             // Save the match
             dbMatch = matchRepository.save(dbMatch);
-            System.out.println("💾 Saved match: " + homeTeamName + " vs " + awayTeamName +
-                    " (ID: " + dbMatch.getId() + ", Status: " + dbMatch.getStatus() + ")");
+            System.out.println("💾 Saved match: " + homeTeamName + " vs " + awayTeamName + " (Status: " + dbMatch.getStatus() + ")");
 
             affectedGameWeeks.add(gameWeek);
 
         } catch (Exception e) {
             System.out.println("❌ Error processing match data: " + e.getMessage());
-            e.printStackTrace();
-            throw e; // Re-throw to fail the transaction if needed
+            throw e;
         }
     }
 
+    // ✅ Update GameWeek timing information based on its matches
     public void updateGameWeekTimings(GameWeek gameWeek) {
         try {
-            List<Match> allMatches = matchRepository.findByGameweeksId(gameWeek.getId());
-            if (allMatches.isEmpty()) {
+            List<Match> matches = matchRepository.findByGameweeksContaining(gameWeek);
+
+            if (matches.isEmpty()) {
                 System.out.println("⚠️ No matches found for GameWeek " + gameWeek.getWeekNumber());
                 return;
             }
 
-            // ✅ Consider ONLY active matches (and only SCHEDULED or LIVE)
-            List<Match> activeMatches = allMatches.stream()
-                    .filter(Match::isActive) // <<--- the key line
-                    .filter(m -> m.getMatchDate() != null)
-                    .toList();
-
-            if (activeMatches.isEmpty()) {
-                System.out.println("⚠️ No ACTIVE matches for GameWeek " + gameWeek.getWeekNumber() + " → keeping existing timings");
-                return;
-            }
-
-            // Earliest active match = start
-            LocalDateTime start = activeMatches.stream()
+            // Find earliest and latest match dates
+            LocalDateTime earliestMatch = matches.stream()
                     .map(Match::getMatchDate)
+                    .filter(Objects::nonNull)
                     .min(LocalDateTime::compareTo)
-                    .orElseThrow();
+                    .orElse(null);
 
-            // Latest active match + 2h30 = end
-            LocalDateTime end = activeMatches.stream()
+            LocalDateTime latestMatch = matches.stream()
                     .map(Match::getMatchDate)
+                    .filter(Objects::nonNull)
                     .max(LocalDateTime::compareTo)
-                    .map(dt -> dt.plusHours(2).plusMinutes(30))
-                    .orElseThrow();
+                    .orElse(null);
 
-            // Join deadline = 30 mins before first ACTIVE match
-            LocalDateTime joinDeadline = start.minusMinutes(30);
+            if (earliestMatch != null && latestMatch != null) {
+                gameWeek.setStartDate(earliestMatch.minusDays(1));
+                gameWeek.setEndDate(latestMatch.plusDays(1));
+                gameWeek.setJoinDeadline(earliestMatch.minusHours(2));
 
-            if (!Objects.equals(gameWeek.getStartDate(), start)
-                    || !Objects.equals(gameWeek.getEndDate(), end)
-                    || !Objects.equals(gameWeek.getJoinDeadline(), joinDeadline)) {
-
-                System.out.println("🔄 Updating GameWeek " + gameWeek.getWeekNumber() + " timings:");
-                System.out.println("   Start: " + gameWeek.getStartDate() + " → " + start);
-                System.out.println("   End: " + gameWeek.getEndDate() + " → " + end);
-                System.out.println("   Join deadline: " + gameWeek.getJoinDeadline() + " → " + joinDeadline);
-
-                gameWeek.setStartDate(start);
-                gameWeek.setEndDate(end);
-                gameWeek.setJoinDeadline(joinDeadline);
-                gameweekRepository.save(gameWeek);
-                System.out.println("✅ Saved timings for GameWeek " + gameWeek.getWeekNumber());
-            } else {
-                System.out.println("📝 GameWeek " + gameWeek.getWeekNumber() + " timings unchanged");
+                System.out.println("📅 Updated GameWeek " + gameWeek.getWeekNumber() +
+                        " timings: " + gameWeek.getStartDate().toLocalDate() +
+                        " to " + gameWeek.getEndDate().toLocalDate());
             }
 
         } catch (Exception e) {
-            System.out.println("❌ Error updating GameWeek timings: " + e.getMessage());
-            e.printStackTrace();
+            System.out.println("⚠️ Error updating GameWeek timings: " + e.getMessage());
         }
     }
 
-    // ✅ NEW: Calculate expected gameweek start based on season pattern
-    private LocalDateTime calculateExpectedGameweekStart(GameWeek gameWeek) {
-        // Basic calculation: assume season starts around August and each gameweek is ~1 week
-        // You can adjust this based on your league's specific calendar
+    // ✅ Update GameWeek statuses based on match completion
+    private void updateGameweeks(Set<GameWeek> gameWeeks) {
+        try {
+            for (GameWeek gameWeek : gameWeeks) {
+                List<Match> matches = matchRepository.findByGameweeksContaining(gameWeek);
 
-        int weekNumber = gameWeek.getWeekNumber();
-        LeagueTheme competition = gameWeek.getCompetition();
+                if (matches.isEmpty()) {
+                    continue;
+                }
 
-        // Different leagues start at different times
-        LocalDateTime seasonStart = switch (competition) {
-            case PREMIER_LEAGUE, BUNDESLIGA, LIGUE_ONE -> LocalDateTime.of(2024, 8, 17, 15, 0); // Mid August
-            case LA_LIGA, SERIE_A -> LocalDateTime.of(2024, 8, 24, 20, 0); // Late August
-            case CHAMPIONS_LEAGUE, EUROPA_LEAGUE, CONFERENCE_LEAGUE -> LocalDateTime.of(2024, 9, 17, 20, 0); // Mid September
-            default -> LocalDateTime.of(2024, 8, 17, 15, 0);
-        };
-
-        // Add weeks (most gameweeks are ~7 days apart)
-        return seasonStart.plusDays((weekNumber - 1) * 7L);
-    }
-
-    private void updateGameweeks(Set<GameWeek> affectedGameWeeks) {
-        System.out.println("📊 Updating status for " + affectedGameWeeks.size() + " gameweeks...");
-
-        for (GameWeek gw : affectedGameWeeks) {
-            try {
-                List<Match> gwMatches = matchRepository.findByGameweeksId(gw.getId());
-                long total = gwMatches.size();
-                long completed = gwMatches.stream()
-                        .filter(m -> m.getStatus() == MatchStatus.COMPLETED)
+                // Calculate status based on match statuses
+                long finishedMatches = matches.stream()
+                        .filter(Match::isFinished)
                         .count();
-                long live = gwMatches.stream()
+
+                long liveMatches = matches.stream()
                         .filter(m -> m.getStatus() == MatchStatus.LIVE)
                         .count();
 
-                GameweekStatus oldStatus = gw.getStatus();
                 GameweekStatus newStatus;
-
-                if (completed == 0 && live == 0) {
-                    newStatus = GameweekStatus.UPCOMING;
-                } else if (completed < total) {
+                if (finishedMatches == matches.size()) {
+                    newStatus = GameweekStatus.FINISHED;
+                } else if (liveMatches > 0 || finishedMatches > 0) {
                     newStatus = GameweekStatus.ONGOING;
                 } else {
-                    newStatus = GameweekStatus.FINISHED;
+                    newStatus = GameweekStatus.UPCOMING;
                 }
 
-                if (oldStatus != newStatus) {
-                    gw.setStatus(newStatus);
-                    gameweekRepository.save(gw);
-                    System.out.println("🔄 GameWeek " + gw.getWeekNumber() + " (" + gw.getCompetition() +
-                            ") status changed: " + oldStatus + " → " + newStatus +
-                            " (Completed: " + completed + "/" + total + ")");
-                } else {
-                    System.out.println("📝 GameWeek " + gw.getWeekNumber() + " (" + gw.getCompetition() +
-                            ") status unchanged: " + oldStatus +
-                            " (Completed: " + completed + "/" + total + ")");
+                if (gameWeek.getStatus() != newStatus) {
+                    gameWeek.setStatus(newStatus);
+                    System.out.println("📊 GameWeek " + gameWeek.getWeekNumber() +
+                            " status updated to " + newStatus);
                 }
 
-            } catch (Exception e) {
-                System.out.println("❌ Error updating GameWeek " + gw.getWeekNumber() + ": " + e.getMessage());
-                e.printStackTrace();
+                gameweekRepository.save(gameWeek);
             }
-        }
-    }
-
-    @Transactional
-    public void updateMatchesForGameweek(String competition, int weekNumber) {
-        try {
-            System.out.println("🔍 DEBUG: Received competition: '" + competition + "', weekNumber: " + weekNumber);
-
-            // Map user input to LeagueTheme enum
-            LeagueTheme league = mapToLeagueTheme(competition);
-
-            if (league == null) {
-                System.out.println("❌ Invalid competition: " + competition);
-                System.out.println("🔍 Available competitions: " + Arrays.toString(LeagueTheme.values()));
-                throw new IllegalArgumentException("Invalid competition: " + competition);
-            }
-
-            System.out.println("✅ Mapped to league: " + league + " (API code: " + league.getApiCode() + ")");
-
-            String apiUrl = apiUrlTemplate
-                    .replace("{competition}", league.getApiCode())
-                    .replace("{season}", "2025");
-
-            System.out.println("🔍 API URL: " + apiUrl);
-
-            RestTemplate restTemplate = new RestTemplate();
-            HttpHeaders headers = new HttpHeaders();
-            headers.set("X-Auth-Token", apiKey);
-            HttpEntity<String> entity = new HttpEntity<>(headers);
-
-            ResponseEntity<Map> response = restTemplate.exchange(apiUrl, HttpMethod.GET, entity, Map.class);
-
-            if (!response.getStatusCode().is2xxSuccessful() || response.getBody() == null) {
-                System.out.println("⚠️ API call failed for " + league + " with status: " + response.getStatusCode());
-                if (response.getBody() != null) {
-                    System.out.println("Response body: " + response.getBody());
-                }
-                throw new RuntimeException("API call failed");
-            }
-
-            List<Map<String, Object>> matches = (List<Map<String, Object>>) response.getBody().get("matches");
-            System.out.println("🔍 Total matches received: " + (matches != null ? matches.size() : 0));
-
-            if (matches == null || matches.isEmpty()) {
-                System.out.println("⚠️ No matches found in API response");
-                return;
-            }
-
-            // Filter only matches from the requested week
-            List<Map<String, Object>> filteredMatches = matches.stream()
-                    .filter(m -> {
-                        Integer matchday = (Integer) m.get("matchday");
-                        boolean isMatch = Objects.equals(matchday, weekNumber);
-                        if (isMatch) {
-                            System.out.println("🔍 Found match for week " + weekNumber + ": " +
-                                    ((Map<String, Object>) m.get("homeTeam")).get("name") + " vs " +
-                                    ((Map<String, Object>) m.get("awayTeam")).get("name"));
-                        }
-                        return isMatch;
-                    })
-                    .toList();
-
-            System.out.println("➡️ " + filteredMatches.size() + " matches found for "
-                    + league + " week " + weekNumber);
-
-            if (filteredMatches.isEmpty()) {
-                System.out.println("⚠️ No matches found for week " + weekNumber + " in " + league);
-                return;
-            }
-
-            Set<GameWeek> affectedGameWeeks = new HashSet<>();
-
-            for (Map<String, Object> matchData2 : filteredMatches) {
-                processMatchData(matchData2, league, affectedGameWeeks);
-            }
-
-            // Update GameWeek timings & statuses
-            for (GameWeek gw : affectedGameWeeks) {
-                updateGameWeekTimings(gw);
-            }
-            updateGameweeks(affectedGameWeeks);
-
-            System.out.println("✅ Successfully updated " + affectedGameWeeks.size() + " gameweek(s)");
 
         } catch (Exception e) {
-            System.out.println("❌ Error fetching matches for " + competition + " week " + weekNumber + ": " + e.getMessage());
-            e.printStackTrace();
-            throw new RuntimeException("Failed to update matches for " + competition + " week " + weekNumber, e);
+            System.out.println("❌ Error updating gameweek statuses: " + e.getMessage());
         }
     }
-
     // Helper method to map user-friendly strings to enum
     public LeagueTheme mapToLeagueTheme(String input) {
         if (input == null) return null;

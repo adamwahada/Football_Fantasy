@@ -175,6 +175,18 @@
           <mat-icon>update</mat-icon>
         </button>
 
+          <!-- Valider / Invalider -->
+          <button 
+            mat-icon-button 
+            class="btn-icon"
+            [class.green]="isGameweekValidated(gameweek)"
+            [class.red]="!isGameweekValidated(gameweek)"
+            (click)="isGameweekValidated(gameweek) ? unvalidateGameweek(gameweek) : validateGameweek(gameweek)"
+            [matTooltip]="isGameweekValidated(gameweek) ? 'Invalider (actuellement publié)' : 'Valider (non publié)'"
+            [attr.aria-label]="isGameweekValidated(gameweek) ? 'Invalider' : 'Valider'">
+            <mat-icon>{{ isGameweekValidated(gameweek) ? 'verified' : 'hourglass_empty' }}</mat-icon>
+          </button>
+
           <!-- Réinitialiser -->
           <button
             mat-icon-button

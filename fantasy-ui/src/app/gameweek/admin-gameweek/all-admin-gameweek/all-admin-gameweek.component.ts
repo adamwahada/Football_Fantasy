@@ -627,4 +627,69 @@ onRefresh(): void {
   });
 }
 
+// ✅ Validate a gameweek
+validateGameweek(gameweek: Gameweek): void {
+  if (!gameweek.id) return;
+  
+  this.gameweekService.validateGameweek(gameweek.id).subscribe({
+    next: (updatedGameweek) => {
+      // Update the gameweek in the local array
+      const index = this.gameweeks.findIndex(gw => gw.id === gameweek.id);
+      if (index !== -1) {
+        this.gameweeks[index] = updatedGameweek;
+        this.dataSource.data = this.gameweeks;
+      }
+      
+      this.snackBar.open(`✅ Gameweek ${gameweek.weekNumber} validée avec succès!`, 'Fermer', {
+        duration: 3000,
+        verticalPosition: 'top',
+        horizontalPosition: 'center'
+      });
+    },
+    error: (err) => {
+      console.error('❌ Error validating gameweek:', err);
+      this.snackBar.open('❌ Erreur lors de la validation de la gameweek', 'Fermer', {
+        duration: 3000,
+        verticalPosition: 'top',
+        horizontalPosition: 'center'
+      });
+    }
+  });
+}
+
+// ✅ Unvalidate a gameweek
+unvalidateGameweek(gameweek: Gameweek): void {
+  if (!gameweek.id) return;
+  
+  this.gameweekService.unvalidateGameweek(gameweek.id).subscribe({
+    next: (updatedGameweek) => {
+      // Update the gameweek in the local array
+      const index = this.gameweeks.findIndex(gw => gw.id === gameweek.id);
+      if (index !== -1) {
+        this.gameweeks[index] = updatedGameweek;
+        this.dataSource.data = this.gameweeks;
+      }
+      
+      this.snackBar.open(`✅ Gameweek ${gameweek.weekNumber} invalidée avec succès!`, 'Fermer', {
+        duration: 3000,
+        verticalPosition: 'top',
+        horizontalPosition: 'center'
+      });
+    },
+    error: (err) => {
+      console.error('❌ Error unvalidating gameweek:', err);
+      this.snackBar.open('❌ Erreur lors de l\'invalidation de la gameweek', 'Fermer', {
+        duration: 3000,
+        verticalPosition: 'top',
+        horizontalPosition: 'center'
+      });
+    }
+  });
+}
+
+// ✅ Check if gameweek is validated (boolean flag from backend)
+isGameweekValidated(gameweek: Gameweek): boolean {
+  return !!(gameweek as any).validated;
+}
+
 }

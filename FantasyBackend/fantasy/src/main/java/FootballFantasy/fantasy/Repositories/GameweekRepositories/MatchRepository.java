@@ -1,5 +1,6 @@
 package FootballFantasy.fantasy.Repositories.GameweekRepositories;
 
+import FootballFantasy.fantasy.Entities.GameweekEntities.GameWeek;
 import FootballFantasy.fantasy.Entities.GameweekEntities.Match;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -22,7 +23,6 @@ public interface MatchRepository extends JpaRepository<Match, Long> {
 
     List<Match> findByGameweeksIdAndActiveTrue(Long gameweekId);
 
-
     // ✅ New method to fetch match with gameweeks
     @Query("SELECT m FROM Match m LEFT JOIN FETCH m.gameweeks " +
             "WHERE m.homeTeam = :home AND m.awayTeam = :away AND m.matchDate BETWEEN :from AND :to")
@@ -32,5 +32,44 @@ public interface MatchRepository extends JpaRepository<Match, Long> {
             @Param("from") LocalDateTime from,
             @Param("to") LocalDateTime to
     );
-}
 
+    // ✅ Missing method needed by MatchUpdateService - find matches that belong to a specific gameweek
+    @Query("SELECT m FROM Match m WHERE :gameweek MEMBER OF m.gameweeks")
+    List<Match> findByGameweeksContaining(@Param("gameweek") GameWeek gameweek);
+
+    // ✅ Additional useful query methods for match management
+
+    // Find all active matches for a specific gameweek
+    @Query("SELECT m FROM Match m WHERE :gameweek MEMBER OF m.gameweeks AND m.active = true")
+    List<Match> findActiveByGameweeksContaining(@Param("gameweek") GameWeek gameweek);
+
+    // Find matches by status
+    @Query("SELECT m FROM Match m WHERE m.status = :status")
+    List<Match> findByStatus(@Param("status") String status);
+
+    // Find matches within a date range
+    @Query("SELECT m FROM Match m WHERE m.matchDate BETWEEN :startDate AND :endDate ORDER BY m.matchDate")
+    List<Match> findByMatchDateBetween(@Param("startDate") LocalDateTime startDate,
+                                       @Param("endDate") LocalDateTime endDate);
+
+    // Find finished matches
+    List<Match> findByFinishedTrue();
+
+    // Find matches that need prediction deadline update (matches happening soon)
+    @Query("SELECT m FROM Match m WHERE m.matchDate > CURRENT_TIMESTAMP " +
+            "AND m.matchDate <= :deadline AND m.active = true")
+    List<Match> findMatchesApproachingDeadline(@Param("deadline") LocalDateTime deadline);
+
+    // Find matches by team (either home or away)
+    @Query("SELECT m FROM Match m WHERE m.homeTeam = :team OR m.awayTeam = :team ORDER BY m.matchDate DESC")
+    List<Match> findByTeam(@Param("team") String team);
+
+    // Find today's matches
+    @Query("SELECT m FROM Match m WHERE FUNCTION('DATE', m.matchDate) = FUNCTION('DATE', CURRENT_TIMESTAMP) " +
+            "AND m.active = true ORDER BY m.matchDate")
+    List<Match> findTodaysMatches();
+
+    // Count matches in a gameweek by status
+    @Query("SELECT COUNT(m) FROM Match m WHERE :gameweek MEMBER OF m.gameweeks AND m.finished = :finished")
+    long countByGameweekAndFinished(@Param("gameweek") GameWeek gameweek, @Param("finished") boolean finished);
+}

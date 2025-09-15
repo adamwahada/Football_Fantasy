@@ -834,4 +834,27 @@ public class GameWeekService {
             System.out.println("Tiebreakers mis à jour avec succès.");
         }
     }
+    @Transactional
+    public GameWeek validateGameWeek(Long gameWeekId) {
+        GameWeek gameWeek = gameWeekRepository.findById(gameWeekId)
+                .orElseThrow(() -> new IllegalArgumentException("GameWeek not found"));
+
+        gameWeek.setValidated(true);
+        return gameWeekRepository.save(gameWeek);
+    }
+
+    @Transactional
+    public GameWeek unvalidateGameWeek(Long gameWeekId) {
+        GameWeek gameWeek = gameWeekRepository.findById(gameWeekId)
+                .orElseThrow(() -> new IllegalArgumentException("GameWeek not found"));
+
+        gameWeek.setValidated(false);
+        return gameWeekRepository.save(gameWeek);
+    }
+    public List<GameWeek> getUpcomingValidatedByCompetition(LeagueTheme competition) {
+        LocalDateTime now = LocalDateTime.now();
+        return gameWeekRepository
+                .findByCompetitionAndJoinDeadlineAfterAndValidatedTrue(competition, now);
+    }
+
 }

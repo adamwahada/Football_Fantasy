@@ -24,6 +24,7 @@ export interface Gameweek {
   description?: string;
   tiebreakerMatchIds?: string;
   matches?: Match[];
+  validated?: boolean;
 }
 export interface TeamStanding {
   teamName: string;
@@ -208,4 +209,14 @@ updateSpecificGameweek(competition: string, weekNumber: number): Observable<stri
 getLeagueClassement(competition: string, gameweek: number): Observable<TeamStanding[]> {
   return this.http.get<TeamStanding[]>(`${this.leagueclassementApiUrl}/${competition}/${gameweek}`);
 }
+// ✅ Admin endpoint: Validate a GameWeek
+validateGameweek(gameweekId: number): Observable<Gameweek> {
+  return this.http.post<Gameweek>(`${this.apiUrl}/${gameweekId}/validate`, {});
+}
+
+// ✅ Admin endpoint: Unvalidate a GameWeek
+unvalidateGameweek(gameweekId: number): Observable<Gameweek> {
+  return this.http.post<Gameweek>(`${this.apiUrl}/${gameweekId}/unvalidate`, {});
+}
+
 }

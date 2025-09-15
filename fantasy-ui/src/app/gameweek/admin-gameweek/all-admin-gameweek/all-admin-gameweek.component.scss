@@ -239,3 +239,49 @@
 .btn-icon.orange {
   color: #f57c00; /* orange Material */
 }
+
+// ✅ Validation toggle styles
+.validation-cell {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  min-width: 120px;
+}
+
+.validation-status {
+  font-size: 0.75rem;
+  font-weight: 500;
+  text-align: center;
+  
+  &.validated {
+    color: #388e3c; /* vert Material */
+  }
+  
+  &.not-validated {
+    color: #d32f2f; /* rouge Material */
+  }
+}
+
+// ✅ Enhanced button styles for validation toggle
+.btn-icon {
+  &.green {
+    color: #388e3c;
+    background-color: rgba(56, 142, 60, 0.1);
+    
+    &:hover {
+      background-color: rgba(56, 142, 60, 0.2);
+      transform: scale(1.1);
+    }
+  }
+  
+  &.red {
+    color: #d32f2f;
+    background-color: rgba(211, 47, 47, 0.1);
+    
+    &:hover {
+      background-color: rgba(211, 47, 47, 0.2);
+      transform: scale(1.1);
+    }
+  }
+}

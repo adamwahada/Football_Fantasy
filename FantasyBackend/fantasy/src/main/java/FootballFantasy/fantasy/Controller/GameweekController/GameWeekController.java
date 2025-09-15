@@ -193,7 +193,8 @@ public class GameWeekController {
     public ResponseEntity<List<GameWeek>> getUpcomingGameweeks(
             @RequestParam LeagueTheme competition
     ) {
-        List<GameWeek> upcomingGameweeks = gameWeekService.getUpcomingByCompetition(competition);
+        // Only return upcoming AND validated gameweeks
+        List<GameWeek> upcomingGameweeks = gameWeekService.getUpcomingValidatedByCompetition(competition);
         return ResponseEntity.ok(upcomingGameweeks);
     }
     private MatchWithIconsDTO convertToMatchWithIconsDTO(Match match) {
@@ -251,6 +252,21 @@ public class GameWeekController {
         gameweekService.removeMatchesFromTiebreakers(gameweekId, matchIdsToRemove);
         return ResponseEntity.noContent().build();
     }
+
+    // 🛠 Admin endpoint to validate a gameweek
+    @PostMapping("/{id}/validate")
+    public ResponseEntity<GameWeek> validateGameWeek(@PathVariable("id") Long gameWeekId) {
+        GameWeek validatedGameWeek = gameWeekService.validateGameWeek(gameWeekId);
+        return ResponseEntity.ok(validatedGameWeek);
+    }
+
+    // 🛠 Admin endpoint to unvalidate a gameweek
+    @PostMapping("/{id}/unvalidate")
+    public ResponseEntity<GameWeek> unvalidateGameWeek(@PathVariable("id") Long gameWeekId) {
+        GameWeek unvalidatedGameWeek = gameWeekService.unvalidateGameWeek(gameWeekId);
+        return ResponseEntity.ok(unvalidatedGameWeek);
+    }
+    
 
 }
 

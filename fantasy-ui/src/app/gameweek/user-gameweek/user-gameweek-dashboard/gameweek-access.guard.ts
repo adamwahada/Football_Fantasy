@@ -42,6 +42,12 @@ export const gameweekAccessGuard: CanActivateFn = (route: ActivatedRouteSnapshot
   // Validate week access via gameweek service
   return gameweekService.getAllGameweeksByCompetition(competition).pipe(
     map(gameweeks => {
+      // Bloquer l'accès si la semaine demandée n'est pas validée (boolean)
+      const requested = gameweeks.find(gw => gw.weekNumber === weekNumber);
+      if (!requested || !requested['validated']) {
+        router.navigate(['/user/user-gameweek-list', competition]);
+        return false;
+      }
       const now = new Date();
 
       const sortedGameweeks = gameweeks.sort((a, b) => a.weekNumber - b.weekNumber);
