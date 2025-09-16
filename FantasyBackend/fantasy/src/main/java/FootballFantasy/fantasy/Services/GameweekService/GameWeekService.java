@@ -139,28 +139,23 @@ public class GameWeekService {
     }
 
 
-
-
     @Transactional
     public Match addMatchToGameWeek(Long gameWeekId, Match matchData) {
         GameWeek gameWeek = gameWeekRepository.findById(gameWeekId)
                 .orElseThrow(() -> new IllegalArgumentException("GameWeek non trouvé"));
+
         // Use helper method to find or create match (prevents duplicates)
         Match match = findOrCreateMatch(matchData);
 
         // Link match to gameweek
         linkMatchToGameWeek(match, gameWeek);
 
-        // Save the match
-        match = matchRepository.save(match);
+        // ✅ Save the match AND automatically update gameweek
+        match = saveAndUpdateGameWeek(match);
 
-        // ✅ THIS IS THE KEY: Recalculate dates AFTER adding the match
-        recalculateGameWeekDates(gameWeek);
-
-        // Update status of all affected gameweeks
-        updateAllAffectedGameWeekStatuses(List.of(match));
         return match;
     }
+
 
     // 2. ADD a new flexible method (optional - for creating gameweeks automatically)
     @Transactional
@@ -193,13 +188,20 @@ public class GameWeekService {
         return addMatchToGameWeek(gameweek.getId(), matchData);
     }
 
+    // ✅ FIX: Only return active matches
     public List<Match> getMatchesByGameWeek(Long gameWeekId) {
+        return matchRepository.findByGameweeksIdAndActiveTrue(gameWeekId);
+    }
+
+    public List<Match> getAllMatchesByGameWeek(Long gameWeekId) {
+        // For admin operations that need to see inactive matches too
         return matchRepository.findByGameweeksId(gameWeekId);
     }
 
     // ✅ New method to return Matches with team icons
     public List<MatchWithIconsDTO> getMatchesByGameWeekWithIcons(Long gameWeekId) {
-        List<Match> matches = matchRepository.findByGameweeksId(gameWeekId);
+        // ✅ FIX: Only get active matches
+        List<Match> matches = matchRepository.findByGameweeksIdAndActiveTrue(gameWeekId);
         return matches.stream()
                 .map(match -> MatchWithIconsDTO.builder()
                         .id(match.getId())
@@ -218,7 +220,6 @@ public class GameWeekService {
                 )
                 .collect(Collectors.toList());
     }
-
     @Transactional
     public void deleteMatchesByGameWeek(Long gameWeekId) {
         GameWeek gameWeek = gameWeekRepository.findById(gameWeekId)
@@ -227,12 +228,19 @@ public class GameWeekService {
         for (Match match : new ArrayList<>(gameWeek.getMatches())) {
             match.getGameweeks().remove(gameWeek);
             gameWeek.getMatches().remove(match);
-            matchRepository.save(match);
-        }
 
-        gameWeekRepository.save(gameWeek);
-        recalculateGameWeekDates(gameWeek);
+            // ✅ Save match AND update gameweek dates/statuses
+            saveAndUpdateGameWeek(match);
+        }
     }
+
+    @Transactional
+    public Match saveAndUpdateGameWeek(Match match) {
+        Match saved = matchRepository.save(match);
+        updateAllAffectedGameWeekStatuses(List.of(saved));
+        return saved;
+    }
+
     public GameWeek getGameweekById(Long id) {
         return gameWeekRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Gameweek not found with id: " + id));
@@ -247,12 +255,13 @@ public class GameWeekService {
             if (matchIdsToRemove.contains(match.getId())) {
                 match.getGameweeks().remove(gameWeek);
                 gameWeek.getMatches().remove(match);
-                matchRepository.save(match);
+
+                // ✅ Save match AND update gameweek dates/statuses
+                saveAndUpdateGameWeek(match);
             }
         }
-        gameWeekRepository.save(gameWeek);
-        recalculateGameWeekDates(gameWeek);
     }
+
 
     @Transactional
     public Match linkExistingMatchToGameWeek(Long gameWeekId, Long matchId) {
@@ -265,12 +274,10 @@ public class GameWeekService {
         // Use helper method to link (prevents duplicate linking)
         linkMatchToGameWeek(match, gameWeek);
 
-        matchRepository.save(match);
-        gameWeekRepository.save(gameWeek);
-
-        recalculateGameWeekDates(gameWeek);
-        return match;
+        // ✅ Save match AND update gameweek dates/statuses
+        return saveAndUpdateGameWeek(match);
     }
+
 
     @Transactional
     public List<Match> linkMultipleMatchesToGameWeek(Long gameWeekId, List<Long> matchIds) {
@@ -283,15 +290,16 @@ public class GameWeekService {
             Match match = matchRepository.findById(matchId)
                     .orElseThrow(() -> new IllegalArgumentException("Match not found with ID: " + matchId));
 
-            // Use helper method to link (prevents duplicate linking)
+            // Link match to gameweek
             linkMatchToGameWeek(match, gameWeek);
-            updatedMatches.add(matchRepository.save(match));
+
+            // Save match AND update gameweek
+            updatedMatches.add(saveAndUpdateGameWeek(match));
         }
 
-        gameWeekRepository.save(gameWeek);
-        recalculateGameWeekDates(gameWeek);
         return updatedMatches;
     }
+
 
     public GameWeek getByWeekNumber(int weekNumber) {
         return gameWeekRepository.findByWeekNumber(weekNumber)
@@ -299,29 +307,31 @@ public class GameWeekService {
     }
 
     public boolean isGameWeekComplete(Long gameWeekId) {
-        List<Match> matches = matchRepository.findByGameweeksId(gameWeekId);
+        List<Match> activeMatches = matchRepository.findByGameweeksIdAndActiveTrue(gameWeekId);
 
-        return matches.stream()
-                .filter(Match::isActive)
+        return activeMatches.stream()
                 .allMatch(m -> m.getStatus() == MatchStatus.COMPLETED);
     }
 
     public void recalculateGameWeekDates(GameWeek gameWeek) {
-        List<Match> matches = gameWeek.getMatches();
-        if (matches.isEmpty()) {
+        // ✅ FIX: Only get active matches for date calculation
+        List<Match> activeMatches = gameWeek.getMatches().stream()
+                .filter(Match::isActive)
+                .toList();
+
+        if (activeMatches.isEmpty()) {
             gameWeek.setStartDate(null);
             gameWeek.setEndDate(null);
-            gameWeek.setJoinDeadline(null);
-            // Valeur par défaut : 1er janvier 2026 00:00
+            // Default far future deadline when no active matches
             LocalDateTime defaultJoinDeadline = LocalDateTime.of(2026, 1, 1, 1, 0);
             gameWeek.setJoinDeadline(defaultJoinDeadline);
         } else {
-            LocalDateTime earliest = matches.stream()
+            LocalDateTime earliest = activeMatches.stream()
                     .map(Match::getMatchDate)
                     .min(LocalDateTime::compareTo)
                     .orElseThrow();
 
-            LocalDateTime latest = matches.stream()
+            LocalDateTime latest = activeMatches.stream()
                     .map(Match::getMatchDate)
                     .max(LocalDateTime::compareTo)
                     .orElseThrow();
@@ -330,16 +340,15 @@ public class GameWeekService {
             gameWeek.setEndDate(latest.plusHours(2).plusMinutes(30));
             gameWeek.setJoinDeadline(earliest.minusMinutes(30));
 
-            System.out.println("📅 GameWeek " + gameWeek.getId() + " dates recalculated: " +
+            System.out.println("📅 GameWeek " + gameWeek.getId() + " dates recalculated based on " +
+                    activeMatches.size() + " ACTIVE matches: " +
                     "Start=" + gameWeek.getStartDate() +
                     ", End=" + gameWeek.getEndDate() +
                     ", JoinDeadline=" + gameWeek.getJoinDeadline());
         }
 
         gameWeekRepository.save(gameWeek);
-
     }
-
     /**
      * ✅ ENHANCED: Helper method to update status of all gameweeks that contain the given matches
      * This triggers AUTOMATIC winner determination when gameweeks complete
@@ -349,7 +358,6 @@ public class GameWeekService {
 
         Set<GameWeek> affectedGameWeeks = new HashSet<>();
         for (Match match : updatedMatches) {
-            System.out.println("🔍 DEBUG: Match " + match.getId() + " belongs to " + match.getGameweeks().size() + " gameweeks");
             affectedGameWeeks.addAll(match.getGameweeks());
         }
 
@@ -358,13 +366,9 @@ public class GameWeekService {
         for (GameWeek gameWeek : affectedGameWeeks) {
             System.out.println("🔄 DEBUG: Processing gameweek ID: " + gameWeek.getId() + " (current status: " + gameWeek.getStatus() + ")");
 
-            List<Match> gameweekMatches = matchRepository.findByGameweeksId(gameWeek.getId());
-            System.out.println("🔍 DEBUG: Found " + gameweekMatches.size() + " matches for gameweek " + gameWeek.getId());
-
-            // Filter active matches only
-            List<Match> activeMatches = gameweekMatches.stream()
-                    .filter(Match::isActive)
-                    .toList();
+            // ✅ FIX: Only get active matches for status calculation
+            List<Match> activeMatches = matchRepository.findByGameweeksIdAndActiveTrue(gameWeek.getId());
+            System.out.println("🔍 DEBUG: Found " + activeMatches.size() + " ACTIVE matches for gameweek " + gameWeek.getId());
 
             long totalActiveMatches = activeMatches.size();
             long completedMatches = activeMatches.stream()
@@ -379,15 +383,18 @@ public class GameWeekService {
 
             GameweekStatus newStatus;
 
-            if (completedMatches == 0) {
+            if (totalActiveMatches == 0) {
+                newStatus = GameweekStatus.UPCOMING; // No active matches
+                System.out.println("📊 DEBUG: No active matches -> UPCOMING");
+            } else if (completedMatches == 0) {
                 newStatus = GameweekStatus.UPCOMING;
-                System.out.println("📊 DEBUG: Setting to UPCOMING (no completed matches)");
+                System.out.println("📊 DEBUG: No completed matches -> UPCOMING");
             } else if (completedMatches < totalActiveMatches) {
                 newStatus = GameweekStatus.ONGOING;
-                System.out.println("📊 DEBUG: Setting to ONGOING (some completed matches)");
+                System.out.println("📊 DEBUG: Some completed matches -> ONGOING");
             } else {
                 newStatus = GameweekStatus.FINISHED;
-                System.out.println("📊 DEBUG: Setting to FINISHED (all completed matches)");
+                System.out.println("📊 DEBUG: All active matches completed -> FINISHED");
             }
 
             if (gameWeek.getStatus() != newStatus) {
@@ -407,9 +414,8 @@ public class GameWeekService {
                 System.out.println("✓ DEBUG: Gameweek " + gameWeek.getId() + " status unchanged (" + newStatus + ")");
             }
         }
-
-        System.out.println("✅ DEBUG: updateAllAffectedGameWeekStatuses completed");
-    }    /**
+    }
+    /**
      * ✅ STREAMLINED: Remove duplicate logic - CompetitionSessionService handles everything
      */
     private void triggerPostGameWeekFinishedActions(GameWeek gameWeek) {
@@ -429,9 +435,8 @@ public class GameWeekService {
         GameWeek gameWeek = gameWeekRepository.findById(gameWeekId)
                 .orElseThrow(() -> new IllegalArgumentException("GameWeek not found"));
 
-        List<Match> activeMatches = gameWeek.getMatches().stream()
-                .filter(Match::isActive)
-                .toList();
+        // ✅ FIX: Only check active matches
+        List<Match> activeMatches = matchRepository.findByGameweeksIdAndActiveTrue(gameWeekId);
 
         long totalActiveMatches = activeMatches.size();
         long completedMatches = activeMatches.stream()
@@ -442,8 +447,7 @@ public class GameWeekService {
         GameweekStatus newStatus;
 
         if (totalActiveMatches == 0) {
-            // No active matches → UPCOMING or your default
-            newStatus = GameweekStatus.UPCOMING;
+            newStatus = GameweekStatus.UPCOMING; // No active matches
         } else if (completedMatches == totalActiveMatches) {
             newStatus = GameweekStatus.FINISHED;
         } else if (completedMatches > 0) {
@@ -460,7 +464,7 @@ public class GameWeekService {
                 triggerPostGameWeekFinishedActions(gameWeek);
             }
 
-            System.out.println("🔄 Gameweek " + gameWeekId + " status changed from " + oldStatus + " to " + newStatus);
+            System.out.println("🔄 Gameweek " + gameWeekId + " status changed from " + oldStatus + " to " + newStatus + " (based on " + totalActiveMatches + " active matches)");
             return true;
         } else {
             System.out.println("✓ Gameweek " + gameWeekId + " status unchanged (" + oldStatus + ")");
@@ -481,7 +485,6 @@ public class GameWeekService {
         List<Match> updatedMatches = new ArrayList<>();
 
         for (Match matchUpdate : matchUpdates) {
-            // Find existing match (don't create new ones)
             Match existingMatch = matchRepository.findByHomeTeamAndAwayTeamAndMatchDate(
                     matchUpdate.getHomeTeam(),
                     matchUpdate.getAwayTeam(),
@@ -491,7 +494,6 @@ public class GameWeekService {
             if (existingMatch != null) {
                 System.out.println("🔄 Updating existing match: " + existingMatch.getHomeTeam() + " vs " + existingMatch.getAwayTeam());
 
-                // Update match data (preserve existing gameweek associations)
                 existingMatch.setMatchDate(matchUpdate.getMatchDate());
                 if (matchUpdate.getHomeScore() != null) {
                     existingMatch.setHomeScore(matchUpdate.getHomeScore());
@@ -500,17 +502,16 @@ public class GameWeekService {
                     existingMatch.setAwayScore(matchUpdate.getAwayScore());
                 }
 
-                // Update status based on scores
                 boolean isCompleted = existingMatch.getHomeScore() != null && existingMatch.getAwayScore() != null;
                 existingMatch.setFinished(isCompleted);
                 existingMatch.setStatus(isCompleted ? MatchStatus.COMPLETED : MatchStatus.SCHEDULED);
                 existingMatch.setPredictionDeadline(existingMatch.getMatchDate().minusMinutes(30));
 
-                // Save and add to updated list
                 existingMatch = matchRepository.save(existingMatch);
                 updatedMatches.add(existingMatch);
 
                 System.out.println("✅ Match updated - Status: " + existingMatch.getStatus() +
+                        ", Active: " + existingMatch.isActive() +
                         ", Belongs to " + existingMatch.getGameweeks().size() + " gameweek(s)");
             } else {
                 System.out.println("⚠️ Match not found in database: " + matchUpdate.getHomeTeam() + " vs " + matchUpdate.getAwayTeam() +
@@ -518,11 +519,10 @@ public class GameWeekService {
             }
         }
 
-        // ✅ THIS IS THE FIX - FORCE UPDATE GAMEWEEK STATUSES
+        // Update gameweek statuses and recalculate dates for affected gameweeks
         if (!updatedMatches.isEmpty()) {
-            System.out.println("🔄 Updating status for all affected gameweeks...");
+            System.out.println("🔄 Updating status and dates for all affected gameweeks...");
 
-            // Get all affected gameweeks
             Set<GameWeek> affectedGameWeeks = new HashSet<>();
             for (Match match : updatedMatches) {
                 affectedGameWeeks.addAll(match.getGameweeks());
@@ -530,28 +530,22 @@ public class GameWeekService {
 
             System.out.println("📊 Found " + affectedGameWeeks.size() + " affected gameweeks");
 
-            // Update each gameweek status
             for (GameWeek gameWeek : affectedGameWeeks) {
-                System.out.println("🔄 Processing gameweek ID: " + gameWeek.getId() + " (current status: " + gameWeek.getStatus() + ")");
+                // ✅ FIX: Recalculate dates based on active matches only
+                recalculateGameWeekDates(gameWeek);
 
-                // Get all matches for this gameweek
-                List<Match> gameweekMatches = matchRepository.findByGameweeksId(gameWeek.getId());
-
-                // Filter active matches
-                List<Match> activeMatches = gameweekMatches.stream()
-                        .filter(Match::isActive)
-                        .toList();
+                // Update status based on active matches only
+                List<Match> activeMatches = matchRepository.findByGameweeksIdAndActiveTrue(gameWeek.getId());
 
                 long totalActiveMatches = activeMatches.size();
                 long completedMatches = activeMatches.stream()
                         .filter(match -> match.getStatus() == MatchStatus.COMPLETED)
                         .count();
 
-                System.out.println("⚽ Active matches: " + totalActiveMatches + ", Completed: " + completedMatches);
-
-                // Determine new status
                 GameweekStatus newStatus;
-                if (completedMatches == 0) {
+                if (totalActiveMatches == 0) {
+                    newStatus = GameweekStatus.UPCOMING; // No active matches
+                } else if (completedMatches == 0) {
                     newStatus = GameweekStatus.UPCOMING;
                 } else if (completedMatches < totalActiveMatches) {
                     newStatus = GameweekStatus.ONGOING;
@@ -559,15 +553,13 @@ public class GameWeekService {
                     newStatus = GameweekStatus.FINISHED;
                 }
 
-                // Update if changed
                 if (gameWeek.getStatus() != newStatus) {
                     GameweekStatus oldStatus = gameWeek.getStatus();
                     gameWeek.setStatus(newStatus);
                     gameWeekRepository.save(gameWeek);
 
-                    System.out.println("📊 ✅ Gameweek " + gameWeek.getId() + " status updated from " + oldStatus + " to " + newStatus);
+                    System.out.println("📊 ✅ Gameweek " + gameWeek.getId() + " status updated from " + oldStatus + " to " + newStatus + " (based on " + totalActiveMatches + " active matches)");
 
-                    // Trigger post-processing if finished
                     if (newStatus == GameweekStatus.FINISHED) {
                         System.out.println("🏆 Triggering post-finish processing...");
                         triggerPostGameWeekFinishedActions(gameWeek);
@@ -581,6 +573,25 @@ public class GameWeekService {
         System.out.println("✅ Global match update completed. Updated " + updatedMatches.size() + " matches");
         return updatedMatches;
     }
+
+    // 7. ADD helper method to get active match count for a gameweek:
+    public long getActiveMatchCount(Long gameweekId) {
+        return matchRepository.countActiveMatchesByGameweek(gameweekId);
+    }
+
+    // 8. ADD method to get gameweeks that should be visible to users (with active matches):
+    public List<GameWeek> getGameweeksWithActiveMatches(LeagueTheme competition) {
+        List<GameWeek> allGameweeks = gameWeekRepository.findByCompetition(competition);
+
+        return allGameweeks.stream()
+                .filter(gw -> {
+                    long activeCount = getActiveMatchCount(gw.getId());
+                    return activeCount > 0; // Only include gameweeks with active matches
+                })
+                .collect(Collectors.toList());
+    }
+
+
     /**
      * Import matches to a specific gameweek (creates new matches and links them)
      * Use this when you want to create new matches for a specific gameweek
@@ -592,29 +603,20 @@ public class GameWeekService {
         GameWeek gameWeek = gameWeekRepository.findById(gameWeekId)
                 .orElseThrow(() -> new IllegalArgumentException("GameWeek not found"));
 
-        List<Match> updatedMatches = new ArrayList<>();
-
         for (Match importedMatch : importedMatches) {
-            // Use helper method to find or create match (prevents duplicates)
+            // Find or create match
             Match match = findOrCreateMatch(importedMatch);
 
-            // Link to gameweek - allows same match to belong to multiple gameweeks
-            // (e.g., Premier League gameweek + Best Of gameweek)
+            // Link to gameweek
             linkMatchToGameWeek(match, gameWeek);
 
-            // Save the match and add to updated list
-            match = matchRepository.save(match);
-            updatedMatches.add(match);
+            // Save match AND update gameweek (dates & statuses)
+            saveAndUpdateGameWeek(match);
         }
-
-        // Recalculate dates for the current gameweek
-        recalculateGameWeekDates(gameWeek);
-
-        // Update status of ALL gameweeks affected by the updated matches
-        updateAllAffectedGameWeekStatuses(updatedMatches);
 
         System.out.println("✅ Import completed for gameweek " + gameWeekId);
     }
+
 
     public GameWeek getByCompetitionAndWeek(LeagueTheme competition, int weekNumber) {
         return gameWeekRepository.findByCompetitionAndWeekNumber(competition, weekNumber)
@@ -623,7 +625,8 @@ public class GameWeekService {
 
     public List<Match> getMatchesByCompetitionAndWeek(LeagueTheme competition, int weekNumber) {
         GameWeek gameWeek = getByCompetitionAndWeek(competition, weekNumber);
-        return matchRepository.findByGameweeksId(gameWeek.getId());
+        // ✅ FIX: Only return active matches
+        return matchRepository.findByGameweeksIdAndActiveTrue(gameWeek.getId());
     }
 
     public List<GameWeek> getUpcomingByCompetition(LeagueTheme competition) {
@@ -643,16 +646,16 @@ public class GameWeekService {
         GameWeek gameWeek = gameWeekRepository.findById(gameweekId)
                 .orElseThrow(() -> new IllegalArgumentException("GameWeek not found"));
 
-        // Fetch all match IDs in the gameweek
-        List<Match> gameweekMatches = matchRepository.findByGameweeksId(gameweekId);
-        Set<Long> validMatchIds = gameweekMatches.stream()
+        // ✅ FIX: Fetch only ACTIVE match IDs in the gameweek
+        List<Match> activeGameweekMatches = matchRepository.findByGameweeksIdAndActiveTrue(gameweekId);
+        Set<Long> validMatchIds = activeGameweekMatches.stream()
                 .map(Match::getId)
                 .collect(Collectors.toSet());
 
         // Validate the submitted matchIds
         for (Long id : matchIds) {
             if (!validMatchIds.contains(id)) {
-                throw new IllegalArgumentException("Match ID " + id + " does not belong to GameWeek " + gameweekId);
+                throw new IllegalArgumentException("Match ID " + id + " does not belong to active matches in GameWeek " + gameweekId);
             }
         }
 
@@ -661,13 +664,13 @@ public class GameWeekService {
         gameWeek.setValidated(true);
         gameWeekRepository.save(gameWeek);
     }
+
     public void updateTiebreakers(Long gameweekId, List<Long> newMatchIds) {
         GameWeek gameWeek = gameWeekRepository.findById(gameweekId)
                 .orElseThrow(() -> new IllegalArgumentException("GameWeek not found"));
 
         if (newMatchIds == null || newMatchIds.isEmpty()) {
             gameWeek.setTiebreakerMatchIdList(Collections.emptyList());
-            // No tiebreakers -> auto-unvalidate
             gameWeek.setValidated(false);
             gameWeekRepository.save(gameWeek);
             return;
@@ -677,9 +680,9 @@ public class GameWeekService {
             throw new IllegalArgumentException("Exactly 3 tiebreaker match IDs must be provided");
         }
 
-        // Récupère tous les matchs liés à la gameweek ET actifs
-        List<Match> matches = matchRepository.findByGameweeksIdAndActiveTrue(gameweekId);
-        Set<Long> validMatchIds = matches.stream().map(Match::getId).collect(Collectors.toSet());
+        // ✅ FIX: Only get active matches for validation
+        List<Match> activeMatches = matchRepository.findByGameweeksIdAndActiveTrue(gameweekId);
+        Set<Long> validMatchIds = activeMatches.stream().map(Match::getId).collect(Collectors.toSet());
 
         for (Long id : newMatchIds) {
             if (!validMatchIds.contains(id)) {
@@ -688,18 +691,54 @@ public class GameWeekService {
         }
 
         gameWeek.setTiebreakerMatchIdList(newMatchIds);
-        // Exactly 3 tiebreakers -> auto-validate, otherwise unvalidate
         gameWeek.setValidated(newMatchIds.size() == 3);
         gameWeekRepository.save(gameWeek);
     }
-
 
     public List<Match> getTiebreakerMatches(Long gameweekId) {
         GameWeek gameWeek = gameWeekRepository.findById(gameweekId)
                 .orElseThrow(() -> new IllegalArgumentException("GameWeek not found"));
 
         List<Long> ids = gameWeek.getTiebreakerMatchIdList();
-        return matchRepository.findAllById(ids);
+        if (ids.isEmpty()) {
+            return List.of();
+        }
+
+        // ✅ FIX: Only return active tiebreaker matches
+        return matchRepository.findAllById(ids).stream()
+                .filter(Match::isActive)
+                .collect(Collectors.toList());
+    }
+    @Transactional
+    public void validateTiebreakersAreActive(Long gameweekId) {
+        GameWeek gameWeek = gameWeekRepository.findById(gameweekId)
+                .orElseThrow(() -> new IllegalArgumentException("GameWeek not found"));
+
+        List<Long> tiebreakerIds = gameWeek.getTiebreakerMatchIdList();
+        if (tiebreakerIds.isEmpty()) {
+            return;
+        }
+
+        // Check if all tiebreaker matches are still active
+        List<Match> tiebreakerMatches = matchRepository.findAllById(tiebreakerIds);
+        List<Long> inactiveIds = tiebreakerMatches.stream()
+                .filter(match -> !match.isActive())
+                .map(Match::getId)
+                .collect(Collectors.toList());
+
+        if (!inactiveIds.isEmpty()) {
+            // Remove inactive matches from tiebreakers
+            List<Long> activeIds = tiebreakerMatches.stream()
+                    .filter(Match::isActive)
+                    .map(Match::getId)
+                    .collect(Collectors.toList());
+
+            gameWeek.setTiebreakerMatchIdList(activeIds);
+            gameWeek.setValidated(activeIds.size() == 3);
+            gameWeekRepository.save(gameWeek);
+
+            System.out.println("Removed inactive tiebreaker matches: " + inactiveIds + " from gameweek " + gameweekId);
+        }
     }
 
     // ✅ NEW: Scheduled task to handle expired sessions (runs every 5 minutes)
@@ -755,43 +794,30 @@ public class GameWeekService {
 
         System.out.println("📊 Current gameweek status: " + gameWeek.getStatus());
 
-        // Get matches using the same method as other functions for consistency
-        List<Match> allMatches = matchRepository.findByGameweeksId(gameweekId);
-
-        // Filter active matches only (same logic as updateStatusIfComplete)
-        List<Match> activeMatches = allMatches.stream()
-                .filter(Match::isActive)
-                .toList();
+        // ✅ FIX: Only get active matches for status calculation
+        List<Match> activeMatches = matchRepository.findByGameweeksIdAndActiveTrue(gameweekId);
 
         long totalActiveMatches = activeMatches.size();
         long completedMatches = activeMatches.stream()
-                .filter(match -> match.getStatus() == MatchStatus.COMPLETED) // Use MatchStatus for consistency
+                .filter(match -> match.getStatus() == MatchStatus.COMPLETED)
                 .count();
 
-        long inactiveCount = allMatches.stream()
-                .filter(match -> !match.isActive())
-                .count();
-
-        System.out.println("⚽ Total matches in gameweek: " + allMatches.size());
         System.out.println("⚽ Active matches: " + totalActiveMatches);
         System.out.println("✅ Completed active matches: " + completedMatches + "/" + totalActiveMatches);
-        if (inactiveCount > 0) {
-            System.out.println("⚠️ Skipping " + inactiveCount + " inactive match(es)");
-        }
 
-        // Determine new status based on completed matches
+        // Determine new status based on completed active matches
         GameweekStatus newStatus;
 
-        if (completedMatches == 0) {
-            // No matches are completed
+        if (totalActiveMatches == 0) {
+            newStatus = GameweekStatus.UPCOMING; // No active matches
+            System.out.println("📊 No active matches -> UPCOMING");
+        } else if (completedMatches == 0) {
             newStatus = GameweekStatus.UPCOMING;
-            System.out.println("📊 No matches completed -> UPCOMING");
+            System.out.println("📊 No completed matches -> UPCOMING");
         } else if (completedMatches < totalActiveMatches) {
-            // Some matches are completed, some are not
             newStatus = GameweekStatus.ONGOING;
             System.out.println("📊 Some matches completed -> ONGOING");
         } else {
-            // All active matches are completed
             newStatus = GameweekStatus.FINISHED;
             System.out.println("📊 All active matches completed -> FINISHED");
         }
@@ -816,7 +842,6 @@ public class GameWeekService {
             return false;
         }
     }
-
     @Transactional
     public void removeMatchesFromTiebreakers(Long gameweekId, List<Long> matchIdsToRemove) {
         GameWeek gameWeek = gameWeekRepository.findById(gameweekId)

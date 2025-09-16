@@ -332,20 +332,18 @@ toggleSelectAll(event: Event): void {
   }
 
   showMatches(gameweek: Gameweek): void {
-    this.selectedGameweekForMatches = gameweek;
-    this.loadingMatches = true;
-    this.matchesLoadError = null;
-    this.matchesForSelectedGameweek = [];
-
-    this.gameweekService.getMatchesWithIcons(gameweek.id!).subscribe({
+    if (!gameweek.id) return;
+  
+    // For admin view, load ALL matches including inactive ones
+    this.gameweekService.getAllMatchesWithIconsForAdmin(gameweek.id).subscribe({
       next: (matches) => {
-        this.matchesForSelectedGameweek = matches;
-        this.loadingMatches = false;
+        this.selectedGameweekForMatches = gameweek;
+        this.matchesForSelectedGameweek = matches; // This now includes inactive matches
+        console.log(`Loaded ${matches.length} matches (including inactive) for admin view`);
       },
       error: (err) => {
-        this.matchesLoadError = 'Erreur lors du chargement des matchs.';
-        this.loadingMatches = false;
-        console.error(err);
+        console.error('Error loading matches for admin view:', err);
+        alert('Erreur lors du chargement des matchs.');
       }
     });
   }
@@ -436,7 +434,7 @@ resetGameweek(gameweekId: number): void {
       const resets = matches.map(m => {
         const updatedMatch: Match = {
           ...m,
-          status: 'SCHEDULED', // ✅ OK if 'SCHEDULED' is in the Match type
+          status: 'SCHEDULED', // OK if 'SCHEDULED' is in the Match type
           homeScore: 0,
           awayScore: 0
         };

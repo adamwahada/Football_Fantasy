@@ -14,6 +14,7 @@ import { CommonModule } from '@angular/common';
 export class ShowGameweekMatchesComponent implements OnChanges {
   @Input() gameweek!: Gameweek;
   @Input() matches: MatchWithIconsDTO[] = [];
+  @Input() isAdminView: boolean = false;
 
   private _matches: (MatchWithIconsDTO & { isTiebreaker?: boolean })[] = [];
 
@@ -35,7 +36,19 @@ export class ShowGameweekMatchesComponent implements OnChanges {
     if (changes['matches'] || changes['gameweek']) {
       this.updateMatchesWithTiebreakers();
     }
+    
+    // If gameweek changed and we're in admin view, reload with admin method
+    if (changes['gameweek'] && this.gameweek?.id && this.isAdminView) {
+      this.gameweekService.getAllMatchesWithIconsForAdmin(this.gameweek.id).subscribe({
+        next: (allMatches) => {
+          this.matches = allMatches;
+          this.updateMatchesWithTiebreakers();
+        },
+        error: (err) => console.error('Error loading admin matches:', err)
+      });
+    }
   }
+  
 
   private updateMatchesWithTiebreakers(): void {
     let tiebreakerIds: number[] = [];
@@ -51,8 +64,8 @@ export class ShowGameweekMatchesComponent implements OnChanges {
 
     this._matches = this.matches.map(m => ({
       ...m,
-      // Only mark as tiebreaker if the match is active AND in the tiebreaker list
-      isTiebreaker: m.id != null && m.active && tiebreakerIds.includes(m.id)
+      // In admin view, show tiebreaker status for all matches, regardless of active status
+      isTiebreaker: m.id != null && tiebreakerIds.includes(m.id)
     }));
   }
 
@@ -278,17 +291,27 @@ export class ShowGameweekMatchesComponent implements OnChanges {
 
   private reloadGameweekAndMatches(): void {
     if (!this.gameweek?.id) return;
-
+  
     this.gameweekService.getGameweekById(this.gameweek.id).subscribe({
       next: (updatedGameweek) => {
         this.gameweek = updatedGameweek;
-        this.gameweekService.getMatchesWithIcons(this.gameweek.id!).subscribe({
+        
+        // Choose which method to call based on admin status
+        const matchesObservable = this.isAdminView 
+          ? this.gameweekService.getAllMatchesWithIconsForAdmin(this.gameweek.id!)
+          : this.gameweekService.getMatchesWithIcons(this.gameweek.id!);
+        
+        matchesObservable.subscribe({
           next: (updatedMatches) => {
             this.matches = updatedMatches;
-            // Emit both updated gameweek and matches to parent component
+            // For admin view, emit all matches; for user view, only active
+            const matchesToEmit = this.isAdminView 
+              ? updatedMatches 
+              : updatedMatches.filter(m => m.active);
+              
             this.matchesUpdated.emit({
               gameweek: updatedGameweek,
-              matches: updatedMatches.filter(m => m.active)
+              matches: matchesToEmit
             });
           }
         });

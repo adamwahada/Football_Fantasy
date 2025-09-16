@@ -119,6 +119,10 @@ export class GameweekService {
   isGameweekComplete(gameweekId: number): Observable<boolean> {
     return this.http.get<boolean>(`${this.apiUrl}/${gameweekId}/is-complete`);
   }
+  // ✅ GET all matches with icons for admin (including inactive ones)
+getAllMatchesWithIconsForAdmin(gameweekId: number): Observable<MatchWithIconsDTO[]> {
+  return this.http.get<MatchWithIconsDTO[]>(`${this.apiUrl}/${gameweekId}/matches/admin`);
+}
 
   // ✅ Import full matches list to gameweek
   importMatches(gameweekId: number, matches: Match[]): Observable<string> {
@@ -218,5 +222,6 @@ validateGameweek(gameweekId: number): Observable<Gameweek> {
 unvalidateGameweek(gameweekId: number): Observable<Gameweek> {
   return this.http.post<Gameweek>(`${this.apiUrl}/${gameweekId}/unvalidate`, {});
 }
+
 
 }

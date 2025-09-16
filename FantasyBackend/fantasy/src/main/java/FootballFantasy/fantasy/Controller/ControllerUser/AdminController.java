@@ -63,12 +63,15 @@ public class AdminController {
     public ResponseEntity<String> triggerMatchUpdate(
             @RequestParam(required = false) String competition) {
 
-        if (competition != null && !competition.isEmpty()) {
-            matchUpdateService.updateMatchesManually(competition.toUpperCase());
-            return ResponseEntity.ok("✅ Match update triggered manually for " + competition.toUpperCase());
-        } else {
-            matchUpdateService.updateMatches(); // triggers all leagues
-            return ResponseEntity.ok("✅ Match update triggered manually for all leagues");
+        try {
+            matchUpdateService.updateTodaysMatches();
+
+            return ResponseEntity.ok("✅ Today's matches updated successfully across all competitions");
+
+        } catch (Exception e) {
+            System.out.println("❌ Error updating today's matches: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("Error updating today's matches: " + e.getMessage());
         }
     }
 

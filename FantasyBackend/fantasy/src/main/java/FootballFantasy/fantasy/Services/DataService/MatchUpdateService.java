@@ -12,6 +12,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
 import java.text.Normalizer;
+import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
@@ -136,6 +137,7 @@ public class MatchUpdateService {
     }
 
     // ✅ New streamlined method that processes matches for a specific gameweek without timing restrictions
+// ✅ New streamlined method that processes matches for a specific gameweek
     @Transactional
     public void updateMatchesForGameweek(String competition, int weekNumber) {
         try {
@@ -170,7 +172,7 @@ public class MatchUpdateService {
                 return;
             }
 
-            // Filter only matches from the requested week - no timing restrictions
+            // Filter only matches from the requested week
             List<Map<String, Object>> filteredMatches = matches.stream()
                     .filter(m -> Objects.equals((Integer) m.get("matchday"), weekNumber))
                     .toList();
@@ -186,7 +188,28 @@ public class MatchUpdateService {
 
             for (Map<String, Object> matchData : filteredMatches) {
                 try {
-                    processMatchDataSimplified(matchData, league, affectedGameWeeks);
+                    String status = (String) matchData.get("status");
+                    String utcDateStr = (String) matchData.get("utcDate");
+
+                    if (utcDateStr == null) {
+                        continue;
+                    }
+
+                    Instant matchDate = Instant.parse(utcDateStr);
+                    boolean isFuture = matchDate.isAfter(Instant.now());
+                    boolean isFinishedOrLive = "FINISHED".equals(status) || "IN_PLAY".equals(status) || "PAUSED".equals(status);
+
+                    // ⏭️ Skip future scheduled matches
+                    if (isFuture && ("SCHEDULED".equals(status) || "TIMED".equals(status))) {
+                        System.out.println("⏭️ Skipping future match: " + matchData.get("homeTeam"));
+                        continue;
+                    }
+
+                    // ✅ Process only finished/live or past scheduled ones
+                    if (isFinishedOrLive || !isFuture) {
+                        processMatchDataSimplified(matchData, league, affectedGameWeeks);
+                    }
+
                 } catch (Exception e) {
                     System.out.println("⚠️ Error processing match: " + e.getMessage());
                 }
@@ -207,7 +230,8 @@ public class MatchUpdateService {
         }
     }
 
-    // ✅ Simplified match processing without complex timing validations
+
+// ✅ Simplified match processing without overriding inactive matches
     @Transactional
     protected void processMatchDataSimplified(Map<String, Object> matchData, LeagueTheme league, Set<GameWeek> affectedGameWeeks) {
         try {
@@ -265,11 +289,17 @@ public class MatchUpdateService {
                 }
             }
 
-            // Find existing match or create new one
+            // Find existing match
             Match dbMatch = matchRepository.findWithGameweeks(
                     homeTeamName, awayTeamName,
                     matchDateUtc.minusHours(2), matchDateUtc.plusHours(2)
             );
+
+            // Respect inactive flag
+            if (dbMatch != null && !dbMatch.isActive()) {
+                System.out.println("⏭️ Skipping inactive match: " + homeTeamName + " vs " + awayTeamName);
+                return;
+            }
 
             if (dbMatch == null) {
                 System.out.println("🆕 Creating new match: " + homeTeamName + " vs " + awayTeamName);
@@ -280,34 +310,41 @@ public class MatchUpdateService {
                 dbMatch.setActive(true);
             } else {
                 System.out.println("🔄 Updating existing match: " + homeTeamName + " vs " + awayTeamName);
-                if (!dbMatch.isActive()) {
-                    dbMatch.setActive(true);
-                    System.out.println("✅ Match reactivated");
-                }
             }
 
-            // Update match data
+            // Update base info
             dbMatch.setMatchDate(matchDateUtc);
             dbMatch.setPredictionDeadline(matchDateUtc.minusMinutes(30));
-            dbMatch.setHomeScore(homeGoals);
-            dbMatch.setAwayScore(awayGoals);
 
-            // Map API status to internal status
+            // Map API status properly
             switch (apiStatus) {
                 case "FINISHED" -> {
+                    if (homeGoals != null && awayGoals != null) { // ✅ only set score if present
+                        dbMatch.setHomeScore(homeGoals);
+                        dbMatch.setAwayScore(awayGoals);
+                    }
                     dbMatch.setFinished(true);
                     dbMatch.setStatus(MatchStatus.COMPLETED);
                 }
                 case "IN_PLAY", "PAUSED" -> {
+                    if (homeGoals != null && awayGoals != null) { // partial scores allowed
+                        dbMatch.setHomeScore(homeGoals);
+                        dbMatch.setAwayScore(awayGoals);
+                    }
                     dbMatch.setFinished(false);
                     dbMatch.setStatus(MatchStatus.LIVE);
                 }
                 case "SCHEDULED", "TIMED", "POSTPONED" -> {
+                    // ✅ clear scores for future matches
+                    dbMatch.setHomeScore(null);
+                    dbMatch.setAwayScore(null);
                     dbMatch.setFinished(false);
                     dbMatch.setStatus(MatchStatus.SCHEDULED);
                 }
                 default -> {
                     System.out.println("⚠️ Unknown match status: " + apiStatus);
+                    dbMatch.setHomeScore(null);
+                    dbMatch.setAwayScore(null);
                     dbMatch.setFinished(false);
                     dbMatch.setStatus(MatchStatus.SCHEDULED);
                 }
@@ -329,6 +366,7 @@ public class MatchUpdateService {
             throw e;
         }
     }
+
 
     // ✅ Keep the old method for backward compatibility (manual finished-only updates)
     @Transactional
@@ -859,6 +897,7 @@ public class MatchUpdateService {
     }
 
     // ✅ Update GameWeek statuses based on match completion
+// ✅ Update GameWeek statuses based on match completion (FIXED)
     private void updateGameweeks(Set<GameWeek> gameWeeks) {
         try {
             for (GameWeek gameWeek : gameWeeks) {
@@ -868,28 +907,45 @@ public class MatchUpdateService {
                     continue;
                 }
 
-                // Calculate status based on match statuses
-                long finishedMatches = matches.stream()
+                // Filter to only ACTIVE matches for status calculation
+                List<Match> activeMatches = matches.stream()
+                        .filter(Match::isActive)
+                        .toList();
+
+                if (activeMatches.isEmpty()) {
+                    // If no active matches, keep current status or set to UPCOMING
+                    System.out.println("⚠️ No active matches for GameWeek " + gameWeek.getWeekNumber());
+                    continue;
+                }
+
+                // Calculate status based on ACTIVE match statuses only
+                long finishedActiveMatches = activeMatches.stream()
                         .filter(Match::isFinished)
                         .count();
 
-                long liveMatches = matches.stream()
+                long liveActiveMatches = activeMatches.stream()
                         .filter(m -> m.getStatus() == MatchStatus.LIVE)
                         .count();
 
                 GameweekStatus newStatus;
-                if (finishedMatches == matches.size()) {
+                if (finishedActiveMatches == activeMatches.size()) {
+                    // All active matches are finished
                     newStatus = GameweekStatus.FINISHED;
-                } else if (liveMatches > 0 || finishedMatches > 0) {
+                } else if (liveActiveMatches > 0 || finishedActiveMatches > 0) {
+                    // Some matches are live or finished but not all
                     newStatus = GameweekStatus.ONGOING;
                 } else {
+                    // No matches have started yet
                     newStatus = GameweekStatus.UPCOMING;
                 }
 
                 if (gameWeek.getStatus() != newStatus) {
                     gameWeek.setStatus(newStatus);
                     System.out.println("📊 GameWeek " + gameWeek.getWeekNumber() +
-                            " status updated to " + newStatus);
+                            " status updated to " + newStatus +
+                            " (Active: " + activeMatches.size() +
+                            ", Finished: " + finishedActiveMatches +
+                            ", Live: " + liveActiveMatches + ")");
                 }
 
                 gameweekRepository.save(gameWeek);
@@ -899,7 +955,6 @@ public class MatchUpdateService {
             System.out.println("❌ Error updating gameweek statuses: " + e.getMessage());
         }
     }
-    // Helper method to map user-friendly strings to enum
     public LeagueTheme mapToLeagueTheme(String input) {
         if (input == null) return null;
         String normalized = input.toLowerCase().replace("_", " ");

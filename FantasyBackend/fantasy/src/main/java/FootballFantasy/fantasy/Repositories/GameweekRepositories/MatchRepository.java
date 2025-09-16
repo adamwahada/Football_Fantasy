@@ -1,6 +1,7 @@
 package FootballFantasy.fantasy.Repositories.GameweekRepositories;
 
 import FootballFantasy.fantasy.Entities.GameweekEntities.GameWeek;
+import FootballFantasy.fantasy.Entities.GameweekEntities.LeagueTheme;
 import FootballFantasy.fantasy.Entities.GameweekEntities.Match;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -72,4 +73,13 @@ public interface MatchRepository extends JpaRepository<Match, Long> {
     // Count matches in a gameweek by status
     @Query("SELECT COUNT(m) FROM Match m WHERE :gameweek MEMBER OF m.gameweeks AND m.finished = :finished")
     long countByGameweekAndFinished(@Param("gameweek") GameWeek gameweek, @Param("finished") boolean finished);
+
+    // ✅ ADD: Find active matches by competition and week
+    @Query("SELECT m FROM Match m JOIN m.gameweeks gw WHERE gw.competition = :competition AND gw.weekNumber = :weekNumber AND m.active = true")
+    List<Match> findActiveMatchesByCompetitionAndWeek(@Param("competition") LeagueTheme competition, @Param("weekNumber") int weekNumber);
+
+    // ✅ ADD: Count active matches in a gameweek
+    @Query("SELECT COUNT(m) FROM Match m JOIN m.gameweeks gw WHERE gw.id = :gameweekId AND m.active = true")
+    long countActiveMatchesByGameweek(@Param("gameweekId") Long gameweekId);
+
 }

@@ -15,6 +15,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/gameweeks")
@@ -265,6 +266,38 @@ public class GameWeekController {
     public ResponseEntity<GameWeek> unvalidateGameWeek(@PathVariable("id") Long gameWeekId) {
         GameWeek unvalidatedGameWeek = gameWeekService.unvalidateGameWeek(gameWeekId);
         return ResponseEntity.ok(unvalidatedGameWeek);
+    }
+
+    // ✅ Get ALL matches for admin (including inactive ones)
+    @GetMapping("/{gameWeekId}/matches/admin")
+    public ResponseEntity<List<MatchWithIconsDTO>> getAllMatchesByGameWeekForAdmin(@PathVariable Long gameWeekId) {
+        try {
+            // Use the method that gets ALL matches (active + inactive)
+            List<Match> allMatches = gameWeekService.getAllMatchesByGameWeek(gameWeekId);
+
+            // Convert to DTOs with icons
+            List<MatchWithIconsDTO> matchesWithIcons = allMatches.stream()
+                    .map(match -> MatchWithIconsDTO.builder()
+                            .id(match.getId())
+                            .homeTeam(match.getHomeTeam())
+                            .awayTeam(match.getAwayTeam())
+                            .homeTeamIcon(teamIconService.getTeamIcon(match.getHomeTeam()))
+                            .awayTeamIcon(teamIconService.getTeamIcon(match.getAwayTeam()))
+                            .matchDate(match.getMatchDate())
+                            .homeScore(match.getHomeScore())
+                            .awayScore(match.getAwayScore())
+                            .active(match.isActive()) // This will show true/false for each match
+                            .finished(match.isFinished())
+                            .predictionDeadline(match.getPredictionDeadline())
+                            .description(match.getDescription())
+                            .build()
+                    )
+                    .collect(Collectors.toList());
+
+            return ResponseEntity.ok(matchesWithIcons);
+        } catch (Exception e) {
+            return ResponseEntity.internalServerError().build();
+        }
     }
     
 

@@ -13,6 +13,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
+
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -193,27 +195,82 @@ public class MatchService {
     @PreAuthorize("hasAuthority('ROLE_ADMIN')")
     @Transactional
     public Match setMatchActiveStatus(Long matchId, boolean active) {
+        System.out.println("🔄 Setting match " + matchId + " active status to: " + active);
+
         Match match = matchRepository.findById(matchId)
                 .orElseThrow(() -> new IllegalArgumentException("Match not found with ID: " + matchId));
 
         boolean wasActive = match.isActive();
+
+        // If no change needed, return early
+        if (wasActive == active) {
+            System.out.println("✅ No change needed for match " + matchId + " (already " + active + ")");
+            return match;
+        }
+
+        System.out.println("📊 Match " + matchId + " status changing from " + wasActive + " to " + active);
+
+        // Update the match status
         match.setActive(active);
-        Match savedMatch = matchRepository.save(match);
+        Match savedMatch = matchRepository.saveAndFlush(match);
 
-        if (wasActive != active) {
-            // Re-evaluate all related gameweeks
-            for (GameWeek gw : match.getGameweeks()) {
-                // 1) Update gameweek status
-                gameWeekService.updateStatusIfComplete(gw.getId());
+        System.out.println("💾 Match " + matchId + " saved with active=" + savedMatch.isActive());
 
-                // 2) Recalculate timings based on only active matches
-                matchUpdateService.updateGameWeekTimings(gw);
+        // Store affected gameweeks for batch processing
+        List<GameWeek> affectedGameweeks = new ArrayList<>(match.getGameweeks());
+
+        // If deactivating a match, remove it from tiebreakers first
+        if (!active) {
+            System.out.println("🚫 Removing match " + matchId + " from tiebreakers (if any)");
+            for (GameWeek gw : affectedGameweeks) {
+                removeMatchFromTiebreakers(gw.getId(), matchId);
+            }
+        }
+
+        // Process each affected gameweek
+        for (GameWeek gw : affectedGameweeks) {
+            System.out.println("🔄 Processing gameweek " + gw.getId() + " after match status change");
+
+            try {
+                // 1) Recalculate dates first (based on active matches only)
+                gameWeekService.recalculateGameWeekDates(gw);
+
+                // 2) Update gameweek status (based on active matches only)
+                gameWeekService.updateStatusIfRescheduled(gw.getId());
+
+                System.out.println("✅ Gameweek " + gw.getId() + " processed successfully");
+
+            } catch (Exception e) {
+                System.err.println("❌ Error processing gameweek " + gw.getId() + ": " + e.getMessage());
+                e.printStackTrace();
             }
         }
 
         return savedMatch;
     }
+    private void removeMatchFromTiebreakers(Long gameweekId, Long matchId) {
+        try {
+            GameWeek gameWeek = gameWeekRepository.findById(gameweekId)
+                    .orElseThrow(() -> new IllegalArgumentException("GameWeek not found"));
 
+            List<Long> currentTiebreakers = gameWeek.getTiebreakerMatchIdList();
 
+            if (currentTiebreakers.contains(matchId)) {
+                List<Long> updatedTiebreakers = new ArrayList<>(currentTiebreakers);
+                updatedTiebreakers.remove(matchId);
+
+                gameWeek.setTiebreakerMatchIdList(updatedTiebreakers);
+                // Update validation status based on remaining tiebreakers
+                gameWeek.setValidated(updatedTiebreakers.size() == 3);
+
+                gameWeekRepository.save(gameWeek);
+
+                System.out.println("🗑️ Removed match " + matchId + " from tiebreakers in gameweek " + gameweekId);
+            }
+
+        } catch (Exception e) {
+            System.err.println("❌ Error removing match from tiebreakers: " + e.getMessage());
+        }
+    }
 
 }
