@@ -213,25 +213,33 @@ export class UserGameweekDetailsComponent implements OnInit, OnDestroy {
   private determineCurrentGameweek(): void {
     const now = new Date();
     
-    // Find the gameweek that's currently active or next upcoming
+    // First, find any gameweek that's currently ONGOING (between start and end dates)
     const activeGameweek = this.gameweeks.find(gw => {
       const startDate = new Date(gw.startDate);
       const endDate = new Date(gw.endDate);
       return now >= startDate && now <= endDate;
     });
-
+  
     if (activeGameweek) {
       this.currentGameweek = activeGameweek.weekNumber;
-    } else {
-      // If no active gameweek, find the next upcoming one
-      const upcomingGameweek = this.gameweeks.find(gw => {
+      return;
+    }
+  
+    // If no ongoing gameweek, find the next upcoming one
+    const sortedUpcoming = this.gameweeks
+      .filter(gw => {
         const startDate = new Date(gw.startDate);
-        return now < startDate;
-      });
-      
-      if (upcomingGameweek) {
-        this.currentGameweek = upcomingGameweek.weekNumber;
-      }
+        return now < startDate; // Only truly upcoming gameweeks
+      })
+      .sort((a, b) => a.weekNumber - b.weekNumber);
+    
+    if (sortedUpcoming.length > 0) {
+      this.currentGameweek = sortedUpcoming[0].weekNumber;
+    } else {
+      // If no upcoming gameweeks, set to null or the last gameweek
+      const lastGameweek = this.gameweeks
+        .sort((a, b) => b.weekNumber - a.weekNumber)[0];
+      this.currentGameweek = lastGameweek?.weekNumber || null;
     }
   }
 
@@ -274,7 +282,24 @@ export class UserGameweekDetailsComponent implements OnInit, OnDestroy {
    * Check if a gameweek is the current active one
    */
   isCurrentGameweek(weekNumber: number): boolean {
-    return this.currentGameweek === weekNumber;
+    const gw = this.gameweeks.find(g => g.weekNumber === weekNumber);
+    if (!gw) return false;
+    
+    const status = this.getGameweekStatus(gw);
+    
+    // A gameweek is "current" only if it's actually ONGOING
+    // OR if it's the next upcoming gameweek when no gameweek is ongoing
+    if (status === 'ONGOING') {
+      return true;
+    }
+    
+    // If there's no ongoing gameweek, the next upcoming one can be considered "current"
+    const hasOngoingGameweek = this.gameweeks.some(g => this.getGameweekStatus(g) === 'ONGOING');
+    if (!hasOngoingGameweek && this.isNextUpcomingGameweek(gw)) {
+      return true;
+    }
+    
+    return false;
   }
 
   /**
@@ -315,17 +340,30 @@ export class UserGameweekDetailsComponent implements OnInit, OnDestroy {
     }
   }
   isLockedGameweek(weekNumber: number): boolean {
-  const gw = this.gameweeks.find(gw => gw.weekNumber === weekNumber);
-  if (!gw) return false;
-  // If this is the current gameweek and its deadline has passed, lock it
-  if (this.currentGameweek === weekNumber) {
-    const minutesLeft = this.getMinutesUntilDeadline(gw);
-    if (minutesLeft === null || minutesLeft <= 0) return true;
+    const gw = this.gameweeks.find(gw => gw.weekNumber === weekNumber);
+    if (!gw) return false;
+  
+    const status = this.getGameweekStatus(gw);
+    
+    // NEVER lock ONGOING or FINISHED gameweeks - they should always be accessible for viewing results
+    if (status === 'ONGOING' || status === 'FINISHED') {
+      return false;
+    }
+    
+    // For UPCOMING gameweeks, check validation and range
+    if (status === 'UPCOMING') {
+      // If not validated, it's locked
+      if (!gw.validated) {
+        return true;
+      }
+      
+      // Check if it's within allowed range (current + next 2)
+      if (this.currentGameweek === null) return false;
+      return weekNumber > this.currentGameweek + 2;
+    }
+    
+    return false;
   }
-  // Lock if more than 2 ahead of current gameweek (keep your original logic)
-  if (this.currentGameweek === null) return false;
-  return weekNumber > this.currentGameweek + 1;
-}
 
   /**
    * Check if this is the next upcoming gameweek (only the immediate next one)
@@ -374,17 +412,19 @@ isNextTwoUpcomingGameweek(gameweek: Gameweek): boolean {
    * Get the display status for a gameweek
    */
   getGameweekDisplayStatus(gameweek: Gameweek): string {
-    if (this.isCurrentGameweek(gameweek.weekNumber)) {
-      return 'Current';
-    } else if (this.getGameweekStatus(gameweek) === 'ONGOING') {
-      return 'Live';
-    } else if (
-      this.getGameweekStatus(gameweek) === 'FINISHED' ||
-      (gameweek.status && gameweek.status.toUpperCase() === 'FINISHED')
-    ) {
+    const status = this.getGameweekStatus(gameweek);
+    
+    // Priority order: actual status first, then contextual labels
+    if (status === 'FINISHED' || (gameweek.status && gameweek.status.toUpperCase() === 'FINISHED')) {
       return 'Done';
-    } else if (this.isNextUpcomingGameweek(gameweek)) {
-      return 'Next';
+    } else if (status === 'ONGOING') {
+      return 'Live';
+    } else if (status === 'UPCOMING') {
+      if (this.isNextUpcomingGameweek(gameweek)) {
+        return 'Next';
+      } else {
+        return 'Upcoming';
+      }
     } else {
       return 'Upcoming';
     }
@@ -418,12 +458,38 @@ isNextTwoUpcomingGameweek(gameweek: Gameweek): boolean {
   /**
    * Open gameweek matches
    */
-  openGameweekMatches(weekNumber: number): void {
-    // Add loading state to clicked gameweek
-    const gameweek = this.gameweeks.find(gw => gw.weekNumber === weekNumber);
-    if (gameweek) {
-      this.router.navigate(['../', this.competition, weekNumber], { relativeTo: this.route });    }
+// In your UserGameweekDetailsComponent, update the click handler method:
+
+openGameweekMatches(weekNumber: number): void {
+  const gameweek = this.gameweeks.find(gw => gw.weekNumber === weekNumber);
+  if (!gameweek) return;
+
+  const status = this.getGameweekStatus(gameweek);
+  
+  switch (status) {
+    case 'FINISHED':
+      // Route to finished gameweek view
+      this.router.navigate(['/user', 'user-gameweek-list', this.competition, weekNumber, 'finished']);
+      break;
+      
+    case 'ONGOING':
+      // Route to current gameweek view (ongoing matches)
+      this.router.navigate(['/user', 'user-gameweek-list', this.competition, weekNumber, 'current']);
+      break;
+      
+    case 'UPCOMING':
+      // Route to regular gameweek view (for predictions)
+      if (gameweek.validated) {
+        this.router.navigate(['/user', 'user-gameweek-list', this.competition, weekNumber]);
+      }
+      break;
+      
+    default:
+      // Fallback to regular gameweek view
+      this.router.navigate(['/user', 'user-gameweek-list', this.competition, weekNumber]);
+      break;
   }
+}
 
   /**
    * Get CSS class for league theme

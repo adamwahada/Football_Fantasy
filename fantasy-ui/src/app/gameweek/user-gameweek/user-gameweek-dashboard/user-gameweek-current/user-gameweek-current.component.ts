@@ -11,13 +11,13 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatTooltipModule } from '@angular/material/tooltip';
 
 @Component({
-  selector: 'app-user-gameweek-finished',
+  selector: 'app-user-gameweek-current',
   standalone: true,
-  imports: [CommonModule, MatIconModule,MatButtonModule,MatTooltipModule],
-  templateUrl: './user-gameweek-finished.component.html',
-  styleUrls: ['./user-gameweek-finished.component.scss']
+  imports: [CommonModule, MatIconModule, MatButtonModule, MatTooltipModule],
+  templateUrl: './user-gameweek-current.component.html',
+  styleUrls: ['./user-gameweek-current.component.scss']
 })
-export class UserGameweekFinishedComponent implements OnInit {
+export class UserGameweekCurrentComponent implements OnInit {
   competition!: string;
   weekNumber!: number;
   matches: Match[] = [];
@@ -26,8 +26,6 @@ export class UserGameweekFinishedComponent implements OnInit {
   error = '';
   leagueIconUrl: string = '';
   leagueDisplayName: string = '';
-
-  // Pre-loaded icon maps for performance
   teamIconsMap: Record<string, string> = {};
   teamsWithIcons: Array<{name: string, iconUrl: string, league: string}> = [];
   leagueIcons: Record<string, string> = {};
@@ -46,23 +44,88 @@ export class UserGameweekFinishedComponent implements OnInit {
     private route: ActivatedRoute,
     private gameweekService: GameweekService,
     private teamService: TeamService,
-    private location: Location  ) {}
+    private location: Location
+  ) {}
 
   ngOnInit(): void {
     this.competition = this.route.snapshot.params['competition'];
-    this.weekNumber = +this.route.snapshot.params['weekNumber'];
+    const weekParam = this.route.snapshot.params['weekNumber'];
+    
+    if (weekParam) {
+      // If weekNumber is provided in URL, use it
+      this.weekNumber = +weekParam;
+      console.log('Using weekNumber from URL:', this.weekNumber);
+      this.loadIconsAndMatches();
+    } else {
+      // If no weekNumber provided, determine current gameweek
+      console.log('No weekNumber in URL, determining current gameweek');
+      this.determineCurrentGameweek();
+    }
+  }
 
-    console.log('UserGameweekFinishedComponent initialized with:', {
-      competition: this.competition,
-      weekNumber: this.weekNumber
+  private determineCurrentGameweek(): void {
+    this.gameweekService.getAllGameweeksByCompetition(this.competition)
+      .subscribe({
+        next: (gameweeks) => {
+          const currentWeek = this.findCurrentGameweek(gameweeks);
+          if (currentWeek) {
+            this.weekNumber = currentWeek;
+            console.log('Current gameweek determined:', this.weekNumber);
+            this.loadIconsAndMatches();
+          } else {
+            this.error = 'No current gameweek found for this competition';
+            this.loading = false;
+          }
+        },
+        error: (err) => {
+          console.error('Error determining current gameweek:', err);
+          this.error = 'Failed to determine current gameweek';
+          this.loading = false;
+        }
+      });
+  }
+
+  private findCurrentGameweek(gameweeks: Gameweek[]): number | null {
+    const now = new Date();
+    const sortedGameweeks = gameweeks.sort((a, b) => a.weekNumber - b.weekNumber);
+
+    console.log('Finding current gameweek from:', sortedGameweeks.length, 'gameweeks');
+    console.log('Current time:', now.toISOString());
+
+    // First, try to find a gameweek that is currently ongoing
+    const ongoingGameweek = sortedGameweeks.find(gw => {
+      const start = new Date(gw.startDate);
+      const end = new Date(gw.endDate);
+      const isOngoing = now >= start && now <= end;
+      
+      console.log(`GW${gw.weekNumber}: ${start.toISOString()} - ${end.toISOString()}, ongoing: ${isOngoing}`);
+      
+      return isOngoing;
     });
 
-    // Load all icons first, then load matches
-    this.loadIconsAndMatches();
+    if (ongoingGameweek) {
+      console.log('Found ongoing gameweek:', ongoingGameweek.weekNumber);
+      return ongoingGameweek.weekNumber;
+    }
+
+    // If no ongoing gameweek, find the next upcoming one
+    const nextGameweek = sortedGameweeks.find(gw => {
+      const start = new Date(gw.startDate);
+      return now < start;
+    });
+
+    if (nextGameweek) {
+      console.log('Found next upcoming gameweek:', nextGameweek.weekNumber);
+      return nextGameweek.weekNumber;
+    }
+
+    // If no upcoming gameweek, return the last finished one
+    const lastGameweek = sortedGameweeks[sortedGameweeks.length - 1];
+    console.log('Using last gameweek:', lastGameweek?.weekNumber);
+    return lastGameweek?.weekNumber || null;
   }
 
   private loadIconsAndMatches(): void {
-    // Load all icons in parallel first
     forkJoin({
       leagueIcons: this.teamService.getAllLeagueIcons(),
       teamIcons: this.teamService.getAllTeamIcons()
@@ -70,18 +133,15 @@ export class UserGameweekFinishedComponent implements OnInit {
       next: ({ leagueIcons, teamIcons }) => {
         this.leagueIcons = leagueIcons || {};
         this.teamIconsMap = teamIcons || {};
-        
-        // Setup league info after icons are loaded
         this.setupLeagueInfo();
-        
-        // Now load matches
         this.loadMatches();
+        this.loadGameweekInfo();
       },
       error: (err) => {
         console.error('Error loading icons:', err);
-        // Continue without icons
         this.setupLeagueInfo();
         this.loadMatches();
+        this.loadGameweekInfo();
       }
     });
   }
@@ -100,19 +160,15 @@ export class UserGameweekFinishedComponent implements OnInit {
     }
   }
 
-  loadMatches(): void {
+  private loadMatches(): void {
     console.log('Loading matches for:', this.competition, this.weekNumber);
     
     this.gameweekService.getMatchesByCompetition(this.competition, this.weekNumber)
       .subscribe({
-        next: (data) => {
-          console.log('Matches loaded:', data);
-          this.matches = data;
-          
-          // Process team icons after matches are loaded
+        next: (matches) => {
+          console.log('Matches loaded:', matches);
+          this.matches = matches;
           this.processTeamIcons();
-          
-          this.loadGameweekInfo();
           this.loading = false;
         },
         error: (err) => {
@@ -124,14 +180,8 @@ export class UserGameweekFinishedComponent implements OnInit {
   }
 
   private processTeamIcons(): void {
-    // Get all unique team names from matches
-    const allTeams = Array.from(new Set(
-      this.matches.flatMap(match => [match.homeTeam, match.awayTeam])
-    ));
-    
-    // Use the TeamService method to get teams with proper icon URLs
+    const allTeams = Array.from(new Set(this.matches.flatMap(m => [m.homeTeam, m.awayTeam])));
     this.teamsWithIcons = this.teamService.getTeamsWithIcons(allTeams, this.teamIconsMap);
-    
     console.log('Teams with icons processed:', this.teamsWithIcons);
   }
 
@@ -140,6 +190,7 @@ export class UserGameweekFinishedComponent implements OnInit {
       .subscribe({
         next: (gameweeks) => {
           this.gameweek = gameweeks.find(gw => gw.weekNumber === this.weekNumber) || null;
+          console.log('Gameweek info loaded:', this.gameweek);
         },
         error: (err) => {
           console.error('Error loading gameweek info:', err);
@@ -147,16 +198,26 @@ export class UserGameweekFinishedComponent implements OnInit {
       });
   }
 
-  getWinner(match: Match): string {
-    if (!match.finished) return 'Pas encore joué';
-    if (typeof match.homeScore !== 'number' || typeof match.awayScore !== 'number') return 'Score inconnu';
-    if (match.homeScore > match.awayScore) return match.homeTeam;
-    if (match.awayScore > match.homeScore) return match.awayTeam;
-    return 'Égalité';
+  getMatchResult(match: Match): string {
+    if (typeof match.homeScore !== 'number' || typeof match.awayScore !== 'number') {
+      return 'Pas encore joué';
+    }
+
+    if (!match.finished) {
+      return `${match.homeScore} - ${match.awayScore}`;
+    }
+
+    if (match.homeScore > match.awayScore) {
+      return match.homeTeam;
+    } else if (match.awayScore > match.homeScore) {
+      return match.awayTeam;
+    } else {
+      return 'Égalité';
+    }
   }
 
   isWinner(match: Match, team: 'home' | 'away'): boolean {
-    if (!match.finished || match.homeScore === undefined || match.awayScore === undefined) {
+    if (!match.finished || typeof match.homeScore !== 'number' || typeof match.awayScore !== 'number') {
       return false;
     }
     if (team === 'home') {
@@ -178,10 +239,26 @@ export class UserGameweekFinishedComponent implements OnInit {
   }
 
   isDraw(match: Match): boolean {
-    return !!(match.finished && 
-             typeof match.homeScore === 'number' && 
-             typeof match.awayScore === 'number' && 
-             match.homeScore === match.awayScore);
+    if (!match.finished || typeof match.homeScore !== 'number' || typeof match.awayScore !== 'number') {
+      return false;
+    }
+    return match.homeScore === match.awayScore;
+  }
+
+  getGameweekStatus(): string {
+    if (!this.gameweek) return 'En cours';
+    
+    const now = new Date();
+    const start = new Date(this.gameweek.startDate);
+    const end = new Date(this.gameweek.endDate);
+    
+    if (now < start) {
+      return 'À venir';
+    } else if (now >= start && now <= end) {
+      return 'En cours';
+    } else {
+      return 'Terminé';
+    }
   }
 
   isTiebreakerMatch(match: Match): boolean {
@@ -192,17 +269,16 @@ export class UserGameweekFinishedComponent implements OnInit {
     return tiebreakerIds.includes(match.id?.toString() || '');
   }
 
-  // Optimized method - synchronous lookup from processed teams with icons
   getTeamIcon(teamName: string): string | undefined {
     const teamWithIcon = this.teamsWithIcons.find(team => team.name === teamName);
     return teamWithIcon?.iconUrl;
   }
 
-  // Method to check if team has a custom icon
   hasTeamIcon(teamName: string): boolean {
     const teamWithIcon = this.teamsWithIcons.find(team => team.name === teamName);
     return !!teamWithIcon?.iconUrl && !teamWithIcon.iconUrl.includes('default.png');
   }
+
   goBack(): void {
     this.location.back();
   }

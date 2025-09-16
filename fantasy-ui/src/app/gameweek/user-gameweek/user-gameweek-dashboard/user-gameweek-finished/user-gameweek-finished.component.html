@@ -3,23 +3,37 @@
     <div class="min-h-screen bg-gradient-to-b from-green-900/95 via-gray-900 to-black p-7 pt-20 text-green-50">
       <div class="max-w-6xl mx-auto">
         
-        <header class="flex justify-between items-center mb-5 pt-6">
-          <!-- Left side: icon + league name + gameweek inline -->
-          <div class="flex items-center gap-3 flex-1">
+        <!-- Header with back button + title -->
+        <header class="relative flex items-center justify-center mb-6">
+          <div class="back-button">
+            <button
+              mat-stroked-button
+              color="primary"
+              class="flex items-center gap-2 px-4 py-2 rounded-lg shadow hover:scale-105 transition-transform"
+              (click)="goBack()"
+              matTooltip="Go back"
+              aria-label="Go back"
+            >
+              <mat-icon>arrow_back</mat-icon>
+              Back
+            </button>
+          </div>
+        
+          <!-- League icon + title centered -->
+          <div class="flex items-center gap-3">
             <img *ngIf="leagueIconUrl" [src]="leagueIconUrl" [alt]="leagueDisplayName" class="h-8 w-8 object-contain" />
-            <h1 class="league-title">
-              {{ leagueDisplayName }} - {{ weekNumber }} (Terminé)
-            </h1>
+            <h1 class="league-title">{{ leagueDisplayName }} - {{ weekNumber }} (Terminé)</h1>
           </div>
         </header>
+        
 
         <!-- Loading State -->
-        <div *ngIf="loading" class="loading">
+        <div *ngIf="loading" class="loading mb-6">
           <p>Chargement des matchs pour {{ competition }} - Gameweek {{ weekNumber }}...</p>
         </div>
         
         <!-- Error State -->
-        <div *ngIf="error" class="error">
+        <div *ngIf="error" class="error mb-6">
           <p>{{ error }}</p>
         </div>
 
@@ -29,11 +43,19 @@
             <article *ngFor="let match of matches"
                      class="match-card"
                      [class.tiebreaker]="isTiebreakerMatch(match)"
+                     [class.draw]="isDraw(match)"
                      [id]="'match-' + match.id">
 
               <!-- Tiebreak badge -->
               <div *ngIf="isTiebreakerMatch(match)" class="tiebreak-badge">
                 Tie-break
+              </div>
+
+              <!-- Match status badge -->
+              <div class="match-status-badges">
+                <div class="match-finished-badge" *ngIf="match.finished">
+                  Terminé
+                </div>
               </div>
 
               <!-- Main match content with three columns -->
@@ -51,17 +73,19 @@
 
                 <!-- Score Display -->
                 <div class="score-display">
-                  <div class="score-container">
+                  <div class="score-container" [class.draw-scores]="isDraw(match)">
                     <span class="score home-score" 
                           [class.winner-score]="isWinner(match, 'home')"
-                          [class.loser-score]="isLoser(match, 'home')">
-                      {{ match.homeScore || 0 }}
+                          [class.loser-score]="isLoser(match, 'home')"
+                          [class.draw-score]="isDraw(match)">
+                      {{ match.homeScore ?? '--' }}
                     </span>
                     <span class="score-separator">-</span>
                     <span class="score away-score" 
                           [class.winner-score]="isWinner(match, 'away')"
-                          [class.loser-score]="isLoser(match, 'away')">
-                      {{ match.awayScore || 0 }}
+                          [class.loser-score]="isLoser(match, 'away')"
+                          [class.draw-score]="isDraw(match)">
+                      {{ match.awayScore ?? '--' }}
                     </span>
                   </div>
                 </div>
@@ -82,7 +106,7 @@
         </main>
 
         <!-- No matches -->
-        <div *ngIf="!loading && !error && matches.length === 0" class="no-matches">
+        <div *ngIf="!loading && !error && matches.length === 0" class="no-matches mt-6">
           <p>Aucun match trouvé pour cette gameweek.</p>
         </div>
 

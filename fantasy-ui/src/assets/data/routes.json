@@ -93,7 +93,7 @@
         },
         {
           "path": "/admin/admin-dashboard-history",
-          "title": "Admin/User History",
+          "title": "Depot/Ban History",
           "class": "ml-menu",
           "role": ["ADMIN"],
           "submenu": []

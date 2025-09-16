@@ -7,6 +7,9 @@ import { UserGameweekMatchesComponent } from "../gameweek/user-gameweek/user-gam
 import { UserGameweekDetailsComponent } from "../gameweek/user-gameweek/user-gameweek-dashboard/user-gameweek-details/user-gameweek-details.component";
 import { UserGameweekClassementComponent } from "../gameweek/user-gameweek/user-gameweek-dashboard/user-gameweek-classement/user-gameweek-classement.component";
 import { UserGameweekFinishedComponent } from "../gameweek/user-gameweek/user-gameweek-dashboard/user-gameweek-finished/user-gameweek-finished.component";
+import { UserGameweekCurrentComponent } from "../gameweek/user-gameweek/user-gameweek-dashboard/user-gameweek-current/user-gameweek-current.component";
+import { finishedGameweekGuard } from "../gameweek/user-gameweek/user-gameweek-dashboard/gameweek-access-finished.guard";
+import { currentGameweekGuard } from "../gameweek/user-gameweek/user-gameweek-dashboard/gameweek-access-current.guard";
 export const userRoutes: Routes = [
   {
     path: '',
@@ -18,9 +21,7 @@ export const userRoutes: Routes = [
       { path: 'user-gameweek-list/:competition', component: UserGameweekDetailsComponent, canActivate: [gameweekAccessGuard] },
       { path: 'user-gameweek-classement/:competition', component: UserGameweekClassementComponent, canActivate: [gameweekAccessGuard] },
       { path: 'user-gameweek-list/:competition/:weekNumber', component: UserGameweekMatchesComponent, canActivate: [gameweekAccessGuard] },
-      { 
-        path: 'user-gameweek-list/:competition/:weekNumber/finished', 
-        component: UserGameweekFinishedComponent
-      }
-            ]}
+      { path: 'user-gameweek-list/:competition/:weekNumber/finished', component: UserGameweekFinishedComponent, canActivate: [finishedGameweekGuard] },
+      { path: 'user-gameweek-list/:competition/:weekNumber/current', component: UserGameweekCurrentComponent, canActivate: [currentGameweekGuard] },
+ ]}
 ];
