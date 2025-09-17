@@ -1,0 +1,51 @@
+<nav
+  class="fixed top-0 left-0 right-0 z-50 transition-all duration-500"
+  [ngClass]="{
+    'bg-[#0a0f0a]/95': scrolled(),
+    'backdrop-blur-md': scrolled(),
+    'border-b': scrolled(),
+    'border-[#0dfd86]/20': scrolled()
+  }"
+>  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div class="flex items-center justify-between h-16">
+      <div class="flex items-center space-x-2">
+        <div class="w-8 h-8 bg-[#0dfd86] rounded-lg flex items-center justify-center">
+          <span class="w-4 h-4 text-[#0a0f0a] inline-block">▶</span>
+        </div>
+        <span class="text-xl font-bold text-white">SPORTSTREAM</span>
+      </div>
+      
+      <div class="hidden md:flex items-center space-x-8">
+        <a href="#" class="text-white hover:text-[#0dfd86] transition-colors">Live</a>
+        <a href="#" class="text-white hover:text-[#0dfd86] transition-colors">Sports</a>
+        <a href="#" class="text-white hover:text-[#0dfd86] transition-colors">Schedule</a>
+        <a href="#" class="text-white hover:text-[#0dfd86] transition-colors">News</a>
+      </div>
+      
+      <div class="hidden md:flex items-center space-x-4">
+        <button class="text-white hover:text-[#0dfd86] px-3 py-2 rounded transition-colors">Sign In</button>
+        <button class="bg-[#0dfd86] hover:bg-[#0dfd86]/90 text-[#0a0f0a] font-semibold px-3 py-2 rounded">Subscribe Now</button>
+      </div>
+      
+      <div class="md:hidden">
+        <button (click)="toggleMenu()" class="text-white p-2 rounded">
+          <span *ngIf="!isMenuOpen()" class="w-6 h-6 inline-block">☰</span>
+          <span *ngIf="isMenuOpen()" class="w-6 h-6 inline-block">✕</span>
+        </button>
+      </div>
+    </div>
+    
+    <div *ngIf="isMenuOpen()" class="md:hidden bg-[#0a0f0a]/95 backdrop-blur-md border-t border-[#0dfd86]/20">
+      <div class="px-2 pt-2 pb-3 space-y-1">
+        <a href="#" class="block px-3 py-2 text-white hover:text-[#0dfd86]">Live</a>
+        <a href="#" class="block px-3 py-2 text-white hover:text-[#0dfd86]">Sports</a>
+        <a href="#" class="block px-3 py-2 text-white hover:text-[#0dfd86]">Schedule</a>
+        <a href="#" class="block px-3 py-2 text-white hover:text-[#0dfd86]">News</a>
+        <div class="pt-4 pb-2 space-y-2">
+          <button class="w-full text-white px-3 py-2 rounded">Sign In</button>
+          <button class="w-full bg-[#0dfd86] hover:bg-[#0dfd86]/90 text-[#0a0f0a] font-semibold px-3 py-2 rounded">Subscribe Now</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</nav>

@@ -1,0 +1,35 @@
+{
+  "ADMIN_DASHBOARD": {
+    "TITLE": "⚙️ Admin Dashboard - Funds Management",
+    "SEARCH_PLACEHOLDER": "Search by name, email, ID or balance...",
+    "FILTER_STATUS": "Filter by status:",
+    "STATUS_ALL": "All users",
+    "STATUS_ACTIVE": "Active",
+    "STATUS_TEMP_BANNED": "Temporarily banned",
+    "STATUS_TEMP_BANNED_UNTIL": "Banned until",
+    "STATUS_PERMANENTLY_BANNED": "Permanently banned",
+    "RESULTS_FOUND": "result(s) found",
+    "INPUT_AMOUNT": "Amount",
+    "BUTTON_CREDIT": "Credit",
+    "BUTTON_DEBIT": "Debit",
+    "REFRESH_LIST": "Refresh list",
+    "FILTER_SEARCH": "Search",
+    "FILTER_STATUS_LABEL": "Status",
+    "RESPONSE": "Response:",
+    "TABLE": {
+      "ID": "ID",
+      "USERNAME": "Username",
+      "EMAIL": "Email",
+      "BALANCE": "Balance",
+      "STATUS": "Status",
+      "ACTIONS": "Actions"
+    },
+    "MESSAGES": {
+      "INVALID_AMOUNT": "⚠️ Please enter a valid amount for this user.",
+      "INSUFFICIENT_BALANCE": "❌ Insufficient balance. Required: {{required}}€, Current: {{current}}€, Missing: {{shortage}}€",
+      "ERROR": "❌ An error occurred",
+      "CREDITED": "💰 Credited {{amount}}€ to user {{id}}",
+      "DEBITED": "💸 Debited {{amount}}€ from user {{id}}"
+    }
+  }
+}

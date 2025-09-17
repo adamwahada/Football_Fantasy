@@ -5,6 +5,9 @@ import { FormsModule } from '@angular/forms';
 import { MatPaginatorModule } from '@angular/material/paginator';
 import { MatPaginator } from '@angular/material/paginator';
 import { AuthService } from '../../core/services/auth.service';
+import { TranslateModule,TranslateService } from '@ngx-translate/core';
+import { MatSnackBarModule,MatSnackBar } from '@angular/material/snack-bar';
+
 
 interface User {
   id: number;
@@ -19,7 +22,8 @@ interface User {
   selector: 'app-admin-dashboard',
   templateUrl: './admin-dashboard-funds.component.html',
   styleUrls: ['./admin-dashboard-funds.component.scss'],
-  imports: [CommonModule, FormsModule, MatPaginatorModule],
+  imports: [CommonModule, FormsModule, MatPaginatorModule,TranslateModule ,    MatSnackBarModule
+],
 })
 export class AdminDashboardFundsComponent implements OnInit {
   users: User[] = [];
@@ -38,7 +42,11 @@ export class AdminDashboardFundsComponent implements OnInit {
 
   private authService = inject(AuthService);
 
-  constructor(private adminService: AdminService) {}
+  constructor(private adminService: AdminService,
+              private snackBar: MatSnackBar, 
+              public translate: TranslateService) {
+    this.translate.setDefaultLang('en');
+  }
 
   ngOnInit(): void {
     this.loadUsers();
@@ -155,57 +163,77 @@ export class AdminDashboardFundsComponent implements OnInit {
     this.updatePagedUsers();
   }
 
-  creditBalance(userId: number): void {
-    const amount = this.getUserAmount(userId);
-    const adminId = this.getAdminId();
+creditBalance(userId: number): void {
+  const amount = this.getUserAmount(userId);
+  const adminId = this.getAdminId();
 
-    if (!amount || amount <= 0) {
-      this.message = '⚠️ Veuillez entrer un montant valide pour cet utilisateur.';
-      return;
-    }
-    this.adminService.creditUserBalance(userId, amount, adminId!).subscribe({
-      next: () => {
-        this.message = `💰 Crédité ${amount}€ à l'utilisateur ${userId}`;
-        this.userAmounts[userId] = 0;
-        this.loadUsers();
-      },
-      error: err => this.message = '❌ Erreur: ' + err.message
-    });
+  if (!amount || amount <= 0) {
+    this.showMessage(
+      this.translate.instant('ADMIN_DASHBOARD.MESSAGES.INVALID_AMOUNT'),
+      'warning'
+    );
+    return;
   }
 
-  debitBalance(userId: number): void {
-    const amount = this.getUserAmount(userId);
-    const adminId = this.getAdminId();
+  this.adminService.creditUserBalance(userId, amount, adminId!).subscribe({
+    next: () => {
+      this.showMessage(
+        this.translate.instant('ADMIN_DASHBOARD.MESSAGES.CREDITED', { amount, id: userId }),
+        'success'
+      );
+      this.userAmounts[userId] = 0;
+      this.loadUsers();
+    },
+    error: err => this.showMessage(this.handleErrorMessage(err), 'error')
+  });
+}
 
-    if (!amount || amount <= 0) {
-      this.message = '⚠️ Veuillez entrer un montant valide pour cet utilisateur.';
-      return;
-    }
-    this.adminService.debitUserBalance(userId, amount, adminId!).subscribe({
-      next: () => {
-        this.message = `💸 Débité ${amount}€ de l'utilisateur ${userId}`;
-        this.userAmounts[userId] = 0;
-        this.loadUsers();
-      },
-      error: err => {
-        let backendError: any;
-        try {
-          backendError = typeof err.error === 'string' ? JSON.parse(err.error) : err.error;
-        } catch {
-          backendError = err.error;
-        }
+debitBalance(userId: number): void {
+  const amount = this.getUserAmount(userId);
+  const adminId = this.getAdminId();
 
-        if (backendError?.error === 'INSUFFICIENT_BALANCE' && backendError.details) {
-          const details = backendError.details;
-          this.message = `❌ Solde insuffisant. Requis: ${details.required}€, Actuel: ${details.current}€, Manque: ${details.shortage}€`;
-        } else if (backendError?.message) {
-          this.message = `❌ ${backendError.message}`;
-        } else {
-          this.message = '❌ Une erreur est survenue';
-        }
-      }
-    });
+  if (!amount || amount <= 0) {
+    this.showMessage(
+      this.translate.instant('ADMIN_DASHBOARD.MESSAGES.INVALID_AMOUNT'),
+      'warning'
+    );
+    return;
   }
+
+  this.adminService.debitUserBalance(userId, amount, adminId!).subscribe({
+    next: () => {
+      this.showMessage(
+        this.translate.instant('ADMIN_DASHBOARD.MESSAGES.DEBITED', { amount, id: userId }),
+        'success'
+      );
+      this.userAmounts[userId] = 0;
+      this.loadUsers();
+    },
+    error: err => this.showMessage(this.handleErrorMessage(err), 'error')
+  });
+}
+
+private handleErrorMessage(err: any): string {
+  let backendError: any;
+  try {
+    backendError = typeof err.error === 'string' ? JSON.parse(err.error) : err.error;
+  } catch {
+    backendError = err.error;
+  }
+
+  if (backendError?.error === 'INSUFFICIENT_BALANCE' && backendError.details) {
+    const details = backendError.details;
+    return this.translate.instant('ADMIN_DASHBOARD.MESSAGES.INSUFFICIENT_BALANCE', {
+      required: details.required,
+      current: details.current,
+      shortage: details.shortage
+    });
+  } else if (backendError?.message) {
+    return `❌ ${backendError.message}`;
+  } else {
+    return this.translate.instant('ADMIN_DASHBOARD.MESSAGES.ERROR');
+  }
+}
 
   getActiveFilters(): string {
     const filters: string[] = [];
@@ -244,5 +272,17 @@ export class AdminDashboardFundsComponent implements OnInit {
       case 'permanently-banned': return 'Définitivement banni';
       default: return '';
     }
+  }
+  changeLanguage(event: Event) {
+  const select = event.target as HTMLSelectElement;
+  this.translate.use(select.value);
+}
+  private showMessage(msg: string, type: 'success' | 'error' | 'warning' = 'success') {
+    this.snackBar.open(msg, '✖', {
+      duration: 5000,
+      panelClass: [`snackbar-${type}`], // allows styling via CSS
+      horizontalPosition: 'center',
+      verticalPosition: 'top'
+    });
   }
 }

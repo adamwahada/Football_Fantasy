@@ -1,0 +1,35 @@
+{
+  "ADMIN_DASHBOARD": {
+    "TITLE": "⚙️ Tableau de bord Admin - Gestion des fonds",
+    "SEARCH_PLACEHOLDER": "Rechercher par nom, email, ID ou solde...",
+    "FILTER_STATUS": "Filtrer par statut :",
+    "STATUS_ALL": "Tous les utilisateurs",
+    "STATUS_ACTIVE": "Actif",
+    "STATUS_TEMP_BANNED": "Temporairement banni",
+    "STATUS_TEMP_BANNED_UNTIL": "Banni jusqu'au",
+    "STATUS_PERMANENTLY_BANNED": "Définitivement banni",
+    "RESULTS_FOUND": "résultat(s) trouvé(s)",
+    "INPUT_AMOUNT": "Montant",
+    "BUTTON_CREDIT": "Créditer",
+    "BUTTON_DEBIT": "Débiter",
+    "REFRESH_LIST": "Rafraîchir la liste",
+    "FILTER_SEARCH": "Recherche",
+    "FILTER_STATUS_LABEL": "Statut",
+    "RESPONSE": "Réponse :",
+        "TABLE": {
+      "ID": "ID",
+      "USERNAME": "Username",
+      "EMAIL": "Email",
+      "BALANCE": "Balaqqqnce",
+      "STATUS": "Status",
+      "ACTIONS": "Actions"
+    },
+    "MESSAGES": {
+      "INVALID_AMOUNT": "⚠️ Veuillez entrer un montant valide pour cet utilisateur.",
+      "INSUFFICIENT_BALANCE": "❌ Solde insuffisant. Requis : {{required}}€, Actuel : {{current}}€, Manque : {{shortage}}€",
+      "ERROR": "❌ Une erreur est survenue",
+      "CREDITED": "💰 Crédité {{amount}}€ à l'utilisateur {{id}}",
+      "DEBITED": "💸 Débité {{amount}}€ de l'utilisateur {{id}}"
+    }
+  }
+}

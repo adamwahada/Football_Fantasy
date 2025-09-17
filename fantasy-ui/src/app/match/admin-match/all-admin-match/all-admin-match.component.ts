@@ -21,6 +21,7 @@ interface MatchFilter {
   date?: string;
   matchStatus?: string;
   dateRange?: string;
+  search?: string;
 }
 
 @Component({
@@ -47,7 +48,7 @@ export class AllAdminMatchComponent implements OnInit, AfterViewInit {
   selectedMatchForGameweeks: Match | null = null;
   gameweeksForSelectedMatch: any[] = [];
   loadingGameweeks = false;
-
+  searchQuery: string = '';
 
   @ViewChild(MatPaginator) paginator!: MatPaginator;
 
@@ -101,99 +102,92 @@ export class AllAdminMatchComponent implements OnInit, AfterViewInit {
     });
   }
 
-
   ngAfterViewInit(): void {
     this.dataSource.paginator = this.paginator;
   }
 
   setupFilters(): void {
-    this.dataSource.filterPredicate = (data: Match, filter: string): boolean => {
-      if (!filter) return true;
-      
-      try {
-        const filters: MatchFilter = JSON.parse(filter);
-        
-        // Status filter (active/inactive)
-        const matchesStatus = filters.status
-          ? (filters.status === 'active' ? !!data.active : !data.active)
-          : true;
-
-        // Specific date filter
-        const matchesDate = filters.date
-          ? new Date(data.matchDate).toDateString() === new Date(filters.date).toDateString()
-          : true;
-
-        // Match status filter (SCHEDULED, LIVE, etc.)
-        const matchesMatchStatus = filters.matchStatus
-          ? data.status === filters.matchStatus
-          : true;
-
-        // Date range filter (1 day, 3 days, 1 week)
-        let matchesDateRange = true;
-        if (filters.dateRange && filters.dateRange !== 'all') {
-          const now = new Date();
-          now.setHours(0, 0, 0, 0); // Start of today
-          const matchDate = new Date(data.matchDate);
-          matchDate.setHours(0, 0, 0, 0); // Start of match day
-
-          switch (filters.dateRange) {
-            case 'today':
-              const today = new Date(now);
-              today.setHours(0, 0, 0, 0); // début de la journée
-
-              const tomorrowStart = new Date(today);
-              tomorrowStart.setDate(tomorrowStart.getDate() + 1); // début de demain
-
-              matchesDateRange = matchDate >= today && matchDate < tomorrowStart;
-              break;
-            case 'nextDay':
-              const tomorrow = new Date(now);
-              tomorrow.setDate(tomorrow.getDate() + 1);
-              const dayAfterTomorrow = new Date(tomorrow);
-              dayAfterTomorrow.setDate(dayAfterTomorrow.getDate() + 1);
-              matchesDateRange = matchDate >= tomorrow && matchDate < dayAfterTomorrow;
-              break;
-              
-            case 'next3Days':
-              const threeDaysLater = new Date(now);
-              threeDaysLater.setDate(threeDaysLater.getDate() + 3);
-              matchesDateRange = matchDate >= now && matchDate < threeDaysLater;
-              break;
-              
-            case 'nextWeek':
-              const nextWeek = new Date(now);
-              nextWeek.setDate(nextWeek.getDate() + 7);
-              matchesDateRange = matchDate >= now && matchDate < nextWeek;
-              break;
-              
-            default:
-              matchesDateRange = true;
-              break;
-          }
-        }
-
-        return !!(matchesStatus && matchesDate && matchesMatchStatus && matchesDateRange);
-      } catch (error) {
-        console.error('Error parsing filter:', error);
-        return true; // If parsing fails, show all data
-      }
-    };
+    this.dataSource.filterPredicate = this.createFilter();
   }
 
-loadMatches(): void {
-  this.matchService.getAllMatches().subscribe(data => {
-    this.matches = data;
-    this.dataSource.data = data;
-    this.applyFilters();
-  });
-}
+  createFilter(): (data: Match, filter: string) => boolean {
+    return (data: Match, filter: string): boolean => {
+      const searchTerms = JSON.parse(filter);
+      let matches = true;
+  
+      // Filter by status
+      if (searchTerms.status) {
+        matches = matches && (searchTerms.status === 'active' ? !!data.active : !data.active);
+      }
+  
+      // Filter by date
+      if (searchTerms.date) {
+        const matchDate = new Date(data.matchDate).toDateString();
+        const filterDate = new Date(searchTerms.date).toDateString();
+        matches = matches && (matchDate === filterDate);
+      }
+
+      // Filter by match status
+      if (searchTerms.matchStatus) {
+        matches = matches && data.status === searchTerms.matchStatus;
+      }
+
+      // Filter by date range
+      if (searchTerms.dateRange && searchTerms.dateRange !== 'all') {
+        const today = new Date();
+        const matchDate = new Date(data.matchDate);
+        
+        switch (searchTerms.dateRange) {
+          case 'today':
+            matches = matches && matchDate.toDateString() === today.toDateString();
+            break;
+          case 'nextDay':
+            const tomorrow = new Date(today);
+            tomorrow.setDate(tomorrow.getDate() + 1);
+            matches = matches && matchDate.toDateString() === tomorrow.toDateString();
+            break;
+          case 'next3Days':
+            const next3Days = new Date(today);
+            next3Days.setDate(next3Days.getDate() + 3);
+            matches = matches && matchDate >= today && matchDate <= next3Days;
+            break;
+          case 'nextWeek':
+            const nextWeek = new Date(today);
+            nextWeek.setDate(nextWeek.getDate() + 7);
+            matches = matches && matchDate >= today && matchDate <= nextWeek;
+            break;
+        }
+      }
+  
+      // Filter by search query (contains search)
+      if (searchTerms.search) {
+        const searchLower = searchTerms.search.toLowerCase();
+        matches = matches && (
+          (data.homeTeam?.toLowerCase().includes(searchLower)) ||
+          (data.awayTeam?.toLowerCase().includes(searchLower)) 
+        );
+      }
+  
+      return matches;
+    };
+  }
+  
+
+  loadMatches(): void {
+    this.matchService.getAllMatches().subscribe(data => {
+      this.matches = data;
+      this.dataSource.data = data;
+      this.applyFilters();
+    });
+  }
 
   applyFilters(): void {
     this.appliedFilters = {
       status: this.statusFilter,
       date: this.dateFilter,
       matchStatus: this.matchStatusFilter,
-      dateRange: this.filterControl.value || 'all'
+      dateRange: this.filterControl.value || 'all',
+      search: this.searchQuery?.toLowerCase() || ''
     };
 
     this.dataSource.filter = JSON.stringify(this.appliedFilters);
@@ -209,24 +203,16 @@ loadMatches(): void {
     this.statusFilter = '';
     this.dateFilter = '';
     this.matchStatusFilter = '';
+    this.searchQuery = '';
     this.filterControl.setValue('all');
-
-    this.appliedFilters = {
-      status: '',
-      date: '',
-      matchStatus: '',
-      dateRange: 'all'
-    };
-
-    this.dataSource.filter = '';
-    this.selectedMatchIds.clear();
+    this.applyFilters();
   }
 
   getPagedData(): Match[] {
     if (!this.dataSource.paginator) {
       return this.dataSource.filteredData;
     }
-    
+
     const startIndex = this.dataSource.paginator.pageIndex * this.dataSource.paginator.pageSize;
     const endIndex = startIndex + this.dataSource.paginator.pageSize;
     return this.dataSource.filteredData.slice(startIndex, endIndex);
@@ -617,6 +603,8 @@ redirectToGameweekMatches(gameweek: any) {
     queryParams: { openModal: gameweek.id }
   });
 }
-
+get loading(): boolean {
+  return this.loadingGameweeks;
+}
 
 }

@@ -1,5 +1,13 @@
 <div class="admin-dashboard">
-  <h2>⚙️ Admin Dashboard - Funds Management</h2>
+  <h2>{{ 'ADMIN_DASHBOARD.TITLE' | translate }}</h2>
+
+  <!-- Language Switcher (optional) -->
+  <div class="language-switcher" style="margin-bottom: 10px;">
+    <select (change)="changeLanguage($event)">
+      <option value="en">English</option>
+      <option value="fr">Français</option>
+    </select>
+  </div>
 
   <!-- Search, Filter and Refresh -->
   <div class="search-container" style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 10px;">
@@ -7,7 +15,7 @@
     <!-- Search Input -->
     <div class="search-input-container" style="flex: 1; display: flex; align-items: center; gap: 5px;">
       <input type="text" 
-            placeholder="Rechercher par nom, email, ID ou solde..." 
+            placeholder="{{ 'ADMIN_DASHBOARD.SEARCH_PLACEHOLDER' | translate }}" 
             [(ngModel)]="searchQuery" 
             (input)="searchUsers()"
             (keyup)="searchUsers()" 
@@ -15,7 +23,7 @@
       <button class="btn-refresh" 
               (click)="refreshUsers()" 
               [disabled]="refreshing"
-              title="Rafraîchir la liste des utilisateurs">
+              title="{{ 'ADMIN_DASHBOARD.REFRESH_LIST' | translate }}">
         <span *ngIf="!refreshing" class="refresh-icon">🔄</span>
         <span *ngIf="refreshing" class="refresh-icon spinning">⏳</span>
       </button>
@@ -24,51 +32,50 @@
     <!-- Status Filter -->
     <div class="filter-container" style="display: flex; align-items: center;">
       <label class="filter-label">
-        <span class="filter-text">Filtrer par statut :</span>
+        <span class="filter-text">{{ 'ADMIN_DASHBOARD.FILTER_STATUS' | translate }}</span>
         <select [(ngModel)]="selectedStatus" 
                 (change)="onStatusFilterChange()"
                 class="status-filter"
                 style="margin-left: 5px; padding: 5px;">
-                <option value="all">Tous les utilisateurs</option>
-                <option value="active">Actif</option>
-                <option value="temp-banned">Ban temporaire</option>
-                <option value="permanently-banned">Ban définitif</option>
+                <option value="all">{{ 'ADMIN_DASHBOARD.STATUS_ALL' | translate }}</option>
+                <option value="active">{{ 'ADMIN_DASHBOARD.STATUS_ACTIVE' | translate }}</option>
+                <option value="temp-banned">{{ 'ADMIN_DASHBOARD.STATUS_TEMP_BANNED' | translate }}</option>
+                <option value="permanently-banned">{{ 'ADMIN_DASHBOARD.STATUS_PERMANENTLY_BANNED' | translate }}</option>
         </select>
       </label>
     </div>
 
   </div>
 
-<!-- Active filters -->
-<div class="active-filters" *ngIf="searchQuery || selectedStatus !== 'all'" style="margin-bottom: 10px; display: flex; flex-wrap: wrap; gap: 5px;">
-  <span *ngIf="searchQuery && searchQuery.trim() !== ''" class="filter-chip">
-    🔍 Recherche: "{{ searchQuery }}"
-    <button type="button" class="remove-filter" (click)="clearSearch()">✖</button>
-  </span>
+  <!-- Active filters -->
+  <div class="active-filters" *ngIf="searchQuery || selectedStatus !== 'all'" style="margin-bottom: 10px; display: flex; flex-wrap: wrap; gap: 5px;">
+    <span *ngIf="searchQuery && searchQuery.trim() !== ''" class="filter-chip">
+      🔍 {{ 'ADMIN_DASHBOARD.FILTER_SEARCH' | translate }}: "{{ searchQuery }}"
+      <button type="button" class="remove-filter" (click)="clearSearch()">✖</button>
+    </span>
 
-  <span *ngIf="selectedStatus && selectedStatus !== 'all'" class="filter-chip">
-    ⚡ Statut: {{ getStatusLabel(selectedStatus) }}
-    <button type="button" class="remove-filter" (click)="clearStatus()">✖</button>
-  </span>
-</div>
+    <span *ngIf="selectedStatus && selectedStatus !== 'all'" class="filter-chip">
+      ⚡ {{ 'ADMIN_DASHBOARD.FILTER_STATUS_LABEL' | translate }}: {{ getStatusLabel(selectedStatus) }}
+      <button type="button" class="remove-filter" (click)="clearStatus()">✖</button>
+    </span>
+  </div>
 
-<!-- Search results info -->
-<div *ngIf="isSearchActive() || selectedStatus !== 'all'" class="search-results-info" style="margin-bottom: 10px; font-style: italic;">
-  {{ getSearchResultsCount() }} résultat(s) trouvé(s)
-</div>
-
+  <!-- Search results info -->
+  <div *ngIf="isSearchActive() || selectedStatus !== 'all'" class="search-results-info" style="margin-bottom: 10px; font-style: italic;">
+    {{ getSearchResultsCount() }} {{ 'ADMIN_DASHBOARD.RESULTS_FOUND' | translate }}
+  </div>
 
   <!-- Users Table -->
   <div class="users-table-container">
     <table class="users-table">
       <thead>
         <tr>
-          <th>ID</th>
-          <th>Nom d'utilisateur</th>
-          <th>Email</th>
-          <th>Solde</th>
-          <th>Statut</th>
-          <th>Actions</th>
+          <th>{{ 'ADMIN_DASHBOARD.TABLE.ID' | translate }}</th>
+          <th>{{ 'ADMIN_DASHBOARD.TABLE.USERNAME' | translate }}</th>
+          <th>{{ 'ADMIN_DASHBOARD.TABLE.EMAIL' | translate }}</th>
+          <th>{{ 'ADMIN_DASHBOARD.TABLE.BALANCE' | translate }}</th>
+          <th>{{ 'ADMIN_DASHBOARD.TABLE.STATUS' | translate }}</th>
+          <th>{{ 'ADMIN_DASHBOARD.TABLE.ACTIONS' | translate }}</th>
         </tr>
       </thead>
       <tbody>
@@ -81,31 +88,31 @@
           <td>{{ user.email }}</td>
           <td><strong>{{ user.balance | currency:'EUR':'symbol':'1.2-2' }}</strong></td>
           <td>
-            <span *ngIf="!user.active" class="inactive">Banni définitivement</span>
+            <span *ngIf="!user.active" class="inactive">{{ 'ADMIN_DASHBOARD.STATUS_PERMANENTLY_BANNED' | translate }}</span>
             <span *ngIf="user.active && isTemporarilyBanned(user)" class="temp-banned">
-              Banni jusqu'au {{ user.bannedUntil | date:'dd/MM/yyyy' }}
+              {{ 'ADMIN_DASHBOARD.STATUS_TEMP_BANNED_UNTIL' | translate }} {{ user.bannedUntil | date:'dd/MM/yyyy' }}
             </span>
             <span *ngIf="user.active && !isTemporarilyBanned(user)" class="active">
-              Actif
+              {{ 'ADMIN_DASHBOARD.STATUS_ACTIVE' | translate }}
             </span>
           </td>
           <td class="actions">
             <input type="number" 
                    [ngModel]="getUserAmount(user.id)" 
                    (ngModelChange)="updateUserAmount(user.id, $event)"
-                   placeholder="Montant" 
+                   placeholder="{{ 'ADMIN_DASHBOARD.INPUT_AMOUNT' | translate }}" 
                    class="amount-input"
                    min="0"
                    step="0.01" />
             <button class="btn-action btn-credit" 
                     (click)="creditBalance(user.id)"
-                    title="Créditer le solde">
-              💰 Créditer
+                    title="{{ 'ADMIN_DASHBOARD.BUTTON_CREDIT' | translate }}">
+              💰 {{ 'ADMIN_DASHBOARD.BUTTON_CREDIT' | translate }}
             </button>
             <button class="btn-action btn-debit" 
                     (click)="debitBalance(user.id)"
-                    title="Débiter le solde">
-              💸 Débiter
+                    title="{{ 'ADMIN_DASHBOARD.BUTTON_DEBIT' | translate }}">
+              💸 {{ 'ADMIN_DASHBOARD.BUTTON_DEBIT' | translate }}
             </button>
           </td>
         </tr>
@@ -122,12 +129,4 @@
     showFirstLastButtons>
   </mat-paginator>
 
-  <!-- Message -->
-  <div *ngIf="message" 
-       class="message-container"
-       [class.success]="message.includes('Credited') || message.includes('Debited') || message.includes('unbanned')"
-       [class.error]="message.includes('Error') || message.includes('❌')"
-       [class.warning]="message.includes('⚠️')">
-    <p><strong>Réponse:</strong> {{ message }}</p>
-  </div>
 </div>

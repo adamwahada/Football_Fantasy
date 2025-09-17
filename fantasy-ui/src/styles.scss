@@ -1,0 +1,33 @@
+
+/* Your custom styles below */
+@import "styles/animations.css";
+
+/* Snack-bar styling */
+body .mat-snack-bar-container {
+  border-radius: 8px !important;
+  padding: 12px 20px !important;
+  font-weight: 500 !important;
+  font-size: 14px !important;
+  color: white !important;
+}
+
+/* Success */
+body .mat-snack-bar-container.snackbar-success {
+  background-color: #4caf50 !important;
+}
+
+/* Error */
+body .mat-snack-bar-container.snackbar-error {
+  background-color: #f44336 !important;
+}
+
+/* Warning */
+body .mat-snack-bar-container.snackbar-warning {
+  background-color: #ff9800 !important;
+}
+
+/* Close button */
+body .mat-snack-bar-container .mat-simple-snackbar-action {
+  color: white !important;
+  font-weight: bold !important;
+}

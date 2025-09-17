@@ -1,0 +1,26 @@
+/* Animations utilitaires pour reproduire des classes Tailwind-like */
+
+@keyframes fade-in {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.animate-fade-in {
+  animation: fade-in 0.7s ease-out both;
+}
+
+@keyframes scroll-x {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+
+/* Appliqué sur le conteneur à largeur max-content doublée */
+.animate-scroll {
+  animation: scroll-x 30s linear infinite;
+}
+
+/* Aide à mettre en pause au survol si besoin */
+.hover\:animation-play-state-paused:hover {
+  animation-play-state: paused;
+}
+

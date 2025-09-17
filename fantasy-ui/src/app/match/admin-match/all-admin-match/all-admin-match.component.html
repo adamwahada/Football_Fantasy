@@ -116,9 +116,48 @@
 
 </div>
 
+<!-- Search Bar -->
+<div class="search-container" style="margin-bottom: 1rem;">
+  <div class="search-input-container" style="position: relative; display: flex; align-items: center; max-width: 600px;">
+    <input 
+      type="text" 
+      placeholder="Rechercher par équipe à domicile, équipe à l'extérieur, compétition..." 
+      [(ngModel)]="searchQuery" 
+      (input)="applyFilters()"
+      style="
+        width: 100%;
+        padding: 0.75rem 1rem;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        font-size: 1rem;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+      "
+    />
+    <button 
+      class="btn-refresh" 
+      (click)="loadMatches()" 
+      [disabled]="loading"
+      style="
+        margin-left: 0.5rem;
+        background: #f5f5f5;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        padding: 0.5rem 1rem;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      "
+      title="Rafraîchir la liste des matchs">
+      <span *ngIf="!loading" class="refresh-icon">🔄</span>
+      <span *ngIf="loading" class="refresh-icon spinning">⏳</span>
+    </button>
+  </div>
+</div>
+
 <!-- Active Filters Display -->
 <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 1rem; flex-wrap: wrap;">
-  <div class="active-filters" *ngIf="statusFilter || dateFilter || matchStatusFilter || filterControl.value !== 'all'"
+  <div class="active-filters" *ngIf="statusFilter || dateFilter || matchStatusFilter || filterControl.value !== 'all' || searchQuery"
        style="padding: 0.5rem; background-color: #f5f5f5; border-radius: 4px; display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; flex: 1;">
     <span style="font-weight: bold;">Filtres actifs:</span>
 
