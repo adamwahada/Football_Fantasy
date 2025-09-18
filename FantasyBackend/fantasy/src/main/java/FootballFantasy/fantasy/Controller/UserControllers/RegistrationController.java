@@ -1,4 +1,4 @@
-package FootballFantasy.fantasy.Controller.ControllerUser;
+package FootballFantasy.fantasy.Controller.UserControllers;
 
 import FootballFantasy.fantasy.Dto.RegisterRequest;
 import FootballFantasy.fantasy.Exception.UserAlreadyExistsException;

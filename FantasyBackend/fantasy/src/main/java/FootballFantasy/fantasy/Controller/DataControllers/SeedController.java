@@ -1,4 +1,4 @@
-package FootballFantasy.fantasy.Controller.DataController;
+package FootballFantasy.fantasy.Controller.DataControllers;
 
 import FootballFantasy.fantasy.Entities.GameweekEntities.LeagueTheme;
 import FootballFantasy.fantasy.Services.DataService.MatchSeederService;

@@ -1,4 +1,4 @@
-package FootballFantasy.fantasy.Controller.GameweekController;
+package FootballFantasy.fantasy.Controller.GameweekControllers;
 
 import FootballFantasy.fantasy.Entities.GameweekEntities.Match;
 import FootballFantasy.fantasy.Entities.GameweekEntities.GameWeek;

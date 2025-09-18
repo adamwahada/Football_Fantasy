@@ -1,6 +1,8 @@
 package FootballFantasy.fantasy.Entities.UserEntities;
 
 import FootballFantasy.fantasy.Entities.GameweekEntities.SessionParticipation;
+import FootballFantasy.fantasy.Entities.PaiementEntities.DepositTransactionEntity;
+import FootballFantasy.fantasy.Entities.PaiementEntities.WithdrawRequestEntity;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.*;
@@ -41,6 +43,15 @@ public class UserEntity {
     @Column(precision = 10, scale = 2, nullable = false)
     private BigDecimal balance = BigDecimal.ZERO;
 
+    @Column(precision = 10, scale = 2, nullable = false)
+    private BigDecimal pendingBalance = BigDecimal.ZERO;
+
+    @Column(precision = 10, scale = 2, nullable = false)
+    private BigDecimal withdrawableBalance = BigDecimal.ZERO;
+
+    @Column(precision = 10, scale = 2, nullable = false)
+    private BigDecimal bonusBalance = BigDecimal.ZERO;
+
     @JsonIgnore
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<SessionParticipation> sessionParticipations = new ArrayList<>();
@@ -48,5 +59,15 @@ public class UserEntity {
     public boolean isBanned() {
         return !active || (bannedUntil != null && bannedUntil.isAfter(LocalDateTime.now()));
     }
+
+    // Historique des dépôts faits par ce user
+    @OneToMany(mappedBy = "depositor")
+    @JsonIgnore
+    private List<DepositTransactionEntity> depositTransactions = new ArrayList<>();
+
+    // Historique des demandes de retrait créées par ce user
+    @OneToMany(mappedBy = "requester")
+    @JsonIgnore
+    private List<WithdrawRequestEntity> withdrawRequests = new ArrayList<>();
 
 }

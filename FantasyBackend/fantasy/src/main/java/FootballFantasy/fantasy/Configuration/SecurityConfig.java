@@ -53,9 +53,12 @@ public class SecurityConfig {
                                 "/api/admin/**",
                                 "/api/teams/**",
                                 "/api/league-classement/**",
-                                "/api/admin-management/**"
+                                "/api/admin-management/**",
+                                "/api/deposit-transactions/**"
 
-                                ).permitAll()
+
+
+                        ).permitAll()
 
                                 // All other requests must be authenticated
                         .anyRequest().authenticated()

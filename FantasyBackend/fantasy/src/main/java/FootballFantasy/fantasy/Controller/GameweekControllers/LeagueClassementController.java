@@ -1,4 +1,4 @@
-package FootballFantasy.fantasy.Controller.GameweekController;
+package FootballFantasy.fantasy.Controller.GameweekControllers;
 
 import FootballFantasy.fantasy.Services.DataService.LeagueClassementService;
 import org.springframework.beans.factory.annotation.Autowired;

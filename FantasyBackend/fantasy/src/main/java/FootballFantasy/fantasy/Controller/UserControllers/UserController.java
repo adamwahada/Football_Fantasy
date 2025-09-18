@@ -1,10 +1,12 @@
-package FootballFantasy.fantasy.Controller.ControllerUser;
+package FootballFantasy.fantasy.Controller.UserControllers;
 
 import FootballFantasy.fantasy.Entities.UserEntities.UserEntity;
 import FootballFantasy.fantasy.Services.UserService.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 import java.math.BigDecimal;
@@ -207,5 +209,14 @@ public class UserController {
             this.balance = balance;
         }
         public BigDecimal getBalance() { return balance; }
+    }
+    // ===== HELPER METHODS =====
+
+    public String getCurrentUserKeycloakId() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication != null && authentication.getName() != null) {
+            return authentication.getName(); // Keycloak ID from JWT
+        }
+        throw new RuntimeException("User not authenticated");
     }
 }

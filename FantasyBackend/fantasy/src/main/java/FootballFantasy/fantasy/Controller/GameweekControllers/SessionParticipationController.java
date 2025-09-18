@@ -1,4 +1,4 @@
-package FootballFantasy.fantasy.Controller.GameweekController;
+package FootballFantasy.fantasy.Controller.GameweekControllers;
 
 import FootballFantasy.fantasy.Dto.UserSessionStats;
 import FootballFantasy.fantasy.Entities.GameweekEntities.LeagueTheme;

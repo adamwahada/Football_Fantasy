@@ -1,8 +1,7 @@
-package FootballFantasy.fantasy.Controller.GameweekController;
+package FootballFantasy.fantasy.Controller.GameweekControllers;
 
 import FootballFantasy.fantasy.Services.DataService.TeamIconService;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Map;
