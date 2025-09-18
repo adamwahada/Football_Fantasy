@@ -1,7 +1,7 @@
 package FootballFantasy.fantasy.Controller.UserControllers;
 
 import FootballFantasy.fantasy.Dto.RegisterRequest;
-import FootballFantasy.fantasy.Exception.UserAlreadyExistsException;
+import FootballFantasy.fantasy.Exceptions.UsersExceptions.UserAlreadyExistsException;
 import FootballFantasy.fantasy.Services.UserService.RegistrationService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;

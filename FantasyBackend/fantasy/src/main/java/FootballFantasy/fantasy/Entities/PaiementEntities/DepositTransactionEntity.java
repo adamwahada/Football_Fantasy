@@ -44,4 +44,8 @@ public class DepositTransactionEntity {
     @JoinColumn(name = "approved_by_admin_id")
     private UserEntity approvedBy;
 
+    @ManyToOne
+    @JoinColumn(name = "withdraw_id")
+    private WithdrawRequestEntity matchedWithdraw;
+
 }

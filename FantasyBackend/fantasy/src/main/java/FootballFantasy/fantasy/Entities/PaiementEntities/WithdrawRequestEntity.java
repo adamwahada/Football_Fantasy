@@ -18,7 +18,7 @@ public class WithdrawRequestEntity {
     private Long id;
 
     @Column(precision = 10, scale = 2, nullable = false)
-    private BigDecimal amountwithdraw;
+    private BigDecimal amount;
 
     @Enumerated(EnumType.STRING)
     private TransactionStatus status = TransactionStatus.PENDING;
@@ -34,10 +34,19 @@ public class WithdrawRequestEntity {
     @Column(nullable = false)
     private String withdrawNumber;
 
+    @Column(nullable = false)
+    private boolean reserved = false;
+    private LocalDateTime reservedAt;
+
+
     private LocalDateTime createdAt = LocalDateTime.now();
     private LocalDateTime updatedAt;
+
+    private String reservedByKeycloakId;
 
     @ManyToOne
     @JoinColumn(name = "user_id", nullable = false)
     private UserEntity requester;
+
+
 }

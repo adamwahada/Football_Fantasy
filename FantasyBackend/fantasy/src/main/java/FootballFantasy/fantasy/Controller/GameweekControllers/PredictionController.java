@@ -2,11 +2,11 @@ package FootballFantasy.fantasy.Controller.GameweekControllers;
 
 import FootballFantasy.fantasy.Dto.GameweekPredictionSubmissionDTO;
 import FootballFantasy.fantasy.Entities.GameweekEntities.*;
-import FootballFantasy.fantasy.Exception.BusinessLogicException;
-import FootballFantasy.fantasy.Exception.InsufficientBalanceException;
-import FootballFantasy.fantasy.Exception.PrivateSessionNotFoundException;
-import FootballFantasy.fantasy.Exception.PrivateSessionGameweekMismatchException;
-import FootballFantasy.fantasy.Exception.PrivateSessionFullException;
+import FootballFantasy.fantasy.Exceptions.BusinessLogicException;
+import FootballFantasy.fantasy.Exceptions.PaiementExceptions.InsufficientBalanceException;
+import FootballFantasy.fantasy.Exceptions.PrivateSessionsExceptions.PrivateSessionNotFoundException;
+import FootballFantasy.fantasy.Exceptions.PrivateSessionsExceptions.PrivateSessionGameweekMismatchException;
+import FootballFantasy.fantasy.Exceptions.PrivateSessionsExceptions.PrivateSessionFullException;
 import FootballFantasy.fantasy.Services.GameweekService.*;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;

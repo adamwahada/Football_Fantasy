@@ -4,7 +4,7 @@ import FootballFantasy.fantasy.Entities.AdminEntities.BanCause;
 import FootballFantasy.fantasy.Entities.AdminEntities.UserAction;
 import FootballFantasy.fantasy.Entities.AdminEntities.UserManagementAudit;
 import FootballFantasy.fantasy.Entities.UserEntities.UserEntity;
-import FootballFantasy.fantasy.Exception.InsufficientBalanceException;
+import FootballFantasy.fantasy.Exceptions.PaiementExceptions.InsufficientBalanceException;
 import FootballFantasy.fantasy.Repositories.AdminRepositories.UserManagementAuditRepository;
 import FootballFantasy.fantasy.Repositories.UserRepositories.UserRepository;
 import FootballFantasy.fantasy.Services.GameweekService.SessionParticipationService;

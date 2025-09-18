@@ -2,7 +2,7 @@ package FootballFantasy.fantasy.Services.GameweekService;
 
 import FootballFantasy.fantasy.Entities.GameweekEntities.*;
 import FootballFantasy.fantasy.Entities.UserEntities.UserEntity;
-import FootballFantasy.fantasy.Exception.BusinessLogicException;
+import FootballFantasy.fantasy.Exceptions.BusinessLogicException;
 import FootballFantasy.fantasy.Repositories.GameweekRepositories.*;
 import FootballFantasy.fantasy.Repositories.UserRepositories.UserRepository;
 import jakarta.transaction.Transactional;
