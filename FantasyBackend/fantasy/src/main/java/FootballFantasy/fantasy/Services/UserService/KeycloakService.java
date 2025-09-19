@@ -234,4 +234,37 @@ public class KeycloakService {
         Object emailVerified = jwt.getClaims().get("email_verified");
         return emailVerified != null && (Boolean) emailVerified;
     }
+
+    // Add these methods to your KeycloakService class
+
+    public UserRepresentation getUserFromKeycloak(String keycloakId) {
+        Keycloak keycloak = null;
+        try {
+            keycloak = KeycloakBuilder.builder()
+                    .serverUrl(serverUrl)
+                    .realm(realm)
+                    .grantType(OAuth2Constants.CLIENT_CREDENTIALS)
+                    .clientId(clientId)
+                    .clientSecret(clientSecret)
+                    .build();
+
+            UsersResource usersResource = keycloak.realm(realm).users();
+            UserRepresentation user = usersResource.get(keycloakId).toRepresentation();
+
+            System.out.println("Retrieved full user from Keycloak: " + keycloakId);
+            return user;
+
+        } catch (Exception e) {
+            System.err.println("Failed to fetch user from Keycloak: " + e.getMessage());
+            return null;
+        } finally {
+            if (keycloak != null) keycloak.close();
+        }
+    }
+
+    public String getAttributeValue(Map<String, List<String>> attributes, String key) {
+        if (attributes == null) return null;
+        List<String> values = attributes.get(key);
+        return (values != null && !values.isEmpty()) ? values.get(0) : null;
+    }
 }

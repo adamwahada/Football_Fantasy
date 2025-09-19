@@ -10,6 +10,8 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.Map;
 
 @RestController
@@ -19,19 +21,31 @@ public class UserController {
     @Autowired
     private UserService userService;
 
-    // ✅ Get current user profile (with balance)
     @GetMapping("/me")
     public ResponseEntity<UserProfileResponse> getCurrentUser() {
         try {
-            UserEntity currentUser = userService.getCurrentUser();
+            UserEntity currentUser = userService.ensureCurrentUserFromToken();
+
             UserProfileResponse response = new UserProfileResponse(
                     currentUser.getId(),
                     currentUser.getUsername(),
                     currentUser.getEmail(),
                     currentUser.getFirstName(),
                     currentUser.getLastName(),
+                    currentUser.getPhone(),
+                    currentUser.getCountry(),
+                    currentUser.getAddress(),
+                    currentUser.getPostalNumber(),
+                    currentUser.getBirthDate(),
+                    currentUser.getReferralCode(),
                     currentUser.getBalance(),
-                    currentUser.isTermsAccepted()  // fixed here
+                    currentUser.getWithdrawableBalance(),
+                    currentUser.getBonusBalance(),
+                    currentUser.getPendingWithdrawals(),
+                    currentUser.getPendingDeposits(),
+                    currentUser.isTermsAccepted(),
+                    currentUser.isActive(),
+                    currentUser.getBannedUntil()
             );
             return ResponseEntity.ok(response);
         } catch (Exception e) {
@@ -39,18 +53,23 @@ public class UserController {
         }
     }
 
-
-    // ✅ Get just the balance (useful for quick competition checks)
     @GetMapping("/user-balance")
     public ResponseEntity<BalanceResponse> getCurrentUserBalance() {
         try {
-            UserEntity currentUser = userService.getCurrentUser();
+            System.out.println("🔍 Getting user balance...");
+
+            // ✅ Auto-create user if needed
+            UserEntity currentUser = userService.ensureCurrentUserFromToken();
+
+            System.out.println("✅ Balance retrieved for user: " + currentUser.getKeycloakId());
+
             return ResponseEntity.ok(new BalanceResponse(currentUser.getBalance()));
         } catch (Exception e) {
+            System.err.println("❌ Error getting balance: " + e.getMessage());
+            e.printStackTrace();
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
     }
-
     /**
      * Existing endpoints...
      */
@@ -178,24 +197,53 @@ public class UserController {
         }
     }
 
+    // Replace your entire UserProfileResponse class with this:
     public static class UserProfileResponse {
         private final Long id;
         private final String username;
         private final String email;
         private final String firstName;
         private final String lastName;
+        private final String phone;
+        private final String country;
+        private final String address;
+        private final String postalNumber;
+        private final LocalDate birthDate;
+        private final String referralCode;
         private final BigDecimal balance;
+        private final BigDecimal withdrawableBalance;
+        private final BigDecimal bonusBalance;
+        private final BigDecimal pendingWithdrawals;
+        private final BigDecimal pendingDeposits;
         private final boolean termsAccepted;
+        private final boolean active;
+        private final LocalDateTime bannedUntil;
 
         public UserProfileResponse(Long id, String username, String email, String firstName,
-                                   String lastName, BigDecimal balance, boolean termsAccepted) {
+                                   String lastName, String phone, String country, String address,
+                                   String postalNumber, LocalDate birthDate, String referralCode,
+                                   BigDecimal balance, BigDecimal withdrawableBalance, BigDecimal bonusBalance,
+                                   BigDecimal pendingWithdrawals, BigDecimal pendingDeposits,
+                                   boolean termsAccepted, boolean active, LocalDateTime bannedUntil) {
             this.id = id;
             this.username = username;
             this.email = email;
             this.firstName = firstName;
             this.lastName = lastName;
+            this.phone = phone;
+            this.country = country;
+            this.address = address;
+            this.postalNumber = postalNumber;
+            this.birthDate = birthDate;
+            this.referralCode = referralCode;
             this.balance = balance;
+            this.withdrawableBalance = withdrawableBalance;
+            this.bonusBalance = bonusBalance;
+            this.pendingWithdrawals = pendingWithdrawals;
+            this.pendingDeposits = pendingDeposits;
             this.termsAccepted = termsAccepted;
+            this.active = active;
+            this.bannedUntil = bannedUntil;
         }
 
         public Long getId() { return id; }
@@ -203,8 +251,20 @@ public class UserController {
         public String getEmail() { return email; }
         public String getFirstName() { return firstName; }
         public String getLastName() { return lastName; }
+        public String getPhone() { return phone; }
+        public String getCountry() { return country; }
+        public String getAddress() { return address; }
+        public String getPostalNumber() { return postalNumber; }
+        public LocalDate getBirthDate() { return birthDate; }
+        public String getReferralCode() { return referralCode; }
         public BigDecimal getBalance() { return balance; }
+        public BigDecimal getWithdrawableBalance() { return withdrawableBalance; }
+        public BigDecimal getBonusBalance() { return bonusBalance; }
+        public BigDecimal getPendingWithdrawals() { return pendingWithdrawals; }
+        public BigDecimal getPendingDeposits() { return pendingDeposits; }
         public boolean isTermsAccepted() { return termsAccepted; }
+        public boolean isActive() { return active; }
+        public LocalDateTime getBannedUntil() { return bannedUntil; }
     }
 
     public static class BalanceResponse {

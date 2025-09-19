@@ -9,6 +9,7 @@ import FootballFantasy.fantasy.Repositories.AdminRepositories.UserManagementAudi
 import FootballFantasy.fantasy.Repositories.UserRepositories.UserRepository;
 import FootballFantasy.fantasy.Services.GameweekService.SessionParticipationService;
 import jakarta.transaction.Transactional;
+import org.keycloak.representations.idm.UserRepresentation;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -20,6 +21,7 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 @Service
@@ -33,6 +35,9 @@ public class UserService {
 
     @Autowired
     private UserManagementAuditRepository userManagementAuditRepository;
+
+    @Autowired
+    private KeycloakService keycloakService;
 
     // ======== Keycloak / Current User Helpers ========
 
@@ -54,54 +59,149 @@ public class UserService {
                 .map(UserEntity::getId)
                 .orElseThrow(() -> new RuntimeException("App user not found for Keycloak ID: " + keycloakId));
     }
-
     public UserEntity ensureCurrentUserFromToken() {
-        Jwt jwt = getJwt();
+        try {
+            Jwt jwt = getJwt();
+            String keycloakId = jwt.getSubject();
 
-        String keycloakId = jwt.getSubject();
-        String username = (String) jwt.getClaims().getOrDefault("preferred_username", "");
-        String email = (String) jwt.getClaims().getOrDefault("email", "");
-        String firstName = (String) jwt.getClaims().getOrDefault("given_name", "");
-        String lastName = (String) jwt.getClaims().getOrDefault("family_name", "");
+            if (keycloakId == null || keycloakId.trim().isEmpty()) {
+                throw new RuntimeException("Keycloak ID not found in JWT token");
+            }
 
-        // App-specific fields
-        String phone = null;
-        String country = null;
-        String address = null;
-        String postalNumber = null;
-        LocalDate birthDate = null;
-        boolean termsAccepted = true;
-        // Defaults for new fields
-        boolean active = true;
-        BigDecimal balance = BigDecimal.ZERO;
-        LocalDateTime bannedUntil = null;
+            // Check if user already exists
+            UserEntity existingUser = userRepository.findByKeycloakId(keycloakId).orElse(null);
 
+            if (existingUser != null) {
+                System.out.println("User already exists in database: " + keycloakId);
 
-        UserEntity user = createOrUpdateUser(
-                keycloakId, username, email, firstName, lastName, phone, country, address, postalNumber,
-                birthDate, termsAccepted, active, balance,
-                BigDecimal.ZERO,               // withdrawableBalance
-                BigDecimal.ZERO,               // pendingWithdrawals
-                BigDecimal.ZERO,               // pendingDeposits
-                bannedUntil
-        );
+                // Ensure new fields have default values for existing users
+                boolean updated = false;
+                if (existingUser.getBalance() == null) {
+                    existingUser.setBalance(BigDecimal.ZERO);
+                    updated = true;
+                }
+                if (existingUser.getWithdrawableBalance() == null) {
+                    existingUser.setWithdrawableBalance(BigDecimal.ZERO);
+                    updated = true;
+                }
+                if (existingUser.getPendingWithdrawals() == null) {
+                    existingUser.setPendingWithdrawals(BigDecimal.ZERO);
+                    updated = true;
+                }
+                if (existingUser.getPendingDeposits() == null) {
+                    existingUser.setPendingDeposits(BigDecimal.ZERO);
+                    updated = true;
+                }
+                if (existingUser.getBonusBalance() == null) {
+                    existingUser.setBonusBalance(BigDecimal.ZERO);
+                    updated = true;
+                }
 
+                if (updated) {
+                    return userRepository.save(existingUser);
+                }
 
-        // Ensure defaults are set for existing users
-        user.setActive(true);
-        if (user.getBalance() == null) user.setBalance(BigDecimal.ZERO);
-        if (user.getWithdrawableBalance() == null) user.setWithdrawableBalance(BigDecimal.ZERO);  // ADD THIS
-        if (user.getPendingWithdrawals() == null) user.setPendingWithdrawals(BigDecimal.ZERO);
-        if (user.getPendingDeposits() == null) user.setPendingDeposits(BigDecimal.ZERO);
-        if (user.getBannedUntil() == null) user.setBannedUntil(null);
+                return existingUser;
+            }
 
-        return user;
+            // User doesn't exist - fetch complete profile from Keycloak Admin API
+            System.out.println("Creating new user from Keycloak: " + keycloakId);
+
+            // Get basic info from JWT
+            String username = getClaimSafely(jwt, "preferred_username");
+            String email = getClaimSafely(jwt, "email");
+            String firstName = getClaimSafely(jwt, "given_name");
+            String lastName = getClaimSafely(jwt, "family_name");
+
+            // Fetch complete user profile from Keycloak
+            String phone = null;
+            String country = null;
+            String address = null;
+            String postalNumber = null;
+            LocalDate birthDate = null;
+            String referralCode = null;
+
+            try {
+                UserRepresentation keycloakUser = keycloakService.getUserFromKeycloak(keycloakId);
+                if (keycloakUser != null && keycloakUser.getAttributes() != null) {
+                    Map<String, List<String>> attributes = keycloakUser.getAttributes();
+
+                    phone = keycloakService.getAttributeValue(attributes, "phone");
+                    country = keycloakService.getAttributeValue(attributes, "country");
+                    address = keycloakService.getAttributeValue(attributes, "address");
+                    postalNumber = keycloakService.getAttributeValue(attributes, "postalNumber");
+                    referralCode = keycloakService.getAttributeValue(attributes, "referralCode");
+
+                    String birthDateStr = keycloakService.getAttributeValue(attributes, "birthDate");
+                    if (birthDateStr != null && !birthDateStr.trim().isEmpty()) {
+                        try {
+                            birthDate = LocalDate.parse(birthDateStr);
+                        } catch (Exception e) {
+                            System.err.println("Failed to parse birth date: " + birthDateStr);
+                        }
+                    }
+
+                    System.out.println("Retrieved custom attributes from Keycloak:");
+                    System.out.println("Phone: " + phone);
+                    System.out.println("Country: " + country);
+                    System.out.println("Address: " + address);
+                    System.out.println("Postal: " + postalNumber);
+                    System.out.println("Birth Date: " + birthDate);
+                }
+            } catch (Exception e) {
+                System.err.println("Warning: Could not fetch custom attributes from Keycloak: " + e.getMessage());
+            }
+
+            // Create user with all available information
+            UserEntity newUser = createOrUpdateUser(
+                    keycloakId,
+                    username != null ? username : "user_" + keycloakId.substring(0, 8),
+                    email != null ? email : "",
+                    firstName != null ? firstName : "",
+                    lastName != null ? lastName : "",
+                    phone,
+                    country,
+                    address,
+                    postalNumber,
+                    birthDate,
+                    true,               // termsAccepted
+                    true,               // active
+                    BigDecimal.ZERO,    // balance
+                    BigDecimal.ZERO,    // withdrawableBalance
+                    BigDecimal.ZERO,    // pendingWithdrawals
+                    BigDecimal.ZERO,    // pendingDeposits
+                    null                // bannedUntil
+            );
+
+            // Set referral code if available
+            if (referralCode != null) {
+                newUser.setReferralCode(referralCode);
+                userRepository.save(newUser);
+            }
+
+            System.out.println("Successfully created user from Keycloak with all custom fields: " + keycloakId);
+            return newUser;
+
+        } catch (Exception e) {
+            System.err.println("Failed to ensure user from token: " + e.getMessage());
+            e.printStackTrace();
+            throw new RuntimeException("Failed to synchronize user with database: " + e.getMessage(), e);
+        }
     }
 
     @Transactional
     public UserEntity updateCurrentUserProfile(UserProfileUpdateRequest request) {
         Long userId = getCurrentAppUserId();
         return updateUserProfile(userId, request);
+    }
+
+    private String getClaimSafely(Jwt jwt, String claimName) {
+        try {
+            Object claim = jwt.getClaims().get(claimName);
+            return claim != null ? claim.toString().trim() : null;
+        } catch (Exception e) {
+            return null;
+        }
     }
 
     @Transactional
