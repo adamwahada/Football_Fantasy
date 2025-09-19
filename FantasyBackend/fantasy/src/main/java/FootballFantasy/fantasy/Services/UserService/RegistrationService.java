@@ -1,6 +1,7 @@
 package FootballFantasy.fantasy.Services.UserService;
 
 import FootballFantasy.fantasy.Dto.RegisterRequest;
+import FootballFantasy.fantasy.Entities.UserEntities.UserEntity;
 import FootballFantasy.fantasy.Exceptions.UsersExceptions.UserAlreadyExistsException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -69,8 +70,9 @@ public class RegistrationService {
 // ✅ STEP 6: Create user in application database
             log.info("📝 Creating user in application database...");
             try {
-                userService.createOrUpdateUser(
-                        keycloakId,              // Keycloak ID
+// Use the parsed birthDate variable instead of parsing again
+                UserEntity user = userService.createOrUpdateUser(
+                        keycloakId,
                         request.getUsername(),
                         request.getEmail(),
                         request.getFirstName(),
@@ -79,12 +81,16 @@ public class RegistrationService {
                         request.getCountry(),
                         request.getAddress(),
                         request.getPostalNumber(),
-                        birthDate,
-                        true,
-                        true,
-                        BigDecimal.ZERO,
-                        null
+                        birthDate,          // reuse instead of parsing again
+                        true,               // termsAccepted
+                        true,               // active
+                        BigDecimal.ZERO,    // balance
+                        BigDecimal.ZERO,    // withdrawableBalance
+                        BigDecimal.ZERO,    // pendingWithdrawals
+                        BigDecimal.ZERO,    // pendingDeposits
+                        null                // bannedUntil
                 );
+
                 log.info("✅ User created in application database successfully with Keycloak ID: {}", keycloakId);
             } catch (Exception e) {
                 log.error("❌ Failed to create user in application database: {}", e.getMessage(), e);

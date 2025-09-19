@@ -54,7 +54,8 @@ public class SecurityConfig {
                                 "/api/teams/**",
                                 "/api/league-classement/**",
                                 "/api/admin-management/**",
-                                "/api/deposit-transactions/**"
+                                "/api/deposit-transactions/**",
+                                "/api/withdraw-requests/**"
 
 
 

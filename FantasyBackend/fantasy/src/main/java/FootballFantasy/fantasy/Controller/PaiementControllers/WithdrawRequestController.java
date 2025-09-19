@@ -9,7 +9,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
-import java.math.BigDecimal;
+import java.util.Map;
 import java.util.List;
 
 @RestController
@@ -24,16 +24,27 @@ public class WithdrawRequestController {
     // User: Submit a new withdraw request
     // ===========================
     @PostMapping("/submit")
-    @Operation(summary = "Submit a withdraw request")
+    @Operation(summary = "Submit a withdraw request using prefixed amount")
     public WithdrawRequestEntity submitWithdraw(
-            @RequestParam BigDecimal amount,
             @RequestParam PrefixedAmount prefixedAmount,
             @RequestParam PaymentPlatform platform,
             @RequestParam String withdrawNumber
     ) {
         String keycloakId = depositTransactionService.getCurrentUserKeycloakId();
-        return withdrawService.submitWithdrawRequest(keycloakId, amount, prefixedAmount, platform, withdrawNumber);
+        return withdrawService.submitWithdrawRequest(keycloakId, prefixedAmount, platform, withdrawNumber);
     }
+
+    @PostMapping("/cancel/{withdrawId}")
+    @Operation(summary = "Cancel a withdraw request")
+    public Map<String, Object> cancelWithdraw(@PathVariable Long withdrawId) {
+        String keycloakId = depositTransactionService.getCurrentUserKeycloakId();
+        withdrawService.cancelWithdrawRequest(keycloakId, withdrawId);
+        return Map.of(
+                "success", true,
+                "message", "Withdraw request cancelled successfully"
+        );
+    }
+
 
     // ===========================
     // User: Get own withdraw requests

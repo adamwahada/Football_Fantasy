@@ -137,7 +137,7 @@ public class UserController {
 
             UserEntity user = userService.createOrUpdateUser(
                     keycloakId,
-                    request.getFirstName(),      // username
+                    request.getUsername(),        // username
                     request.getEmail(),
                     request.getFirstName(),
                     request.getLastName(),
@@ -146,11 +146,15 @@ public class UserController {
                     request.getAddress(),
                     request.getPostalNumber(),
                     request.getBirthDate(),
-                    true,
-                    true,                       // active
-                    BigDecimal.ZERO,            // balance
-                    null                        // bannedUntil
+                    true,                         // termsAccepted
+                    true,                         // active
+                    BigDecimal.ZERO,              // balance
+                    BigDecimal.ZERO,              // withdrawableBalance
+                    BigDecimal.ZERO,              // pendingWithdrawals
+                    BigDecimal.ZERO,              // pendingDeposits
+                    null                          // bannedUntil
             );
+
 
 
 

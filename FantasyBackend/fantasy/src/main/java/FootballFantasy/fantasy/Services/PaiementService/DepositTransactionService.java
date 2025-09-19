@@ -3,10 +3,8 @@ package FootballFantasy.fantasy.Services.PaiementService;
 import FootballFantasy.fantasy.Dto.WithdrawReservationResponseDTO;
 import FootballFantasy.fantasy.Entities.PaiementEntities.*;
 import FootballFantasy.fantasy.Entities.UserEntities.UserEntity;
+import FootballFantasy.fantasy.Exceptions.PaiementExceptions.*;
 import FootballFantasy.fantasy.Exceptions.UsersExceptions.UserBannedException;
-import FootballFantasy.fantasy.Exceptions.PaiementExceptions.WithdrawNotAvailableException;
-import FootballFantasy.fantasy.Exceptions.PaiementExceptions.DepositAlreadyProcessedException;
-import FootballFantasy.fantasy.Exceptions.PaiementExceptions.DepositNotFoundException;
 import FootballFantasy.fantasy.Exceptions.UsersExceptions.UserNotFoundException;
 import FootballFantasy.fantasy.Repositories.PaiementRepositories.DepositTransactionRepository;
 import FootballFantasy.fantasy.Repositories.PaiementRepositories.WithdrawRequestRepository;
@@ -31,8 +29,8 @@ public class DepositTransactionService {
     private final WithdrawRequestRepository withdrawRepo;
 
     // ===========================
-    // Phase 1 – Pre-Deposit: Reserve Withdraw Number
-    // ===========================
+// Phase 1 – Reserve Withdraw Number
+// ===========================
     @Transactional
     public WithdrawReservationResponseDTO reserveWithdrawNumber(String keycloakId,
                                                                 PrefixedAmount prefixedAmount,
@@ -42,16 +40,38 @@ public class DepositTransactionService {
 
         if (user.isBanned()) throw new UserBannedException("Your account is temporarily banned");
 
+        // ✅ Check if user already has a reserved withdraw not yet processed
+        boolean hasActiveReservation = withdrawRepo.existsByReservedTrueAndReservedByKeycloakIdAndStatus(
+                user.getKeycloakId(),
+                TransactionStatus.RESERVED
+        );
+        if (hasActiveReservation) {
+            throw new WithdrawLimitExceededException("You already have an active reserved deposit. Complete it first.");
+        }
+
+        // ✅ Count pending or in-review deposits to limit spam
+        long pendingWithdraws = withdrawRepo.countByRequesterAndStatusIn(
+                user, List.of(TransactionStatus.PENDING, TransactionStatus.IN_REVIEW)
+        );
+        if (pendingWithdraws >= 2) { // limit to 2 deposits waiting for admin validation
+            throw new WithdrawLimitExceededException("You cannot have more than 2 deposits awaiting for admin validation.");
+        }
+
         WithdrawRequestEntity withdrawRequest = withdrawRepo
-                .findFirstByStatusAndReservedFalseOrderByCreatedAtAscForUpdate(TransactionStatus.PENDING)
+                .findFirstByStatusAndReservedFalseAndPrefixedAmountAndPlatformOrderByCreatedAtAsc(
+                        TransactionStatus.PENDING,
+                        prefixedAmount,
+                        platform
+                )
                 .orElseThrow(WithdrawNotAvailableException::new);
 
         withdrawRequest.setReserved(true);
         withdrawRequest.setReservedAt(LocalDateTime.now());
         withdrawRequest.setReservedByKeycloakId(keycloakId);
+        withdrawRequest.setStatus(TransactionStatus.RESERVED);
+
         withdrawRepo.save(withdrawRequest);
 
-        // Calculate expiration
         LocalDateTime expiresAt = withdrawRequest.getReservedAt().plusMinutes(15);
 
         return new WithdrawReservationResponseDTO(
@@ -66,52 +86,51 @@ public class DepositTransactionService {
 
 
     // ===========================
-    // Phase 2 – Confirm Deposit: Create the actual DepositTransactionEntity
-    // ===========================
+// Phase 2 – Confirm Deposit (uses reservation values only)
+// ===========================
     @Transactional
     public DepositTransactionEntity confirmDeposit(String keycloakId,
-                                                   PrefixedAmount prefixedAmount,
-                                                   PaymentPlatform platform,
                                                    String screenshotUrl,
                                                    Long withdrawId) {
 
         UserEntity user = userRepository.findByKeycloakId(keycloakId)
-                .orElseThrow(() -> new UserNotFoundException(keycloakId));
+                .orElseThrow(() -> new RuntimeException("User not found"));
 
-        if (user.isBanned()) {
-            throw new UserBannedException("Your account is temporarily banned");
-        }
+        if (user.isBanned()) throw new UserBannedException("Your account is temporarily banned");
 
-        // 1️⃣ Get the reserved withdraw request
         WithdrawRequestEntity withdrawRequest = withdrawRepo.findById(withdrawId)
-                .orElseThrow(() -> new RuntimeException("Withdraw request not found"));
+                .orElseThrow(WithdrawNotFoundException::new);
 
-        // ❌ Reject if not reserved
-        if (!withdrawRequest.isReserved()) {
-            throw new RuntimeException("Withdraw request is no longer reserved");
+        // ensure it was reserved and by the same user
+        if (!withdrawRequest.isReserved() ||
+                !keycloakId.equals(withdrawRequest.getReservedByKeycloakId()) ||
+                withdrawRequest.getStatus() != TransactionStatus.RESERVED) {
+            throw new WithdrawNotReservedByUserException();
         }
 
-        // ⏰ Reject if 15 minutes passed
+        // check expiry
         LocalDateTime expiryThreshold = withdrawRequest.getReservedAt().plusMinutes(15);
         if (LocalDateTime.now().isAfter(expiryThreshold)) {
             withdrawRequest.setReserved(false);
             withdrawRequest.setReservedAt(null);
+            withdrawRequest.setReservedByKeycloakId(null);
+            withdrawRequest.setStatus(TransactionStatus.PENDING);
             withdrawRepo.save(withdrawRequest);
-            throw new RuntimeException("Reservation expired. Please try again.");
+            throw new WithdrawReservationExpiredException();
         }
 
-        // 2️⃣ Lock the withdraw (status → IN_REVIEW)
+        // Move from RESERVED → IN_REVIEW
         withdrawRequest.setStatus(TransactionStatus.IN_REVIEW);
         withdrawRepo.save(withdrawRequest);
 
-        // 3️⃣ Create deposit entity
+        // Use values from reservation only
         DepositTransactionEntity deposit = new DepositTransactionEntity();
         deposit.setDepositor(user);
-        deposit.setPrefixedAmount(prefixedAmount);
-        deposit.setAmount(BigDecimal.valueOf(prefixedAmount.getValue()));
-        deposit.setPlatform(platform);
+        deposit.setPrefixedAmount(withdrawRequest.getPrefixedAmount());
+        deposit.setAmount(withdrawRequest.getAmount());
+        deposit.setPlatform(withdrawRequest.getPlatform());
         deposit.setScreenshotUrl(screenshotUrl);
-        deposit.setStatus(TransactionStatus.PENDING);
+        deposit.setStatus(TransactionStatus.IN_REVIEW);
         deposit.setCreatedAt(LocalDateTime.now());
         deposit.setMatchedWithdraw(withdrawRequest);
 
@@ -138,15 +157,34 @@ public class DepositTransactionService {
         deposit.setApprovedBy(admin);
         deposit.setUpdatedAt(LocalDateTime.now());
 
-        UserEntity user = deposit.getDepositor();
-        user.setBalance(user.getBalance().add(deposit.getAmount()));
-        user.setWithdrawableBalance(user.getWithdrawableBalance().add(deposit.getAmount()));
+        UserEntity depositor = deposit.getDepositor();
+        BigDecimal amount = deposit.getAmount();
 
+        // ✅ Add only to balance (usable in system)
+        depositor.setBalance(depositor.getBalance().add(amount));
+
+        // ✅ Remove the amount from pendingDeposits
+        depositor.setPendingDeposits(depositor.getPendingDeposits().subtract(amount));
+        if (depositor.getPendingDeposits().compareTo(BigDecimal.ZERO) < 0) {
+            depositor.setPendingDeposits(BigDecimal.ZERO);
+        }
+
+        userRepository.save(depositor);
+
+        // Handle matched withdraw request if exists
         WithdrawRequestEntity withdraw = deposit.getMatchedWithdraw();
         if (withdraw != null && withdraw.getStatus() == TransactionStatus.IN_REVIEW) {
             withdraw.setStatus(TransactionStatus.APPROVED);
             withdraw.setUpdatedAt(LocalDateTime.now());
-            // keep reserved true if you want it for traceability
+
+            UserEntity withdrawer = withdraw.getRequester();
+            // Adjust pendingWithdrawals
+            withdrawer.setPendingWithdrawals(withdrawer.getPendingWithdrawals().subtract(withdraw.getAmount()));
+            if (withdrawer.getPendingWithdrawals().compareTo(BigDecimal.ZERO) < 0) {
+                withdrawer.setPendingWithdrawals(BigDecimal.ZERO);
+            }
+
+            userRepository.save(withdrawer);
             withdrawRepo.save(withdraw);
         }
 
@@ -174,19 +212,42 @@ public class DepositTransactionService {
         deposit.setApprovedBy(admin);
         deposit.setUpdatedAt(LocalDateTime.now());
 
+        UserEntity depositor = deposit.getDepositor();
+        BigDecimal amount = deposit.getAmount();
+
+        // ✅ Remove from pendingDeposits (refund not to balance)
+        depositor.setPendingDeposits(depositor.getPendingDeposits().subtract(amount));
+        if (depositor.getPendingDeposits().compareTo(BigDecimal.ZERO) < 0) {
+            depositor.setPendingDeposits(BigDecimal.ZERO);
+        }
+        userRepository.save(depositor);
+
         WithdrawRequestEntity withdraw = deposit.getMatchedWithdraw();
         if (withdraw != null && withdraw.getStatus() == TransactionStatus.IN_REVIEW) {
-            // release so it can be used again
+            // Release reservation
             withdraw.setReserved(false);
             withdraw.setReservedAt(null);
             withdraw.setReservedByKeycloakId(null);
             withdraw.setStatus(TransactionStatus.PENDING);
+            withdraw.setUpdatedAt(LocalDateTime.now());
+
+            UserEntity withdrawer = withdraw.getRequester();
+            // Adjust pendingWithdrawals
+            withdrawer.setPendingWithdrawals(withdrawer.getPendingWithdrawals().subtract(withdraw.getAmount()));
+            if (withdrawer.getPendingWithdrawals().compareTo(BigDecimal.ZERO) < 0) {
+                withdrawer.setPendingWithdrawals(BigDecimal.ZERO);
+            }
+
+            // Refund withdraw to balance & withdrawable
+            withdrawer.setBalance(withdrawer.getBalance().add(withdraw.getAmount()));
+            withdrawer.setWithdrawableBalance(withdrawer.getWithdrawableBalance().add(withdraw.getAmount()));
+
+            userRepository.save(withdrawer);
             withdrawRepo.save(withdraw);
         }
 
         return depositRepo.save(deposit);
     }
-
 
     // ===========================
     // Utility Methods
@@ -205,12 +266,9 @@ public class DepositTransactionService {
 
     @PreAuthorize("hasAuthority('ROLE_ADMIN')")
     public List<DepositTransactionEntity> getDepositsInReview() {
-        return depositRepo.findByStatus(TransactionStatus.PENDING)
-                .stream()
-                .filter(d -> d.getMatchedWithdraw() != null
-                        && d.getMatchedWithdraw().getStatus() == TransactionStatus.IN_REVIEW)
-                .toList();
+        return depositRepo.findByStatus(TransactionStatus.IN_REVIEW);
     }
+
 
 
     public String getCurrentUserKeycloakId() {
@@ -220,4 +278,16 @@ public class DepositTransactionService {
         }
         throw new RuntimeException("User not authenticated");
     }
+
+    @Transactional
+    public void notifyPendingDeposits() {
+        LocalDateTime threshold = LocalDateTime.now().minusHours(24);
+        List<DepositTransactionEntity> pending = depositRepo.findByStatusAndCreatedAtBefore(TransactionStatus.IN_REVIEW, threshold);
+
+        for (DepositTransactionEntity deposit : pending) {
+            // send email/log reminder for admin to process
+            System.out.println("Deposit ID " + deposit.getId() + " pending review for over 24h.");
+        }
+    }
+
 }

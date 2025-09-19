@@ -44,13 +44,17 @@ public class UserEntity {
     private BigDecimal balance = BigDecimal.ZERO;
 
     @Column(precision = 10, scale = 2, nullable = false)
-    private BigDecimal pendingBalance = BigDecimal.ZERO;
+    private BigDecimal pendingWithdrawals = BigDecimal.ZERO;
 
     @Column(precision = 10, scale = 2, nullable = false)
     private BigDecimal withdrawableBalance = BigDecimal.ZERO;
 
     @Column(precision = 10, scale = 2, nullable = false)
     private BigDecimal bonusBalance = BigDecimal.ZERO;
+
+    @Column(precision = 10, scale = 2, nullable = false)
+    private BigDecimal pendingDeposits = BigDecimal.ZERO;
+
 
     @JsonIgnore
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)

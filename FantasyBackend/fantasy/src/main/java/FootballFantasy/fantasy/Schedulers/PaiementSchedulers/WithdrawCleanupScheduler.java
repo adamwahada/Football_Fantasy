@@ -1,4 +1,4 @@
-package FootballFantasy.fantasy.Schedulers;
+package FootballFantasy.fantasy.Schedulers.PaiementSchedulers;
 
 import FootballFantasy.fantasy.Services.PaiementService.WithdrawRequestService;
 import lombok.RequiredArgsConstructor;
@@ -14,6 +14,7 @@ public class WithdrawCleanupScheduler {
     // Runs every minute
     @Scheduled(fixedRate = 60000)
     public void cleanupExpiredReservations() {
+
         withdrawRequestService.releaseExpiredReservations();
     }
 }

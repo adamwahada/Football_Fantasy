@@ -1,5 +1,6 @@
 package FootballFantasy.fantasy.Repositories.PaiementRepositories;
 
+import FootballFantasy.fantasy.Entities.PaiementEntities.PaymentPlatform;
 import FootballFantasy.fantasy.Entities.PaiementEntities.PrefixedAmount;
 import FootballFantasy.fantasy.Entities.PaiementEntities.TransactionStatus;
 import FootballFantasy.fantasy.Entities.PaiementEntities.WithdrawRequestEntity;
@@ -20,14 +21,19 @@ public interface WithdrawRequestRepository extends JpaRepository<WithdrawRequest
     List<WithdrawRequestEntity> findByPrefixedAmountAndStatus(PrefixedAmount amount, TransactionStatus status);
 
     @Lock(LockModeType.PESSIMISTIC_WRITE)
-    @Query("SELECT w FROM WithdrawRequestEntity w " +
-            "WHERE w.status = :status AND w.reserved = false " +
-            "ORDER BY w.createdAt ASC")
-    Optional<WithdrawRequestEntity> findFirstByStatusAndReservedFalseOrderByCreatedAtAscForUpdate(
-            @Param("status") TransactionStatus status
+    Optional<WithdrawRequestEntity> findFirstByStatusAndReservedFalseAndPrefixedAmountAndPlatformOrderByCreatedAtAsc(
+            TransactionStatus status,
+            PrefixedAmount prefixedAmount,
+            PaymentPlatform platform
     );
 
     List<WithdrawRequestEntity> findAllByReservedTrueAndReservedAtBeforeAndStatus(
             LocalDateTime before, TransactionStatus status
     );
+
+    long countByRequesterAndStatusIn(UserEntity requester, List<TransactionStatus> statuses);
+
+    boolean existsByReservedTrueAndReservedByKeycloakIdAndStatus(String keycloakId, TransactionStatus status);
+
+
 }

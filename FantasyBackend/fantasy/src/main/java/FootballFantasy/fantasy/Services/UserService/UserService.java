@@ -77,26 +77,22 @@ public class UserService {
         LocalDateTime bannedUntil = null;
 
 
-        // Call createOrUpdateUser
         UserEntity user = createOrUpdateUser(
-                keycloakId,
-                username,
-                email,
-                firstName,
-                lastName,
-                phone,
-                country,
-                address,
-                postalNumber,
-                birthDate,
-                termsAccepted,                active,
-                balance,
+                keycloakId, username, email, firstName, lastName, phone, country, address, postalNumber,
+                birthDate, termsAccepted, active, balance,
+                BigDecimal.ZERO,               // withdrawableBalance
+                BigDecimal.ZERO,               // pendingWithdrawals
+                BigDecimal.ZERO,               // pendingDeposits
                 bannedUntil
         );
+
 
         // Ensure defaults are set for existing users
         user.setActive(true);
         if (user.getBalance() == null) user.setBalance(BigDecimal.ZERO);
+        if (user.getWithdrawableBalance() == null) user.setWithdrawableBalance(BigDecimal.ZERO);  // ADD THIS
+        if (user.getPendingWithdrawals() == null) user.setPendingWithdrawals(BigDecimal.ZERO);
+        if (user.getPendingDeposits() == null) user.setPendingDeposits(BigDecimal.ZERO);
         if (user.getBannedUntil() == null) user.setBannedUntil(null);
 
         return user;
@@ -127,21 +123,15 @@ public class UserService {
 
     // ======== User Operations (internal / reused) ========
     public UserEntity createOrUpdateUser(
-            String keycloakId,
-            String username,
-            String email,
-            String firstName,
-            String lastName,
-            String phone,
-            String country,
-            String address,
-            String postalNumber,
-            LocalDate birthDate,
-            boolean termsAccepted,
-            boolean active,
-            BigDecimal balance,
+            String keycloakId, String username, String email, String firstName, String lastName,
+            String phone, String country, String address, String postalNumber, LocalDate birthDate,
+            boolean termsAccepted, boolean active, BigDecimal balance,
+            BigDecimal withdrawableBalance,
+            BigDecimal pendingWithdrawals,          // NEW
+            BigDecimal pendingDeposits,             // NEW
             LocalDateTime bannedUntil
-    ) {
+    )
+ {
         UserEntity user = userRepository.findByKeycloakId(keycloakId).orElse(new UserEntity());
         user.setKeycloakId(keycloakId);
         user.setUsername(username);
@@ -153,14 +143,16 @@ public class UserService {
         user.setAddress(address);
         user.setPostalNumber(postalNumber);
         user.setBirthDate(birthDate);
-        user.setTermsAccepted(true);
+        user.setTermsAccepted(termsAccepted);
         user.setActive(active);
         user.setBalance(balance);
+        user.setWithdrawableBalance(withdrawableBalance);
+        user.setPendingWithdrawals(pendingWithdrawals);
+        user.setPendingDeposits(pendingDeposits);
         user.setBannedUntil(bannedUntil);
 
         return userRepository.save(user);
     }
-
 
     @Transactional
     public UserEntity updateUserProfile(Long userId, UserProfileUpdateRequest request) {
@@ -235,14 +227,6 @@ public class UserService {
     }
 
     @Transactional
-    public void refundUser(Long userId, BigDecimal amount) {
-        UserEntity user = userRepository.findById(userId)
-                .orElseThrow(() -> new RuntimeException("User not found"));
-        user.setBalance(user.getBalance().add(amount));
-        userRepository.save(user);
-    }
-
-    @Transactional
     public void creditBalance(Long userId, BigDecimal amount, Long adminId) {
         if (amount == null || amount.compareTo(BigDecimal.ZERO) <= 0) {
             throw new IllegalArgumentException("Amount must be positive");
@@ -250,16 +234,24 @@ public class UserService {
 
         UserEntity user = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("User not found"));
+
         BigDecimal oldBalance = user.getBalance();
+        BigDecimal oldWithdrawable = user.getWithdrawableBalance();
+
+        // Add to both balance and withdrawable balance for admin credits
         user.setBalance(user.getBalance().add(amount));
+        user.setWithdrawableBalance(user.getWithdrawableBalance().add(amount));
         userRepository.save(user);
 
-        // Save audit
+        // Update audit details
         UserManagementAudit audit = new UserManagementAudit();
         audit.setUserId(userId);
         audit.setAdminId(adminId);
         audit.setAction(UserAction.CREDIT);
-        audit.setDetails("Credited " + amount + " | Previous balance: " + oldBalance + " | New balance: " + user.getBalance());
+        audit.setDetails("Credited " + amount + " | Previous balance: " + oldBalance +
+                " | New balance: " + user.getBalance() +
+                " | Previous withdrawable: " + oldWithdrawable +
+                " | New withdrawable: " + user.getWithdrawableBalance());
         audit.setTimestamp(LocalDateTime.now());
         userManagementAuditRepository.save(audit);
     }
@@ -273,24 +265,32 @@ public class UserService {
         UserEntity user = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
-        if (user.getBalance().compareTo(amount) < 0) {
+        // Check against withdrawable balance for debits
+        if (user.getWithdrawableBalance().compareTo(amount) < 0) {
             throw new InsufficientBalanceException(
                     String.valueOf(userId),
                     amount.toString(),
-                    user.getBalance().toString()
+                    user.getWithdrawableBalance().toString()
             );
         }
 
         BigDecimal oldBalance = user.getBalance();
+        BigDecimal oldWithdrawable = user.getWithdrawableBalance();
+
+        // Deduct from both balance and withdrawable balance
         user.setBalance(user.getBalance().subtract(amount));
+        user.setWithdrawableBalance(user.getWithdrawableBalance().subtract(amount));
         userRepository.save(user);
 
-        // Save audit
+        // Update audit details
         UserManagementAudit audit = new UserManagementAudit();
         audit.setUserId(userId);
         audit.setAdminId(adminId);
         audit.setAction(UserAction.DEBIT);
-        audit.setDetails("Debited " + amount + " | Previous balance: " + oldBalance + " | New balance: " + user.getBalance());
+        audit.setDetails("Debited " + amount + " | Previous balance: " + oldBalance +
+                " | New balance: " + user.getBalance() +
+                " | Previous withdrawable: " + oldWithdrawable +
+                " | New withdrawable: " + user.getWithdrawableBalance());
         audit.setTimestamp(LocalDateTime.now());
         userManagementAuditRepository.save(audit);
     }
@@ -298,6 +298,7 @@ public class UserService {
 
     // ======== Inner DTO classes ========
     public static class UserProfileUpdateRequest {
+        private String username;
         private String firstName;
         private String lastName;
         private String email;
@@ -308,6 +309,9 @@ public class UserService {
         private LocalDate birthDate;
 
         public UserProfileUpdateRequest() {}
+
+        public String getUsername() {return username;}
+        public void setUsername(String username) {this.username = username;}
 
         public String getFirstName() { return firstName; }
         public void setFirstName(String firstName) { this.firstName = firstName; }
@@ -361,6 +365,15 @@ public class UserService {
         public BigDecimal getTotalSpent() { return totalSpent; }
         public BigDecimal getNetProfit() { return netProfit; }
         public double getAverageAccuracy() { return averageAccuracy; }
+    }
+    @Transactional
+    public void refundUser(Long userId, BigDecimal amount) {
+        UserEntity user = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        user.setBalance(user.getBalance().add(amount));
+        user.setWithdrawableBalance(user.getWithdrawableBalance().add(amount));
+        userRepository.save(user);
     }
 
     @Transactional
@@ -428,7 +441,6 @@ public class UserService {
     }
 
 
-
     public String getUserBanStatus(Long userId) {
         UserEntity user = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("User not found"));
@@ -438,4 +450,32 @@ public class UserService {
         return "active";
     }
 
+public UserBalanceResponse getCurrentUserBalance() {
+    UserEntity user = getCurrentUser();
+    return new UserBalanceResponse(
+            user.getBalance(),
+            user.getWithdrawableBalance(),
+            user.getPendingWithdrawals(),  // for withdrawals
+            user.getPendingDeposits()      // for deposits
+    );
+}
+public static class UserBalanceResponse {
+    private final BigDecimal balance;
+    private final BigDecimal withdrawableBalance;
+    private final BigDecimal pendingWithdrawals;
+    private final BigDecimal pendingDeposits;
+
+    public UserBalanceResponse(BigDecimal balance, BigDecimal withdrawableBalance,
+                               BigDecimal pendingWithdrawals, BigDecimal pendingDeposits) {
+        this.balance = balance;
+        this.withdrawableBalance = withdrawableBalance;
+        this.pendingWithdrawals = pendingWithdrawals;
+        this.pendingDeposits = pendingDeposits;
+    }
+
+    public BigDecimal getBalance() { return balance; }
+    public BigDecimal getWithdrawableBalance() { return withdrawableBalance; }
+    public BigDecimal getPendingWithdrawals() { return pendingWithdrawals; }
+    public BigDecimal getPendingDeposits() { return pendingDeposits; }
+}
 }

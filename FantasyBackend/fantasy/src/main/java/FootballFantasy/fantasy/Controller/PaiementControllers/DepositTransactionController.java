@@ -37,18 +37,17 @@ public class DepositTransactionController {
     @Operation(summary = "Confirm a deposit using the reserved withdraw number")
     public DepositTransactionEntity confirmDeposit(
             @RequestParam Long withdrawId,
-            @RequestParam PrefixedAmount prefixedAmount,
-            @RequestParam PaymentPlatform platform,
             @RequestParam String screenshotUrl
     ) {
         String keycloakId = depositService.getCurrentUserKeycloakId();
-        return depositService.confirmDeposit(keycloakId, prefixedAmount, platform, screenshotUrl, withdrawId);
+        return depositService.confirmDeposit(keycloakId,  screenshotUrl, withdrawId);
     }
 
     // ===========================
     // Admin: Approve Deposit
     // ===========================
     @PostMapping("/{depositId}/approve")
+    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
     @Operation(summary = "Approve a deposit request (Admin)")
     public DepositTransactionEntity approveDeposit(@PathVariable Long depositId) {
         String adminKeycloakId = depositService.getCurrentUserKeycloakId();
@@ -59,6 +58,7 @@ public class DepositTransactionController {
     // Admin: Reject Deposit
     // ===========================
     @PostMapping("/{depositId}/reject")
+    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
     @Operation(summary = "Reject a deposit request (Admin)")
     public DepositTransactionEntity rejectDeposit(@PathVariable Long depositId) {
         String adminKeycloakId = depositService.getCurrentUserKeycloakId();

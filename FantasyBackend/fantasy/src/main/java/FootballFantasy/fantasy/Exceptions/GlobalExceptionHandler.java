@@ -1,9 +1,6 @@
 package FootballFantasy.fantasy.Exceptions;
 
-import FootballFantasy.fantasy.Exceptions.PaiementExceptions.DepositAlreadyProcessedException;
-import FootballFantasy.fantasy.Exceptions.PaiementExceptions.DepositNotFoundException;
-import FootballFantasy.fantasy.Exceptions.PaiementExceptions.InsufficientBalanceException;
-import FootballFantasy.fantasy.Exceptions.PaiementExceptions.WithdrawNotAvailableException;
+import FootballFantasy.fantasy.Exceptions.PaiementExceptions.*;
 import FootballFantasy.fantasy.Exceptions.PrivateSessionsExceptions.PrivateSessionFullException;
 import FootballFantasy.fantasy.Exceptions.PrivateSessionsExceptions.PrivateSessionGameweekMismatchException;
 import FootballFantasy.fantasy.Exceptions.PrivateSessionsExceptions.PrivateSessionNotFoundException;
@@ -12,11 +9,13 @@ import FootballFantasy.fantasy.Exceptions.UsersExceptions.UserBannedException;
 import FootballFantasy.fantasy.Exceptions.UsersExceptions.UserNotFoundException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.authorization.AuthorizationDeniedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.context.request.WebRequest;
 
+import java.nio.file.AccessDeniedException;
 import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Map;
@@ -371,6 +370,95 @@ public class GlobalExceptionHandler {
                         "message", ex.getMessage()
                 ));
     }
+
+    @ExceptionHandler(WithdrawLimitExceededException.class)
+    public ResponseEntity<Object> handleWithdrawLimitExceeded(WithdrawLimitExceededException ex) {
+        Map<String, Object> body = new HashMap<>();
+        body.put("timestamp", LocalDateTime.now());
+        body.put("success", false);
+        body.put("error", "WITHDRAW_LIMIT_EXCEEDED");
+        body.put("message", ex.getMessage());
+
+        return new ResponseEntity<>(body, HttpStatus.BAD_REQUEST);
+    }
+
+    @ExceptionHandler(WithdrawReservationExpiredException.class)
+    public ResponseEntity<Object> handleWithdrawReservationExpired(WithdrawReservationExpiredException ex) {
+        Map<String, Object> body = new HashMap<>();
+        body.put("timestamp", LocalDateTime.now());
+        body.put("success", false);
+        body.put("error", "WITHDRAW_RESERVATION_EXPIRED");
+        body.put("message", ex.getMessage());
+
+        return new ResponseEntity<>(body, HttpStatus.BAD_REQUEST);
+    }
+
+    @ExceptionHandler(WithdrawNotReservedByUserException.class)
+    public ResponseEntity<Object> handleWithdrawNotReservedByUser(WithdrawNotReservedByUserException ex) {
+        Map<String, Object> body = new HashMap<>();
+        body.put("timestamp", LocalDateTime.now());
+        body.put("success", false);
+        body.put("error", "WITHDRAW_NOT_RESERVED_BY_USER");
+        body.put("message", ex.getMessage());
+
+        return new ResponseEntity<>(body, HttpStatus.BAD_REQUEST);
+    }
+
+    @ExceptionHandler(WithdrawNotFoundException.class)
+    public ResponseEntity<Object> handleWithdrawNotFound(WithdrawNotFoundException ex) {
+        Map<String, Object> body = new HashMap<>();
+        body.put("timestamp", LocalDateTime.now());
+        body.put("success", false);
+        body.put("error", "WITHDRAW_NOT_FOUND");
+        body.put("message", ex.getMessage());
+
+        return new ResponseEntity<>(body, HttpStatus.NOT_FOUND);
+    }
+
+    @ExceptionHandler(UnauthorizedWithdrawCancellationException.class)
+    public ResponseEntity<Object> handleUnauthorizedWithdrawCancellation(UnauthorizedWithdrawCancellationException ex) {
+        Map<String, Object> body = new HashMap<>();
+        body.put("timestamp", LocalDateTime.now());
+        body.put("success", false);
+        body.put("error", "UNAUTHORIZED_WITHDRAW_CANCELLATION");
+        body.put("message", ex.getMessage());
+
+        return new ResponseEntity<>(body, HttpStatus.FORBIDDEN);
+    }
+
+    @ExceptionHandler(InvalidWithdrawStatusException.class)
+    public ResponseEntity<Object> handleInvalidWithdrawStatus(InvalidWithdrawStatusException ex) {
+        Map<String, Object> body = new HashMap<>();
+        body.put("timestamp", LocalDateTime.now());
+        body.put("success", false);
+        body.put("error", "INVALID_WITHDRAW_STATUS");
+        body.put("message", ex.getMessage());
+
+        return new ResponseEntity<>(body, HttpStatus.BAD_REQUEST);
+    }
+
+    @ExceptionHandler(WithdrawReservedException.class)
+    public ResponseEntity<Object> handleWithdrawReserved(WithdrawReservedException ex) {
+        Map<String, Object> body = new HashMap<>();
+        body.put("timestamp", LocalDateTime.now());
+        body.put("success", false);
+        body.put("error", "WITHDRAW_RESERVED");
+        body.put("message", ex.getMessage());
+
+        return new ResponseEntity<>(body, HttpStatus.CONFLICT);
+    }
+
+    @ExceptionHandler({AccessDeniedException.class, AuthorizationDeniedException.class})
+    public ResponseEntity<Object> handleAccessDenied(Exception ex) {
+        Map<String, Object> body = new HashMap<>();
+        body.put("timestamp", LocalDateTime.now());
+        body.put("success", false);
+        body.put("error", "ACCESS_DENIED");
+        body.put("message", "You do not have permission to access this resource");
+
+        return new ResponseEntity<>(body, HttpStatus.FORBIDDEN);
+    }
+
 
 
 }

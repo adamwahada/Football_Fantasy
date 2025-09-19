@@ -21,6 +21,7 @@ public class WithdrawRequestEntity {
     private BigDecimal amount;
 
     @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 25)
     private TransactionStatus status = TransactionStatus.PENDING;
 
     @Enumerated(EnumType.STRING)
