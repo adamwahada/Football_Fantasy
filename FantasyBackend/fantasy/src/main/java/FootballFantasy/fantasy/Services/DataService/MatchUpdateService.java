@@ -144,8 +144,7 @@ public class MatchUpdateService {
         }
     }
 
-    // ✅ New streamlined method that processes matches for a specific gameweek without timing restrictions
-// ✅ New streamlined method that processes matches for a specific gameweek
+    // ✅ New streamlined method that processes matches for a specific gameweek
     @Transactional
     public void updateMatchesForGameweek(String competition, int weekNumber) {
         try {
@@ -205,17 +204,47 @@ public class MatchUpdateService {
 
                     Instant matchDate = Instant.parse(utcDateStr);
                     boolean isFuture = matchDate.isAfter(Instant.now());
-                    boolean isFinishedOrLive = "FINISHED".equals(status) || "IN_PLAY".equals(status) || "PAUSED".equals(status);
+                    boolean isFinished = "FINISHED".equals(status);
+                    boolean isLive = "IN_PLAY".equals(status) || "PAUSED".equals(status);
+                    boolean isScheduled = "SCHEDULED".equals(status) || "TIMED".equals(status);
 
-                    // ⏭️ Skip future scheduled matches
-                    if (isFuture && ("SCHEDULED".equals(status) || "TIMED".equals(status))) {
-                        System.out.println("⏭️ Skipping future match: " + matchData.get("homeTeam"));
-                        continue;
+                    // ✅ Process matches based on these criteria:
+                    // 1. All finished matches (to get final results)
+                    // 2. All live matches (for real-time updates)
+                    // 3. Past scheduled matches that might have been postponed/rescheduled
+                    // 4. Future scheduled matches within reasonable timeframe (for fixtures)
+
+                    boolean shouldProcess = false;
+                    String reason = "";
+
+                    if (isFinished) {
+                        shouldProcess = true;
+                        reason = "finished match";
+                    } else if (isLive) {
+                        shouldProcess = true;
+                        reason = "live match";
+                    } else if (!isFuture && isScheduled) {
+                        shouldProcess = true;
+                        reason = "past scheduled match";
+                    } else if (isFuture && isScheduled) {
+                        // Allow upcoming matches within reasonable timeframe (e.g., next 4 weeks)
+                        long daysInFuture = java.time.Duration.between(Instant.now(), matchDate).toDays();
+                        if (daysInFuture <= 28) { // Process matches up to 4 weeks away
+                            shouldProcess = true;
+                            reason = "upcoming scheduled match";
+                        } else {
+                            reason = "too far in future (" + daysInFuture + " days)";
+                        }
                     }
 
-                    // ✅ Process only finished/live or past scheduled ones
-                    if (isFinishedOrLive || !isFuture) {
-                        processMatchDataSimplified(matchData, league, affectedGameWeeks);
+                    if (shouldProcess) {
+                        System.out.println("✅ Processing match (" + reason + "): " +
+                                ((Map<String, Object>) matchData.get("homeTeam")).get("name") + " vs " +
+                                ((Map<String, Object>) matchData.get("awayTeam")).get("name"));
+                        processMatchDataUnified(matchData, league, affectedGameWeeks);
+                    } else {
+                        System.out.println("⏭️ Skipping match (" + reason + "): " +
+                                ((Map<String, Object>) matchData.get("homeTeam")).get("name"));
                     }
 
                 } catch (Exception e) {
@@ -238,154 +267,166 @@ public class MatchUpdateService {
         }
     }
 
+    // ✅ Unified method that handles all match types appropriately
+    @Transactional
+    protected void processMatchDataUnified(Map<String, Object> matchData, LeagueTheme league, Set<GameWeek> affectedGameWeeks) {
+        try {
+            Map<String, Object> homeTeamMap = (Map<String, Object>) matchData.get("homeTeam");
+            Map<String, Object> awayTeamMap = (Map<String, Object>) matchData.get("awayTeam");
 
-// ✅ Simplified match processing without overriding inactive matches
-@Transactional
-protected void processMatchDataSimplified(Map<String, Object> matchData, LeagueTheme league, Set<GameWeek> affectedGameWeeks) {
-    try {
-        Map<String, Object> homeTeamMap = (Map<String, Object>) matchData.get("homeTeam");
-        Map<String, Object> awayTeamMap = (Map<String, Object>) matchData.get("awayTeam");
-
-        if (homeTeamMap == null || awayTeamMap == null) {
-            System.out.println("⚠️ Missing team data in match");
-            return;
-        }
-
-        String homeTeamName = normalizeTeamName((String) homeTeamMap.get("name"));
-        String awayTeamName = normalizeTeamName((String) awayTeamMap.get("name"));
-        String apiStatus = (String) matchData.get("status");
-
-        String dateStr = (String) matchData.get("utcDate");
-        if (dateStr == null) {
-            System.out.println("⚠️ No date found for match: " + homeTeamName + " vs " + awayTeamName);
-            return;
-        }
-
-        LocalDateTime matchDateUtc = OffsetDateTime.parse(dateStr).toLocalDateTime();
-        Integer matchday = (Integer) matchData.get("matchday");
-
-        if (matchday == null) {
-            System.out.println("⚠️ No matchday found for " + homeTeamName + " vs " + awayTeamName);
-            return;
-        }
-
-        // Find or create GameWeek
-        GameWeek gameWeek = gameweekRepository.findByWeekNumberAndCompetition(matchday, league)
-                .orElse(null);
-
-        if (gameWeek == null) {
-            System.out.println("🆕 Creating new GameWeek for " + league + " week " + matchday);
-            gameWeek = new GameWeek();
-            gameWeek.setWeekNumber(matchday);
-            gameWeek.setCompetition(league);
-            gameWeek.setStatus(GameweekStatus.UPCOMING);
-            gameWeek.setStartDate(matchDateUtc.minusDays(3));
-            gameWeek.setEndDate(matchDateUtc.plusDays(3));
-            gameWeek.setJoinDeadline(matchDateUtc.minusHours(2));
-            gameWeek = gameweekRepository.save(gameWeek);
-        }
-
-        // Parse score
-        Integer homeGoals = null;
-        Integer awayGoals = null;
-        Map<String, Object> scoreMap = (Map<String, Object>) matchData.get("score");
-        if (scoreMap != null) {
-            Map<String, Object> fullTime = (Map<String, Object>) scoreMap.get("fullTime");
-            if (fullTime != null) {
-                homeGoals = fullTime.get("home") != null ? (Integer) fullTime.get("home") : null;
-                awayGoals = fullTime.get("away") != null ? (Integer) fullTime.get("away") : null;
+            if (homeTeamMap == null || awayTeamMap == null) {
+                System.out.println("⚠️ Missing team data in match");
+                return;
             }
-        }
 
-        // Find existing match
-        Match dbMatch = matchRepository.findWithGameweeks(
-                homeTeamName, awayTeamName,
-                matchDateUtc.minusHours(2), matchDateUtc.plusHours(2)
-        );
+            String homeTeamName = normalizeTeamName((String) homeTeamMap.get("name"));
+            String awayTeamName = normalizeTeamName((String) awayTeamMap.get("name"));
+            String apiStatus = (String) matchData.get("status");
 
-        // Store previous status to detect changes
-        boolean wasFinishedBefore = dbMatch != null && dbMatch.isFinished();
+            String dateStr = (String) matchData.get("utcDate");
+            if (dateStr == null) {
+                System.out.println("⚠️ No date found for match: " + homeTeamName + " vs " + awayTeamName);
+                return;
+            }
 
-        // Respect inactive flag
-        if (dbMatch != null && !dbMatch.isActive()) {
-            System.out.println("⏭️ Skipping inactive match: " + homeTeamName + " vs " + awayTeamName);
-            return;
-        }
+            LocalDateTime matchDateUtc = OffsetDateTime.parse(dateStr).toLocalDateTime();
+            Integer matchday = (Integer) matchData.get("matchday");
 
-        if (dbMatch == null) {
-            System.out.println("🆕 Creating new match: " + homeTeamName + " vs " + awayTeamName);
-            dbMatch = new Match();
-            dbMatch.setHomeTeam(homeTeamName);
-            dbMatch.setAwayTeam(awayTeamName);
-            dbMatch.setGameweeks(new ArrayList<>());
-            dbMatch.setActive(true);
-        } else {
-            System.out.println("🔄 Updating existing match: " + homeTeamName + " vs " + awayTeamName);
-        }
+            if (matchday == null) {
+                System.out.println("⚠️ No matchday found for " + homeTeamName + " vs " + awayTeamName);
+                return;
+            }
 
-        // Update base info
-        dbMatch.setMatchDate(matchDateUtc);
-        dbMatch.setPredictionDeadline(matchDateUtc.minusMinutes(30));
+            // Find or create GameWeek
+            GameWeek gameWeek = gameweekRepository.findByWeekNumberAndCompetition(matchday, league)
+                    .orElse(null);
 
-        // Map API status properly
-        boolean justFinished = false;
-        switch (apiStatus) {
-            case "FINISHED" -> {
-                if (homeGoals != null && awayGoals != null) {
-                    dbMatch.setHomeScore(homeGoals);
-                    dbMatch.setAwayScore(awayGoals);
+            if (gameWeek == null) {
+                System.out.println("🆕 Creating new GameWeek for " + league + " week " + matchday);
+                gameWeek = new GameWeek();
+                gameWeek.setWeekNumber(matchday);
+                gameWeek.setCompetition(league);
+                gameWeek.setStatus(GameweekStatus.UPCOMING);
+                gameWeek.setStartDate(matchDateUtc.minusDays(3));
+                gameWeek.setEndDate(matchDateUtc.plusDays(3));
+                gameWeek.setJoinDeadline(matchDateUtc.minusHours(2));
+                gameWeek = gameweekRepository.save(gameWeek);
+            }
+
+            // Find existing match
+            Match dbMatch = matchRepository.findWithGameweeks(
+                    homeTeamName, awayTeamName,
+                    matchDateUtc.minusHours(2), matchDateUtc.plusHours(2)
+            );
+
+            // Respect inactive flag - don't update inactive matches
+            if (dbMatch != null && !dbMatch.isActive()) {
+                System.out.println("⏭️ Skipping inactive match: " + homeTeamName + " vs " + awayTeamName);
+                return;
+            }
+
+            // Store previous status to detect changes
+            boolean wasFinishedBefore = dbMatch != null && dbMatch.isFinished();
+
+            if (dbMatch == null) {
+                System.out.println("🆕 Creating new match: " + homeTeamName + " vs " + awayTeamName);
+                dbMatch = new Match();
+                dbMatch.setHomeTeam(homeTeamName);
+                dbMatch.setAwayTeam(awayTeamName);
+                dbMatch.setGameweeks(new ArrayList<>());
+                dbMatch.setActive(true);
+            } else {
+                System.out.println("🔄 Updating existing match: " + homeTeamName + " vs " + awayTeamName);
+            }
+
+            // Always update basic match info
+            dbMatch.setMatchDate(matchDateUtc);
+            dbMatch.setPredictionDeadline(matchDateUtc.minusMinutes(30));
+
+            // Parse score data
+            Integer homeGoals = null;
+            Integer awayGoals = null;
+            Map<String, Object> scoreMap = (Map<String, Object>) matchData.get("score");
+            if (scoreMap != null) {
+                Map<String, Object> fullTime = (Map<String, Object>) scoreMap.get("fullTime");
+                if (fullTime != null) {
+                    homeGoals = fullTime.get("home") != null ? (Integer) fullTime.get("home") : null;
+                    awayGoals = fullTime.get("away") != null ? (Integer) fullTime.get("away") : null;
                 }
-                dbMatch.setFinished(true);
-                dbMatch.setStatus(MatchStatus.COMPLETED);
-                justFinished = !wasFinishedBefore;
             }
-            case "IN_PLAY", "PAUSED" -> {
-                if (homeGoals != null && awayGoals != null) {
-                    dbMatch.setHomeScore(homeGoals);
-                    dbMatch.setAwayScore(awayGoals);
+
+            // Update match based on status
+            boolean justFinished = false;
+            switch (apiStatus) {
+                case "FINISHED" -> {
+                    // Always update scores for finished matches
+                    if (homeGoals != null && awayGoals != null) {
+                        dbMatch.setHomeScore(homeGoals);
+                        dbMatch.setAwayScore(awayGoals);
+                    } else {
+                        System.out.println("⚠️ Finished match missing scores: " + homeTeamName + " vs " + awayTeamName);
+                    }
+                    dbMatch.setFinished(true);
+                    dbMatch.setStatus(MatchStatus.COMPLETED);
+                    justFinished = !wasFinishedBefore;
                 }
-                dbMatch.setFinished(false);
-                dbMatch.setStatus(MatchStatus.LIVE);
+                case "IN_PLAY", "PAUSED" -> {
+                    // Update live scores
+                    if (homeGoals != null && awayGoals != null) {
+                        dbMatch.setHomeScore(homeGoals);
+                        dbMatch.setAwayScore(awayGoals);
+                    }
+                    dbMatch.setFinished(false);
+                    dbMatch.setStatus(MatchStatus.LIVE);
+                }
+                case "SCHEDULED", "TIMED" -> {
+                    // For scheduled matches, clear scores and set as scheduled
+                    dbMatch.setHomeScore(null);
+                    dbMatch.setAwayScore(null);
+                    dbMatch.setFinished(false);
+                    dbMatch.setStatus(MatchStatus.SCHEDULED);
+                }
+                case "POSTPONED" -> {
+                    // Handle postponed matches
+                    dbMatch.setHomeScore(null);
+                    dbMatch.setAwayScore(null);
+                    dbMatch.setFinished(false);
+                    dbMatch.setStatus(MatchStatus.SCHEDULED); // or create POSTPONED status if needed
+                    System.out.println("📅 Match postponed: " + homeTeamName + " vs " + awayTeamName);
+                }
+                default -> {
+                    System.out.println("⚠️ Unknown match status: " + apiStatus + " for " + homeTeamName + " vs " + awayTeamName);
+                    // Default to scheduled
+                    dbMatch.setHomeScore(null);
+                    dbMatch.setAwayScore(null);
+                    dbMatch.setFinished(false);
+                    dbMatch.setStatus(MatchStatus.SCHEDULED);
+                }
             }
-            case "SCHEDULED", "TIMED", "POSTPONED" -> {
-                dbMatch.setHomeScore(null);
-                dbMatch.setAwayScore(null);
-                dbMatch.setFinished(false);
-                dbMatch.setStatus(MatchStatus.SCHEDULED);
+
+            // Link to GameWeek
+            if (!dbMatch.getGameweeks().contains(gameWeek)) {
+                dbMatch.getGameweeks().add(gameWeek);
             }
-            default -> {
-                System.out.println("⚠️ Unknown match status: " + apiStatus);
-                dbMatch.setHomeScore(null);
-                dbMatch.setAwayScore(null);
-                dbMatch.setFinished(false);
-                dbMatch.setStatus(MatchStatus.SCHEDULED);
+
+            // Save the match
+            dbMatch = matchRepository.save(dbMatch);
+            System.out.println("💾 Saved match: " + homeTeamName + " vs " + awayTeamName +
+                    " (Status: " + dbMatch.getStatus() + ", Scores: " + dbMatch.getHomeScore() + "-" + dbMatch.getAwayScore() + ")");
+
+            // IMMEDIATELY SCORE PREDICTIONS IF MATCH JUST FINISHED
+            if (justFinished && dbMatch.getHomeScore() != null && dbMatch.getAwayScore() != null) {
+                System.out.println("⚡ Match just finished! Scoring predictions immediately...");
+                predictionService.scorePredictionsForMatch(dbMatch.getId());
             }
+
+            affectedGameWeeks.add(gameWeek);
+
+        } catch (Exception e) {
+            System.out.println("❌ Error processing match data: " + e.getMessage());
+            throw e;
         }
-
-        // Link to GameWeek
-        if (!dbMatch.getGameweeks().contains(gameWeek)) {
-            dbMatch.getGameweeks().add(gameWeek);
-        }
-
-        // Save the match
-        dbMatch = matchRepository.save(dbMatch);
-        System.out.println("💾 Saved match: " + homeTeamName + " vs " + awayTeamName +
-                " (Status: " + dbMatch.getStatus() + ")");
-
-        // IMMEDIATELY SCORE PREDICTIONS IF MATCH JUST FINISHED
-        if (justFinished && dbMatch.getHomeScore() != null && dbMatch.getAwayScore() != null) {
-            System.out.println("⚡ Match just finished! Scoring predictions immediately...");
-            predictionService.scorePredictionsForMatch(dbMatch.getId());
-        }
-
-        affectedGameWeeks.add(gameWeek);
-
-    } catch (Exception e) {
-        System.out.println("❌ Error processing match data: " + e.getMessage());
-        throw e;
     }
-}
-
 
     // ✅ Keep the old method for backward compatibility (manual finished-only updates)
     @Transactional
